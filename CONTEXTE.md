@@ -22,6 +22,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 6 | Moteur de KPI (TO, prix moyen, RevPAR, RevPAC, DMS, captage PDJ) et vue groupe | 15 |
 | 7 | Site de démonstration (`index.html`, GitHub Pages) calculé par le moteur réel | 5 |
 | 8 | Charte Zenitude, connexion, choix du périmètre, tableau EBITDA, onglet Import et paramètres | - |
+| 9 | Thème clair / sombre / auto, réglette de période libre, ajustements (comptes simulés, provisions), vue Réel / Ajusté | 2 (navigateur) |
 
 Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). L'ancienne maquette (`maquette/`) est remplacée.
 
@@ -33,6 +34,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Comptes : Plan comptable général officiel (libellés à vérifier contre l'extrait Pennylane).
 - Une seule approbation distincte du déposant suffit pour appliquer une version (règle à confirmer).
 - Une règle datée est une version : changer une date d'effet crée un retrait et un ajout.
+- Phase test : le calcul des ajustements se fait dans la page (`docs/decisions/0002-calcul-ajustements-navigateur.md`), le moteur Python reste la référence et un test compare les deux.
 
 ## Points ouverts
 
@@ -46,13 +48,14 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 8. Hébergement, plateforme Git, accès : décisions DSI.
 9. Lot 5 limité : pas de PDF/PPTX, une publication par dossier et exercice.
 11. Lot 6 : définitions des six KPI à valider par le contrôle de gestion (notamment RevPAC : CA hébergement + services / nuitées clients ; captage PDJ : couverts / nuitées clients). Source réelle des mesures d'exploitation (Mews, saisie) à décider. Groupes de l'onglet Groupes non encore utilisés par la vue groupe. Pas de publication figée des KPI.
+12. Calculateur d'ajustements de la page (lot 9) : à remplacer par le backend en production, avec la même structure d'ajustement. Validation à deux personnes des ajustements et droits non définis.
 10. Charte graphique : appliquée au lot 8. Présentation EBITDA à valider par le contrôle de gestion.
 
 ## Comment reprendre
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 126 tests attendus
+python -m pytest            # 128 tests attendus (2 demandent Playwright)
 sh demo.sh                  # démonstration complète
 python interface/generer_site.py   # régénère index.html
 ```

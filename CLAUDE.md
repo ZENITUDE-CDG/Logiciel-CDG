@@ -38,13 +38,13 @@
 - Backend Python / Django, PostgreSQL, traitements d'import et de calcul en arrière-plan.
 - Frontend React / TypeScript. Metabase possible pour les tableaux de bord (à décider).
 - Modules : données certifiées, connecteur Pennylane, configuration, moteur de KPI, clôture, budgets, rapports, administration.
-- Le moteur de KPI est appelé par tous les écrans et exports. Aucune formule officielle recopiée dans le navigateur.
+- Le moteur de KPI est appelé par tous les écrans et exports. Aucune formule officielle recopiée dans le navigateur. Exception phase test : le calculateur d'ajustements de la page (lot 9, `docs/decisions/0002-calcul-ajustements-navigateur.md`), comparé au moteur par `tests/test_site_ajustements.py`.
 - Connecteurs séparés du modèle métier : changer de source ne réécrit pas le P&L.
 - Cache et précalculs : clés incluant scénario, version et périmètre de droits.
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (126 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7).
+- Tests : `python -m pytest` (128 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9 ; ces deux derniers demandent Playwright et Chromium, sinon ils sont ignorés).
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
 - Configuration de test complète : `python tests/generer_config_complete.py config_modele/Zenitude_Configuration_modele.xlsx tests/fixtures tests/fixtures/ecritures_synthetiques.csv`.
 - Écritures synthétiques : `python tests/generer_ecritures.py tests/fixtures`.
@@ -135,3 +135,11 @@ Limites : stub de publication (lot 5) ; un seul rédacteur à la fois, sans verr
 - Import et paramètres : import comptable Pennylane (factice), données externes, plan comptable, journaux, sections analytiques, paramètres KPI.
 - Présentation EBITDA provisoire dans `LIGNES_EBITDA` (`generer_site.py`) : à reporter dans l'onglet Rubriques et à valider par le contrôle de gestion. La projection reprend les écritures fictives tant que le module Budgets n'existe pas.
 - Limites : l'authentification n'est pas réelle (point ouvert n° 7) ; pas de connexion Pennylane.
+
+
+## Lot 9 - STATUT : réalisé (site : thème, période libre, ajustements)
+- Thème d'affichage Clair (défaut), Sombre, Auto : bouton à côté de « Se déconnecter », choix mémorisé dans le navigateur.
+- Réglette de période : plage libre de mois sur toutes les données de démonstration (octobre 2025 à décembre 2026), raccourcis (dernier mois importé, 12 derniers mois, année, exercice de la résidence, toute la période), clic sur un mois (Maj + clic pour étendre). Elle pilote la Synthèse, les Indicateurs, les Comptes et provisions et les Écarts. Les graphiques montrent toute la frise avec la période en surbrillance ; les tableaux EBITDA et SIG ont une colonne par mois de la période, un total « Réalisé » et un total de période.
+- Ajustements (section « Ajustements ») : comptes simulés (exemple 70610000P, classés par le plus long préfixe commun avec les comptes réels) et provisions ou ajustements de compte, par résidence ou pour toutes. Règle = somme de termes (montant fixe par mois, pourcentage d'un ou plusieurs comptes, montant par donnée externe) ou saisie mensuelle pour une résidence. Période d'application optionnelle. Commutateur Réel / Ajusté sur tous les tableaux de bord, page Écarts Réel → Ajusté, export et import JSON.
+- Calculateur dans la page (décision 0002) : `generer_site.py` fournit `calcul` (montants mensuels par compte crédit - débit, couverture, données d'exploitation, rubriques, libellés PCG) et les règles des lignes EBITDA et SIG ; `gabarit.html` rejoue les mêmes règles que le moteur Python.
+- Limites : ajustements enregistrés dans le navigateur seulement ; la page ne rejoue que les rubriques « tous dossiers, préfixe, sans exception ni date de fin » (le générateur refuse le reste) ; MOYENNE_PONDEREE et DERNIERE restent non calculables ; les publications figées ne tiennent pas compte des ajustements ; pas de validation à deux personnes des ajustements.

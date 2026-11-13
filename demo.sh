@@ -1,5 +1,5 @@
 #!/bin/sh
-# Démonstration du lot 1 à 5 sur données fictives. Aucun accès réseau ni Pennylane.
+# Démonstration des lots 1 à 6 sur données fictives. Aucun accès réseau ni Pennylane.
 set -e
 STORE=$(mktemp -d)/store
 echo "1. Validation du classeur modèle (incomplet)"
@@ -17,3 +17,12 @@ cat "$STORE/publications/p1.json"
 echo
 echo "6. État du dépôt"
 python3 -m zenitude.config versions "$STORE" statut | python3 -c "import json,sys; d=json.load(sys.stdin); print('courante:', d['courante']); [print(' -', j['action'], j['auteur'], j['detail']) for j in d['journal']]"
+echo
+echo "7. KPI du lot 6 (configuration avec les six KPI)"
+python3 -m zenitude.config versions "$STORE" deposer tests/fixtures/config_kpi_lot6.xlsx alice
+python3 -m zenitude.config versions "$STORE" approuver v2 bob
+python3 -m zenitude.config versions "$STORE" appliquer v2 bob
+python3 -m zenitude.kpi calcul "$STORE" PENNY-1001 tests/fixtures/ecritures_synthetiques.csv tests/fixtures/exercices.csv tests/fixtures/mesures_exploitation.csv
+echo
+echo "8. Vue groupe : résidences seniors, premier trimestre 2026"
+python3 -m zenitude.kpi groupe "$STORE" tests/fixtures/ecritures_synthetiques.csv tests/fixtures/mesures_exploitation.csv --du 2026-01 --au 2026-03 --activite Seniors

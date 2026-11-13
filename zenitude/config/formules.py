@@ -9,6 +9,8 @@ MESURES = {
     "CA_HEBERGEMENT": "€", "CA_SERVICES": "€", "PL_CHARGES": "€", "PL_PRODUITS": "€",
     "EBITDA_AJUSTE": "€", "TRESORERIE": "€",
     "LN_VENDUES": "logements-nuits", "LN_DISPONIBLES": "logements-nuits",
+    # Lot 6 : mesures d'exploitation (catalogue provisoire, à valider par le contrôle de gestion)
+    "NB_SEJOURS": "séjours", "NUITEES_CLIENTS": "nuitées", "COUVERTS_PDJ": "couverts",
 }
 ARITE = {"SOMME": 1, "RATIO": 2, "MOYENNE_PONDEREE": 2, "DERNIERE": 1, "SI": 3}
 
@@ -126,6 +128,16 @@ class _Parseur:
             self.take(")")
             return ("fonc", val, args)
         raise FormuleError(f"élément inattendu « {val or 'fin de formule'} »")
+
+
+def arbre(texte):
+    """Arbre syntaxique d'une formule (utilisé par le moteur de KPI, lot 6). Lève FormuleError."""
+    toks = _tokens(texte)
+    p = _Parseur(toks)
+    a = p.expr()
+    if p.i != len(toks):
+        raise FormuleError(f"élément en trop « {toks[p.i][1]} »")
+    return a
 
 
 def analyser(texte, mesures, kpi_unites):

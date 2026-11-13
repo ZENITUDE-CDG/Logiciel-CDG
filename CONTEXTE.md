@@ -19,6 +19,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 3 | Référentiel PCG, écritures synthétiques équilibrées, contrôle P1 (comptes non classés) | 9 |
 | 4 | Dépôt, approbation, application, retour arrière de version, journal | 11 |
 | 5 | Compte de résultat par dossier et exercice, instantané figé, P1 bloquant | 7 |
+| 6 | Moteur de KPI (TO, prix moyen, RevPAR, RevPAC, DMS, captage PDJ) et vue groupe | 15 |
 
 Maquette HTML (`maquette/`) : écrans du site avec données fictives. Charte graphique à venir.
 
@@ -41,14 +42,15 @@ Maquette HTML (`maquette/`) : écrans du site avec données fictives. Charte gra
 6. Concurrence : un seul rédacteur à la fois, pas de verrou entre processus.
 7. Authentification : rien n'identifie aujourd'hui les personnes qui déposent ou approuvent. Requis par la DSI avant tout usage réel.
 8. Hébergement, plateforme Git, accès : décisions DSI.
-9. Lot 5 limité : pas de KPI, pas de vue groupe, pas de PDF/PPTX, une publication par dossier et exercice.
+9. Lot 5 limité : pas de PDF/PPTX, une publication par dossier et exercice.
+11. Lot 6 : définitions des six KPI à valider par le contrôle de gestion (notamment RevPAC : CA hébergement + services / nuitées clients ; captage PDJ : couverts / nuitées clients). Source réelle des mesures d'exploitation (Mews, saisie) à décider. Groupes de l'onglet Groupes non encore utilisés par la vue groupe. Pas de publication figée des KPI.
 10. Charte graphique : à recevoir pour adapter la maquette.
 
 ## Comment reprendre
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 106 tests attendus
+python -m pytest            # 121 tests attendus
 sh demo.sh                  # démonstration complète
 python maquette/generer_maquette.py maquette/index.html
 ```

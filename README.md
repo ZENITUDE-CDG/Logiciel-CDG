@@ -64,6 +64,16 @@ Déroule le dépôt, l'approbation, l'application, la publication et l'historiqu
 
 Page HTML autonome, données fictives issues du moteur réel. Aucune fonction réelle hors calculs et contrôles.
 
+## KPI et vue groupe (lot 6)
+
+Six premiers KPI (taux d'occupation, prix moyen chambre, RevPAR, RevPAC, durée moyenne de séjour,
+taux de captage petit-déjeuner), calculés par dossier ou sur un groupe (ratio de sommes) :
+
+    python -m zenitude.kpi calcul <store> PENNY-1001 tests/fixtures/ecritures_synthetiques.csv tests/fixtures/exercices.csv tests/fixtures/mesures_exploitation.csv
+    python -m zenitude.kpi groupe <store> tests/fixtures/ecritures_synthetiques.csv tests/fixtures/mesures_exploitation.csv --du 2026-01 --au 2026-03 --activite Seniors
+
+Une donnée absente ou un dénominateur nul donne « non calculable » avec le motif, jamais zéro.
+
 ## Tests
 
     python -m pytest

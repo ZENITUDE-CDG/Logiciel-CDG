@@ -229,3 +229,5 @@ Le rapport de chargement est conservé avec la version. Il indique la date, l'au
 
 - **Versions** (lot 4) : une seule approbation distincte du déposant suffit pour appliquer. La spec §7 mentionne « un second utilisateur » ; la règle « deux approbateurs » n'est pas imposée et reste à trancher.
 - **Publication** (lot 5) : compte de résultat calculé avec la version courante ; refusée si P1 échoue (compte non classé). Instantané figé et vérifiable.
+
+- **Moteur de KPI** (lot 6) : les mesures sont sommées sur le périmètre (dossiers) et la période (mois), puis la formule est appliquée ; un ratio groupe est donc toujours un ratio de sommes. `SOMME`, `RATIO` et `SI` sont évalués ; `MOYENNE_PONDEREE` et `DERNIERE` rendent « non calculable » tant que les données au grain fin ne sont pas disponibles. Catalogue provisoire complété par `NB_SEJOURS`, `NUITEES_CLIENTS` et `COUVERTS_PDJ` (à valider, point 9.1). Les mesures qui ne sont pas des agrégats de base des Rubriques sont des mesures d'exploitation, lues par dossier et par mois ; une valeur vide est une absence. Un mois sans aucune écriture pour un dossier est une absence de donnée comptable.

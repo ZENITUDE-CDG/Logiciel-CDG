@@ -44,13 +44,17 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (106 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5).
+- Tests : `python -m pytest` (121 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6).
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
 - Configuration de test complète : `python tests/generer_config_complete.py config_modele/Zenitude_Configuration_modele.xlsx tests/fixtures tests/fixtures/ecritures_synthetiques.csv`.
 - Écritures synthétiques : `python tests/generer_ecritures.py tests/fixtures`.
 - Validation d'un classeur : `python -m zenitude.config check <fichier.xlsx> [--md|--json]`.
 - Aperçu des impacts entre deux versions : `python -m zenitude.config impact <ancien.xlsx> <nouveau.xlsx> [--json]`.
 - Génération des fixtures : `python tests/generer_fixtures.py config_modele/Zenitude_Configuration_modele.xlsx tests_out`.
+- Mesures d'exploitation synthétiques (lot 6) : `python tests/generer_mesures.py tests/fixtures`.
+- Configuration de test avec les six KPI (lot 6) : `python tests/generer_config_kpi.py tests/fixtures/config_complete_v1.xlsx tests/fixtures/config_kpi_lot6.xlsx`.
+- KPI d'un dossier : `python -m zenitude.kpi calcul <store> <dossier> <ecritures.csv> <exercices.csv> <mesures.csv> [--du AAAA-MM --au AAAA-MM] [--json]`.
+- Vue groupe : `python -m zenitude.kpi groupe <store> <ecritures.csv> <mesures.csv> --du AAAA-MM --au AAAA-MM (--dossiers A,B | --activite Seniors) [--json]`.
 
 ## Règles de modification
 - Un changement de format de classeur est un changement de contrat : mettre à jour `docs/configuration.md`, les fixtures et `attendus.csv` dans le même commit.
@@ -100,3 +104,13 @@ Limites : stub de publication (lot 5) ; un seul rédacteur à la fois, sans verr
 - Contrôle P1 branché : publication refusée tant qu'un compte de classe 6 ou 7 n'est pas classé ; le refus est journalisé avec la liste des comptes.
 - Instantané figé (JSON + empreinte) : version de configuration, empreinte de la configuration, rubriques utilisées, empreinte des données. Vérifiable et détecte toute modification.
 - Limites : pas de KPI, pas de vue groupe, pas de rapport PDF/PPTX ; une publication par dossier et exercice ; classement par période d'exercice (pas au jour près) ; les comptes du modèle `Zenitude_Configuration_modele.xlsx` restent incomplets (P1 refuse), la configuration complète est générée pour les tests.
+
+
+## Lot 6 - STATUT : réalisé (six premiers KPI, vue groupe)
+- Module `zenitude/kpi/` : moteur d'évaluation des formules de l'onglet KPI (arbre syntaxique, sans `eval`), appelé par la ligne de commande et destiné à tous les écrans et exports.
+- Six KPI de test (`tests/fixtures/config_kpi_lot6.xlsx`, définitions à valider par le contrôle de gestion) : TO-SEN (taux d'occupation), PRIX-MOYEN, REVPAR, REVPAC, DMS (durée moyenne de séjour), CAPTAGE-PDJ.
+- Mesures comptables (agrégats de base des Rubriques) calculées par mois à partir des écritures ; mesures d'exploitation (LN_VENDUES, LN_DISPONIBLES, NB_SEJOURS, NUITEES_CLIENTS, COUVERTS_PDJ) lues dans `tests/fixtures/mesures_exploitation.csv` (fictif ; plus tard Mews ou saisie).
+- Absence de donnée (ligne absente ou valeur vide, mois sans écriture) : « non calculable » avec mesure, dossier et mois. Dénominateur nul : « non calculable ». Compte non classé (P1) : toutes les mesures comptables du dossier sont non calculables.
+- Vue groupe : mesures sommées sur tous les dossiers puis formule appliquée (ratio de sommes). Période obligatoire (exercices décalés). Périmètre par liste de dossiers ou par activité (onglet Referentiel).
+- Seuls les KPI au statut « actif » et en vigueur sur la période sont calculés. Le résultat cite la version et l'empreinte de la configuration.
+- Limites : MOYENNE_PONDEREE et DERNIERE rendent « non calculable » (grain fin non disponible) ; pas de groupes de l'onglet Groupes (dynamiques, composés) ; pas de publication figée des KPI ; pas de rapport PDF/PPTX ; le modèle `Zenitude_Configuration_modele.xlsx` n'est pas modifié.

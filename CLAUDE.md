@@ -44,7 +44,7 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (121 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6).
+- Tests : `python -m pytest` (126 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7).
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
 - Configuration de test complète : `python tests/generer_config_complete.py config_modele/Zenitude_Configuration_modele.xlsx tests/fixtures tests/fixtures/ecritures_synthetiques.csv`.
 - Écritures synthétiques : `python tests/generer_ecritures.py tests/fixtures`.
@@ -54,6 +54,7 @@
 - Mesures d'exploitation synthétiques (lot 6) : `python tests/generer_mesures.py tests/fixtures`.
 - Configuration de test avec les six KPI (lot 6) : `python tests/generer_config_kpi.py tests/fixtures/config_complete_v1.xlsx tests/fixtures/config_kpi_lot6.xlsx`.
 - KPI d'un dossier : `python -m zenitude.kpi calcul <store> <dossier> <ecritures.csv> <exercices.csv> <mesures.csv> [--du AAAA-MM --au AAAA-MM] [--json]`.
+- Site (lot 7) : `python interface/generer_demo.py` puis `python interface/generer_site.py` (écrit `index.html` à la racine, affiché par GitHub Pages).
 - Vue groupe : `python -m zenitude.kpi groupe <store> <ecritures.csv> <mesures.csv> --du AAAA-MM --au AAAA-MM (--dossiers A,B | --activite Seniors) [--json]`.
 
 ## Règles de modification
@@ -114,3 +115,12 @@ Limites : stub de publication (lot 5) ; un seul rédacteur à la fois, sans verr
 - Vue groupe : mesures sommées sur tous les dossiers puis formule appliquée (ratio de sommes). Période obligatoire (exercices décalés). Périmètre par liste de dossiers ou par activité (onglet Referentiel).
 - Seuls les KPI au statut « actif » et en vigueur sur la période sont calculés. Le résultat cite la version et l'empreinte de la configuration.
 - Limites : MOYENNE_PONDEREE et DERNIERE rendent « non calculable » (grain fin non disponible) ; pas de groupes de l'onglet Groupes (dynamiques, composés) ; pas de publication figée des KPI ; pas de rapport PDF/PPTX ; le modèle `Zenitude_Configuration_modele.xlsx` n'est pas modifié.
+
+
+## Lot 7 - STATUT : réalisé (site de démonstration)
+- `index.html` à la racine : application de pilotage affichée par GitHub Pages (tableau de bord, résidences, compte de résultat, données, configuration ; budgets et rapports annoncés).
+- Généré par `interface/generer_site.py` à partir du gabarit `interface/gabarit.html`. Tous les chiffres sont calculés par le moteur réel (lots 5 et 6) puis intégrés à la page : le navigateur affiche, il ne calcule aucune formule.
+- Jeu de démonstration distinct des fixtures de test : `interface/demo/` (huit résidences fictives, exercices octobre-septembre et civils, une valeur absente volontaire en août 2026 pour Le Belvédère), produit par `interface/generer_demo.py`.
+- Correction du lot 5 : la publication ne retient que les écritures datées dans l'exercice publié.
+- Après toute modification du moteur, de la configuration de démonstration ou du gabarit, régénérer `index.html` et le committer.
+- Limites : site statique (pas de saisie, pas de dépôt de configuration, pas d'authentification) ; le dossier `maquette/` est remplacé par ce site et peut être supprimé.

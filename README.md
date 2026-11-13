@@ -64,6 +64,14 @@ Déroule le dépôt, l'approbation, l'application, la publication et l'historiqu
 
 Page HTML autonome, données fictives issues du moteur réel. Aucune fonction réelle hors calculs et contrôles.
 
+## Site (lot 7)
+
+La page d'accueil du site GitHub Pages est l'application de pilotage (`index.html`), calculée par
+le moteur réel sur huit résidences fictives. Pour la régénérer :
+
+    python interface/generer_demo.py
+    python interface/generer_site.py
+
 ## KPI et vue groupe (lot 6)
 
 Six premiers KPI (taux d'occupation, prix moyen chambre, RevPAR, RevPAC, durée moyenne de séjour,

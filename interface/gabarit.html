@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zenitude · Pilotage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --encre: #17303A; --page: #EDF0EF; --surface: #FFFFFF; --trait: #D5DCDA;
+  --accent: #2C6E6A; --accent-pale: #E1EEEC; --attention: #9A5B06; --attention-pale: #FBF0DF;
+  --muet: #5B6B70; --texte: #1C2A30;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: "Public Sans", "Segoe UI", Arial, sans-serif; color: var(--texte);
+  background: var(--page); font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+aside { background: var(--encre); color: #DCE6E4; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+.marque { padding: 22px 20px 18px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.marque b { display: block; font-size: 19px; color: #fff; letter-spacing: .2px; }
+.marque span { font-size: 13px; color: #9FB4B1; }
+aside nav { flex: 1; padding: 10px 0; }
+aside nav a { display: block; padding: 10px 20px; color: #DCE6E4; text-decoration: none; border-left: 3px solid transparent; }
+aside nav a small { display: block; color: #8EA6A2; font-size: 12px; }
+aside nav a:hover { background: rgba(255,255,255,.05); }
+aside nav a.actif { background: rgba(255,255,255,.09); border-left-color: #7FC2BB; color: #fff; }
+aside nav a.bientot { opacity: .62; }
+aside .pied { padding: 14px 20px; font-size: 12px; color: #8EA6A2; border-top: 1px solid rgba(255,255,255,.12); }
+
+main { min-width: 0; }
+.bandeau { background: var(--surface); border-bottom: 1px solid var(--trait); padding: 12px 28px;
+  display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; position: sticky; top: 0; z-index: 5; }
+.bandeau label { display: flex; flex-direction: column; font-size: 12px; color: var(--muet); gap: 3px; }
+.bandeau select { font: inherit; font-size: 15px; padding: 6px 8px; border: 1px solid var(--trait); border-radius: 4px;
+  background: #fff; color: var(--texte); min-width: 200px; }
+.bandeau .infos { margin-left: auto; font-size: 12px; color: var(--muet); text-align: right; }
+.bandeau .test { color: var(--attention); font-weight: 600; }
+
+.contenu { padding: 26px 28px 60px; max-width: 1280px; }
+.vue { display: none; }
+.vue.actif { display: block; }
+h1 { font-size: 26px; margin: 0 0 4px; color: var(--encre); font-weight: 700; }
+h2 { font-size: 17px; margin: 34px 0 10px; color: var(--encre); font-weight: 600; }
+.chapeau { color: var(--muet); margin: 0 0 22px; max-width: 70ch; }
+
+/* Ruban des indicateurs : l'élément principal de la page */
+.ruban { display: grid; grid-template-columns: repeat(6, 1fr); background: var(--surface);
+  border: 1px solid var(--trait); border-top: 4px solid var(--encre); }
+.indic { padding: 16px 16px 14px; border-left: 1px solid var(--trait); min-width: 0; }
+.indic:first-child { border-left: 0; }
+.indic .nom { font-size: 13px; color: var(--muet); min-height: 2.6em; }
+.indic .val { font-size: 30px; font-weight: 700; color: var(--encre); letter-spacing: -.5px; margin: 4px 0 2px; white-space: nowrap; }
+.indic .val .unite { font-size: 15px; font-weight: 600; color: var(--muet); letter-spacing: 0; }
+.indic .formule { font-size: 12px; color: var(--muet); }
+.indic.nc { background: repeating-linear-gradient(135deg, var(--attention-pale) 0 8px, #fff 8px 16px); }
+.indic.nc .val { font-size: 17px; color: var(--attention); letter-spacing: 0; padding: 9px 0 6px; }
+.indic.nc .motif { font-size: 12px; color: var(--attention); overflow-wrap: anywhere; }
+
+.panneau { background: var(--surface); border: 1px solid var(--trait); padding: 18px 20px; }
+.ligne-titre { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ligne-titre select { font: inherit; padding: 4px 6px; border: 1px solid var(--trait); border-radius: 4px; }
+svg text { font-family: inherit; }
+.legende { font-size: 12px; color: var(--muet); margin-top: 6px; }
+.legende i { display: inline-block; width: 12px; height: 10px; vertical-align: -1px; margin: 0 4px 0 12px; }
+
+.tableau { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 14px; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--trait); vertical-align: top; }
+thead th { font-weight: 600; color: var(--muet); font-size: 13px; border-bottom: 2px solid var(--encre); background: var(--surface); }
+td.num, th.num { text-align: right; white-space: nowrap; }
+tr.total td { font-weight: 700; background: var(--accent-pale); }
+tr.cliquable { cursor: pointer; }
+tr.cliquable:hover td { background: #F6F8F8; }
+.nc-txt { color: var(--attention); }
+.pastille { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; border: 1px solid; }
+.pastille.ok { color: var(--accent); border-color: var(--accent); }
+.pastille.att { color: var(--attention); border-color: var(--attention); }
+code { font-size: 13px; background: #F1F4F3; padding: 1px 5px; border-radius: 3px; }
+
+.grille td.c { text-align: center; padding: 6px 4px; font-size: 12px; }
+.case { display: inline-block; width: 22px; height: 16px; border-radius: 2px; }
+.case.pleine { background: var(--accent); }
+.case.partielle { background: #A9CFCB; }
+.case.vide { background: repeating-linear-gradient(135deg, var(--attention-pale) 0 4px, #fff 4px 8px); border: 1px solid #E3C79C; }
+
+.vide-ecran { background: var(--surface); border: 1px dashed var(--trait); padding: 28px; color: var(--muet); max-width: 70ch; }
+.deux { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+@media (max-width: 1100px) { .ruban { grid-template-columns: repeat(3, 1fr); }
+  .indic:nth-child(4) { border-left: 0; } .indic:nth-child(n+4) { border-top: 1px solid var(--trait); } }
+@media (max-width: 780px) {
+  .app { grid-template-columns: 1fr; }
+  aside { position: static; height: auto; }
+  aside nav { display: flex; overflow-x: auto; padding: 0; }
+  aside nav a { white-space: nowrap; border-left: 0; border-bottom: 3px solid transparent; }
+  aside nav a.actif { border-bottom-color: #7FC2BB; }
+  aside nav a small, aside .pied { display: none; }
+  .bandeau { position: static; padding: 12px 16px; }
+  .bandeau .infos { margin-left: 0; text-align: left; }
+  .contenu { padding: 20px 16px 50px; }
+  .ruban { grid-template-columns: repeat(2, 1fr); }
+  .indic:nth-child(odd) { border-left: 0; } .indic:nth-child(n+3) { border-top: 1px solid var(--trait); }
+  .deux { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="marque"><b>Zenitude</b><span>Pilotage des résidences</span></div>
+    <nav>
+      <a href="#tableau" data-v="tableau">Tableau de bord<small>Indicateurs et comparaison</small></a>
+      <a href="#residences" data-v="residences">Résidences<small>Référentiel</small></a>
+      <a href="#finance" data-v="finance">Compte de résultat<small>Par résidence et exercice</small></a>
+      <a href="#donnees" data-v="donnees">Données<small>Imports et complétude</small></a>
+      <a href="#configuration" data-v="configuration">Configuration<small>Indicateurs et versions</small></a>
+      <a href="#budgets" data-v="budgets" class="bientot">Budgets<small>À venir</small></a>
+      <a href="#rapports" data-v="rapports" class="bientot">Rapports<small>À venir</small></a>
+    </nav>
+    <div class="pied" id="pied"></div>
+  </aside>
+  <main>
+    <div class="bandeau">
+      <label>Périmètre<select id="sel-perim"></select></label>
+      <label>Période<select id="sel-periode"></select></label>
+      <div class="infos"><span class="test">Phase test : données fictives</span><br><span id="infos-version"></span></div>
+    </div>
+    <div class="contenu">
+
+      <section class="vue" id="v-tableau">
+        <h1 id="titre-tableau">Tableau de bord</h1>
+        <p class="chapeau" id="chapeau-tableau"></p>
+        <div class="ruban" id="ruban"></div>
+        <h2>Évolution mensuelle</h2>
+        <div class="panneau">
+          <div class="ligne-titre"><span id="titre-graph"></span>
+            <label class="legende">Indicateur <select id="sel-graph"></select></label></div>
+          <div id="graph"></div>
+          <div class="legende"><i style="background:var(--accent)"></i>mois calculé<i class="case vide" style="width:12px;height:10px"></i>non calculable (donnée absente)</div>
+        </div>
+        <h2 id="titre-comparaison">Comparaison des résidences</h2>
+        <div class="tableau"><table id="comparaison"></table></div>
+        <p class="legende">Cliquez sur une résidence pour l'afficher seule. Le total est un ratio de sommes, jamais une moyenne des taux.</p>
+      </section>
+
+      <section class="vue" id="v-residences">
+        <h1>Résidences</h1>
+        <p class="chapeau">Résidences actives de la configuration appliquée. Chaque résidence correspond à un dossier comptable Pennylane.</p>
+        <div class="tableau"><table id="tab-residences"></table></div>
+      </section>
+
+      <section class="vue" id="v-finance">
+        <h1>Compte de résultat</h1>
+        <p class="chapeau">Un compte de résultat par résidence, sur son exercice comptable réel. Un exercice court n'est jamais ramené à douze mois.</p>
+        <div class="tableau"><table id="tab-finance"></table></div>
+      </section>
+
+      <section class="vue" id="v-donnees">
+        <h1>Données</h1>
+        <p class="chapeau" id="chapeau-donnees"></p>
+        <div class="deux">
+          <div class="panneau"><h2 style="margin-top:0">Comptabilité</h2><p id="txt-compta"></p><p class="legende">Connexion Pennylane : non active en phase test.</p></div>
+          <div class="panneau"><h2 style="margin-top:0">Exploitation</h2><p id="txt-exploit"></p><p class="legende">Source future : Mews ou saisie (à décider).</p></div>
+        </div>
+        <h2>Complétude par mois</h2>
+        <div class="tableau"><table class="grille" id="tab-couverture"></table></div>
+        <p class="legende"><i class="case pleine" style="width:12px;height:10px"></i>complet<i class="case partielle" style="width:12px;height:10px"></i>partiel<i class="case vide" style="width:12px;height:10px"></i>absent. Un mois absent rend les indicateurs qui en dépendent non calculables.</p>
+      </section>
+
+      <section class="vue" id="v-configuration">
+        <h1>Configuration</h1>
+        <p class="chapeau">Les indicateurs sont définis dans le classeur de configuration, approuvé puis appliqué. Le site affiche les résultats du moteur de calcul ; aucune formule n'est recalculée dans le navigateur.</p>
+        <h2>Indicateurs actifs</h2>
+        <div class="tableau"><table id="tab-kpi"></table></div>
+        <h2>Versions de configuration</h2>
+        <div class="tableau"><table id="tab-versions"></table></div>
+        <h2>Journal</h2>
+        <div class="tableau"><table id="tab-journal"></table></div>
+      </section>
+
+      <section class="vue" id="v-budgets">
+        <h1>Budgets</h1>
+        <div class="vide-ecran">Les campagnes budgétaires et les scénarios Référence, Optimiste et Défavorable arrivent dans un prochain lot. Le moteur d'indicateurs est déjà prêt à les calculer.</div>
+      </section>
+      <section class="vue" id="v-rapports">
+        <h1>Rapports</h1>
+        <div class="vide-ecran">L'export PDF et PowerPoint par résidence arrive dans un prochain lot. Aucun envoi automatique n'est prévu en phase test.</div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+var D = /*__DONNEES__*/null;
+var etat = { perim: "GROUPE", periode: D.meta.periode_defaut, graph: "TO-SEN" };
+var principaux = D.kpi.filter(function (k) { return k.principal; });
+
+function el(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+  return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function perimetre(id) { return D.perimetres.find(function (p) { return p.id === id; }); }
+function periodes() {
+  var p = perimetre(etat.perim), liste = D.periodes.slice();
+  if (p.type === "residence" && D.resultats[p.id + "|EXERCICE"]) {
+    var r = D.residences.find(function (x) { return x.dossier === p.id; });
+    liste.unshift({ id: "EXERCICE", libelle: "Exercice comptable (" + dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) + ")" });
+  }
+  return liste;
+}
+function dateFr(iso) { var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+function resultat(perim, periode) { return D.resultats[perim + "|" + periode] || {}; }
+function libellePeriode() { var p = periodes().find(function (x) { return x.id === etat.periode; }); return p ? p.libelle : ""; }
+function nomMois(m) { return ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."][+m.slice(5) - 1]; }
+
+function remplirSelecteurs() {
+  var groupes = { groupe: "Ensemble", activite: "Par activité", residence: "Par résidence" }, html = "", courant = "";
+  D.perimetres.forEach(function (p) {
+    if (p.type !== courant) { if (courant) html += "</optgroup>"; html += '<optgroup label="' + groupes[p.type] + '">'; courant = p.type; }
+    html += '<option value="' + esc(p.id) + '">' + esc(p.libelle) + "</option>";
+  });
+  el("sel-perim").innerHTML = html + "</optgroup>";
+  el("sel-perim").value = etat.perim;
+  var ps = periodes();
+  if (!ps.some(function (p) { return p.id === etat.periode; })) etat.periode = D.meta.periode_defaut;
+  el("sel-periode").innerHTML = ps.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.libelle) + "</option>"; }).join("");
+  el("sel-periode").value = etat.periode;
+  el("sel-graph").innerHTML = principaux.map(function (k) { return '<option value="' + k.code + '">' + esc(k.nom) + "</option>"; }).join("");
+  el("sel-graph").value = etat.graph;
+}
+
+function valeurUnite(a) {
+  var i = a.lastIndexOf(" ");
+  return i < 0 ? esc(a) : esc(a.slice(0, i)) + '<span class="unite">' + esc(a.slice(i)) + "</span>";
+}
+function ruban() {
+  var r = resultat(etat.perim, etat.periode);
+  el("ruban").innerHTML = principaux.map(function (k) {
+    var v = r[k.code] || { statut: "non calculable", motif: "indicateur absent" };
+    if (v.statut === "calculé")
+      return '<div class="indic"><div class="nom">' + esc(k.nom) + '</div><div class="val">' + valeurUnite(v.affichage) +
+        '</div><div class="formule">' + esc(k.definition) + "</div></div>";
+    return '<div class="indic nc"><div class="nom">' + esc(k.nom) + '</div><div class="val">Non calculable</div><div class="motif">' +
+      esc(v.motif) + "</div></div>";
+  }).join("");
+}
+
+function graphique() {
+  var k = D.kpi.find(function (x) { return x.code === etat.graph; }), p = perimetre(etat.perim);
+  el("titre-graph").textContent = k.nom + " · " + p.libelle + " · " + D.meta.annee;
+  var pts = D.mois.map(function (m) { var v = resultat(etat.perim, m)[k.code]; return { m: m, v: v && v.statut === "calculé" ? +v.valeur : null, a: v ? v.affichage : "" }; });
+  var vals = pts.filter(function (x) { return x.v !== null; }).map(function (x) { return x.v; });
+  var max = vals.length ? Math.max.apply(null, vals) * 1.15 : 1;
+  if (k.unite === "%") max = vals.length && Math.max.apply(null, vals) > 1 ? max : 1;
+  var L = 760, H = 230, g = 40, b = 28, h = 22, l = (L - g) / pts.length, s = "";
+  s += '<svg viewBox="0 0 ' + L + " " + H + '" width="100%" role="img" aria-label="' + esc(k.nom) + ' par mois">';
+  for (var i = 0; i <= 4; i++) {
+    var y = h + (H - h - b) * i / 4, val = max * (1 - i / 4);
+    s += '<line x1="' + g + '" x2="' + L + '" y1="' + y + '" y2="' + y + '" stroke="#E4E9E8"/>';
+    s += '<text x="' + (g - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#5B6B70">' +
+      (k.unite === "%" ? Math.round(val * 100) + " %" : Math.round(val)) + "</text>";
+  }
+  s += '<defs><pattern id="hach" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fff"/><rect width="3" height="6" fill="#FBF0DF"/></pattern></defs>';
+  pts.forEach(function (pt, i) {
+    var x = g + i * l + l * 0.18, w = l * 0.64, sel = pt.m === etat.periode;
+    if (pt.v === null) s += '<rect x="' + x + '" y="' + h + '" width="' + w + '" height="' + (H - h - b) + '" fill="url(#hach)" stroke="#E3C79C"><title>' + nomMois(pt.m) + " : non calculable</title></rect>";
+    else { var hh = (H - h - b) * pt.v / max;
+      s += '<rect x="' + x + '" y="' + (H - b - hh) + '" width="' + w + '" height="' + hh + '" fill="' + (sel ? "#17303A" : "#2C6E6A") + '"><title>' + nomMois(pt.m) + " : " + esc(pt.a) + "</title></rect>";
+      if (sel) s += '<text x="' + (x + w / 2) + '" y="' + (H - b - hh - 6) + '" text-anchor="middle" font-size="11" font-weight="600" fill="#17303A">' + esc(pt.a) + "</text>"; }
+    s += '<text x="' + (x + w / 2) + '" y="' + (H - 9) + '" text-anchor="middle" font-size="11" fill="' + (sel ? "#17303A" : "#5B6B70") + '"' + (sel ? ' font-weight="700"' : "") + ">" + nomMois(pt.m) + "</text>";
+  });
+  el("graph").innerHTML = s + "</svg>";
+}
+
+function comparaison() {
+  var p = perimetre(etat.perim), per = etat.periode === "EXERCICE" ? null : etat.periode;
+  var dossiers = p.type === "residence" ? D.residences.map(function (r) { return r.dossier; }) : p.dossiers;
+  el("titre-comparaison").textContent = "Comparaison des résidences · " + (per ? libellePeriode() : "choisissez une période civile");
+  if (!per) { el("comparaison").innerHTML = '<tr><td class="nc-txt">Chaque résidence a son propre exercice : choisissez un mois, un trimestre ou l\'année pour comparer.</td></tr>'; return; }
+  var tete = "<thead><tr><th>Résidence</th><th>Activité</th>" + principaux.map(function (k) { return '<th class="num">' + esc(k.nom) + "</th>"; }).join("") + "</tr></thead>";
+  function cellules(r) { return principaux.map(function (k) { var v = r[k.code];
+    return v && v.statut === "calculé" ? '<td class="num">' + esc(v.affichage) + "</td>" : '<td class="num nc-txt" title="' + esc(v ? v.motif : "") + '">non calculable</td>'; }).join(""); }
+  var corps = dossiers.map(function (d) { var r = D.residences.find(function (x) { return x.dossier === d; });
+    return '<tr class="cliquable" data-d="' + esc(d) + '"><td>' + esc(r.nom) + '</td><td>' + esc(r.activite) + "</td>" + cellules(resultat(d, per)) + "</tr>"; }).join("");
+  var totalId = p.type === "residence" ? "GROUPE" : p.id, totalNom = perimetre(totalId).libelle;
+  corps += '<tr class="total"><td colspan="2">Total ' + esc(totalNom.toLowerCase()) + "</td>" + cellules(resultat(totalId, per)) + "</tr>";
+  el("comparaison").innerHTML = tete + "<tbody>" + corps + "</tbody>";
+  document.querySelectorAll("#comparaison tr.cliquable").forEach(function (tr) {
+    tr.addEventListener("click", function () { etat.perim = tr.dataset.d; remplirSelecteurs(); rendre(); window.scrollTo(0, 0); });
+  });
+}
+
+function tableau() {
+  var p = perimetre(etat.perim);
+  el("titre-tableau").textContent = p.libelle;
+  el("chapeau-tableau").textContent = libellePeriode() + " · " + (p.dossiers.length > 1 ? p.dossiers.length + " résidences, chiffres additionnés avant chaque ratio" : "1 résidence, dossier " + p.dossiers[0]);
+  ruban(); graphique(); comparaison();
+}
+
+function eur(s) { var v = Math.round(+s); return v.toLocaleString("fr-FR").replace(/\u202f/g, " ") + " €"; }
+
+function statiques() {
+  el("pied").innerHTML = "Configuration " + esc(D.meta.version_config) + "<br>Calculé le " + esc(D.meta.genere_le);
+  el("infos-version").textContent = "Configuration " + D.meta.version_config + " · calculé le " + D.meta.genere_le;
+  el("tab-residences").innerHTML = "<thead><tr><th>Résidence</th><th>Dossier Pennylane</th><th>Activité</th><th>Région</th><th>Exercice comptable</th><th></th></tr></thead><tbody>" +
+    D.residences.map(function (r) { return "<tr><td>" + esc(r.nom) + "</td><td><code>" + esc(r.dossier) + "</code></td><td>" + esc(r.activite) + "</td><td>" + esc(r.region) +
+      "</td><td>" + (r.exercice ? dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) : "-") + '</td><td><a href="#tableau" data-d="' + esc(r.dossier) + '">Voir les indicateurs</a></td></tr>'; }).join("") + "</tbody>";
+  document.querySelectorAll("#tab-residences a[data-d]").forEach(function (a) { a.addEventListener("click", function () { etat.perim = a.dataset.d; remplirSelecteurs(); rendre(); }); });
+
+  el("tab-finance").innerHTML = '<thead><tr><th>Résidence</th><th>Exercice</th><th class="num">Durée</th><th class="num">CA hébergement</th><th class="num">CA services</th><th class="num">Charges</th><th class="num">Résultat</th><th>État</th></tr></thead><tbody>' +
+    D.finance.map(function (f) {
+      if (f.statut !== "publié") return "<tr><td>" + esc(f.nom) + '</td><td colspan="6" class="nc-txt">' + esc(f.motif) + '</td><td><span class="pastille att">bloqué</span></td></tr>';
+      var r = f.resultat, e = f.exercice;
+      return "<tr><td>" + esc(f.nom) + "</td><td>" + dateFr(e.debut) + " au " + dateFr(e.fin) + '</td><td class="num">' + e.duree_mois + " mois</td>" +
+        '<td class="num">' + eur(r.CA_HEBERGEMENT) + '</td><td class="num">' + eur(r.CA_SERVICES) + '</td><td class="num">' + eur(r.PL_CHARGES) +
+        '</td><td class="num"><b>' + eur(r.RESULTAT) + '</b></td><td><span class="pastille ok">publié</span></td></tr>'; }).join("") + "</tbody>";
+
+  el("chapeau-donnees").textContent = "Données disponibles pour " + D.meta.annee + ", par résidence et par mois. Toutes les données sont fictives.";
+  el("txt-compta").innerHTML = "<b>" + D.meta.nb_ecritures.toLocaleString("fr-FR") + "</b> lignes d'écritures synthétiques, plan comptable général.";
+  el("txt-exploit").innerHTML = "<b>" + D.meta.nb_mesures.toLocaleString("fr-FR") + "</b> valeurs mensuelles : " + D.meta.mesures.map(function (m) { return "<code>" + esc(m) + "</code>"; }).join(" ");
+  var t = "<thead><tr><th>Résidence</th><th>Source</th>" + D.mois.map(function (m) { return '<th class="num">' + nomMois(m) + "</th>"; }).join("") + "</tr></thead><tbody>";
+  D.residences.forEach(function (r) { var c = D.couverture[r.dossier];
+    t += '<tr><td rowspan="2">' + esc(r.nom) + "</td><td>Comptabilité</td>" + D.mois.map(function (m) { return '<td class="c"><span class="case ' + (c[m].compta ? "pleine" : "vide") + '" title="' + nomMois(m) + '"></span></td>'; }).join("") + "</tr>";
+    t += "<tr><td>Exploitation</td>" + D.mois.map(function (m) { var x = c[m], cl = x.exploitation === x.attendu ? "pleine" : x.exploitation ? "partielle" : "vide";
+      return '<td class="c"><span class="case ' + cl + '" title="' + x.exploitation + " / " + x.attendu + ' mesures"></span></td>'; }).join("") + "</tr>"; });
+  el("tab-couverture").innerHTML = t + "</tbody>";
+
+  el("tab-kpi").innerHTML = "<thead><tr><th>Code</th><th>Indicateur</th><th>Formule</th><th>Unité</th><th>Approuvé par</th></tr></thead><tbody>" +
+    D.kpi.map(function (k) { return "<tr><td><code>" + esc(k.code) + "</code></td><td>" + esc(k.nom) + "<br><span class=\"legende\">" + esc(k.definition) + "</span></td><td><code>" + esc(k.formule) + "</code></td><td>" + esc(k.unite) + "</td><td>" + esc(k.approbateur) + "</td></tr>"; }).join("") + "</tbody>";
+  el("tab-versions").innerHTML = "<thead><tr><th>Version</th><th>État</th><th>Déposée par</th><th>Approuvée par</th><th>Date</th></tr></thead><tbody>" +
+    D.versions.map(function (v) { return "<tr><td>" + esc(v.id) + '</td><td><span class="pastille ' + (v.statut === "appliquée" ? "ok" : "att") + '">' + esc(v.statut) + "</span></td><td>" + esc(v.auteur_depot) + "</td><td>" + esc(v.approbations.join(", ") || "-") + "</td><td>" + esc(v.date_depot) + "</td></tr>"; }).join("") + "</tbody>";
+  el("tab-journal").innerHTML = "<thead><tr><th>Date</th><th>Action</th><th>Par</th><th>Détail</th></tr></thead><tbody>" +
+    D.journal.map(function (j) { return "<tr><td>" + esc(j.date) + "</td><td>" + esc(j.action) + "</td><td>" + esc(j.auteur) + "</td><td>" + esc(j.detail) + "</td></tr>"; }).join("") + "</tbody>";
+}
+
+function rendre() { tableau(); }
+function afficherVue() {
+  var v = (location.hash || "#tableau").slice(1);
+  if (!el("v-" + v)) v = "tableau";
+  document.querySelectorAll(".vue").forEach(function (s) { s.classList.toggle("actif", s.id === "v-" + v); });
+  document.querySelectorAll("aside nav a").forEach(function (a) { a.classList.toggle("actif", a.dataset.v === v); });
+  document.querySelector(".bandeau").style.display = v === "tableau" ? "" : "none";
+}
+el("sel-perim").addEventListener("change", function (e) { etat.perim = e.target.value; remplirSelecteurs(); rendre(); });
+el("sel-periode").addEventListener("change", function (e) { etat.periode = e.target.value; rendre(); });
+el("sel-graph").addEventListener("change", function (e) { etat.graph = e.target.value; graphique(); });
+window.addEventListener("hashchange", afficherVue);
+remplirSelecteurs(); statiques(); rendre(); afficherVue();
+</script>
+</body>
+</html>

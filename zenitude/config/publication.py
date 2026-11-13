@@ -56,6 +56,8 @@ def calculer(ecritures, rubriques, dossier, debut, fin):
     for e in ecritures:
         if e["dossier"] != dossier:
             continue
+        if e.get("date") and not (debut <= date.fromisoformat(e["date"]) <= fin):
+            continue  # écriture hors de l'exercice publié
         compte = e["compte"]
         if compte[:1] not in ("6", "7"):
             continue
@@ -116,7 +118,8 @@ def publier(depot, ecritures_csv, exercices_csv, dossier, auteur):
         depot._journal_refus(etat, "publication refusée", auteur, dossier, e.non_classes)
         depot._ecrire(etat)
         raise
-    lignes = [e for e in ecritures if e["dossier"] == dossier and e["compte"][:1] in ("6", "7")]
+    lignes = [e for e in ecritures if e["dossier"] == dossier and e["compte"][:1] in ("6", "7")
+              and (not e.get("date") or debut <= date.fromisoformat(e["date"]) <= fin)]
     instantane = {
         "dossier": dossier,
         "exercice": {"debut": debut.isoformat(), "fin": fin.isoformat(),

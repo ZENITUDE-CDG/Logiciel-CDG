@@ -20,8 +20,9 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 4 | Dépôt, approbation, application, retour arrière de version, journal | 11 |
 | 5 | Compte de résultat par dossier et exercice, instantané figé, P1 bloquant | 7 |
 | 6 | Moteur de KPI (TO, prix moyen, RevPAR, RevPAC, DMS, captage PDJ) et vue groupe | 15 |
+| 7 | Site de démonstration (`index.html`, GitHub Pages) calculé par le moteur réel | 5 |
 
-Maquette HTML (`maquette/`) : écrans du site avec données fictives. Charte graphique à venir.
+Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique à venir. L'ancienne maquette (`maquette/`) est remplacée.
 
 ## Décisions prises
 
@@ -50,9 +51,9 @@ Maquette HTML (`maquette/`) : écrans du site avec données fictives. Charte gra
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 121 tests attendus
+python -m pytest            # 126 tests attendus
 sh demo.sh                  # démonstration complète
-python maquette/generer_maquette.py maquette/index.html
+python interface/generer_site.py   # régénère index.html
 ```
 
 ## Fichiers à ne jamais committer

@@ -7,6 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+/* Thème : Clair par défaut (choix mémorisé dans ce navigateur). « Auto » suit le réglage du système. */
+(function () { var t = "light"; try { t = localStorage.getItem("zen-theme") || "light"; } catch (e) {}
+  if (t !== "auto") document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light"); })();
+</script>
 <style>
 /* Charte Zenitude : bleu foncé #0F506C, bleu clair #007298, gris #333E48, orange #DE7233 (accent), Montserrat.
    Rendu sobre (lot 8) : fonds neutres, filets fins, la couleur réservée à ce qui porte une information
@@ -306,6 +311,55 @@ tr.cliquable { cursor:pointer; }
   main.contenu { padding:20px 14px 48px; }
   .frise button { font-size:10.5px; }
 }
+.btn-theme { border:1px solid var(--bord); background:var(--surface); color:var(--txt); border-radius:8px; height:30px; min-width:30px; padding:0 8px; cursor:pointer; font-size:13px; font-weight:600; line-height:1; white-space:nowrap; }
+.btn-theme:hover { background:var(--survol); border-color:var(--bord-fort); }
+/* ---------- Lot 9 : réglette de période, ajustements ---------- */
+.zone-periode { max-width:1640px; margin:0 auto; padding:16px 24px 0; }
+.reglette { background:var(--surface); border:1px solid var(--bord); border-radius:var(--rayon); padding:12px 16px 10px; }
+.reg-haut { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
+.reg-lib { font-size:13px; } .reg-lib b { color:var(--titre); font-size:14px; margin:0 4px; }
+.reg-rac { display:flex; gap:6px; flex-wrap:wrap; }
+.btn-petit { border:1px solid var(--bord-fort); background:var(--surface); color:var(--txt); border-radius:7px; padding:3px 10px; font-size:11.5px; font-weight:500; cursor:pointer; }
+.btn-petit:hover { background:var(--survol); } .btn-petit.actif { background:var(--bleu-fonce); border-color:var(--bleu-fonce); color:#fff; }
+.reg-vue { display:flex; align-items:center; gap:10px; }
+.reg-badge { font-size:11px; color:var(--mut); } .reg-badge.on { color:var(--accent-txt); font-weight:600; }
+.reg-piste { position:relative; padding-top:26px; margin:0 9px; }
+.reg-rail { position:absolute; top:6px; left:0; right:0; height:6px; border-radius:3px; background:var(--bord); }
+.reg-fill { position:absolute; top:0; bottom:0; border-radius:3px; background:var(--bleu-clair); }
+.reg-piste input[type=range] { position:absolute; left:-9px; top:0; width:calc(100% + 18px); height:18px; margin:0; padding:0; background:none; pointer-events:none; -webkit-appearance:none; appearance:none; }
+.reg-piste input[type=range]::-webkit-slider-runnable-track { background:transparent; height:18px; }
+.reg-piste input[type=range]::-moz-range-track { background:transparent; height:18px; }
+.reg-piste input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; pointer-events:auto; width:18px; height:18px; border-radius:50%; background:var(--surface); border:2px solid var(--bleu-fonce); box-shadow:0 1px 3px rgba(20,35,45,.25); cursor:grab; }
+.reg-piste input[type=range]::-moz-range-thumb { pointer-events:auto; width:14px; height:14px; border-radius:50%; background:var(--surface); border:2px solid var(--bleu-fonce); box-shadow:0 1px 3px rgba(20,35,45,.25); cursor:grab; }
+.reg-piste input[type=range]:focus-visible::-webkit-slider-thumb { outline:2px solid var(--bleu-clair); outline-offset:2px; }
+.reg-cases { display:grid; grid-template-columns:repeat(var(--n),1fr); margin:0; }
+.reg-case { border:0; background:transparent; padding:3px 0 4px; cursor:pointer; border-radius:6px; font-size:11.5px; color:var(--mut); line-height:1.25; position:relative; }
+.reg-case small { display:block; font-size:9.5px; color:var(--faible); min-height:12px; }
+.reg-case::after { content:""; position:absolute; left:24%; right:24%; bottom:0; height:2px; border-radius:2px; background:var(--bleu-clair); opacity:.5; }
+.reg-case.proj::after { background:var(--orange); opacity:.7; }
+.reg-case:hover { background:var(--survol); } .reg-case.dans { color:var(--titre); font-weight:600; background:var(--selection); }
+.zone-periode .frise-leg { margin:8px 0 0; }
+.connexion-etat.info { background:var(--selection); }
+.aj-pastille { display:inline-block; font-size:10px; font-weight:600; color:var(--accent-txt); background:var(--attente-fond); padding:0 6px; border-radius:10px; margin-left:6px; vertical-align:1px; }
+.aj-barre { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.aj-grille { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px 16px; margin-bottom:14px; }
+.champ-aj { display:block; } .champ-aj span { display:block; font-size:12px; font-weight:500; color:var(--mut); margin-bottom:5px; }
+.champ-aj.large { grid-column:span 2; } .champ-aj small { display:block; margin-top:4px; font-size:11px; min-height:14px; }
+.champ-aj input, .champ-aj select, .mini-champ input, .mini-champ select { width:100%; padding:8px 10px; border:1px solid var(--bord-fort); border-radius:8px; background:var(--surface); }
+.champ-aj input:focus, .mini-champ input:focus { border-color:var(--bleu-clair); outline:none; box-shadow:0 0 0 3px rgba(0,114,152,.14); }
+.aj-mode { display:flex; gap:22px; flex-wrap:wrap; margin:4px 0 12px; } .aj-mode label, .rad { display:flex; gap:7px; align-items:center; margin:4px 0; font-weight:500; }
+.aj-sous { border-top:1px solid var(--bord); padding:12px 0 4px; } .aj-sous h3 { margin-bottom:8px; } .aj-sous h3 .mut { font-weight:400; }
+.aj-res { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:4px 14px; padding:6px 0 4px 22px; } .aj-res label { display:flex; gap:7px; align-items:center; }
+.terme { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; padding:8px 10px; margin-bottom:8px; border:1px solid var(--bord); border-radius:8px; background:var(--entete); }
+.terme > select { width:auto; min-width:210px; padding:8px 28px 8px 10px; }
+.mini-champ { display:block; min-width:110px; } .mini-champ.large { min-width:230px; flex:1; } .mini-champ span { display:block; font-size:11px; color:var(--mut); margin-bottom:3px; }
+.aj-saisie { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px 12px; margin:10px 0; } .aj-saisie label span { display:block; font-size:11px; color:var(--mut); margin-bottom:3px; } .aj-saisie input { width:100%; padding:6px 8px; border:1px solid var(--bord-fort); border-radius:8px; background:var(--surface); }
+.aj-actions { display:flex; gap:10px; margin-top:12px; }
+.aj-lig-actions { white-space:nowrap; text-align:right; } .aj-lig-actions .btn-petit { margin-left:6px; }
+.inactif td { opacity:.55; }
+.aj-nvcompte { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:10px; } .aj-nvcompte .champ-aj { min-width:200px; } .aj-nvcompte .champ-aj.large { min-width:280px; grid-column:auto; }
+@media (max-width:1650px) { .utilisateur .nom .u-mail { display:none; } }
+@media (max-width:760px) { .zone-periode { padding:12px 14px 0; } .champ-aj.large { grid-column:auto; } .reg-case { font-size:9.5px; } .reg-case small { font-size:8px; } }
 @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
 </style>
 </head>
@@ -339,7 +393,7 @@ tr.cliquable { cursor:pointer; }
 <section id="ecran-choix" class="ecran" aria-label="Choix du périmètre">
   <div class="barre"><div class="barre-1">
     <span class="bouton-zenitude" style="cursor:default"><img src="__LOGO__" alt="Zenitude"></span>
-    <div class="utilisateur"><span class="pill-test" title="Données fictives calculées par le moteur du logiciel">Phase test, données fictives</span><div class="nom"><b class="u-nom"></b><span class="u-mail mut"></span></div><div class="avatar u-ini"></div><button class="lien" data-deconnexion>Se déconnecter</button></div>
+    <div class="utilisateur"><button class="btn-theme" data-theme-cycle aria-label="Thème d’affichage" title="Thème d’affichage"></button><span class="pill-test" title="Données fictives calculées par le moteur du logiciel">Phase test, données fictives</span><div class="nom"><b class="u-nom"></b><span class="u-mail mut"></span></div><div class="avatar u-ini"></div><button class="lien" data-deconnexion>Se déconnecter</button></div>
   </div></div>
   <div class="choix">
     <div class="choix-tete">
@@ -371,14 +425,16 @@ tr.cliquable { cursor:pointer; }
       <span class="sep"></span>
       <nav class="nav-principale" aria-label="Sections">
         <button data-section="tableaux">Tableaux de bord</button>
+        <button data-section="ajustements">Ajustements</button>
         <button data-section="import">Import et paramètres</button>
         <button data-section="budgets" data-avenir>Budgets <span class="tag">à venir</span></button>
         <button data-section="rapports" data-avenir>Rapports <span class="tag">à venir</span></button>
       </nav>
-      <div class="utilisateur"><span class="pill-test" title="Données fictives calculées par le moteur du logiciel">Phase test, données fictives</span><div class="nom"><b class="u-nom"></b><span class="u-mail mut"></span></div><div class="avatar u-ini"></div><button class="lien" data-deconnexion>Se déconnecter</button></div>
+      <div class="utilisateur"><button class="btn-theme" data-theme-cycle aria-label="Thème d’affichage" title="Thème d’affichage"></button><span class="pill-test" title="Données fictives calculées par le moteur du logiciel">Phase test, données fictives</span><div class="nom"><b class="u-nom"></b><span class="u-mail mut"></span></div><div class="avatar u-ini"></div><button class="lien" data-deconnexion>Se déconnecter</button></div>
     </div>
     <nav class="barre-2" id="sous-onglets" aria-label="Pages"></nav>
   </header>
+  <div id="zone-periode" class="zone-periode" style="display:none"></div>
   <main class="contenu" id="contenu"></main>
 </section>
 
@@ -387,10 +443,12 @@ var D = /*__DONNEES__*/null;
 var LOGO = "__LOGO__";
 var SOUS = {
   tableaux: [["synthese", "Synthèse d’activité"], ["indicateurs", "Indicateurs hôteliers"], ["resultat", "Compte de résultat"], ["controle", "Contrôle des données"]],
+  ajustements: [["provisions", "Comptes et provisions"], ["ecarts", "Écarts Réel → Ajusté"]],
   import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
   budgets: [["budgets", "Budgets"]], rapports: [["rapports", "Rapports"]]
 };
-var etat = { utilisateur: null, perim: null, section: "tableaux", page: "synthese", periode: D.meta.periode_defaut, vueFin: "ebitda" };
+var iDefaut = D.calcul.mois.indexOf(D.meta.periode_defaut);
+var etat = { utilisateur: null, perim: null, section: "tableaux", page: "synthese", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null };
 var principaux = D.kpi.filter(function (k) { return k.principal; });
 var MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 var MOIS_COURT = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
@@ -405,7 +463,7 @@ function moisCourt(m) { return MOIS_COURT[+m.slice(5) - 1] + " " + m.slice(2, 4)
 function moisLong(m) { return MOIS_LONG[+m.slice(5) - 1] + " " + m.slice(0, 4); }
 function estProj(m) { return m > D.meta.dernier_mois_importe; }
 function resultat(perim, periode) { return D.resultats[perim + "|" + periode] || {}; }
-function eur(s) { if (s == null) return ""; var v = Math.round(+s); return v.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ") + " €"; }
+function eur(s) { if (s == null) return ""; var v = Math.round(+s); if (!v) v = 0; return v.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ") + " €"; }
 function nb(n) { return (+n).toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " "); }
 function initiales(p) { return p.type === "residence" ? (residence(p.id).activite || "R").slice(0, 1) : p.type === "groupe" ? "Z" : p.type === "activite" ? "A" : p.type === "region" ? "R" : "G"; }
 function session(k, v) { try { if (v === undefined) return JSON.parse(sessionStorage.getItem("zen-" + k)); if (v === null) sessionStorage.removeItem("zen-" + k); else sessionStorage.setItem("zen-" + k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -468,7 +526,7 @@ function choisir(id) { etat.perim = id; session("perim", id); fermerDeroulant();
 function ouvrirApp() { montrer("ecran-app"); rendre(); }
 el("btn-zenitude").addEventListener("click", function () { fermerDeroulant(); ouvrirChoix(); });
 document.querySelectorAll(".nav-principale button").forEach(function (b) { b.addEventListener("click", function () {
-  etat.section = b.dataset.section; etat.page = SOUS[etat.section][0][0]; rendre(); }); });
+  etat.section = b.dataset.section; etat.page = SOUS[etat.section][0][0]; etat.brouillon = null; rendre(); }); });
 
 function ouvrirDeroulant() { el("deroulant").classList.add("ouvert"); el("btn-perim").setAttribute("aria-expanded", "true");
   el("deroulant").style.left = el("btn-perim").offsetLeft + "px"; el("der-rech").value = ""; dessinerDeroulant(); el("der-rech").focus(); }
@@ -499,44 +557,364 @@ function rendre() {
   el("perim-nom").textContent = p.libelle; el("perim-ico").textContent = initiales(p);
   document.querySelectorAll(".nav-principale button").forEach(function (b) { b.classList.toggle("actif", b.dataset.section === etat.section); });
   el("sous-onglets").innerHTML = SOUS[etat.section].map(function (s) { return '<button data-page="' + s[0] + '" class="' + (s[0] === etat.page ? "actif" : "") + '">' + esc(s[1]) + "</button>"; }).join("");
-  el("sous-onglets").querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () { etat.page = b.dataset.page; rendre(); }); });
+  el("sous-onglets").querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () { etat.page = b.dataset.page; etat.brouillon = null; rendre(); }); });
+  dessinerReglette(p);
   var f = PAGES[etat.page]; el("contenu").innerHTML = ""; f(p);
 }
 
-/* ---------- Périodes ---------- */
-function periodes(p) {
-  var liste = D.periodes.slice();
-  if (p.type === "residence" && D.resultats[p.id + "|EXERCICE"]) {
-    var r = residence(p.id);
-    liste.push({ id: "EXERCICE", libelle: "Exercice comptable (" + dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) + ")", mois: [] });
+/* ======================================================================================
+   Lot 9 : période libre (réglette), ajustements comptables (comptes simulés et provisions).
+   Décision 0002 : la page recalcule les tableaux à partir des montants mensuels par compte fournis
+   par le générateur, avec les mêmes règles que le moteur Python (tests/test_site_ajustements.py).
+   Aucune saisie utilisateur n'est interprétée comme une formule : les règles de provision sont des
+   objets structurés (montant fixe, pourcentage de comptes, montant par donnée externe, saisie).
+   ====================================================================================== */
+var NC = { nc: true };
+var C = D.calcul, MOIS = C.mois;
+var COMPTA = {}, EXPL = {}, COUV = {};
+Object.keys(C.compta).forEach(function (d) { COMPTA[d] = {}; Object.keys(C.compta[d]).forEach(function (m) { COMPTA[d][m] = {};
+  Object.keys(C.compta[d][m]).forEach(function (c) { COMPTA[d][m][c] = Math.round(parseFloat(C.compta[d][m][c]) * 100); }); }); });
+Object.keys(C.exploitation).forEach(function (d) { EXPL[d] = {}; Object.keys(C.exploitation[d]).forEach(function (m) { EXPL[d][m] = {};
+  Object.keys(C.exploitation[d][m]).forEach(function (k) { EXPL[d][m][k] = parseFloat(C.exploitation[d][m][k]); }); }); });
+Object.keys(C.couverts).forEach(function (d) { COUV[d] = {}; C.couverts[d].forEach(function (m) { COUV[d][m] = true; }); });
+
+function idxMois(m) { return MOIS.indexOf(m); }
+function nombreOk(x) { return x !== null && x !== "" && x !== undefined && isFinite(+x); }
+function naturel(compte, net) { return compte.charAt(0) === "6" ? -net : net; }
+function agregatDe(compte) {
+  var best = null;
+  C.rubriques.forEach(function (r) { if (compte.indexOf(r.prefixe) === 0 && (!best || r.prefixe.length > best.prefixe.length)) best = r; });
+  return best ? best.agregat : null;
+}
+function mesureExterne(code) { return C.mesures_externes.find(function (x) { return x.code === code; }); }
+
+/* ---------- Ajustements : stockage (navigateur, phase test) ---------- */
+var AJ = { liste: [], comptes: [] };
+var SOLDES = {}, RES_CACHE = {};
+var RE_COMPTE = /^[67][0-9A-Z]{2,12}$/;
+function ajErreurs(a) {
+  var e = [];
+  if (!a.libelle || !String(a.libelle).trim()) e.push("Le libellé est obligatoire.");
+  if (!RE_COMPTE.test(a.compte || "")) e.push("Compte invalide : chiffres et lettres majuscules, commençant par 6 ou 7 (exemple 70610000P).");
+  if (a.mode === "saisie") {
+    if (!a.saisie || !D.residences.some(function (r) { return r.dossier === a.saisie.dossier; })) e.push("Choisissez la résidence de la saisie.");
+    else Object.keys(a.saisie.valeurs || {}).forEach(function (m) { if (a.saisie.valeurs[m] !== "" && !nombreOk(a.saisie.valeurs[m])) e.push("Saisie invalide pour " + moisLong(m) + "."); });
+  } else {
+    if (a.portee !== "tous" && !(Array.isArray(a.portee) && a.portee.length)) e.push("Choisissez au moins une résidence.");
+    if (!a.termes || !a.termes.length) e.push("Ajoutez au moins un terme de calcul.");
+    (a.termes || []).forEach(function (t, i) {
+      var n = "Terme " + (i + 1) + " : ";
+      if (t.t === "fixe") { if (!nombreOk(t.montant)) e.push(n + "montant invalide."); }
+      else if (t.t === "pct") {
+        if (!nombreOk(t.taux)) e.push(n + "taux invalide.");
+        if (!t.comptes || !t.comptes.length || t.comptes.some(function (x) { return !/^[67][0-9A-Z]*$/.test(x); })) e.push(n + "comptes de base invalides (préfixes commençant par 6 ou 7, séparés par des virgules).");
+      } else if (t.t === "unit") {
+        if (!nombreOk(t.montant)) e.push(n + "montant unitaire invalide.");
+        if (!mesureExterne(t.mesure)) e.push(n + "choisissez une donnée externe.");
+      } else e.push(n + "type inconnu.");
+    });
   }
-  return liste;
+  if (a.du && a.au && a.du > a.au) e.push("La période d’application est inversée.");
+  return e;
 }
-function selecteurPeriode(p) {
-  var ps = periodes(p);
-  if (!ps.some(function (x) { return x.id === etat.periode; })) etat.periode = D.meta.periode_defaut;
-  return '<label>Période des indicateurs <select id="sel-periode">' + ps.map(function (x) {
-    return '<option value="' + esc(x.id) + '"' + (x.id === etat.periode ? " selected" : "") + ">" + esc(x.libelle) + "</option>"; }).join("") + "</select></label>";
+function ajCharger() {
+  try {
+    var x = JSON.parse(localStorage.getItem("zen-ajustements"));
+    if (x && Array.isArray(x.liste)) AJ = { liste: x.liste.filter(function (a) { return !ajErreurs(a).length; }),
+      comptes: (x.comptes || []).filter(function (c) { return RE_COMPTE.test(c.numero || "") && c.libelle; }) };
+  } catch (e) {}
 }
-function brancherPeriode() { var s = el("sel-periode"); if (s) s.addEventListener("change", function () { etat.periode = s.value; rendre(); }); }
-function frise(p) {
-  var per = periodes(p).find(function (x) { return x.id === etat.periode; }) || { mois: [] };
-  return '<div class="frise" role="group" aria-label="Mois de ' + D.meta.annee + '">' + D.mois.map(function (m) {
-    var cl = (estProj(m) ? "proj" : "") + (etat.periode === m ? " sel" : "") + (per.mois.indexOf(m) >= 0 && etat.periode !== m ? " dans" : "");
-    return '<button class="' + cl + '" data-m="' + m + '" title="' + moisLong(m) + (estProj(m) ? " (projection)" : " (réalisé)") + '">' + MOIS_COURT[+m.slice(5) - 1] + "</button>";
-  }).join("") + '</div><div class="frise-leg"><span><i style="background:var(--bleu-clair)"></i>Réalisé, comptabilité importée jusqu’à ' + moisLong(D.meta.dernier_mois_importe) + '</span><span><i style="background:var(--orange)"></i>Projection</span><span>Cliquez sur un mois pour afficher ses indicateurs.</span></div>';
+function ajSauver() {
+  SOLDES = {}; RES_CACHE = {};
+  try { localStorage.setItem("zen-ajustements", JSON.stringify(AJ)); } catch (e) {}
 }
-function brancherFrise() { document.querySelectorAll(".frise [data-m]").forEach(function (b) { b.addEventListener("click", function () { etat.periode = b.dataset.m; rendre(); }); }); }
+function ajActifs() { return AJ.liste.filter(function (a) { return a.actif; }); }
+
+/* ---------- Ajustements : montants (centimes, sens naturel : charge ou produit positif) ---------- */
+function ajPourDossier(a, d) {
+  if (a.mode === "saisie") return !!a.saisie && a.saisie.dossier === d;
+  return a.portee === "tous" || (Array.isArray(a.portee) && a.portee.indexOf(d) >= 0);
+}
+/* Retourne un nombre de centimes, null (rien à ajuster ce mois-là) ou { nc, motif }.
+   Un mois sans écriture pour la résidence n'est jamais ajusté ; une donnée externe absente rend
+   l'ajustement « non calculable », jamais zéro. */
+function ajMontant(a, d, m) {
+  if (a.du && m < a.du) return null;
+  if (a.au && m > a.au) return null;
+  if (!(COUV[d] && COUV[d][m])) return null;
+  if (a.mode === "saisie") { var s = a.saisie.valeurs[m]; return nombreOk(s) ? Math.round(+s * 100) : null; }
+  var tot = 0, i, t;
+  for (i = 0; i < a.termes.length; i++) {
+    t = a.termes[i];
+    if (t.t === "fixe") tot += Math.round(+t.montant * 100);
+    else if (t.t === "pct") {
+      var base = 0, cs = (COMPTA[d] && COMPTA[d][m]) || {};
+      Object.keys(cs).forEach(function (c) { if (t.comptes.some(function (p) { return c.indexOf(p) === 0; })) base += naturel(c, cs[c]); });
+      tot += Math.round(base * (+t.taux) / 100);
+    } else if (t.t === "unit") {
+      var x = EXPL[d] && EXPL[d][m] ? EXPL[d][m][t.mesure] : undefined;
+      if (x === undefined) return { nc: true, motif: "donnée externe absente : " + t.mesure + ", dossier " + d + ", " + moisLong(m) };
+      tot += Math.round(+t.montant * 100 * x);
+    }
+  }
+  return tot;
+}
+/* Soldes par mois et compte pour un dossier (crédit - débit, en centimes), avec ou sans ajustements. */
+function soldes(d, ajuste) {
+  var cle = d + "|" + (ajuste ? 1 : 0);
+  if (SOLDES[cle]) return SOLDES[cle];
+  var out = {}, nc = [];
+  MOIS.forEach(function (m) { out[m] = {}; var r = (COMPTA[d] || {})[m] || {}; Object.keys(r).forEach(function (c) { out[m][c] = r[c]; }); });
+  if (ajuste) ajActifs().forEach(function (a) {
+    if (!ajPourDossier(a, d)) return;
+    MOIS.forEach(function (m) {
+      var v = ajMontant(a, d, m);
+      if (v === null) return;
+      if (v.nc) { out[m][a.compte] = NC; nc.push({ dossier: d, mois: m, compte: a.compte, motif: "ajustement « " + a.libelle + " » non calculable : " + v.motif }); return; }
+      if (out[m][a.compte] === NC) return;
+      out[m][a.compte] = (out[m][a.compte] || 0) + (a.compte.charAt(0) === "6" ? -v : v);
+    });
+  });
+  SOLDES[cle] = { v: out, nc: nc };
+  return SOLDES[cle];
+}
+
+/* ---------- Tableaux de gestion (EBITDA, SIG) : mêmes règles que generer_site._tableau ---------- */
+function ligneDuCompte(compte, lignes) {
+  var best = null;
+  lignes.forEach(function (l) { if (l.regle.prefixes) l.regle.prefixes.forEach(function (p) {
+    if (compte.indexOf(p) === 0 && (best === null || p.length > best.n)) best = { code: l.code, n: p.length }; }); });
+  return best ? best.code : null;
+}
+function cumuler(o, code, v) { o[code] = (v === NC || o[code] === NC) ? NC : (o[code] || 0) + v; }
+function calcLignes(lignes, valeurs) {
+  var out = {}, def = {};
+  lignes.forEach(function (l) { def[l.code] = l; });
+  function val(code) {
+    if (code in out) return out[code];
+    var l = def[code];
+    if (l.regle.prefixes) { var v = valeurs[code]; out[code] = v === undefined ? null : (v === NC ? NC : (l.sens === "produit" ? v : -v)); }
+    else {
+      var t = l.regle.termes.map(function (x) { return [x[0], val(x[1])]; });
+      if (t.some(function (x) { return x[1] === NC; })) out[code] = NC;
+      else if (t.every(function (x) { return x[1] === null; })) out[code] = null;
+      else out[code] = t.reduce(function (s, x) { return s + (x[1] || 0) * x[0]; }, 0);
+    }
+    return out[code];
+  }
+  lignes.forEach(function (l) { val(l.code); });
+  return out;
+}
+function ratioPct(d, num, den) {
+  var n = d[num], q = d[den];
+  if (n === NC || q === NC) return NC;
+  if (q === null || q === undefined || q === 0 || n === null || n === undefined) return null;
+  return arrondi(n / q * 100, 1);
+}
+function arrondi(x, n) { var f = Math.pow(10, n), s = x < 0 ? -1 : 1; return s * Math.floor(Math.abs(x) * f + 0.5 + 1e-9) / f; }
+function tableauJS(lignes, dossiers, mois, ajuste, ratio) {
+  var brut = {}, nonCl = {}, nc = [], DER = D.meta.dernier_mois_importe;
+  mois.forEach(function (m) { brut[m] = {}; });
+  dossiers.forEach(function (d) {
+    var S = soldes(d, ajuste);
+    S.nc.forEach(function (x) { if (mois.indexOf(x.mois) >= 0) nc.push(x); });
+    mois.forEach(function (m) { var cs = S.v[m]; Object.keys(cs).forEach(function (c) {
+      var l = ligneDuCompte(c, lignes);
+      if (l === null) { nonCl[c] = 1; return; }
+      var v = cs[c];
+      if (v === NC || brut[m][l] === NC) brut[m][l] = NC; else brut[m][l] = (brut[m][l] || 0) + v;
+    }); });
+  });
+  var cumR = {}, cumT = {}, parMois = {};
+  mois.forEach(function (m) {
+    var r = calcLignes(lignes, brut[m]); r[ratio[0]] = ratioPct(r, ratio[1], ratio[2]); parMois[m] = r;
+    Object.keys(brut[m]).forEach(function (code) { cuMul(cumT, code, brut[m][code]); if (m <= DER) cuMul(cumR, code, brut[m][code]); });
+  });
+  function cuMul(o, code, v) { cumuler(o, code, v); }
+  var tr = calcLignes(lignes, cumR), tt = calcLignes(lignes, cumT);
+  tr[ratio[0]] = ratioPct(tr, ratio[1], ratio[2]); tt[ratio[0]] = ratioPct(tt, ratio[1], ratio[2]);
+  return { mois: parMois, realise: tr, total: tt, non_classes: Object.keys(nonCl).sort(), nc: nc };
+}
+
+/* ---------- KPI : mêmes règles que zenitude/kpi/moteur.py ---------- */
+function ncFusion(vals) {
+  var motifs = [];
+  vals.forEach(function (v) { if (v && v.nc && motifs.indexOf(v.motif) < 0) motifs.push(v.motif); });
+  return motifs.length ? { nc: true, motif: motifs.join(" ; ") } : null;
+}
+function sommeMesure(mesure, dossiers, mois, ajuste) {
+  var comptable = C.rubriques.some(function (r) { return r.agregat === mesure; });
+  var total = 0, manques = [], i, d;
+  for (i = 0; i < dossiers.length; i++) {
+    d = dossiers[i];
+    if (comptable) {
+      var S = soldes(d, ajuste), couv = COUV[d] || {}, ncl = {};
+      mois.forEach(function (m) { if (couv[m]) Object.keys(S.v[m]).forEach(function (c) { if (agregatDe(c) === null) ncl[c] = 1; }); });
+      var lst = Object.keys(ncl).sort();
+      if (lst.length) return { nc: true, motif: "comptes non classés (P1) : " + lst.join(", ") + ", dossier " + d };
+      var absents = mois.filter(function (m) { return !couv[m]; });
+      if (absents.length) { manques.push([d, absents]); continue; }
+      for (var j = 0; j < mois.length; j++) {
+        var m = mois[j], cs = S.v[m], cles = Object.keys(cs);
+        for (var k = 0; k < cles.length; k++) {
+          if (agregatDe(cles[k]) !== mesure) continue;
+          if (cs[cles[k]] === NC) {
+            var x = S.nc.find(function (y) { return y.mois === m && y.compte === cles[k]; });
+            return { nc: true, motif: x ? x.motif : "ajustement non calculable" };
+          }
+          total += naturel(cles[k], cs[cles[k]]) / 100;
+        }
+      }
+    } else {
+      var abs = mois.filter(function (m) { return !(EXPL[d] && EXPL[d][m] && EXPL[d][m][mesure] !== undefined); });
+      if (abs.length) { manques.push([d, abs]); continue; }
+      mois.forEach(function (m) { total += EXPL[d][m][mesure]; });
+    }
+  }
+  if (manques.length) return { nc: true, motif: "donnée manquante : " + mesure + ", " + manques.map(function (x) {
+    return "dossier " + x[0] + ", " + x[1].map(moisLong).join(", "); }).join("; ") };
+  return total;
+}
+function evalArbre(n, ctx) {
+  var a, b, nc;
+  switch (n[0]) {
+    case "num": return parseFloat(n[1]);
+    case "mesure": return ctx.mesure(n[1]);
+    case "kpi": return ctx.kpi(n[1]);
+    case "neg": a = evalArbre(n[1], ctx); return a.nc ? a : -a;
+    case "bin":
+      a = evalArbre(n[2], ctx); b = evalArbre(n[3], ctx); nc = ncFusion([a, b]);
+      if (nc) return nc;
+      if (n[1] === "+") return a + b;
+      if (n[1] === "-") return a - b;
+      if (n[1] === "*") return a * b;
+      return b === 0 ? { nc: true, motif: "dénominateur nul" } : a / b;
+    case "cmp":
+      a = evalArbre(n[2], ctx); b = evalArbre(n[3], ctx); nc = ncFusion([a, b]);
+      if (nc) return nc;
+      return { "=": a === b, "<>": a !== b, "<": a < b, ">": a > b, "<=": a <= b, ">=": a >= b }[n[1]];
+    case "fonc":
+      if (n[1] === "SOMME") return evalArbre(n[2][0], ctx);
+      if (n[1] === "RATIO") {
+        a = evalArbre(n[2][0], ctx); b = evalArbre(n[2][1], ctx); nc = ncFusion([a, b]);
+        if (nc) return nc;
+        return b === 0 ? { nc: true, motif: "dénominateur nul" } : a / b;
+      }
+      if (n[1] === "SI") { a = evalArbre(n[2][0], ctx); if (a && a.nc) return a; return evalArbre(a ? n[2][1] : n[2][2], ctx); }
+      if (n[1] === "MOYENNE_PONDEREE" || n[1] === "DERNIERE") return { nc: true, motif: "fonction " + n[1] + " non prise en charge au lot 6" };
+      return { nc: true, motif: "fonction inconnue " + n[1] };
+  }
+  return { nc: true, motif: "nœud inconnu" };
+}
+function affichageKPI(v, unite) {
+  if (unite === "%") return arrondi(v * 100, 1).toFixed(1).replace(".", ",") + " %";
+  if (unite === "€") return nb(arrondi(v, 0)) + " €";
+  return (arrondi(v, 2).toFixed(2) + " " + unite).replace(".", ",").trim();
+}
+/* Résultats de tous les KPI sur un périmètre (liste de dossiers) et une période (liste de mois). */
+function resultatFen(dossiers, mois, ajuste) {
+  var cle = dossiers.join(",") + "|" + mois[0] + "|" + mois[mois.length - 1] + "|" + (ajuste ? 1 : 0);
+  if (RES_CACHE[cle]) return RES_CACHE[cle];
+  var defs = {}, memo = {}, res = {};
+  D.kpi.forEach(function (k) { defs[k.code] = k; });
+  var ctx = {
+    mesure: function (m) { return sommeMesure(m, dossiers, mois, ajuste); },
+    kpi: function (code) {
+      if (code in memo) return memo[code];
+      memo[code] = defs[code] ? evalArbre(defs[code].arbre, ctx) : { nc: true, motif: "KPI " + code + " inactif ou absent sur la période" };
+      return memo[code];
+    }
+  };
+  D.kpi.forEach(function (k) {
+    var v = ctx.kpi(k.code);
+    res[k.code] = v && v.nc ? { statut: "non calculable", valeur: null, affichage: "non calculable", motif: v.motif }
+      : { statut: "calculé", valeur: v, affichage: affichageKPI(v, k.unite), motif: null };
+  });
+  RES_CACHE[cle] = res;
+  return res;
+}
+
+/* ---------- Période libre : fenêtre de mois et vue Réel / Ajusté ---------- */
+function fenetre() { return MOIS.slice(etat.lo, etat.hi); }
+function ajuste() { return etat.vue === "ajuste"; }
+function libFenetre() {
+  var f = fenetre(), a = moisCourt(f[0]), b = moisCourt(f[f.length - 1]);
+  return f.length === 1 ? moisLong(f[0]) : a + " → " + b;
+}
+var PAGES_PERIODE = ["synthese", "indicateurs", "provisions", "ecarts"];
+function raccourcis(p) {
+  var iD = idxMois(D.meta.dernier_mois_importe), an = String(D.meta.annee), n = MOIS.length;
+  var r = [["Dernier mois importé", iD, iD + 1], ["12 derniers mois", Math.max(0, iD - 11), iD + 1]];
+  var ia = MOIS.findIndex(function (m) { return m.slice(0, 4) === an; }), ib = n - 1 - MOIS.slice().reverse().findIndex(function (m) { return m.slice(0, 4) === an; });
+  if (ia >= 0) r.push(["Année " + an, ia, ib + 1]);
+  if (p.type === "residence") {
+    var rs = residence(p.id);
+    if (rs && rs.exercice) {
+      var d0 = rs.exercice[0].slice(0, 7), d1 = rs.exercice[1].slice(0, 7), i0 = MOIS.findIndex(function (m) { return m >= d0; }), i1 = -1;
+      MOIS.forEach(function (m, i) { if (m <= d1) i1 = i; });
+      if (i0 >= 0 && i1 >= i0) r.push(["Exercice de la résidence", i0, i1 + 1]);
+    }
+  }
+  r.push(["Toute la période", 0, n]);
+  return r;
+}
+function dessinerReglette(p) {
+  var z = el("zone-periode");
+  if (PAGES_PERIODE.indexOf(etat.page) < 0) { z.innerHTML = ""; z.style.display = "none"; return; }
+  z.style.display = "block";
+  var n = MOIS.length;
+  z.innerHTML = '<div class="reglette"><div class="reg-haut"><div class="reg-lib"><span class="mut">Période</span> <b id="reg-lib"></b> <span class="mut" id="reg-nb"></span></div>' +
+    '<div class="reg-rac" id="reg-rac">' + raccourcis(p).map(function (r, i) { return '<button class="btn-petit" data-r="' + i + '">' + esc(r[0]) + "</button>"; }).join("") + "</div>" +
+    '<div class="reg-vue"><div class="segment" role="group" aria-label="Données affichées"><button data-vue="ajuste" title="Comptabilité avec les ajustements et provisions">Ajusté</button><button data-vue="reel" title="Comptabilité brute importée">Réel</button></div><span class="reg-badge" id="reg-badge"></span></div></div>' +
+    '<div class="reg-piste" style="--n:' + n + '"><div class="reg-rail"><div class="reg-fill" id="reg-fill"></div></div>' +
+    '<input type="range" id="reg-lo" min="0" max="' + n + '" step="1" aria-label="Début de la période"><input type="range" id="reg-hi" min="0" max="' + n + '" step="1" aria-label="Fin de la période">' +
+    '<div class="reg-cases">' + MOIS.map(function (m, i) { var an = m.slice(0, 4);
+      return '<button class="reg-case' + (estProj(m) ? " proj" : "") + '" data-i="' + i + '" title="' + moisLong(m) + (estProj(m) ? " (projection)" : " (réalisé)") + '"><span>' + MOIS_COURT[+m.slice(5) - 1] + "</span><small>" + (i === 0 || m.slice(5) === "01" ? an : "&nbsp;") + "</small></button>"; }).join("") + "</div></div>" +
+    '<div class="frise-leg"><span><i style="background:var(--bleu-clair)"></i>Réalisé, comptabilité importée jusqu’à ' + moisLong(D.meta.dernier_mois_importe) + '</span><span><i style="background:var(--orange)"></i>Projection</span><span>Faites glisser les poignées, ou cliquez sur un mois (Maj + clic pour étendre).</span></div></div>';
+  var raccs = raccourcis(p);
+  el("reg-lo").addEventListener("input", function () { var lo = Math.min(+this.value, etat.hi - 1); reglerFenetre(Math.max(0, lo), etat.hi); });
+  el("reg-hi").addEventListener("input", function () { var hi = Math.max(+this.value, etat.lo + 1); reglerFenetre(etat.lo, Math.min(MOIS.length, hi)); });
+  z.querySelectorAll("[data-r]").forEach(function (b) { b.addEventListener("click", function () { var r = raccs[+b.dataset.r]; reglerFenetre(r[1], r[2]); }); });
+  z.querySelectorAll(".reg-case").forEach(function (b) { b.addEventListener("click", function (ev) {
+    var i = +b.dataset.i;
+    if (ev.shiftKey) reglerFenetre(Math.min(etat.lo, i), Math.max(etat.hi, i + 1)); else reglerFenetre(i, i + 1); }); });
+  z.querySelectorAll("[data-vue]").forEach(function (b) { b.addEventListener("click", function () { etat.vue = b.dataset.vue; majReglette(); majContenu(); }); });
+  majReglette();
+}
+function majReglette() {
+  if (!el("reg-lo")) return;
+  var n = MOIS.length, nbm = etat.hi - etat.lo, actifs = ajActifs().length;
+  el("reg-lo").value = etat.lo; el("reg-hi").value = etat.hi;
+  el("reg-fill").style.left = (etat.lo / n * 100) + "%"; el("reg-fill").style.width = (nbm / n * 100) + "%";
+  el("reg-lib").textContent = libFenetre(); el("reg-nb").textContent = nbm + " mois";
+  document.querySelectorAll(".reg-case").forEach(function (b) { var i = +b.dataset.i; b.classList.toggle("dans", i >= etat.lo && i < etat.hi); });
+  document.querySelectorAll("[data-vue]").forEach(function (b) { var on = b.dataset.vue === etat.vue; b.classList.toggle("actif", on); b.setAttribute("aria-pressed", on); });
+  var raccs = raccourcis(perimetre(etat.perim));
+  document.querySelectorAll("[data-r]").forEach(function (b) { var r = raccs[+b.dataset.r]; b.classList.toggle("actif", r[1] === etat.lo && r[2] === etat.hi); });
+  el("reg-badge").textContent = actifs ? actifs + " ajustement" + (actifs > 1 ? "s" : "") + " actif" + (actifs > 1 ? "s" : "") : "Aucun ajustement";
+  el("reg-badge").className = "reg-badge" + (actifs && etat.vue === "ajuste" ? " on" : "");
+}
+function reglerFenetre(lo, hi) { etat.lo = lo; etat.hi = hi; majReglette(); planifierContenu(); }
+var contenuPlanifie = false;
+function planifierContenu() { if (contenuPlanifie) return; contenuPlanifie = true; requestAnimationFrame(function () { contenuPlanifie = false; majContenu(); }); }
+function majContenu() { var x = window.scrollY; PAGES[etat.page](perimetre(etat.perim)); window.scrollTo(0, x); }
+
 function enTete(titre, p, sousTitre, outils) {
   var n = p.dossiers.length;
   return '<div class="titre-page"><div><h1>' + esc(titre) + "</h1><p>" + esc(p.libelle) + (p.type === "residence" ? ", " + esc(residence(p.id).activite) + ", " + esc(residence(p.id).region) :
     ", " + n + " résidence" + (n > 1 ? "s" : "")) + (sousTitre ? ". " + sousTitre : "") + '</p></div><div class="outils">' + (outils || "") + "</div></div>";
 }
+function bandeauAjuste() {
+  var actifs = ajActifs().length;
+  if (!actifs) return "";
+  if (ajuste()) return '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div><b>Vue ajustée.</b> ' + actifs + " ajustement" + (actifs > 1 ? "s" : "") + " actif" + (actifs > 1 ? "s" : "") + " (provisions, comptes simulés) intègre" + (actifs > 1 ? "nt" : "") + " les chiffres ci-dessous. Passez sur Réel pour voir la comptabilité importée telle quelle.</div></div>";
+  return '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Vue réelle.</b> Les ' + actifs + " ajustement" + (actifs > 1 ? "s" : "") + " actif" + (actifs > 1 ? "s" : "") + " ne sont pas pris en compte. Passez sur Ajusté pour les intégrer.</div></div>";
+}
 
 /* ---------- Tableaux de bord : synthèse ---------- */
 function valeurUnite(a) { var i = a.lastIndexOf(" "); return i < 0 ? esc(a) : esc(a.slice(0, i)) + '<span class="unite">' + esc(a.slice(i)) + "</span>"; }
 function ruban(p) {
-  var r = resultat(p.id, etat.periode);
+  var r = resultatFen(p.dossiers, fenetre(), ajuste());
   return '<div class="ruban">' + principaux.map(function (k) {
     var v = r[k.code] || { statut: "non calculable", motif: "indicateur absent" };
     if (v.statut === "calculé") return '<div class="indic"><div class="nom">' + esc(k.nom) + '</div><div class="val">' + valeurUnite(v.affichage) + '</div><div class="def">' + esc(k.definition) + "</div></div>";
@@ -544,104 +922,358 @@ function ruban(p) {
   }).join("") + "</div>";
 }
 function graphe(p, k) {
-  var pct = k.unite === "%";
-  var pts = D.mois.map(function (m) { var v = resultat(p.id, m)[k.code]; return { m: m, v: v && v.statut === "calculé" ? +v.valeur * (pct ? 100 : 1) : null, a: v ? (v.statut === "calculé" ? v.affichage : "non calculable") : "" }; });
+  var pct = k.unite === "%", N = MOIS.length, aj = ajuste();
+  var pts = MOIS.map(function (m) { var v = resultatFen(p.dossiers, [m], aj)[k.code]; return { m: m, v: v && v.statut === "calculé" ? +v.valeur * (pct ? 100 : 1) : null, a: v ? v.affichage : "", motif: v ? v.motif : "" }; });
   var vals = pts.filter(function (x) { return x.v !== null; }).map(function (x) { return x.v; });
-  var W = 360, H = 160, g = 38, d = 6, h = 10, b = 22;
+  var W = 360, H = 160, g = 38, d = 6, h = 10, b = 22, pas = (W - g - d) / (N - 1);
   var min = vals.length ? Math.min.apply(null, vals) : 0, max = vals.length ? Math.max.apply(null, vals) : 1;
   var marge = (max - min) * 0.18 || Math.abs(max) * 0.1 || 1; min = Math.max(0, min - marge); max = max + marge;
-  var x = function (i) { return g + (W - g - d) * i / 11; }, y = function (v) { return h + (H - h - b) * (1 - (v - min) / (max - min)); };
+  var x = function (i) { return g + pas * i; }, y = function (v) { return h + (H - h - b) * (1 - (v - min) / (max - min)); };
   var fmt = function (v) { return pct ? Math.round(v) + " %" : Math.round(v).toLocaleString("fr-FR"); };
-  var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(k.nom) + " par mois, " + D.meta.annee + '">';
-  var iCoupe = D.mois.findIndex(estProj);
-  var xc = x(iCoupe) - (W - g - d) / 22;
-  if (iCoupe > 0) s += '<rect x="' + xc + '" y="' + h + '" width="' + (W - d - xc) + '" height="' + (H - h - b) + '" fill="var(--proj)"/>';
+  var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(k.nom) + ' par mois">';
+  var iCoupe = MOIS.findIndex(estProj);
+  if (iCoupe > 0) { var xc = x(iCoupe) - pas / 2; s += '<rect x="' + xc + '" y="' + h + '" width="' + (W - d - xc) + '" height="' + (H - h - b) + '" fill="var(--proj)"/>'; }
+  var x0 = Math.max(g, x(etat.lo) - pas / 2), x1 = Math.min(W - d, x(etat.hi - 1) + pas / 2);
+  s += '<rect x="' + x0 + '" y="' + h + '" width="' + (x1 - x0) + '" height="' + (H - h - b) + '" fill="var(--selection)" opacity=".75"/>';
   for (var t = 0; t <= 2; t++) { var vv = min + (max - min) * t / 2;
-    s += '<line x1="' + g + '" x2="' + (W - d) + '" y1="' + y(vv) + '" y2="' + y(vv) + '" stroke="var(--bord)" stroke-width="1"' + (t ? ' stroke-dasharray="2 3"' : "") + '/>' +
+    s += '<line x1="' + g + '" x2="' + (W - d) + '" y1="' + y(vv) + '" y2="' + y(vv) + '" stroke="var(--bord)" stroke-width="1"' + (t ? ' stroke-dasharray="2 3"' : "") + "/>" +
       '<text x="' + (g - 6) + '" y="' + (y(vv) + 3.5) + '" font-size="9" text-anchor="end" fill="var(--faible)">' + fmt(vv) + "</text>"; }
-  pts.forEach(function (pt, i) { if (i % 3 === 0 || i === 11) s += '<text x="' + x(i) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="var(--faible)">' + MOIS_COURT[i] + "</text>"; });
+  pts.forEach(function (pt, i) { if (i % 3 === 0 || i === N - 1) s += '<text x="' + (i === N - 1 ? x(i) + 4 : x(i)) + '" y="' + (H - 6) + '" font-size="9" text-anchor="' + (i === N - 1 ? "end" : "middle") + '" fill="var(--faible)">' + moisCourt(pt.m) + "</text>"; });
   var seg = function (filtre, dash, couleur) { var d2 = "", ouvert = false;
     pts.forEach(function (pt, i) { if (pt.v === null || !filtre(i)) { ouvert = false; return; } d2 += (ouvert ? "L" : "M") + x(i).toFixed(1) + " " + y(pt.v).toFixed(1); ouvert = true; });
     return d2 ? '<path d="' + d2 + '" fill="none" stroke="' + couleur + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"' + (dash ? ' stroke-dasharray="3 3"' : "") + "/>" : ""; };
-  s += seg(function (i) { return !estProj(D.mois[i]); }, false, "#007298");
+  s += seg(function (i) { return !estProj(MOIS[i]); }, false, "#007298");
   s += seg(function (i) { return i >= iCoupe - 1 && iCoupe > 0; }, true, "#DE7233");
   pts.forEach(function (pt, i) {
     if (pt.v === null) { s += '<text x="' + x(i) + '" y="' + (H - b - 4) + '" font-size="9" text-anchor="middle" fill="var(--attente)" font-weight="700">n.c.<title>' + esc(moisLong(pt.m)) + " : non calculable</title></text>"; return; }
-    var dernier = !estProj(pt.m) && (i === 11 || estProj(D.mois[i + 1]));
+    var dernier = !estProj(pt.m) && (i === N - 1 || estProj(MOIS[i + 1]));
     if (dernier) s += '<circle cx="' + x(i) + '" cy="' + y(pt.v) + '" r="3" fill="#007298" stroke="var(--surface)" stroke-width="1.5"/>';
     s += '<circle cx="' + x(i) + '" cy="' + y(pt.v) + '" r="9" fill="transparent"><title>' + esc(moisLong(pt.m)) + " : " + esc(pt.a) + (estProj(pt.m) ? " (projection)" : "") + "</title></circle>";
   });
-  var an = resultat(p.id, "A-" + D.meta.annee)[k.code];
-  return '<div class="graphe"><div class="gt"><b>' + esc(k.nom) + "</b><span>Année " + D.meta.annee + " <strong>" + (an && an.statut === "calculé" ? esc(an.affichage) : "n.c.") + "</strong></span></div>" + s + "</svg></div>";
+  var an = resultatFen(p.dossiers, fenetre(), aj)[k.code];
+  return '<div class="graphe"><div class="gt"><b>' + esc(k.nom) + "</b><span>Période <strong>" + (an && an.statut === "calculé" ? esc(an.affichage) : "n.c.") + "</strong></span></div>" + s + "</svg></div>";
 }
-/* Tableau financier : EBITDA ou soldes intermédiaires de gestion, mêmes colonnes réalisé / projection.
-   Les montants viennent du générateur (moteur Python) ; la page ne fait que les afficher. */
+/* Tableau financier : EBITDA ou soldes intermédiaires de gestion sur la période choisie. */
 var VUES_FIN = {
-  ebitda: { titre: "EBITDA", lignes: function () { return D.lignes_ebitda; }, donnees: function (p) { return D.ebitda[p.id]; },
-            taux: ["TAUX_EBITDA", "Taux d’EBITDA (sur CA net)"], titreBloc: "Compte de résultat jusqu’à l’EBITDA" },
-  sig: { titre: "SIG", lignes: function () { return D.lignes_sig; }, donnees: function (p) { return D.sig[p.id]; },
-         taux: ["TAUX_EBE", "Taux d’EBE (sur ventes et production)"], titreBloc: "Soldes intermédiaires de gestion" }
+  ebitda: { titre: "EBITDA", lignes: function () { return D.lignes_ebitda; }, ratio: ["TAUX_EBITDA", "EBITDA", "CA_NET"], libTaux: "Taux d’EBITDA (sur CA net)", titreBloc: "Compte de résultat jusqu’à l’EBITDA" },
+  sig: { titre: "SIG", lignes: function () { return D.lignes_sig; }, ratio: ["TAUX_EBE", "EBE", "VENTES_PROD"], libTaux: "Taux d’EBE (sur ventes et production)", titreBloc: "Soldes intermédiaires de gestion" }
 };
 function tableauFinancier(p, vue) {
-  var V = VUES_FIN[vue], E = V.donnees(p), dm = D.meta.dernier_mois_importe;
-  var t = '<div class="defile"><table class="fin"><thead><tr><th class="ind" rowspan="2"></th>' +
-    D.mois.map(function (m) { return '<th class="' + (estProj(m) ? "proj" : "") + '">' + moisCourt(m) + "</th>"; }).join("") +
-    '<th class="tot tot1">Réalisé</th><th class="tot">Projection</th></tr><tr>' +
-    D.mois.map(function (m) { return '<th class="' + (estProj(m) ? "proj" : "") + '">' + (estProj(m) ? "Projection" : "Réalisé") + "</th>"; }).join("") +
-    '<th class="tot tot1">janv. – ' + MOIS_COURT[+dm.slice(5) - 1].toLowerCase() + " " + dm.slice(2, 4) + '</th><th class="tot">' + D.meta.annee + "</th></tr></thead><tbody>";
-  function cell(v, cl) { var neg = v != null && +v < 0; return '<td class="' + cl + (neg ? " neg" : "") + '">' + (v == null ? '<span class="vide-val">–</span>' : eur(v)) + "</td>"; }
+  var V = VUES_FIN[vue], mois = fenetre(), dm = D.meta.dernier_mois_importe, aj = ajuste();
+  var E = tableauJS(V.lignes(), p.dossiers, mois, aj, V.ratio), R = aj ? tableauJS(V.lignes(), p.dossiers, mois, false, V.ratio) : null;
+  var reel = mois.filter(function (m) { return m <= dm; });
+  var motifNC = E.nc.length ? E.nc[0].motif : "ajustement non calculable";
+  var t = '<div class="defile"><table class="fin" style="min-width:' + (300 + mois.length * 92 + 230) + 'px"><thead><tr><th class="ind" rowspan="2"></th>' +
+    mois.map(function (m) { return '<th class="' + (estProj(m) ? "proj" : "") + '">' + moisCourt(m) + "</th>"; }).join("") +
+    '<th class="tot tot1">Réalisé</th><th class="tot">Total période</th></tr><tr>' +
+    mois.map(function (m) { return '<th class="' + (estProj(m) ? "proj" : "") + '">' + (estProj(m) ? "Projection" : "Réalisé") + "</th>"; }).join("") +
+    '<th class="tot tot1">' + (reel.length ? moisCourt(reel[0]) + " – " + moisCourt(reel[reel.length - 1]) : "aucun mois") + '</th><th class="tot">' + moisCourt(mois[0]) + (mois.length > 1 ? " – " + moisCourt(mois[mois.length - 1]) : "") + "</th></tr></thead><tbody>";
+  function cell(v, cl) {
+    if (v === NC) return '<td class="' + cl + ' nc-cell" title="' + esc(motifNC) + '">n.c.</td>';
+    var neg = v !== null && v !== undefined && v < 0;
+    return '<td class="' + cl + (neg ? " neg" : "") + '">' + (v === null || v === undefined ? '<span class="vide-val">–</span>' : eur(v / 100)) + "</td>";
+  }
   var masquees = 0;
   V.lignes().forEach(function (l) {
-    var vals = D.mois.map(function (m) { return E.mois[m][l.code]; }).concat([E.realise[l.code], E.total[l.code]]);
-    if (l.niveau === 2 && vals.every(function (v) { return v == null; })) { masquees++; return; }
-    t += '<tr class="n' + l.niveau + '"><td class="ind">' + esc(l.libelle) + "</td>" +
-      D.mois.map(function (m) { return cell(E.mois[m][l.code], estProj(m) ? "proj" : ""); }).join("") +
+    var vals = mois.map(function (m) { return E.mois[m][l.code]; }).concat([E.realise[l.code], E.total[l.code]]);
+    if (l.niveau === 2 && vals.every(function (v) { return v === null || v === undefined; })) { masquees++; return; }
+    var modif = R && E.total[l.code] !== R.total[l.code];
+    t += '<tr class="n' + l.niveau + '"><td class="ind">' + esc(l.libelle) + (modif ? ' <span class="aj-pastille" title="Cette ligne diffère de la comptabilité réelle sur la période">ajusté</span>' : "") + "</td>" +
+      mois.map(function (m) { return cell(E.mois[m][l.code], estProj(m) ? "proj" : ""); }).join("") +
       cell(E.realise[l.code], "tot tot1") + cell(E.total[l.code], "tot") + "</tr>";
   });
-  function pc(v) { return v == null ? "" : String(v).replace(".", ",") + " %"; }
-  var tc = V.taux[0];
-  t += '<tr class="taux"><td class="ind">' + esc(V.taux[1]) + "</td>" + D.mois.map(function (m) { return '<td class="' + (estProj(m) ? "proj" : "") + '">' + pc(E.mois[m][tc]) + "</td>"; }).join("") +
+  function pc(v) { return v === NC ? "n.c." : v === null || v === undefined ? "" : v.toFixed(1).replace(".", ",") + " %"; }
+  var tc = V.ratio[0];
+  t += '<tr class="taux"><td class="ind">' + esc(V.libTaux) + "</td>" + mois.map(function (m) { return '<td class="' + (estProj(m) ? "proj" : "") + '">' + pc(E.mois[m][tc]) + "</td>"; }).join("") +
     '<td class="tot tot1">' + pc(E.realise[tc]) + '</td><td class="tot">' + pc(E.total[tc]) + "</td></tr>";
   t += "</tbody></table></div>";
   var notes = [];
   if (masquees) notes.push(masquees + " ligne" + (masquees > 1 ? "s" : "") + " sans écriture sur ce périmètre " + (masquees > 1 ? "sont masquées" : "est masquée") + ".");
   notes.push("Colonnes orangées : projection, données fictives en attendant le module Budgets.");
   t += '<p class="legende" style="margin:10px 0 0">' + notes.join(" ") + "</p>";
+  if (E.nc.length) t += '<p class="legende" style="color:var(--attente);margin:4px 0 0">' + esc(E.nc[0].motif) + (E.nc.length > 1 ? " (et " + (E.nc.length - 1) + " autre" + (E.nc.length > 2 ? "s" : "") + ")" : "") + "</p>";
   if (E.non_classes.length) t += '<p class="legende" style="color:var(--erreur);margin:4px 0 0">Comptes non classés, exclus du tableau : ' + E.non_classes.map(esc).join(", ") + "</p>";
   return t;
 }
 function blocFinancier(p) {
   var V = VUES_FIN[etat.vueFin];
-  return '<div class="bloc"><div class="bloc-tete"><h2>' + esc(V.titreBloc) + ", " + D.meta.annee + '</h2><div class="segment" role="tablist" aria-label="Tableau affiché">' +
-    Object.keys(VUES_FIN).map(function (k) { return '<button role="tab" data-vue="' + k + '" aria-selected="' + (k === etat.vueFin) + '" class="' + (k === etat.vueFin ? "actif" : "") + '">' + VUES_FIN[k].titre + "</button>"; }).join("") +
+  return '<div class="bloc"><div class="bloc-tete"><h2>' + esc(V.titreBloc) + ", " + esc(libFenetre()) + (ajuste() ? " (ajusté)" : " (réel)") + '</h2><div class="segment" role="tablist" aria-label="Tableau affiché">' +
+    Object.keys(VUES_FIN).map(function (k) { return '<button role="tab" data-vue-fin="' + k + '" aria-selected="' + (k === etat.vueFin) + '" class="' + (k === etat.vueFin ? "actif" : "") + '">' + VUES_FIN[k].titre + "</button>"; }).join("") +
     "</div></div>" + tableauFinancier(p, etat.vueFin) + "</div>";
 }
-function brancherVueFin() { document.querySelectorAll(".segment [data-vue]").forEach(function (b) { b.addEventListener("click", function () {
-  var x = window.scrollY; etat.vueFin = b.dataset.vue; rendre(); window.scrollTo(0, x); }); }); }
+function brancherVueFin() { document.querySelectorAll("[data-vue-fin]").forEach(function (b) { b.addEventListener("click", function () {
+  var x = window.scrollY; etat.vueFin = b.dataset.vueFin; majContenu(); window.scrollTo(0, x); }); }); }
 var PAGES = {};
 PAGES.synthese = function (p) {
-  var h = enTete("Synthèse d’activité", p, "", selecteurPeriode(p)) + frise(p) + ruban(p);
-  h += '<div class="section-tete"><h2>Indicateurs clés, mois par mois</h2><span class="legende">Trait plein : réalisé. Pointillé : projection. « n.c. » : non calculable, survolez pour le motif.</span></div>';
+  var h = enTete("Synthèse d’activité", p, "") + bandeauAjuste() + ruban(p);
+  h += '<div class="section-tete"><h2>Indicateurs clés, mois par mois</h2><span class="legende">Trait plein : réalisé. Pointillé : projection. Fond bleuté : période choisie. « n.c. » : non calculable, survolez pour le motif.</span></div>';
   h += '<div class="graphes">' + principaux.map(function (k) { return graphe(p, k); }).join("") + "</div>";
   h += blocFinancier(p);
-  el("contenu").innerHTML = h; brancherPeriode(); brancherFrise(); brancherVueFin();
+  el("contenu").innerHTML = h; brancherVueFin();
 };
 
 /* ---------- Indicateurs hôteliers ---------- */
 PAGES.indicateurs = function (p) {
-  var dossiers = p.dossiers;
-  var h = enTete("Indicateurs hôteliers", p, "", selecteurPeriode(p)) + frise(p) + ruban(p);
-  var t = '<div class="bloc"><div class="bloc-tete"><h2>Détail par résidence</h2><span class="legende">Cliquez sur une résidence pour l’ouvrir.</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Activité</th>' +
+  var dossiers = p.dossiers, mois = fenetre(), aj = ajuste();
+  var h = enTete("Indicateurs hôteliers", p, "") + bandeauAjuste() + ruban(p);
+  var t = '<div class="bloc"><div class="bloc-tete"><h2>Détail par résidence, ' + esc(libFenetre()) + '</h2><span class="legende">Cliquez sur une résidence pour l’ouvrir.</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Activité</th>' +
     principaux.map(function (k) { return '<th class="num">' + esc(k.nom) + "</th>"; }).join("") + "</tr></thead><tbody>";
-  dossiers.forEach(function (d) { var r = residence(d), per = etat.periode === "EXERCICE" ? "EXERCICE" : etat.periode, v = resultat(d, per);
+  dossiers.forEach(function (d) { var r = residence(d), v = resultatFen([d], mois, aj);
     t += '<tr class="cliquable" data-d="' + esc(d) + '"><td><b>' + esc(r.nom) + "</b></td><td>" + esc(r.activite) + "</td>" + principaux.map(function (k) { var x = v[k.code];
       return x && x.statut === "calculé" ? '<td class="num">' + esc(x.affichage) + "</td>" : '<td class="num nc-cell" title="' + esc(x ? x.motif : "") + '">n.c.</td>'; }).join("") + "</tr>"; });
-  if (dossiers.length > 1) { var g = resultat(p.id, etat.periode);
+  if (dossiers.length > 1) { var g = resultatFen(dossiers, mois, aj);
     t += '<tr><td><b>' + esc(p.libelle) + "</b></td><td class=\"mut\">ratio de sommes</td>" + principaux.map(function (k) { var x = g[k.code];
       return x && x.statut === "calculé" ? '<td class="num"><b>' + esc(x.affichage) + "</b></td>" : '<td class="num nc-cell" title="' + esc(x ? x.motif : "") + '">n.c.</td>'; }).join("") + "</tr>"; }
   el("contenu").innerHTML = h + t + "</tbody></table></div></div>";
-  brancherPeriode(); brancherFrise();
   document.querySelectorAll("tr[data-d]").forEach(function (tr) { tr.addEventListener("click", function () { choisir(tr.dataset.d); }); });
+};
+
+/* ---------- Ajustements : comptes simulés et provisions ---------- */
+function libelleCompte(c) {
+  var s = AJ.comptes.find(function (x) { return x.numero === c; });
+  if (s) return s.libelle;
+  var i;
+  for (i = c.length; i >= 3; i--) { if (C.libelles_comptes[c.slice(0, i)]) return C.libelles_comptes[c.slice(0, i)]; }
+  return "";
+}
+function compteConnu(c) {
+  if (AJ.comptes.some(function (x) { return x.numero === c; })) return true;
+  return D.plan.some(function (x) { return x.compte === c; });
+}
+function comptesProposes() {
+  var l = D.plan.filter(function (x) { return x.classe === "6" || x.classe === "7"; }).map(function (x) { return x.compte; });
+  AJ.comptes.forEach(function (x) { if (l.indexOf(x.numero) < 0) l.push(x.numero); });
+  return l.sort();
+}
+function resumeRegle(a) {
+  if (a.mode === "saisie") return "Saisie mensuelle (" + esc(residence(a.saisie.dossier) ? residence(a.saisie.dossier).nom : a.saisie.dossier) + ")";
+  return a.termes.map(function (t) {
+    if (t.t === "fixe") return esc(nb(+t.montant)) + " € par mois";
+    if (t.t === "pct") return esc(String(t.taux).replace(".", ",")) + " % de " + esc(t.comptes.join(", "));
+    return esc(nb(+t.montant)) + " € × " + esc((mesureExterne(t.mesure) || { libelle: t.mesure }).libelle.toLowerCase());
+  }).join(" + ");
+}
+function textePortee(a) {
+  if (a.mode === "saisie") return esc(residence(a.saisie.dossier) ? residence(a.saisie.dossier).nom : "");
+  if (a.portee === "tous") return "Toutes les résidences";
+  return a.portee.length + " résidence" + (a.portee.length > 1 ? "s" : "");
+}
+function impactAj(a, dossiers, mois) {
+  var tot = 0, nc = null, n = 0;
+  dossiers.forEach(function (d) { if (!ajPourDossier(a, d)) return; mois.forEach(function (m) {
+    var v = ajMontant(a, d, m);
+    if (v === null) return;
+    if (v.nc) { nc = v.motif; return; }
+    tot += v; n++; }); });
+  return { tot: tot, nc: nc, n: n };
+}
+function prochainId() {
+  var max = 0;
+  AJ.liste.forEach(function (a) { var m = /^AJ-(\d+)$/.exec(a.id); if (m) max = Math.max(max, +m[1]); });
+  return "AJ-" + String(max + 1).padStart(3, "0");
+}
+function brouillonVide() {
+  return { id: null, edition: false, actif: true, type: "provision", libelle: "", compte: "", mode: "regle", portee: "tous",
+    termes: [{ t: "pct", taux: "", comptes: ["706"] }], saisie: { dossier: D.residences[0].dossier, valeurs: {} }, du: "", au: "" };
+}
+function termeHtml(t, i) {
+  var h = '<div class="terme" data-i="' + i + '"><select class="t-type" aria-label="Type de terme"><option value="pct"' + (t.t === "pct" ? " selected" : "") + '>Pourcentage de comptes</option><option value="unit"' + (t.t === "unit" ? " selected" : "") + '>Montant par donnée externe</option><option value="fixe"' + (t.t === "fixe" ? " selected" : "") + ">Montant fixe par mois</option></select>";
+  if (t.t === "pct") h += '<label class="mini-champ"><span>Taux (%)</span><input class="t-taux" type="number" step="any" value="' + esc(t.taux) + '" placeholder="5"></label><label class="mini-champ large"><span>Comptes de base (préfixes)</span><input class="t-comptes" type="text" value="' + esc((t.comptes || []).join(", ")) + '" placeholder="706, 708"></label>';
+  else if (t.t === "unit") h += '<label class="mini-champ"><span>Montant (€)</span><input class="t-montant" type="number" step="any" value="' + esc(t.montant == null ? "" : t.montant) + '" placeholder="5"></label><label class="mini-champ large"><span>Donnée externe</span><select class="t-mesure"><option value="">Choisir…</option>' +
+    C.mesures_externes.map(function (m) { return '<option value="' + esc(m.code) + '"' + (t.mesure === m.code ? " selected" : "") + ">" + esc(m.libelle) + "</option>"; }).join("") + "</select></label>";
+  else h += '<label class="mini-champ"><span>Montant (€ par mois)</span><input class="t-montant" type="number" step="any" value="' + esc(t.montant == null ? "" : t.montant) + '" placeholder="1000"></label>';
+  return h + '<button type="button" class="btn-petit t-sup" title="Retirer ce terme"' + '>Retirer</button></div>';
+}
+function formulaire() {
+  var b = etat.brouillon;
+  if (!b) return "";
+  var h = '<div class="bloc" id="form-aj"><div class="bloc-tete"><h2>' + (b.edition ? "Modifier " + esc(b.id) : "Nouvelle provision ou nouvel ajustement") + '</h2></div><div class="aj-grille">' +
+    '<label class="champ-aj"><span>Nature</span><select id="f-type"><option value="provision"' + (b.type === "provision" ? " selected" : "") + '>Provision</option><option value="ajustement"' + (b.type === "ajustement" ? " selected" : "") + ">Ajustement de compte</option></select></label>" +
+    '<label class="champ-aj large"><span>Libellé</span><input id="f-libelle" type="text" value="' + esc(b.libelle) + '" placeholder="Provision redevance de marque"></label>' +
+    '<label class="champ-aj"><span>Compte (existant ou à créer)</span><input id="f-compte" list="liste-comptes" type="text" value="' + esc(b.compte) + '" placeholder="65110000P" autocomplete="off"><datalist id="liste-comptes">' +
+      comptesProposes().map(function (c) { return '<option value="' + esc(c) + '">' + esc(libelleCompte(c)) + "</option>"; }).join("") + '</datalist><small id="f-compte-info" class="mut"></small></label>' +
+    '<label class="champ-aj"><span>Appliquer de</span><select id="f-du"><option value="">Début des données</option>' + MOIS.map(function (m) { return '<option value="' + m + '"' + (b.du === m ? " selected" : "") + ">" + esc(moisLong(m)) + "</option>"; }).join("") + "</select></label>" +
+    '<label class="champ-aj"><span>jusqu’à</span><select id="f-au"><option value="">Fin des données</option>' + MOIS.map(function (m) { return '<option value="' + m + '"' + (b.au === m ? " selected" : "") + ">" + esc(moisLong(m)) + "</option>"; }).join("") + "</select></label></div>" +
+    '<div class="aj-mode"><label><input type="radio" name="f-mode" value="regle"' + (b.mode === "regle" ? " checked" : "") + '> Règle de calcul</label><label><input type="radio" name="f-mode" value="saisie"' + (b.mode === "saisie" ? " checked" : "") + "> Saisie mensuelle pour une résidence</label></div>";
+  if (b.mode === "regle") {
+    h += '<div class="aj-sous"><h3>Résidences concernées</h3><label class="rad"><input type="radio" name="f-portee" value="tous"' + (b.portee === "tous" ? " checked" : "") + '> Toutes les résidences (la règle est calculée résidence par résidence)</label>' +
+      '<label class="rad"><input type="radio" name="f-portee" value="choix"' + (b.portee !== "tous" ? " checked" : "") + "> Résidences choisies</label>";
+    if (b.portee !== "tous") h += '<div class="aj-res">' + D.residences.map(function (r) { return '<label><input type="checkbox" class="f-res" value="' + esc(r.dossier) + '"' + (b.portee.indexOf(r.dossier) >= 0 ? " checked" : "") + "> " + esc(r.nom) + "</label>"; }).join("") + "</div>";
+    h += '</div><div class="aj-sous"><h3>Montant mensuel à ajouter au compte <span class="mut">(somme des termes ; négatif pour diminuer)</span></h3>' + b.termes.map(termeHtml).join("") +
+      '<button type="button" class="btn btn-ligne" id="t-ajout">+ Ajouter un terme</button><p class="legende">Le pourcentage s’applique aux montants réels de la comptabilité (hors ajustements). Une donnée externe absente rend l’ajustement non calculable, jamais égal à zéro.</p></div>';
+  } else {
+    h += '<div class="aj-sous"><h3>Saisie mensuelle</h3><label class="champ-aj"><span>Résidence</span><select id="f-sdossier">' + D.residences.map(function (r) { return '<option value="' + esc(r.dossier) + '"' + (b.saisie.dossier === r.dossier ? " selected" : "") + ">" + esc(r.nom) + "</option>"; }).join("") +
+      '</select></label><div class="aj-saisie">' + MOIS.map(function (m) { var v = b.saisie.valeurs[m]; return '<label><span>' + esc(moisCourt(m)) + '</span><input class="s-val" data-m="' + m + '" type="number" step="any" value="' + (v == null ? "" : esc(v)) + '"></label>'; }).join("") +
+      '</div><p class="legende">Montants en euros ajoutés au compte, mois par mois. Un mois laissé vide n’est pas ajusté.</p></div>';
+  }
+  return h + '<div class="erreur-form" id="f-erreur" role="alert"></div><div class="aj-actions"><button class="btn btn-principal" id="f-ok" type="button">Enregistrer</button><button class="btn btn-ligne" id="f-annuler" type="button">Annuler</button></div></div>';
+}
+function lireFormulaire() {
+  var b = etat.brouillon;
+  if (!el("form-aj")) return;
+  b.type = el("f-type").value; b.libelle = el("f-libelle").value; b.compte = el("f-compte").value.trim().toUpperCase();
+  b.du = el("f-du").value; b.au = el("f-au").value;
+  var mode = document.querySelector('input[name="f-mode"]:checked'); b.mode = mode ? mode.value : "regle";
+  if (b.mode === "regle") {
+    var pt = document.querySelector('input[name="f-portee"]:checked');
+    if (pt && pt.value === "tous") b.portee = "tous";
+    else { var cochees = Array.prototype.map.call(document.querySelectorAll(".f-res:checked"), function (x) { return x.value; }); b.portee = Array.isArray(b.portee) && !el("form-aj").querySelector(".f-res") ? b.portee : cochees; }
+    b.termes = Array.prototype.map.call(document.querySelectorAll(".terme"), function (n) {
+      var type = n.querySelector(".t-type").value, t = { t: type };
+      if (type === "pct") { t.taux = n.querySelector(".t-taux") ? n.querySelector(".t-taux").value : ""; t.comptes = n.querySelector(".t-comptes") ? n.querySelector(".t-comptes").value.split(/[\s,;]+/).map(function (x) { return x.trim().toUpperCase(); }).filter(Boolean) : []; }
+      else { t.montant = n.querySelector(".t-montant") ? n.querySelector(".t-montant").value : ""; if (type === "unit") t.mesure = n.querySelector(".t-mesure") ? n.querySelector(".t-mesure").value : ""; }
+      return t;
+    });
+  } else {
+    b.saisie = { dossier: el("f-sdossier").value, valeurs: {} };
+    document.querySelectorAll(".s-val").forEach(function (i) { if (i.value !== "") b.saisie.valeurs[i.dataset.m] = i.value; });
+  }
+}
+function aPartirBrouillon(b) {
+  var a = { id: b.id, actif: b.actif, type: b.type, libelle: b.libelle.trim(), compte: b.compte, mode: b.mode, du: b.du || "", au: b.au || "", rev: b.rev || 1 };
+  if (b.mode === "saisie") a.saisie = { dossier: b.saisie.dossier, valeurs: b.saisie.valeurs };
+  else {
+    a.portee = b.portee;
+    a.termes = b.termes.map(function (t) {
+      if (t.t === "pct") return { t: "pct", taux: +t.taux, comptes: t.comptes };
+      if (t.t === "unit") return { t: "unit", montant: +t.montant, mesure: t.mesure };
+      return { t: "fixe", montant: +t.montant };
+    });
+  }
+  return a;
+}
+function brancherFormulaire() {
+  var b = etat.brouillon;
+  if (!b || !el("form-aj")) return;
+  var redessiner = function () { lireFormulaire(); PAGES.provisions(perimetre(etat.perim)); var f = el("form-aj"); if (f) f.scrollIntoView({ block: "nearest" }); };
+  var info = function () { var c = el("f-compte").value.trim().toUpperCase(), i = el("f-compte-info");
+    i.textContent = !c ? "" : !RE_COMPTE.test(c) ? "Format invalide." : compteConnu(c) ? libelleCompte(c) : "Nouveau compte simulé : il sera créé à l’enregistrement."; };
+  el("f-compte").addEventListener("input", info); info();
+  document.querySelectorAll('input[name="f-mode"]').forEach(function (r) { r.addEventListener("change", redessiner); });
+  document.querySelectorAll('input[name="f-portee"]').forEach(function (r) { r.addEventListener("change", function () { lireFormulaire(); if (r.value === "tous") b.portee = "tous"; else if (b.portee === "tous") b.portee = []; PAGES.provisions(perimetre(etat.perim)); }); });
+  document.querySelectorAll(".t-type").forEach(function (s) { s.addEventListener("change", function () { lireFormulaire(); var i = +s.closest(".terme").dataset.i, t = b.termes[i];
+    b.termes[i] = s.value === "pct" ? { t: "pct", taux: "", comptes: ["706"] } : s.value === "unit" ? { t: "unit", montant: "", mesure: "" } : { t: "fixe", montant: "" }; PAGES.provisions(perimetre(etat.perim)); }); });
+  document.querySelectorAll(".t-sup").forEach(function (x) { x.addEventListener("click", function () { lireFormulaire(); b.termes.splice(+x.closest(".terme").dataset.i, 1); PAGES.provisions(perimetre(etat.perim)); }); });
+  var ajout = el("t-ajout"); if (ajout) ajout.addEventListener("click", function () { lireFormulaire(); b.termes.push({ t: "pct", taux: "", comptes: ["706"] }); PAGES.provisions(perimetre(etat.perim)); });
+  var sd = el("f-sdossier"); if (sd) sd.addEventListener("change", function () { lireFormulaire(); b.saisie.valeurs = {}; PAGES.provisions(perimetre(etat.perim)); });
+  el("f-annuler").addEventListener("click", function () { etat.brouillon = null; PAGES.provisions(perimetre(etat.perim)); });
+  el("f-ok").addEventListener("click", function () {
+    lireFormulaire();
+    var a = aPartirBrouillon(b), err = ajErreurs(a);
+    if (err.length) { el("f-erreur").innerHTML = err.map(esc).join("<br>"); return; }
+    if (!compteConnu(a.compte)) AJ.comptes.push({ numero: a.compte, libelle: a.libelle });
+    if (b.edition) { a.rev = (b.rev || 1) + 1; AJ.liste = AJ.liste.map(function (x) { return x.id === a.id ? a : x; }); }
+    else { a.id = prochainId(); a.rev = 1; AJ.liste.push(a); }
+    ajSauver(); etat.brouillon = null; PAGES.provisions(perimetre(etat.perim)); majReglette();
+  });
+}
+function exporterAjustements() {
+  var blob = new Blob([JSON.stringify({ version: 1, donnees: "fictives (phase test)", liste: AJ.liste, comptes: AJ.comptes }, null, 2)], { type: "application/json" });
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "zenitude-ajustements.json"; document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function importerAjustements(fichier) {
+  var lecteur = new FileReader();
+  lecteur.onload = function () {
+    var x;
+    try { x = JSON.parse(lecteur.result); } catch (e) { return alert("Fichier illisible : ce n’est pas un export d’ajustements."); }
+    if (!x || !Array.isArray(x.liste)) return alert("Fichier non reconnu.");
+    var valides = x.liste.filter(function (a) { return !ajErreurs(a).length; }), refus = x.liste.length - valides.length;
+    if (AJ.liste.length && !confirm("Remplacer les " + AJ.liste.length + " ajustement(s) actuel(s) par les " + valides.length + " du fichier ?")) return;
+    AJ = { liste: valides, comptes: (x.comptes || []).filter(function (c) { return RE_COMPTE.test(c.numero || "") && c.libelle; }) };
+    ajSauver(); PAGES.provisions(perimetre(etat.perim)); majReglette();
+    if (refus) alert(refus + " ajustement(s) du fichier ont été refusé(s) car invalides.");
+  };
+  lecteur.readAsText(fichier);
+}
+PAGES.provisions = function (p) {
+  var mois = fenetre(), n = AJ.liste.length;
+  var h = enTete("Comptes et provisions", p, "Ajustements qui rapprochent les tableaux de bord de la réalité économique") +
+    '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div>Un ajustement ajoute un montant à un compte de charges ou de produits, sans modifier la comptabilité importée. Tous les tableaux de bord le prennent en compte en vue <b>Ajusté</b>. ' +
+    '<b>Phase test :</b> les ajustements sont enregistrés dans ce navigateur uniquement ; utilisez Exporter pour les conserver ou les partager.</div></div>' +
+    '<div class="aj-barre"><button class="btn btn-principal" id="aj-nouveau">+ Nouvelle provision ou ajustement</button><button class="btn btn-ligne" id="aj-export"' + (n ? "" : " disabled") + '>Exporter</button>' +
+    '<label class="btn btn-ligne" for="aj-import" style="cursor:pointer">Importer</label><input type="file" id="aj-import" accept="application/json,.json" style="display:none"></div>';
+  h += formulaire();
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Provisions et ajustements</h2><span class="legende">Montant sur la période ' + esc(libFenetre()) + ", " + esc(p.libelle) + ' (sens naturel : une charge ou un produit en plus)</span></div>';
+  if (!n) h += '<div class="vide-etat" style="padding:28px 12px"><h2>Aucun ajustement</h2><p>Exemples : une provision de 5 % du chiffre d’affaires sur un compte de redevance, ou 5 € par nuitée sur un compte de taxe.</p></div>';
+  else {
+    h += '<div class="defile"><table class="tab"><thead><tr><th class="c">Actif</th><th>Réf.</th><th>Compte</th><th>Libellé</th><th>Résidences</th><th>Règle</th><th class="num">Montant sur la période</th><th></th></tr></thead><tbody>';
+    AJ.liste.forEach(function (a) {
+      var im = impactAj(a, p.dossiers, mois);
+      h += '<tr class="' + (a.actif ? "" : "inactif") + '"><td class="c"><input type="checkbox" class="aj-actif" data-id="' + esc(a.id) + '"' + (a.actif ? " checked" : "") + ' aria-label="Actif"></td><td><code>' + esc(a.id) + "</code></td><td><code>" + esc(a.compte) + "</code><br><span class=\"legende\">" + esc(libelleCompte(a.compte)) + "</span></td><td><b>" + esc(a.libelle) + '</b><br><span class="legende">' + (a.type === "provision" ? "Provision" : "Ajustement") + (a.du || a.au ? ", " + (a.du ? "dès " + moisCourt(a.du) : "") + (a.au ? " jusqu’à " + moisCourt(a.au) : "") : "") + "</span></td><td>" + textePortee(a) + "</td><td>" + resumeRegle(a) + '</td><td class="num">' +
+        (im.nc ? '<span class="nc-cell" title="' + esc(im.nc) + '">n.c.</span>' : im.n ? eur(im.tot / 100) : '<span class="mut">–</span>') + '</td><td class="aj-lig-actions"><button class="btn-petit aj-edit" data-id="' + esc(a.id) + '">Modifier</button><button class="btn-petit aj-sup" data-id="' + esc(a.id) + '">Supprimer</button></td></tr>';
+    });
+    h += "</tbody></table></div>";
+  }
+  h += "</div>";
+  // Comptes simulés
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Comptes simulés</h2><span class="legende">Comptes créés pour porter des provisions (exemple : 70610000P)</span></div><div class="aj-nvcompte"><label class="champ-aj"><span>Numéro</span><input id="nc-num" type="text" placeholder="70610000P" autocomplete="off"></label>' +
+    '<label class="champ-aj large"><span>Libellé</span><input id="nc-lib" type="text" placeholder="Hébergement - provision"></label><button class="btn btn-ligne" id="nc-ok">Créer le compte</button></div><div class="erreur-form" id="nc-erreur" role="alert"></div>';
+  if (AJ.comptes.length) {
+    var ligEb = D.lignes_ebitda, ligSig = D.lignes_sig;
+    h += '<div class="defile"><table class="tab"><thead><tr><th>Compte</th><th>Libellé</th><th>Ligne EBITDA</th><th>Ligne SIG</th><th>Agrégat KPI</th><th class="num">Ajustements</th><th></th></tr></thead><tbody>' + AJ.comptes.map(function (c) {
+      var le = ligneDuCompte(c.numero, ligEb), ls = ligneDuCompte(c.numero, ligSig), ag = agregatDe(c.numero), nbA = AJ.liste.filter(function (a) { return a.compte === c.numero; }).length;
+      var nomLigne = function (lignes, code) { var l = lignes.find(function (x) { return x.code === code; }); return l ? esc(l.libelle) : '<span class="pastille ko">non affecté</span>'; };
+      return "<tr><td><code>" + esc(c.numero) + "</code></td><td>" + esc(c.libelle) + "</td><td>" + (le ? nomLigne(ligEb, le) : nomLigne(ligEb, null)) + "</td><td>" + (ls ? nomLigne(ligSig, ls) : nomLigne(ligSig, null)) + "</td><td>" + (ag ? esc(ag) : '<span class="pastille ko">non classé</span>') + '</td><td class="num">' + nbA + '</td><td class="aj-lig-actions"><button class="btn-petit nc-sup" data-num="' + esc(c.numero) + '">Supprimer</button></td></tr>';
+    }).join("") + '</tbody></table></div><p class="legende">Un compte simulé prend la place du plus long préfixe qu’il partage avec les comptes réels (70610000P suit la règle du 706). Sans préfixe commun avec une ligne du tableau, il est signalé « non classé » et rend les indicateurs comptables non calculables.</p>';
+  }
+  h += "</div>";
+  el("contenu").innerHTML = h;
+  el("aj-nouveau").addEventListener("click", function () { etat.brouillon = brouillonVide(); PAGES.provisions(p); var f = el("form-aj"); if (f) f.scrollIntoView({ block: "start" }); });
+  el("aj-export").addEventListener("click", exporterAjustements);
+  el("aj-import").addEventListener("change", function () { if (this.files[0]) importerAjustements(this.files[0]); this.value = ""; });
+  document.querySelectorAll(".aj-actif").forEach(function (c) { c.addEventListener("change", function () {
+    var a = AJ.liste.find(function (x) { return x.id === c.dataset.id; }); a.actif = c.checked; ajSauver(); PAGES.provisions(p); majReglette(); }); });
+  document.querySelectorAll(".aj-edit").forEach(function (bt) { bt.addEventListener("click", function () {
+    var a = JSON.parse(JSON.stringify(AJ.liste.find(function (x) { return x.id === bt.dataset.id; })));
+    etat.brouillon = { id: a.id, edition: true, rev: a.rev, actif: a.actif, type: a.type, libelle: a.libelle, compte: a.compte, mode: a.mode, portee: a.portee || "tous", du: a.du || "", au: a.au || "",
+      termes: (a.termes || [{ t: "pct", taux: "", comptes: ["706"] }]).map(function (t) { return t.t === "pct" ? { t: "pct", taux: t.taux, comptes: t.comptes } : t; }), saisie: a.saisie || { dossier: D.residences[0].dossier, valeurs: {} } };
+    PAGES.provisions(p); var f = el("form-aj"); if (f) f.scrollIntoView({ block: "start" }); }); });
+  document.querySelectorAll(".aj-sup").forEach(function (bt) { bt.addEventListener("click", function () {
+    var a = AJ.liste.find(function (x) { return x.id === bt.dataset.id; });
+    if (!confirm("Supprimer l’ajustement « " + a.libelle + " » (" + a.id + ") ?")) return;
+    AJ.liste = AJ.liste.filter(function (x) { return x.id !== a.id; }); ajSauver(); PAGES.provisions(p); majReglette(); }); });
+  el("nc-ok").addEventListener("click", function () {
+    var num = el("nc-num").value.trim().toUpperCase(), lib = el("nc-lib").value.trim(), e = el("nc-erreur");
+    if (!RE_COMPTE.test(num)) { e.textContent = "Numéro invalide : chiffres et lettres majuscules, commençant par 6 ou 7 (exemple 70610000P)."; return; }
+    if (!lib) { e.textContent = "Le libellé est obligatoire."; return; }
+    if (compteConnu(num)) { e.textContent = "Ce compte existe déjà."; return; }
+    AJ.comptes.push({ numero: num, libelle: lib }); ajSauver(); PAGES.provisions(p); });
+  document.querySelectorAll(".nc-sup").forEach(function (bt) { bt.addEventListener("click", function () {
+    if (AJ.liste.some(function (a) { return a.compte === bt.dataset.num; })) { el("nc-erreur").textContent = "Supprimez d’abord les ajustements rattachés à ce compte."; return; }
+    AJ.comptes = AJ.comptes.filter(function (c) { return c.numero !== bt.dataset.num; }); ajSauver(); PAGES.provisions(p); }); });
+  brancherFormulaire();
+};
+
+/* ---------- Écarts Réel → Ajusté ---------- */
+PAGES.ecarts = function (p) {
+  var mois = fenetre(), actifs = ajActifs(), h = enTete("Écarts Réel → Ajusté", p, "Ce que les ajustements changent, sur la période " + libFenetre());
+  if (!actifs.length) { el("contenu").innerHTML = h + '<div class="bloc vide-etat"><h2>Aucun ajustement actif</h2><p>Créez une provision ou un ajustement dans « Comptes et provisions » pour voir son effet ici.</p></div>'; return; }
+  var comptes = {};
+  actifs.forEach(function (a) { comptes[a.compte] = 1; });
+  function somme(c, aj) {
+    var tot = 0;
+    for (var i = 0; i < p.dossiers.length; i++) for (var j = 0; j < mois.length; j++) {
+      var v = soldes(p.dossiers[i], aj).v[mois[j]][c];
+      if (v === NC) return NC;
+      if (v !== undefined) tot += naturel(c, v);
+    }
+    return tot;
+  }
+  var t = '<div class="bloc"><div class="bloc-tete"><h2>Par compte</h2><span class="legende">Sens naturel : charges et produits en positif</span></div><div class="defile"><table class="tab"><thead><tr><th>Compte</th><th>Libellé</th><th class="num">Réel</th><th class="num">Ajustements</th><th class="num">Ajusté</th></tr></thead><tbody>';
+  Object.keys(comptes).sort().forEach(function (c) {
+    var r = somme(c, false), a = somme(c, true);
+    t += "<tr><td><code>" + esc(c) + "</code></td><td>" + esc(libelleCompte(c)) + '</td><td class="num">' + eur(r / 100) + '</td><td class="num">' + (a === NC ? '<span class="nc-cell">n.c.</span>' : eur((a - r) / 100)) + '</td><td class="num"><b>' + (a === NC ? '<span class="nc-cell">n.c.</span>' : eur(a / 100)) + "</b></td></tr>";
+  });
+  t += "</tbody></table></div></div>";
+  var lignes = [["ebitda", "CA_NET", "Chiffre d’affaires net"], ["ebitda", "GOP", "GOP"], ["ebitda", "EBITDA", "EBITDA"], ["sig", "EBE", "EBE"], ["sig", "RN", "Résultat net"]];
+  var tr = '<div class="bloc"><div class="bloc-tete"><h2>Effet sur les soldes</h2></div><div class="defile"><table class="tab"><thead><tr><th>Solde</th><th class="num">Réel</th><th class="num">Ajusté</th><th class="num">Écart</th></tr></thead><tbody>';
+  lignes.forEach(function (x) {
+    var V = VUES_FIN[x[0]], r = tableauJS(V.lignes(), p.dossiers, mois, false, V.ratio).total[x[1]], a = tableauJS(V.lignes(), p.dossiers, mois, true, V.ratio).total[x[1]];
+    var f = function (v) { return v === NC ? '<span class="nc-cell">n.c.</span>' : v == null ? "–" : eur(v / 100); };
+    tr += "<tr><td><b>" + esc(x[2]) + '</b></td><td class="num">' + f(r) + '</td><td class="num">' + f(a) + '</td><td class="num">' + (a === NC || r === NC || r == null || a == null ? "–" : eur((a - r) / 100)) + "</td></tr>";
+  });
+  el("contenu").innerHTML = h + t + tr + "</tbody></table></div></div>" + '<p class="legende">Les publications figées (onglet Compte de résultat) ne changent pas : elles gardent les données de leur création.</p>';
 };
 
 /* ---------- Compte de résultat publié (lot 5) ---------- */
@@ -736,6 +1368,20 @@ PAGES.parametres = function () {
 };
 PAGES.budgets = function (p) { el("contenu").innerHTML = enTete("Budgets", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Saisie et import des budgets par résidence. Il alimentera les colonnes Projection des tableaux EBITDA et SIG.</p></div>'; };
 PAGES.rapports = function (p) { el("contenu").innerHTML = enTete("Rapports", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Plaquettes PDF et présentations par résidence ou par groupe.</p></div>'; };
+
+/* ---------- Thème d'affichage ---------- */
+function themeChoisi() { try { return localStorage.getItem("zen-theme") || "light"; } catch (e) { return "light"; } }
+var THEMES = { light: ["☀", "Thème clair (blanc). Cliquer pour passer au thème sombre."], dark: ["☾", "Thème sombre. Cliquer pour passer au réglage automatique."], auto: ["Auto", "Suit le réglage de l’ordinateur. Cliquer pour passer au thème clair."] };
+var SUITE_THEME = { light: "dark", dark: "auto", auto: "light" };
+function appliquerTheme(t) {
+  if (!THEMES[t]) t = "light";
+  try { localStorage.setItem("zen-theme", t); } catch (e) {}
+  if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t);
+  document.querySelectorAll("[data-theme-cycle]").forEach(function (b) { b.textContent = THEMES[t][0]; b.title = THEMES[t][1]; b.setAttribute("aria-label", THEMES[t][1]); });
+}
+document.querySelectorAll("[data-theme-cycle]").forEach(function (b) { b.addEventListener("click", function () { appliquerTheme(SUITE_THEME[themeChoisi()]); }); });
+appliquerTheme(themeChoisi());
+ajCharger();
 
 demarrer();
 </script>

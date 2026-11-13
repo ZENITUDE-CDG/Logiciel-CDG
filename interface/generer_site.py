@@ -12,15 +12,22 @@ from decimal import Decimal
 import os
 import sys
 import tempfile
-from datetime import datetime
+from datetime import date, datetime
 
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RACINE)
 
-from zenitude.config import controles as c, couverture, publication  # noqa: E402
+from zenitude.config import controles as c, couverture, formules, publication  # noqa: E402
 from zenitude.config.versions import Depot  # noqa: E402
 from zenitude.kpi import moteur  # noqa: E402
 from zenitude.kpi.mesures import Source, bornes, charger_exploitation, liste_mois, libelle_mois  # noqa: E402
+
+date_min = date.min
+
+
+def date_debut(mois):
+    return date(int(mois[:4]), int(mois[5:7]), 1)
+
 
 DEMO = os.path.join(RACINE, "interface", "demo")
 GABARIT = os.path.join(RACINE, "interface", "gabarit.html")
@@ -225,6 +232,85 @@ def _sig(ecritures, dossiers, mois):
     return _tableau(LIGNES_SIG, ecritures, dossiers, mois, ("TAUX_EBE", "EBE", "VENTES_PROD"))
 
 
+LIBELLES_MESURES = {
+    "LN_VENDUES": "Logements-nuits vendus", "LN_DISPONIBLES": "Logements-nuits disponibles",
+    "NB_SEJOURS": "Séjours", "NUITEES_CLIENTS": "Nuitées clients", "COUVERTS_PDJ": "Couverts petit-déjeuner",
+}
+
+
+def _lignes_exportees(lignes):
+    """Lignes d'un tableau de gestion avec leur règle (préfixes de comptes ou termes d'un total),
+    pour que la page recalcule le tableau quand des ajustements existent (lot 9)."""
+    out = []
+    for code, libelle, regle, sens, niveau in lignes:
+        r = {"prefixes": list(regle)} if isinstance(regle, list) else {"termes": [[sg, cd] for sg, cd in _termes(regle)]}
+        out.append({"code": code, "libelle": libelle, "niveau": niveau, "sens": sens, "regle": r})
+    return out
+
+
+def _libelles_pcg():
+    chemin = os.path.join(RACINE, "config_modele", "pcg_reference.csv")
+    out = {}
+    with open(chemin, encoding="utf-8") as fh:
+        for ligne in fh:
+            if ligne.startswith("#") or not ligne.strip():
+                continue
+            champs = ligne.rstrip("\n").split(";")
+            if len(champs) >= 2 and champs[0].isdigit():
+                out[champs[0]] = champs[1]
+    return out
+
+
+def _donnees_calcul(ecritures, exploitation, rubriques, residences):
+    """Données de base pour le calculateur d'ajustements de la page (lot 9, décision 0002).
+
+    Montants comptables en « crédit - débit » par dossier, mois et compte de classe 6 ou 7 (chaînes
+    à deux décimales). Le calculateur de la page ne fait que sommer ces montants et les passer dans les
+    mêmes règles que le moteur Python ; un test compare les deux (tests/test_site_ajustements.py).
+    """
+    mois_ecr = sorted({e["date"][:7] for e in ecritures})
+    mois_tous = liste_mois(mois_ecr[0], mois_ecr[-1])
+    compta, couverts = {}, {}
+    for e in ecritures:
+        d, m = e["dossier"], e["date"][:7]
+        couverts.setdefault(d, set()).add(m)
+        if e["compte"][:1] in ("6", "7"):
+            cell = compta.setdefault(d, {}).setdefault(m, {})
+            cell[e["compte"]] = cell.get(e["compte"], Decimal("0")) + Decimal(e["credit"] or 0) - Decimal(e["debit"] or 0)
+    compta = {d: {m: {k: str(v.quantize(Decimal("0.01"))) for k, v in cs.items()} for m, cs in ms.items()}
+              for d, ms in compta.items()}
+    expl = {}
+    for (d, m, mesure), v in exploitation.items():
+        expl.setdefault(d, {}).setdefault(m, {})[mesure] = str(v)
+    # Classement des comptes dans les agrégats de base : la page applique le préfixe le plus long.
+    # Les cas que la page ne sait pas rejouer (rubrique propre à un dossier, datée ou avec exceptions)
+    # bloquent la génération plutôt que de produire des chiffres différents du moteur.
+    regles = []
+    for r in rubriques:
+        if str(r.get("Statut") or "").strip() != "actif":
+            continue
+        pref = str(r.get("Préfixe ou plage de comptes") or "").strip()
+        ok = (str(r.get("Dossier Pennylane (ou * pour tous)") or "").strip() == "*" and pref.isdigit()
+              and not str(r.get("Exceptions (comptes exclus, séparés par ;)") or "").strip()
+              and r.get("Date de fin") in (None, "")
+              and (c._date(r.get("Date d'effet")) or date_min) <= date_debut(mois_tous[0]))
+        if not ok:
+            raise ValueError(f"Rubrique {r.get('Code rubrique')} : cas non géré par le calculateur de la page "
+                             "(dossier précis, plage, exceptions ou dates). Voir docs/decisions/0002.")
+        regles.append({"prefixe": pref, "agregat": str(r["Agrégat de base"]).strip()})
+    pcg = _libelles_pcg()
+    return {
+        "mois": mois_tous,
+        "compta": compta,
+        "couverts": {d: sorted(ms) for d, ms in couverts.items()},
+        "exploitation": expl,
+        "rubriques": regles,
+        "mesures_externes": [{"code": k, "libelle": v} for k, v in LIBELLES_MESURES.items()
+                             if any(k == x[2] for x in exploitation)],
+        "libelles_comptes": pcg,
+    }
+
+
 def _groupes_crees(feuille, residences):
     """Groupes actifs de l'onglet Groupes (manuels ou dynamiques)."""
     out = []
@@ -316,7 +402,8 @@ def construire(demo=DEMO):
     codes = [k for k in ORDRE_KPI if k in actifs] + sorted(k for k in actifs if k not in ORDRE_KPI)
     kpi_defs = [{"code": k, "nom": str(actifs[k].get("Nom") or ""), "formule": str(actifs[k].get("Formule") or ""),
                  "definition": str(actifs[k].get("Définition") or ""), "unite": str(actifs[k].get("Unité") or ""),
-                 "approbateur": str(actifs[k].get("Approbateur") or ""), "principal": k in ORDRE_KPI}
+                 "approbateur": str(actifs[k].get("Approbateur") or ""), "principal": k in ORDRE_KPI,
+                 "arbre": formules.arbre(str(actifs[k].get("Formule") or ""))}
                 for k in codes]
 
     # Compte de résultat (lot 5) : une publication par dossier sur son exercice
@@ -401,10 +488,11 @@ def construire(demo=DEMO):
         "residences": residences, "perimetres": perimetres, "periodes": periodes,
         "kpi": kpi_defs, "resultats": resultats, "finance": finance, "couverture": couv,
         "mois": mois_annee,
-        "lignes_ebitda": [{"code": c_, "libelle": l, "niveau": n, "sens": s_} for c_, l, _, s_, n in LIGNES_EBITDA],
+        "lignes_ebitda": _lignes_exportees(LIGNES_EBITDA),
         "ebitda": ebitda,
-        "lignes_sig": [{"code": c_, "libelle": l, "niveau": n, "sens": s_} for c_, l, _, s_, n in LIGNES_SIG],
+        "lignes_sig": _lignes_exportees(LIGNES_SIG),
         "sig": sig, "imports": imports, "journaux": journaux, "plan": plan,
+        "calcul": _donnees_calcul(ecritures, exploitation, f.get("Rubriques", []), residences),
         "versions": statut["versions"], "journal": statut["journal"],
     }
 

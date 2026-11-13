@@ -1,0 +1,5 @@
+# Dossiers Pennylane connus du logiciel - PHASE TEST uniquement, données fictives.
+# Remplacé par la liste issue du connecteur Pennylane une fois celui-ci développé.
+PENNY-1001
+PENNY-1002
+PENNY-1003

@@ -1,0 +1,40 @@
+# Référentiel de comptes du Plan comptable général (PCG, règlement ANC 2014-03).
+# Numéros et libellés de comptes généraux. Les sous-comptes et libellés détaillés doivent être
+# vérifiés contre l'extrait officiel du plan de comptes Pennylane avant tout usage réel.
+# Phase test : ce fichier sert uniquement à générer des écritures synthétiques.
+compte;libelle;classe;statut_verification
+401;Fournisseurs;4;à vérifier
+411;Clients;4;à vérifier
+512;Banques;5;à vérifier
+601;Achats stockés - matières premières;6;à vérifier
+602;Achats stockés - autres approvisionnements;6;à vérifier
+603;Variations des stocks;6;à vérifier
+604;Achats d'études et prestations de services;6;à vérifier
+606;Achats non stockés de matières et fournitures;6;à vérifier
+607;Achats de marchandises;6;à vérifier
+611;Sous-traitance générale;6;à vérifier
+613;Locations;6;à vérifier
+614;Charges locatives et de copropriété;6;à vérifier
+615;Entretien et réparations;6;à vérifier
+616;Primes d'assurance;6;à vérifier
+618;Divers;6;à vérifier
+6161;Assurances multirisques;6;à vérifier
+621;Personnel extérieur à l'entreprise;6;à vérifier
+622;Rémunérations d'intermédiaires et honoraires;6;à vérifier
+623;Publicité, publications, relations publiques;6;à vérifier
+624;Transports de biens et transports collectifs;6;à vérifier
+625;Déplacements, missions et réceptions;6;à vérifier
+626;Frais postaux et de télécommunications;6;à vérifier
+627;Services bancaires et assimilés;6;à vérifier
+628;Divers;6;à vérifier
+641;Rémunérations du personnel;6;à vérifier
+645;Charges de sécurité sociale et de prévoyance;6;à vérifier
+658;Charges diverses de gestion courante;6;à vérifier
+661;Charges d'intérêts;6;à vérifier
+681;Dotations aux amortissements, aux provisions et engagements;6;à vérifier
+706;Prestations de services;7;à vérifier
+707;Ventes de marchandises;7;à vérifier
+708;Produits des activités annexes;7;à vérifier
+709;Rabais, remises et ristournes accordés;7;à vérifier
+74;Subventions d'exploitation;7;à vérifier
+758;Produits divers de gestion courante;7;à vérifier

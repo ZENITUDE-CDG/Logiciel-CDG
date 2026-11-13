@@ -314,7 +314,7 @@ tr.cliquable { cursor:pointer; }
 .btn-theme { border:1px solid var(--bord); background:var(--surface); color:var(--txt); border-radius:8px; height:30px; min-width:30px; padding:0 8px; cursor:pointer; font-size:13px; font-weight:600; line-height:1; white-space:nowrap; }
 .btn-theme:hover { background:var(--survol); border-color:var(--bord-fort); }
 /* ---------- Lot 9 : réglette de période, ajustements ---------- */
-.zone-periode { max-width:1640px; margin:0 auto; padding:16px 24px 0; }
+.zone-periode { max-width:1640px; margin:0 auto; padding:16px 24px 10px; position:sticky; top:env(safe-area-inset-top,0px); z-index:18; background:var(--fond); }
 .reglette { background:var(--surface); border:1px solid var(--bord); border-radius:var(--rayon); padding:12px 16px 10px; }
 .reg-haut { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
 .reg-lib { font-size:13px; } .reg-lib b { color:var(--titre); font-size:14px; margin:0 4px; }
@@ -360,6 +360,85 @@ tr.cliquable { cursor:pointer; }
 @media (max-width:1650px) { .utilisateur .nom .u-mail { display:none; } }
 @media (max-width:760px) { .zone-periode { padding:12px 14px 0; } .champ-aj.large { grid-column:auto; } .reg-an { font-size:10px; } .reg-bulle { font-size:10px; padding:2px 6px; } }
 @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+
+/* ---------- Lot 10 : menu latéral réductible ---------- */
+.app { display:flex; min-height:100vh; }
+.principal { flex:1; min-width:0; }
+.lateral { position:sticky; top:0; align-self:flex-start; height:100vh; width:264px; flex-shrink:0; display:flex; flex-direction:column; gap:10px;
+  background:var(--surface); border-right:1px solid var(--bord); padding:calc(12px + env(safe-area-inset-top,0px)) 12px 12px; transition:width .18s ease; z-index:25; overflow:hidden; }
+.lat-tete { display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:40px; }
+.lat-reduire, .lat-burger { border:1px solid var(--bord); background:var(--surface); color:var(--mut); width:30px; height:30px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.lat-reduire:hover, .lat-burger:hover { background:var(--survol); color:var(--titre); }
+.lat-reduire svg { transition:transform .18s ease; }
+.lateral .perim-btn { min-width:0; max-width:none; width:100%; flex:none; }
+.lateral .perim-txt { min-width:0; flex:1; }
+.lateral .perim-btn .t2 { max-width:none; }
+.lat-nav { flex:1; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; gap:2px; padding:4px 0; margin:0 -4px; padding-inline:4px; }
+.lat-item { display:flex; align-items:center; gap:11px; width:100%; border:0; background:transparent; padding:9px 10px; border-radius:8px; cursor:pointer; text-align:left; font-weight:500; color:var(--mut); font-size:13.5px; white-space:nowrap; }
+.lat-item svg { flex-shrink:0; }
+.lat-item:hover { color:var(--titre); background:var(--survol); }
+.lat-item.actif { color:var(--titre); background:var(--entete); font-weight:600; }
+.lat-item.actif svg { color:var(--bleu-clair); }
+.lat-item .tag { margin-left:auto; font-size:10px; font-weight:600; padding:0 6px; border-radius:6px; background:var(--entete); color:var(--mut); }
+.lat-sous { display:flex; flex-direction:column; gap:1px; margin:2px 0 6px 20px; padding-left:12px; border-left:1px solid var(--bord); }
+.lat-sous button { border:0; background:none; text-align:left; padding:6px 10px; border-radius:6px; cursor:pointer; color:var(--mut); font-weight:500; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lat-sous button:hover { color:var(--titre); background:var(--survol); }
+.lat-sous button.actif { color:var(--titre); font-weight:600; background:var(--selection); }
+.lat-pied { border-top:1px solid var(--bord); padding-top:12px; display:flex; flex-direction:column; gap:10px; }
+.lat-pied .pill-test { align-self:flex-start; white-space:normal; }
+.lat-user { display:flex; align-items:center; gap:10px; min-width:0; }
+.lat-user .nom { min-width:0; font-size:12px; line-height:1.3; }
+.lat-user .nom b { display:block; font-size:12.5px; font-weight:600; color:var(--titre); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lat-user .nom span { display:block; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lat-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.lat-deco { display:flex; align-items:center; gap:7px; }
+.lat-deco:hover { text-decoration:none; }
+.barre-mobile { display:none; }
+.lat-voile { display:none; }
+.deroulant { position:fixed; top:auto; }
+/* Menu réduit : icônes seules */
+.app.reduit .lateral { width:68px; }
+.app.reduit .lat-txt, .app.reduit .lat-sous { display:none; }
+.app.reduit .lat-tete { flex-direction:column; align-items:center; gap:8px; }
+.app.reduit .bouton-zenitude { padding:2px; }
+.app.reduit .bouton-zenitude img { display:none; }
+.app.reduit .bouton-zenitude::before { content:"Z"; width:34px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; color:var(--bleu-fonce); border-bottom:3px solid var(--orange); }
+.app.reduit .lat-reduire svg { transform:rotate(180deg); }
+.app.reduit .perim-btn { justify-content:center; padding:5px; min-width:0; }
+.app.reduit .lat-item { justify-content:center; padding:10px 0; }
+.app.reduit .lat-user { justify-content:center; }
+.app.reduit .lat-actions { flex-direction:column; }
+/* Mobile : le menu devient un tiroir */
+@media (max-width:900px) {
+  .lateral { position:fixed; left:0; top:0; bottom:0; width:280px; transform:translateX(-102%); transition:transform .2s ease; box-shadow:var(--ombre-pop); }
+  .app.menu-ouvert .lateral { transform:none; }
+  .app.menu-ouvert .lat-voile { display:block; position:fixed; inset:0; background:rgba(20,35,45,.35); z-index:22; }
+  .app.reduit .lateral { width:280px; }
+  .app.reduit .lat-txt { display:revert; } .app.reduit .lat-sous { display:flex; }
+  .app.reduit .lat-tete { flex-direction:row; } .app.reduit .bouton-zenitude img { display:block; width:104px; height:auto; } .app.reduit .bouton-zenitude::before { content:none; }
+  .app.reduit .perim-btn { justify-content:flex-start; padding:5px 10px 5px 6px; }
+  .app.reduit .lat-item { justify-content:flex-start; padding:9px 10px; }
+  .app.reduit .lat-actions { flex-direction:row; }
+  .lat-reduire { display:none; }
+  .barre-mobile { display:flex; align-items:center; gap:12px; position:sticky; top:env(safe-area-inset-top,0px); z-index:20; background:var(--surface); border-bottom:1px solid var(--bord); padding:8px 14px; }
+  .barre-mobile b { color:var(--titre); font-size:14px; }
+  .zone-periode { top:calc(env(safe-area-inset-top,0px) + 50px); }
+}
+/* Page Résidence */
+.fiche-grille { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; align-items:start; }
+.fiche-grille .bloc { margin-bottom:0; }
+.fiche-grille .large { grid-column:1 / -1; }
+@media (max-width:1100px) { .fiche-grille { grid-template-columns:1fr; } }
+dl.fiche { display:grid; grid-template-columns:minmax(120px,170px) 1fr; gap:9px 16px; margin:0; font-size:13px; }
+dl.fiche dt { color:var(--mut); } dl.fiche dd { margin:0; color:var(--txt); font-weight:500; word-break:break-word; }
+.puces { display:flex; flex-wrap:wrap; gap:6px; }
+.puce { font-size:12px; padding:3px 10px; border-radius:20px; background:var(--entete); color:var(--txt); border:1px solid var(--bord); }
+.puce small { color:var(--mut); margin-left:4px; }
+.tab tr.clic { cursor:pointer; } .tab tr.clic:hover td { background:var(--survol); }
+.kpi-mini { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.kpi-mini div { background:var(--entete); border-radius:8px; padding:10px 12px; }
+.kpi-mini .n { display:block; font-size:11.5px; color:var(--mut); } .kpi-mini .v { display:block; font-size:17px; font-weight:600; color:var(--titre); margin-top:2px; }
+.kpi-mini .nc .v { font-size:12.5px; color:var(--mut); font-weight:500; }
 </style>
 </head>
 <body>
@@ -408,33 +487,47 @@ tr.cliquable { cursor:pointer; }
 
 <!-- 3. Application -->
 <section id="ecran-app" class="ecran" aria-label="Pilotage">
-  <header class="barre">
-    <div class="barre-1" style="position:relative">
-      <button class="bouton-zenitude" id="btn-zenitude" title="Liste des résidences et des groupes"><img src="__LOGO__" alt="Zenitude : retour à la liste des périmètres"></button>
-      <button class="perim-btn" id="btn-perim" aria-haspopup="true" aria-expanded="false">
-        <span class="ico" id="perim-ico"></span>
-        <span><span class="t1">Périmètre</span><span class="t2" id="perim-nom"></span></span>
-        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-      </button>
-      <div class="deroulant" id="deroulant" role="dialog" aria-label="Changer de périmètre">
-        <div class="rech"><input type="search" id="der-rech" placeholder="Rechercher…" aria-label="Rechercher un périmètre"></div>
-        <div class="liste" id="der-liste"></div>
-        <div class="pied"><button class="lien" id="der-tous">Voir la liste complète</button></div>
+  <div class="app" id="app">
+    <aside class="lateral" id="lateral" aria-label="Menu principal">
+      <div class="lat-tete">
+        <button class="bouton-zenitude" id="btn-zenitude" title="Liste des résidences et des groupes"><img src="__LOGO__" alt="Zenitude : retour à la liste des périmètres"></button>
+        <button class="lat-reduire" id="btn-reduire" aria-label="Réduire le menu" aria-expanded="true" title="Réduire le menu">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
-      <span class="sep"></span>
-      <nav class="nav-principale" aria-label="Sections">
-        <button data-section="tableaux">Tableaux de bord</button>
-        <button data-section="ajustements">Ajustements</button>
-        <button data-section="import">Import et paramètres</button>
-        <button data-section="budgets" data-avenir>Budgets <span class="tag">à venir</span></button>
-        <button data-section="rapports" data-avenir>Rapports <span class="tag">à venir</span></button>
-      </nav>
-      <div class="utilisateur"><button class="btn-theme" data-theme-cycle aria-label="Thème d’affichage" title="Thème d’affichage"></button><span class="pill-test" title="Données fictives calculées par le moteur du logiciel">Phase test, données fictives</span><div class="nom"><b class="u-nom"></b><span class="u-mail mut"></span></div><div class="avatar u-ini"></div><button class="lien" data-deconnexion>Se déconnecter</button></div>
+      <button class="perim-btn" id="btn-perim" aria-haspopup="true" aria-expanded="false" title="Changer de périmètre">
+        <span class="ico" id="perim-ico"></span>
+        <span class="lat-txt perim-txt"><span class="t1">Périmètre</span><span class="t2" id="perim-nom"></span></span>
+        <svg class="lat-txt" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      </button>
+      <nav class="lat-nav" id="lat-nav" aria-label="Sections"></nav>
+      <div class="lat-pied">
+        <span class="pill-test lat-txt" title="Données fictives calculées par le moteur du logiciel">Phase test, données fictives</span>
+        <div class="lat-user">
+          <div class="avatar u-ini"></div>
+          <div class="nom lat-txt"><b class="u-nom"></b><span class="u-mail mut"></span></div>
+        </div>
+        <div class="lat-actions">
+          <button class="btn-theme" data-theme-cycle aria-label="Thème d’affichage" title="Thème d’affichage"></button>
+          <button class="lien lat-deco" data-deconnexion title="Se déconnecter"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2H3.5A1.5 1.5 0 002 3.5v9A1.5 1.5 0 003.5 14H6M10.5 11.5L14 8l-3.5-3.5M14 8H6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lat-txt">Se déconnecter</span></button>
+        </div>
+      </div>
+    </aside>
+    <div class="deroulant" id="deroulant" role="dialog" aria-label="Changer de périmètre">
+      <div class="rech"><input type="search" id="der-rech" placeholder="Rechercher…" aria-label="Rechercher un périmètre"></div>
+      <div class="liste" id="der-liste"></div>
+      <div class="pied"><button class="lien" id="der-tous">Voir la liste complète</button></div>
     </div>
-    <nav class="barre-2" id="sous-onglets" aria-label="Pages"></nav>
-  </header>
-  <div id="zone-periode" class="zone-periode" style="display:none"></div>
-  <main class="contenu" id="contenu"></main>
+    <div class="lat-voile" id="lat-voile"></div>
+    <div class="principal">
+      <div class="barre-mobile">
+        <button class="lat-burger" id="btn-burger" aria-label="Ouvrir le menu"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        <b id="titre-mobile"></b>
+      </div>
+      <div id="zone-periode" class="zone-periode" style="display:none"></div>
+      <main class="contenu" id="contenu"></main>
+    </div>
+  </div>
 </section>
 
 <script>
@@ -444,8 +537,18 @@ var SOUS = {
   tableaux: [["synthese", "Synthèse d’activité"], ["indicateurs", "Indicateurs hôteliers"], ["resultat", "Compte de résultat"], ["controle", "Contrôle des données"]],
   ajustements: [["provisions", "Comptes et provisions"], ["ecarts", "Écarts Réel → Ajusté"]],
   import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
+  residence: [["residence", "Résidence"]],
   budgets: [["budgets", "Budgets"]], rapports: [["rapports", "Rapports"]]
 };
+/* Menu latéral : ordre, libellés et icônes (lot 10) */
+var MENU = [
+  ["tableaux", "Tableaux de bord", "M3 3v14h14M7 13V9m4 4V6m4 7v-4"],
+  ["residence", "Résidence", "M4 17V4.5L10 3l6 1.5V17M2.5 17h15M8 7.5h1.5M11 7.5h1.5M8 11h1.5M11 11h1.5M9 17v-3h2v3"],
+  ["ajustements", "Ajustements", "M4 5h7M15 5h1M4 10h2M10 10h6M4 15h9M17 15h-1M11 3.5v3M7 8.5v3M14 13.5v3"],
+  ["import", "Import et paramètres", "M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M3.5 13.5v2A1.5 1.5 0 005 17h10a1.5 1.5 0 001.5-1.5v-2"],
+  ["budgets", "Budgets", "M3 6.5A1.5 1.5 0 014.5 5h11A1.5 1.5 0 0117 6.5v7a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 13.5zM3 8.5h14M6.5 12h2", true],
+  ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6", true]
+];
 var iDefaut = D.calcul.mois.indexOf(D.meta.periode_defaut);
 var etat = { utilisateur: null, perim: null, section: "tableaux", page: "synthese", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null };
 var principaux = D.kpi.filter(function (k) { return k.principal; });
@@ -519,21 +622,48 @@ function dessinerChoix() {
   document.querySelectorAll("#ecran-choix [data-p]").forEach(function (b) { b.addEventListener("click", function () { choisir(b.dataset.p); }); });
 }
 el("choix-rech").addEventListener("input", dessinerChoix);
-function choisir(id) { etat.perim = id; session("perim", id); fermerDeroulant(); if (!el("ecran-app").classList.contains("visible")) ouvrirApp(); else rendre(); }
+function choisir(id) { etat.perim = id; session("perim", id); fermerDeroulant(); fermerTiroir(); if (!el("ecran-app").classList.contains("visible")) ouvrirApp(); else rendre(); }
 
 /* ---------- Application ---------- */
 function ouvrirApp() { montrer("ecran-app"); rendre(); }
 el("btn-zenitude").addEventListener("click", function () { fermerDeroulant(); ouvrirChoix(); });
-document.querySelectorAll(".nav-principale button").forEach(function (b) { b.addEventListener("click", function () {
-  etat.section = b.dataset.section; etat.page = SOUS[etat.section][0][0]; etat.brouillon = null; rendre(); }); });
+/* Menu latéral : réduction (mémorisée dans le navigateur) et tiroir sur mobile */
+function menuReduit() { try { return localStorage.getItem("zen-menu-reduit") === "1"; } catch (e) { return false; } }
+function appliquerMenu(reduit) {
+  el("app").classList.toggle("reduit", reduit);
+  var b = el("btn-reduire"); b.setAttribute("aria-expanded", String(!reduit));
+  b.title = reduit ? "Agrandir le menu" : "Réduire le menu"; b.setAttribute("aria-label", b.title);
+  try { localStorage.setItem("zen-menu-reduit", reduit ? "1" : "0"); } catch (e) {}
+  fermerDeroulant();
+}
+function fermerTiroir() { el("app").classList.remove("menu-ouvert"); }
+el("btn-reduire").addEventListener("click", function () { appliquerMenu(!el("app").classList.contains("reduit")); });
+el("btn-burger").addEventListener("click", function (e) { e.stopPropagation(); el("app").classList.add("menu-ouvert"); });
+el("lat-voile").addEventListener("click", fermerTiroir);
+function allerA(section, page) { etat.section = section; etat.page = page || SOUS[section][0][0]; etat.brouillon = null; fermerTiroir(); rendre(); }
+function dessinerMenu() {
+  var h = "";
+  MENU.forEach(function (m) {
+    var sec = m[0], actif = etat.section === sec, sous = SOUS[sec];
+    h += '<button class="lat-item' + (actif ? " actif" : "") + '" data-section="' + sec + '" title="' + esc(m[1]) + '"' + (actif ? ' aria-current="page"' : "") + '>' +
+      '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="' + m[2] + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '<span class="lat-txt">' + esc(m[1]) + "</span>" + (m[3] ? '<span class="tag lat-txt">à venir</span>' : "") + "</button>";
+    if (actif && sous.length > 1) h += '<div class="lat-sous">' + sous.map(function (x) {
+      return '<button data-section="' + sec + '" data-page="' + x[0] + '" class="' + (x[0] === etat.page ? "actif" : "") + '">' + esc(x[1]) + "</button>"; }).join("") + "</div>";
+  });
+  el("lat-nav").innerHTML = h;
+  el("lat-nav").querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () { allerA(b.dataset.section, b.dataset.page); }); });
+}
 
 function ouvrirDeroulant() { el("deroulant").classList.add("ouvert"); el("btn-perim").setAttribute("aria-expanded", "true");
-  el("deroulant").style.left = el("btn-perim").offsetLeft + "px"; el("der-rech").value = ""; dessinerDeroulant(); el("der-rech").focus(); }
+  var r = el("btn-perim").getBoundingClientRect(), reduit = el("app").classList.contains("reduit") && window.innerWidth > 900;
+  el("deroulant").style.left = Math.max(12, reduit ? r.right + 14 : r.left) + "px";
+  el("deroulant").style.top = Math.max(12, reduit ? r.top : r.bottom + 6) + "px"; el("der-rech").value = ""; dessinerDeroulant(); el("der-rech").focus(); }
 function fermerDeroulant() { el("deroulant").classList.remove("ouvert"); el("btn-perim").setAttribute("aria-expanded", "false"); }
 el("btn-perim").addEventListener("click", function (e) { e.stopPropagation(); el("deroulant").classList.contains("ouvert") ? fermerDeroulant() : ouvrirDeroulant(); });
 el("deroulant").addEventListener("click", function (e) { e.stopPropagation(); });
 document.addEventListener("click", fermerDeroulant);
-document.addEventListener("keydown", function (e) { if (e.key === "Escape") fermerDeroulant(); });
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") { fermerDeroulant(); fermerTiroir(); } });
 el("der-rech").addEventListener("input", dessinerDeroulant);
 el("der-tous").addEventListener("click", function () { fermerDeroulant(); ouvrirChoix(); });
 function dessinerDeroulant() {
@@ -554,9 +684,9 @@ function dessinerDeroulant() {
 function rendre() {
   var p = perimetre(etat.perim);
   el("perim-nom").textContent = p.libelle; el("perim-ico").textContent = initiales(p);
-  document.querySelectorAll(".nav-principale button").forEach(function (b) { b.classList.toggle("actif", b.dataset.section === etat.section); });
-  el("sous-onglets").innerHTML = SOUS[etat.section].map(function (s) { return '<button data-page="' + s[0] + '" class="' + (s[0] === etat.page ? "actif" : "") + '">' + esc(s[1]) + "</button>"; }).join("");
-  el("sous-onglets").querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () { etat.page = b.dataset.page; etat.brouillon = null; rendre(); }); });
+  dessinerMenu();
+  var cur = SOUS[etat.section].find(function (x) { return x[0] === etat.page; });
+  el("titre-mobile").textContent = (cur ? cur[1] : "") + " · " + p.libelle;
   dessinerReglette(p);
   var f = PAGES[etat.page]; el("contenu").innerHTML = ""; f(p);
 }
@@ -1380,6 +1510,60 @@ PAGES.parametres = function () {
     D.journal.map(function (j) { return "<tr><td>" + esc(j.date.replace("T", " ")) + "</td><td>" + esc(j.action) + "</td><td>" + esc(j.auteur) + "</td><td>" + esc(j.detail) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
   el("contenu").innerHTML = h + '<p class="legende">Page générée le ' + esc(D.meta.genere_le) + ", empreinte de configuration <code>" + esc(D.meta.empreinte_config.slice(0, 12)) + "</code>.</p>";
 };
+/* ---------- Résidence (lot 10) : fiche complète d'une résidence ---------- */
+function ligneFiche(lib, val) { return "<dt>" + esc(lib) + "</dt><dd>" + (val ? esc(val) : '<span class="mut">Non renseigné</span>') + "</dd>"; }
+PAGES.residence = function (p) {
+  if (p.type !== "residence") {
+    var t = '<div class="bloc"><div class="bloc-tete"><h2>Résidences du périmètre</h2><span class="legende">Cliquez sur une résidence pour ouvrir sa fiche.</span></div><div class="defile"><table class="tab"><thead><tr>' +
+      "<th>Résidence</th><th>Code</th><th>Activité</th><th>Région</th><th>Société</th><th>Marque</th><th>Ouverture</th><th>Exercice en cours</th></tr></thead><tbody>";
+    p.dossiers.map(residence).forEach(function (r) {
+      t += '<tr class="clic" tabindex="0" data-p="' + esc(r.dossier) + '"><td><b>' + esc(r.nom) + "</b></td><td>" + esc(r.code) + "</td><td>" + esc(r.activite) + "</td><td>" + esc(r.region) +
+        "</td><td>" + esc(r.societe) + "</td><td>" + esc(r.marque) + "</td><td>" + (r.ouverture ? dateFr(r.ouverture) : "") + "</td><td>" + (r.exercice ? dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) : "") + "</td></tr>";
+    });
+    el("contenu").innerHTML = enTete("Résidence", p, "Choisissez une résidence pour afficher toutes ses informations") + t + "</tbody></table></div></div>";
+    el("contenu").querySelectorAll("tr[data-p]").forEach(function (tr) {
+      tr.addEventListener("click", function () { choisir(tr.dataset.p); });
+      tr.addEventListener("keydown", function (e) { if (e.key === "Enter") choisir(tr.dataset.p); });
+    });
+    return;
+  }
+  var d = p.id, r = residence(d), dm = D.meta.dernier_mois_importe;
+  var h = enTete("Fiche de la résidence", p, "Informations de référence, exercices, résultats et données disponibles") + '<div class="fiche-grille">';
+  /* Identité */
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Identité</h2></div><dl class="fiche">' +
+    ligneFiche("Nom", r.nom) + ligneFiche("Code interne", r.code) + ligneFiche("Dossier Pennylane", d) + ligneFiche("Société", r.societe) +
+    ligneFiche("Activité", r.activite) + ligneFiche("Région", r.region) + ligneFiche("Marque", r.marque) +
+    ligneFiche("Date d’ouverture", r.ouverture ? dateFr(r.ouverture) : "") + ligneFiche("Rattachée depuis", r.date_effet ? dateFr(r.date_effet) : "") + ligneFiche("Statut", r.statut) + "</dl></div>";
+  /* Indicateurs du dernier mois importé */
+  var kp = resultatFen([d], [dm], ajuste());
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Indicateurs, ' + esc(moisLong(dm)) + (ajuste() ? " (ajusté)" : " (réel)") + '</h2><span class="legende">Dernier mois importé</span></div><div class="kpi-mini">' +
+    principaux.map(function (k) { var v = kp[k.code];
+      return v && v.statut === "calculé" ? '<div><span class="n">' + esc(k.nom) + '</span><span class="v">' + esc(v.affichage) + "</span></div>"
+        : '<div class="nc"><span class="n">' + esc(k.nom) + '</span><span class="v" title="' + esc(v ? v.motif : "") + '">Non calculable</span></div>'; }).join("") + "</div></div>";
+  /* Exercices */
+  var rangs = D.imports[d] || [];
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Exercices comptables</h2></div><div class="defile"><table class="tab"><thead><tr><th>Rang</th><th>Exercice</th><th>Période importée</th><th class="num">Écritures</th></tr></thead><tbody>' +
+    rangs.map(function (x) { return "<tr><td><b>" + x.rang + "</b></td><td>Du " + dateFr(x.debut) + " au " + dateFr(x.fin) + "</td><td>" +
+      (x.periode_importee ? dateFr(x.periode_importee[0]) + " au " + dateFr(x.periode_importee[1]) : '<span class="mut">aucune</span>') + '</td><td class="num">' + nb(x.ecritures) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  /* Résultat de l'exercice publié */
+  var fi = D.finance.find(function (x) { return x.dossier === d; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Résultat de l’exercice publié</h2>' + (fi ? '<span class="legende">Du ' + dateFr(fi.exercice.debut) + " au " + dateFr(fi.exercice.fin) + ", " + fi.exercice.duree_mois + " mois, " + esc(fi.statut) + "</span>" : "") + "</div>" +
+    (fi ? '<dl class="fiche">' + ligneFiche("CA hébergement", eur(fi.resultat.CA_HEBERGEMENT)) + ligneFiche("CA services", eur(fi.resultat.CA_SERVICES)) + ligneFiche("Charges (classe 6)", eur(fi.resultat.PL_CHARGES)) + ligneFiche("Résultat", eur(fi.resultat.RESULTAT)) + "</dl>"
+      : '<p class="mut">Aucune publication pour cette résidence.</p>') + "</div>";
+  /* Appartenances */
+  var ap = D.perimetres.filter(function (x) { return x.type !== "residence" && x.type !== "groupe" && x.dossiers.indexOf(d) >= 0; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Groupes et regroupements</h2></div><div class="puces"><span class="puce">Groupe Zenitude</span>' +
+    ap.map(function (x) { return '<span class="puce">' + esc(x.libelle) + "<small>" + esc(TYPES[x.type] || "") + "</small></span>"; }).join("") + "</div></div>";
+  /* Ajustements */
+  var ajs = ajActifs().filter(function (a) { return ajPourDossier(a, d); });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Ajustements actifs</h2></div>' + (ajs.length ?
+    '<div class="defile"><table class="tab"><thead><tr><th>Libellé</th><th>Compte</th></tr></thead><tbody>' + ajs.map(function (a) { return "<tr><td>" + esc(a.libelle) + "</td><td><code>" + esc(a.compte) + "</code></td></tr>"; }).join("") + "</tbody></table></div>"
+    : '<p class="mut">Aucun ajustement ou provision actif pour cette résidence.</p>') + "</div>";
+  /* Couverture des données */
+  h += '<div class="bloc large"><div class="bloc-tete"><h2>Données disponibles, ' + D.meta.annee + '</h2><span class="legende">Comptabilité et exploitation, mois par mois</span></div>' + grilleCouverture(p, true) + "</div>";
+  el("contenu").innerHTML = h + "</div>";
+};
+
 PAGES.budgets = function (p) { el("contenu").innerHTML = enTete("Budgets", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Saisie et import des budgets par résidence. Il alimentera les colonnes Projection des tableaux EBITDA et SIG.</p></div>'; };
 PAGES.rapports = function (p) { el("contenu").innerHTML = enTete("Rapports", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Plaquettes PDF et présentations par résidence ou par groupe.</p></div>'; };
 
@@ -1396,6 +1580,7 @@ function appliquerTheme(t) {
 document.querySelectorAll("[data-theme-cycle]").forEach(function (b) { b.addEventListener("click", function () { appliquerTheme(SUITE_THEME[themeChoisi()]); }); });
 appliquerTheme(themeChoisi());
 ajCharger();
+appliquerMenu(menuReduit());
 
 demarrer();
 </script>

@@ -261,6 +261,13 @@ def _libelles_pcg():
     return out
 
 
+def _date_iso(v):
+    """Date du référentiel en AAAA-MM-JJ, ou chaîne vide si absente."""
+    if v is None or v == "":
+        return ""
+    return v.date().isoformat() if hasattr(v, "date") else (v.isoformat() if hasattr(v, "isoformat") else str(v)[:10])
+
+
 def _donnees_calcul(ecritures, exploitation, rubriques, residences):
     """Données de base pour le calculateur d'ajustements de la page (lot 9, décision 0002).
 
@@ -371,6 +378,9 @@ def construire(demo=DEMO):
         debut, fin = exercices.get(dossier, (None, None))
         residences.append({"dossier": dossier, "code": str(r.get("Identifiant interne") or "").strip(), "nom": str(r["Nom de la résidence"]).strip(),
                            "activite": str(r["Activité"]).strip(), "region": str(r.get("Région") or "").strip(),
+                           "societe": str(r.get("Société") or "").strip(), "marque": str(r.get("Marque") or "").strip(),
+                           "ouverture": _date_iso(r.get("Date d'ouverture")), "date_effet": _date_iso(r.get("Date d'effet")),
+                           "statut": str(r.get("Statut") or "").strip(),
                            "exercice": [debut.isoformat(), fin.isoformat()] if debut else None})
     residences.sort(key=lambda x: x["nom"])
 

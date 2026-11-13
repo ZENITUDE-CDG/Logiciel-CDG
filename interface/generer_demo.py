@@ -2,7 +2,9 @@
 
 Distinct des fixtures de test (tests/fixtures), qui ne sont pas modifiées.
 Produit dans interface/demo/ :
-  - ecritures.csv  : écritures équilibrées d'octobre 2025 à décembre 2026 ;
+  - ecritures.csv  : écritures équilibrées d'octobre 2025 à décembre 2026, avec tiers, lettrage et
+                     échéance sur les comptes clients et fournisseurs, règlements bancaires fictifs
+                     jusqu'à octobre 2026 et à-nouveaux (lot 11) ;
   - exercices.csv  : exercice en cours de chaque dossier (octobre-septembre ou janvier-décembre) ;
   - mesures.csv    : mesures d'exploitation mensuelles ; une valeur volontairement absente
                      (Le Belvédère, LN_VENDUES, août 2026) pour montrer « non calculable » ;
@@ -16,7 +18,7 @@ import csv
 import os
 import random
 import sys
-from datetime import date
+from datetime import date, timedelta
 
 from openpyxl import load_workbook
 
@@ -56,6 +58,101 @@ def saison(activite, m):
     if activite == "Étudiants":
         return {7: 0.55, 8: 0.5, 9: 1.05}.get(m, 1.06)
     return 1.0
+
+DERNIER_REGLEMENT = date(2026, 10, 31)
+# tiers fictifs : code, délai d'échéance en jours, délai de règlement observé (min, max) en jours
+CLIENTS_DEMO = [("CLI001", 30, (3, 55)), ("CLI002", 45, (25, 85)), ("CLI003", 30, (5, 40))]
+FOURNISSEURS_DEMO = [("FOU001", 45, (20, 70)), ("FOU002", 30, (15, 55)), ("FOU003", 30, (10, 50)),
+                     ("FOU004", 60, (30, 90)), ("FOU005", 30, (15, 60)), ("FOU006", 45, (20, 75))]
+SANS_ECHEANCE = "DEMO-2008"  # échéance non exportée pour ce dossier : « échéance inconnue » en mode pièce
+AN_CREANCE = {"DEMO-2001", "DEMO-2004", "DEMO-2006"}
+AN_DETTE = {"DEMO-2002", "DEMO-2005"}
+
+
+def ajouter_tresorerie(ecr, rng):
+    """Lot 11 : tiers, lettrage, échéance, règlements bancaires et à-nouveaux (données fictives).
+
+    Générateur aléatoire distinct : les écritures de classes 6 et 7 ne changent pas. Les règlements sont
+    datés au plus du 31 octobre 2026 (dernier mois importé) ; une pièce non réglée à cette date reste
+    non lettrée."""
+    for l in ecr:
+        l.extend(["", "", ""])  # tiers, lettrage, echeance
+    base = list(ecr)
+    nouvelles, lettre, piece_bq = [], {}, {}
+
+    def reglement(l, sens, tiers, delai, regl):
+        d0 = date.fromisoformat(l[2])
+        dossier = l[0]
+        code = None
+        age = (DERNIER_REGLEMENT - d0).days
+        proba_impaye = 0.12 if tiers in ("CLI002", "FOU004") else 0.07
+        pay = d0 + timedelta(days=rng.randint(*regl))
+        if pay > DERNIER_REGLEMENT or rng.random() < proba_impaye * (1.0 if age > 90 else 0.0):
+            return
+        lettre[dossier] = lettre.get(dossier, 0) + 1
+        piece_bq[dossier] = piece_bq.get(dossier, 0) + 1
+        code = f"L{lettre[dossier]:05d}"
+        l[10] = code
+        montant = l[7] or l[8]
+        num = f"BQ{piece_bq[dossier]:05d}"
+        compte_t = l[5]
+        if sens == "client":
+            nouvelles.append([dossier, l[1], pay.isoformat(), "BQ", num, "512", f"Encaissement {tiers} (fictif)", montant, "", "", "", ""])
+            nouvelles.append([dossier, l[1], pay.isoformat(), "BQ", num, compte_t, f"Encaissement {tiers} (fictif)", "", montant, tiers, code, ""])
+        else:
+            nouvelles.append([dossier, l[1], pay.isoformat(), "BQ", num, compte_t, f"Règlement {tiers} (fictif)", montant, "", tiers, code, ""])
+            nouvelles.append([dossier, l[1], pay.isoformat(), "BQ", num, "512", f"Règlement {tiers} (fictif)", "", montant, "", "", ""])
+
+    for l in base:
+        if l[3] not in ("VT", "HA"):
+            continue
+        if l[5] == "411" and l[7]:
+            tiers, delai, regl = rng.choice(CLIENTS_DEMO)
+            sens = "client"
+        elif l[5] == "401" and l[8]:
+            tiers, delai, regl = rng.choice(FOURNISSEURS_DEMO)
+            sens = "fournisseur"
+        else:
+            continue
+        l[9] = tiers
+        l[11] = "" if l[0] == SANS_ECHEANCE else (date.fromisoformat(l[2]) + timedelta(days=delai)).isoformat()
+        reglement(l, sens, tiers, delai, regl)
+
+    # À-nouveaux : trésorerie d'ouverture, créances et dettes antérieures à l'import
+    for dossier in sorted({l[0] for l in base}):
+        lignes_d = [l for l in base if l[0] == dossier]
+        exercice = lignes_d[0][1]
+        ca_moyen = sum(float(l[7]) for l in lignes_d if l[5] == "411" and l[7]) / 15
+        y = round(ca_moyen * 0.12, -2) if dossier in AN_CREANCE else 0
+        z = round(ca_moyen * 0.10, -2) if dossier in AN_DETTE else 0
+        flux = sorted((l[2], float(l[7] or 0) - float(l[8] or 0)) for l in lignes_d + [n for n in nouvelles if n[0] == dossier]
+                      if l[5] == "512")
+        cum, mini = 0.0, 0.0
+        for _, v in flux:
+            cum += v
+            mini = min(mini, cum)
+        x = max(round(ca_moyen * rng.uniform(0.7, 1.3), -2), round(15000 - mini, -2))
+        num = "AN00001"
+        ech_an = "" if dossier == SANS_ECHEANCE else "2025-09-20"
+        lignes_an = [[dossier, exercice, "2025-10-01", "AN", num, "512", "Trésorerie d'ouverture (fictif)", f"{x:.2f}", "", "", "", ""]]
+        if y:
+            code_an = ""
+            if dossier == "DEMO-2001":  # une créance d'ouverture réglée en décembre 2025
+                lettre[dossier] = lettre.get(dossier, 0) + 1
+                piece_bq[dossier] = piece_bq.get(dossier, 0) + 1
+                code_an = f"L{lettre[dossier]:05d}"
+                nb = f"BQ{piece_bq[dossier]:05d}"
+                nouvelles.append([dossier, exercice, "2025-12-12", "BQ", nb, "512", "Encaissement CLI900 (fictif)", f"{y:.2f}", "", "", "", ""])
+                nouvelles.append([dossier, exercice, "2025-12-12", "BQ", nb, "411", "Encaissement CLI900 (fictif)", "", f"{y:.2f}", "CLI900", code_an, ""])
+            lignes_an.append([dossier, exercice, "2025-10-01", "AN", num, "411", "Créance d'ouverture (fictif)", f"{y:.2f}", "", "CLI900", code_an, ech_an])
+        if z:
+            lignes_an.append([dossier, exercice, "2025-10-01", "AN", num, "401", "Dette d'ouverture (fictif)", "", f"{z:.2f}", "FOU900", "", ech_an])
+        lignes_an.append([dossier, exercice, "2025-10-01", "AN", num, "106", "Réserves d'ouverture (fictif)", "", f"{x + y - z:.2f}", "", "", ""])
+        nouvelles = lignes_an + nouvelles
+    # Un règlement client reçu et non affecté (acompte) pour montrer les crédits non lettrés
+    nouvelles.append(["DEMO-2006", "2025-10-01/2026-09-30", "2026-09-10", "BQ", "BQ99001", "512", "Acompte reçu (fictif)", "5000.00", "", "", "", ""])
+    nouvelles.append(["DEMO-2006", "2025-10-01/2026-09-30", "2026-09-10", "BQ", "BQ99001", "411", "Acompte reçu (fictif)", "", "5000.00", "CLI001", "", ""])
+    return base + nouvelles
 
 
 def main(SORTIE=SORTIE):
@@ -116,7 +213,9 @@ def main(SORTIE=SORTIE):
             op("OD", "6811", "2813", "Dotation aux amortissements (fictif)", round(ca * rng2.uniform(0.03, 0.045), 2))
             if (dossier, m.month, m.year) == ("DEMO-2001", 7, 2026):
                 op("HA", "671", "401", "Pénalité (fictif)", 380.00)
-    entete_e = ["dossier", "exercice", "date", "journal", "piece", "compte", "libelle", "debit", "credit"]
+    ecr = ajouter_tresorerie(ecr, random.Random(GRAINE + 11))
+    entete_e = ["dossier", "exercice", "date", "journal", "piece", "compte", "libelle", "debit", "credit",
+                "tiers", "lettrage", "echeance"]
     for nom, entete, lignes in (("ecritures.csv", entete_e, ecr),
                                 ("exercices.csv", ["dossier", "debut", "fin", "duree_mois"], exe),
                                 ("mesures.csv", ["dossier", "mois", "mesure", "valeur", "source"], mes)):
@@ -126,7 +225,7 @@ def main(SORTIE=SORTIE):
             w.writerows(lignes)
 
     # Configuration de démonstration
-    comptes = sorted({l[5] for l in ecr})
+    comptes = sorted({l[5] for l in ecr if l[5][:1] in "67"})
     rub = lignes_rubriques(comptes)
     # Ventes de marchandises (lot 8) : rattachées à l'agrégat des services pour le compte de résultat publié
     rub.append(["CA-MARCH", "Ventes de marchandises (exemple)", "produit", "*", "707", "", "CA_SERVICES", 1,

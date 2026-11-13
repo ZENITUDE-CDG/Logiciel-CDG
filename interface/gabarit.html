@@ -264,6 +264,20 @@ table { border-collapse:collapse; width:100%; }
 .fin .vide-val { color:var(--faible); }
 .neg { color:var(--erreur) !important; }
 
+/* Compte de résultat PCG et trésorerie (lot 11) */
+.fin.cr { min-width:0; }
+.fin.cr th.ind, .fin.cr td.ind { white-space:normal; min-width:360px; }
+.fin.cr thead th { border-bottom:1px solid var(--bord-fort) !important; padding-bottom:8px !important; }
+.fin.cr thead th:not(.ind) { min-width:130px; }
+.fin.cr tr.titre td { text-align:left; font-weight:700; color:var(--bleu-fonce); background:var(--entete); font-size:11px; letter-spacing:.03em; text-transform:uppercase; border-bottom:0; padding-top:9px; }
+.fin.cr tr.memo td { font-style:italic; color:var(--faible); font-size:11.5px; }
+.fin.cr tr.memo td.ind { padding-left:26px; }
+.fin.cr td.nd { color:var(--faible); cursor:help; }
+.tab tbody tr[data-cr] { cursor:pointer; }
+.tab tbody tr.sel td { background:var(--selection); }
+.bloc .outils input[type="checkbox"] { margin-right:6px; vertical-align:-2px; }
+@media (max-width:760px) { .graphes[style] { grid-template-columns:1fr !important; } }
+
 /* Pastilles, cases */
 .pastille { display:inline-block; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:500; white-space:nowrap; }
 .pastille.ok { background:var(--ok-fond); color:var(--ok); }
@@ -535,6 +549,7 @@ var D = /*__DONNEES__*/null;
 var LOGO = "__LOGO__";
 var SOUS = {
   tableaux: [["synthese", "Synthèse d’activité"], ["indicateurs", "Indicateurs hôteliers"], ["resultat", "Compte de résultat"], ["controle", "Contrôle des données"]],
+  tresorerie: [["tr_position", "Position de trésorerie"], ["tr_creances", "Analyse des créances"], ["tr_dettes", "Analyse des dettes"]],
   ajustements: [["provisions", "Comptes et provisions"], ["ecarts", "Écarts Réel → Ajusté"]],
   import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
   residence: [["residence", "Résidence"]],
@@ -543,6 +558,7 @@ var SOUS = {
 /* Menu latéral : ordre, libellés et icônes (lot 10) */
 var MENU = [
   ["tableaux", "Tableaux de bord", "M3 3v14h14M7 13V9m4 4V6m4 7v-4"],
+  ["tresorerie", "Trésorerie", "M2.5 8L10 3.5 17.5 8M4.5 8.5v6M8 8.5v6M12 8.5v6M15.5 8.5v6M2.5 16.5h15"],
   ["residence", "Résidence", "M4 17V4.5L10 3l6 1.5V17M2.5 17h15M8 7.5h1.5M11 7.5h1.5M8 11h1.5M11 11h1.5M9 17v-3h2v3"],
   ["ajustements", "Ajustements", "M4 5h7M15 5h1M4 10h2M10 10h6M4 15h9M17 15h-1M11 3.5v3M7 8.5v3M14 13.5v3"],
   ["import", "Import et paramètres", "M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M3.5 13.5v2A1.5 1.5 0 005 17h10a1.5 1.5 0 001.5-1.5v-2"],
@@ -550,7 +566,7 @@ var MENU = [
   ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6", true]
 ];
 var iDefaut = D.calcul.mois.indexOf(D.meta.periode_defaut);
-var etat = { utilisateur: null, perim: null, section: "tableaux", page: "synthese", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null };
+var etat = { utilisateur: null, perim: null, section: "tableaux", page: "synthese", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null, delai: "30", crSel: null, crPerim: null, crTous: false };
 var principaux = D.kpi.filter(function (k) { return k.principal; });
 var MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 var MOIS_COURT = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
@@ -970,7 +986,8 @@ function libFenetre() {
   var f = fenetre(), a = moisCourt(f[0]), b = moisCourt(f[f.length - 1]);
   return f.length === 1 ? moisLong(f[0]) : a + " → " + b;
 }
-var PAGES_PERIODE = ["synthese", "indicateurs", "provisions", "ecarts"];
+var PAGES_PERIODE = ["synthese", "indicateurs", "provisions", "ecarts", "tr_position", "tr_creances", "tr_dettes"];
+var PAGES_SANS_VUE = ["tr_position", "tr_creances", "tr_dettes"];
 function raccourcis(p) {
   var iD = idxMois(D.meta.dernier_mois_importe), an = String(D.meta.annee), n = MOIS.length;
   var r = [["Dernier mois importé", iD, iD + 1], ["12 derniers mois", Math.max(0, iD - 11), iD + 1]];
@@ -1007,6 +1024,7 @@ function dessinerReglette(p) {
     '<div class="reg-import" style="left:' + ((iD + 1) / n * 100) + '%" title="Comptabilité importée jusqu’à ' + esc(moisLong(D.meta.dernier_mois_importe)) + '. Au-delà : projection."></div>' + grad +
     '<input type="range" id="reg-lo" min="0" max="' + n + '" step="1" aria-label="Début de la période"><input type="range" id="reg-hi" min="0" max="' + n + '" step="1" aria-label="Fin de la période">' +
     '<span class="reg-bulle" id="reg-b-lo"></span><span class="reg-bulle" id="reg-b-hi"></span></div></div>';
+  if (PAGES_SANS_VUE.indexOf(etat.page) >= 0) z.querySelector(".reg-vue").style.display = "none";
   var raccs = raccourcis(p);
   el("reg-lo").addEventListener("input", function () { var lo = Math.min(+this.value, etat.hi - 1); reglerFenetre(Math.max(0, lo), etat.hi); });
   el("reg-hi").addEventListener("input", function () { var hi = Math.max(+this.value, etat.lo + 1); reglerFenetre(etat.lo, Math.min(MOIS.length, hi)); });
@@ -1420,18 +1438,216 @@ PAGES.ecarts = function (p) {
   el("contenu").innerHTML = h + t + tr + "</tbody></table></div></div>" + '<p class="legende">Les publications figées (onglet Compte de résultat) ne changent pas : elles gardent les données de leur création.</p>';
 };
 
-/* ---------- Compte de résultat publié (lot 5) ---------- */
+/* ---------- Compte de résultat (lots 5 et 11) ---------- */
+/* Modèle du système de base du PCG (règlement ANC 2014-03 modifié par ANC 2022-06). Les montants viennent des
+   publications figées calculées par le moteur Python : la page les affiche et, pour un cumul de résidences ayant
+   le même exercice, les additionne poste par poste (en centimes), sans recalcul comptable. Les exercices
+   décalés ne sont jamais additionnés. */
+function cleExercice(f) { return f.exercice.debut + "/" + f.exercice.fin; }
+function optionsCR(p) {
+  var fs = D.finance.filter(function (f) { return p.dossiers.indexOf(f.dossier) >= 0; }), opts = [], parEx = {};
+  fs.forEach(function (f) { if (f.statut === "publié") (parEx[cleExercice(f)] = parEx[cleExercice(f)] || []).push(f); });
+  Object.keys(parEx).sort().forEach(function (k) {
+    if (parEx[k].length > 1) opts.push({ id: "cumul|" + k, lib: "Cumul des " + parEx[k].length + " résidences, exercice du " + dateFr(k.split("/")[0]) + " au " + dateFr(k.split("/")[1]), fs: parEx[k], cumul: true });
+  });
+  fs.forEach(function (f) { opts.push({ id: f.dossier, lib: f.nom, fs: [f], cumul: false }); });
+  return opts;
+}
+function sommeCR(fs) {
+  var lignes = {}, nc = null, ecart = 0;
+  fs.forEach(function (f) {
+    var cr = f.compte_resultat;
+    if (f.statut !== "publié") { nc = nc || (f.nom + " : " + (f.motif || "publication bloquée")); return; }
+    if (cr.statut !== "calculé") { nc = nc || (f.nom + " : " + (cr.motif || "compte de résultat non calculable")); return; }
+    Object.keys(cr.lignes).forEach(function (k) { lignes[k] = (lignes[k] || 0) + Math.round(+cr.lignes[k] * 100); });
+    ecart += Math.round(+cr.rapprochement.ecart * 100);
+  });
+  return nc ? { statut: "indisponible", motif: nc } : { statut: "calculé", lignes: lignes, ecart: ecart };
+}
+function tableauCR(S) {
+  var masques = 0, t = '<div class="defile"><table class="fin cr"><thead><tr><th class="ind">Poste</th><th>Exercice N</th><th title="Exercice précédent non disponible : écritures de N-1 non importées">Exercice N-1</th></tr></thead><tbody>';
+  D.cr_lignes.forEach(function (l) {
+    if (l.sens === "titre") { t += '<tr class="titre"><td colspan="3">' + esc(l.libelle) + "</td></tr>"; return; }
+    var v = S.lignes[l.code];
+    if (l.sens === "memo") { if (v) t += '<tr class="memo"><td class="ind">' + esc(l.libelle) + "</td><td>" + eur(v / 100) + '</td><td class="nd">n.d.</td></tr>'; return; }
+    if (l.niveau === 2 && !v && !etat.crTous) { masques++; return; }
+    t += '<tr class="n' + l.niveau + '"><td class="ind">' + esc(l.libelle) + '</td><td class="' + (v < 0 ? "neg" : "") + '">' + eur(v / 100) + '</td><td class="nd" title="Exercice précédent non disponible : écritures de N-1 non importées">n.d.</td></tr>';
+  });
+  return { html: t + "</tbody></table></div>", masques: masques };
+}
 PAGES.resultat = function (p) {
+  var opts = optionsCR(p);
+  if (etat.crPerim !== p.id || !opts.some(function (o) { return o.id === etat.crSel; })) { etat.crPerim = p.id; etat.crSel = opts.length ? opts[0].id : null; }
+  var sel = opts.find(function (o) { return o.id === etat.crSel; });
   var lignes = D.finance.filter(function (f) { return p.dossiers.indexOf(f.dossier) >= 0; });
-  var t = enTete("Compte de résultat publié", p, "Une publication par résidence, sur son exercice comptable") +
+  var h = enTete("Compte de résultat", p, "Une publication par résidence, sur son exercice comptable") +
     '<div class="bloc"><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Exercice</th><th class="num">CA hébergement</th><th class="num">CA services</th><th class="num">Charges</th><th class="num">Résultat</th><th>Statut</th></tr></thead><tbody>';
   lignes.forEach(function (f) {
-    if (f.statut !== "publié") { t += "<tr><td><b>" + esc(f.nom) + '</b></td><td colspan="5" class="nc-cell">' + esc(f.motif) + '</td><td><span class="pastille ko">bloqué</span></td></tr>'; return; }
-    t += "<tr><td><b>" + esc(f.nom) + "</b></td><td>" + dateFr(f.exercice.debut) + " au " + dateFr(f.exercice.fin) + '</td><td class="num">' + eur(f.resultat.CA_HEBERGEMENT) + '</td><td class="num">' + eur(f.resultat.CA_SERVICES) +
+    var actif = sel && !sel.cumul && sel.id === f.dossier, attr = ' data-cr="' + esc(f.dossier) + '" class="' + (actif ? "sel" : "") + '" title="Afficher le compte de résultat détaillé"';
+    if (f.statut !== "publié") { h += "<tr" + attr + "><td><b>" + esc(f.nom) + '</b></td><td colspan="5" class="nc-cell">' + esc(f.motif) + '</td><td><span class="pastille ko">bloqué</span></td></tr>'; return; }
+    h += "<tr" + attr + "><td><b>" + esc(f.nom) + "</b></td><td>" + dateFr(f.exercice.debut) + " au " + dateFr(f.exercice.fin) + '</td><td class="num">' + eur(f.resultat.CA_HEBERGEMENT) + '</td><td class="num">' + eur(f.resultat.CA_SERVICES) +
       '</td><td class="num">' + eur(f.resultat.PL_CHARGES) + '</td><td class="num"><b>' + eur(f.resultat.RESULTAT) + '</b></td><td><span class="pastille ok">publié</span></td></tr>';
   });
-  el("contenu").innerHTML = t + '</tbody></table></div><p class="legende">Instantané figé et vérifiable (version de configuration ' + esc(D.meta.version_config) + "). Les exercices décalés ne sont pas additionnés entre résidences.</p></div>";
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Instantané figé et vérifiable (version de configuration ' + esc(D.meta.version_config) + "). Les exercices décalés ne sont pas additionnés entre résidences.</p></div>";
+  if (sel) {
+    var S = sommeCR(sel.fs), f0 = sel.fs[0];
+    var sous = sel.cumul ? sel.lib : f0.statut === "publié" ? esc(sel.lib) + ", exercice du " + dateFr(f0.exercice.debut) + " au " + dateFr(f0.exercice.fin) + " (" + f0.exercice.duree_mois + " mois)" : esc(sel.lib);
+    h += '<div class="bloc"><div class="bloc-tete"><h2>Compte de résultat détaillé, ' + (sel.cumul ? esc(sel.lib) : sous) + '</h2><div class="outils">';
+    if (opts.length > 1) h += '<label for="cr-sel">Afficher <select id="cr-sel">' + opts.map(function (o) { return '<option value="' + esc(o.id) + '"' + (o.id === sel.id ? " selected" : "") + ">" + esc(o.lib) + "</option>"; }).join("") + "</select></label>";
+    h += '<label><input type="checkbox" id="cr-tous"' + (etat.crTous ? " checked" : "") + "> Tous les postes du modèle</label></div></div>";
+    if (S.statut !== "calculé") {
+      h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Compte de résultat non disponible.</b> ' + esc(S.motif) + ". Un compte de classe 6 ou 7 non classé bloque le compte de résultat : rien n’est affiché tant qu’il n’est pas classé, et les montants ne sont jamais complétés par zéro.</div></div>";
+    } else {
+      var T2 = tableauCR(S), res = S.lignes.RESULTAT;
+      h += T2.html;
+      h += '<p class="legende" style="margin:10px 0 0">' + (S.ecart === 0 ? '<span class="pastille ok">Rapprochement</span> Le résultat ci-dessus (' + eur(res / 100) + ") est identique à celui de la publication figée." :
+        '<span class="pastille att">Écart</span> Le résultat diffère de ' + eur(S.ecart / 100) + " du résultat publié : la publication ne reprend que le chiffre d’affaires et les charges de classe 6, pas les autres produits.") + "</p>";
+      var notes = ["Montants hors taxes, en euros, sans annualisation. Modèle : " + D.cr_reference + "."];
+      if (T2.masques) notes.push(T2.masques + " poste" + (T2.masques > 1 ? "s" : "") + " sans montant " + (T2.masques > 1 ? "sont masqués" : "est masqué") + " (case « Tous les postes du modèle »).");
+      notes.push("Exercice N-1 : non disponible, les écritures de l’exercice précédent ne sont pas importées (jamais remplacé par zéro).");
+      notes.push("Rattachements provisoires à valider par la direction financière : 708 et 709 (production vendue), 608 (achats de marchandises), 648 et 649 (cotisations sociales).");
+      h += '<p class="legende" style="margin:4px 0 0">' + notes.map(esc).join(" ") + "</p>";
+    }
+    h += "</div>";
+  }
+  el("contenu").innerHTML = h;
+  el("contenu").querySelectorAll("tr[data-cr]").forEach(function (b) { b.addEventListener("click", function () { etat.crSel = b.dataset.cr; majContenu(); }); });
+  var s = el("cr-sel"); if (s) s.addEventListener("change", function () { etat.crSel = s.value; majContenu(); });
+  var tg = el("cr-tous"); if (tg) tg.addEventListener("change", function () { etat.crTous = tg.checked; majContenu(); });
 };
+
+/* ---------- Trésorerie (lot 11) ---------- */
+/* Les agrégats par dossier et par arrêté viennent du moteur Python (zenitude/comptes/tresorerie.py) ; la page
+   les additionne sur le périmètre. Taux = somme des réglés / somme des facturés (jamais une moyenne de taux).
+   Une donnée absente (lettrage) rend l'indicateur non calculable, jamais égal à zéro. */
+var TR = D.tresorerie;
+var PAS_DE_VUE = ["tr_position", "tr_creances", "tr_dettes"];
+function arreteTreso() { var f = fenetre(), m = f[f.length - 1], dm = D.meta.dernier_mois_importe; return m > dm ? dm : m; }
+function moisTreso() { var a = arreteTreso(); return fenetre().filter(function (m) { return m <= a && TR.mois.indexOf(m) >= 0; }); }
+function vecSomme(v, w) { return v.map(function (x, i) { return x + (w[i] || 0); }); }
+function somme(v) { return v.reduce(function (s, x) { return s + x; }, 0); }
+function nomsDossiers(ds) { return ds.map(function (d) { return residence(d).nom; }).join(", "); }
+function eurC(c) { return eur(c / 100); }
+function kEur(v) { var a = Math.abs(v), s = a >= 1e6 ? (a / 1e6).toFixed(1).replace(".", ",") + " M" : a >= 1e3 ? Math.round(a / 1e3) + " k" : String(Math.round(a)); return (v < 0 ? "−" : "") + s; }
+function pct1(x) { return (x * 100).toFixed(1).replace(".", ",") + " %"; }
+function carte(nom, val, def, nc) {
+  return nc ? '<div class="indic nc"><div class="nom">' + esc(nom) + '</div><div class="val">Non calculable</div><div class="motif">' + esc(def) + "</div></div>" :
+    '<div class="indic"><div class="nom">' + esc(nom) + '</div><div class="val">' + val + '</div><div class="def">' + esc(def) + "</div></div>";
+}
+function blocNC(motif) { return '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Non calculable.</b> ' + esc(motif) + "</div></div>"; }
+function barres(titre, cats, series, opts) {
+  opts = opts || {};
+  var N = cats.length;
+  if (!N) return '<div class="graphe"><div class="gt"><b>' + esc(titre) + '</b></div><p class="legende" style="margin:10px 0">Aucun mois importé sur la période choisie.</p></div>';
+  var W = 520, H = 230, g = 46, d = 8, h = 18, b = 34, pas = (W - g - d) / N, empile = !!opts.empile;
+  var vals = [0];
+  series.forEach(function (x) { x.valeurs.forEach(function (v) { vals.push(v); }); });
+  if (empile) cats.forEach(function (c, i) { vals.push(series.reduce(function (s, x) { return s + Math.max(0, x.valeurs[i]); }, 0)); });
+  var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals); if (max === min) max = min + 1; max += (max - min) * 0.1;
+  var y = function (v) { return h + (H - h - b) * (1 - (v - min) / (max - min)); };
+  var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(titre) + '">';
+  for (var t = 0; t <= 3; t++) { var vv = min + (max - min) * t / 3;
+    s += '<line x1="' + g + '" x2="' + (W - d) + '" y1="' + y(vv) + '" y2="' + y(vv) + '" stroke="var(--bord)" stroke-width="1"' + (t ? ' stroke-dasharray="2 3"' : "") + "/>" +
+      '<text x="' + (g - 6) + '" y="' + (y(vv) + 3.5) + '" font-size="9" text-anchor="end" fill="var(--faible)">' + kEur(vv) + "</text>"; }
+  s += '<line x1="' + g + '" x2="' + (W - d) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--bord-fort)" stroke-width="1"/>';
+  var ns = series.length, lb = empile ? pas * 0.62 : pas * 0.8 / ns, sk = Math.ceil(N / 9);
+  cats.forEach(function (c, i) {
+    var cx = g + pas * i + pas / 2, base = 0;
+    series.forEach(function (x, j) {
+      var v = x.valeurs[i], couleur = (opts.couleurs && opts.couleurs[i]) || x.couleur, x0, y1, y2;
+      if (empile) { x0 = cx - lb / 2; if (v >= 0) { y1 = y(base + v); y2 = y(base); base += v; } else { y1 = y(0); y2 = y(v); } }
+      else { x0 = cx - lb * ns / 2 + lb * j; y1 = y(Math.max(v, 0)); y2 = y(Math.min(v, 0)); }
+      s += '<rect x="' + x0.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + lb.toFixed(1) + '" height="' + Math.max(0.5, y2 - y1).toFixed(1) + '" fill="' + couleur + '" fill-opacity="' + (opts.hors && opts.hors[i] ? "0.28" : "1") + '" rx="1.5"><title>' + esc(c) + " · " + esc(x.nom) + " : " + eur(v) + "</title></rect>";
+    });
+    if (opts.etiquettes && opts.etiquettes[i]) s += '<text x="' + cx.toFixed(1) + '" y="' + (y(empile ? base : Math.max.apply(null, series.map(function (x) { return x.valeurs[i]; }))) - 4).toFixed(1) + '" font-size="9" text-anchor="middle" fill="var(--mut)">' + esc(opts.etiquettes[i]) + "</text>";
+    if (i % sk === 0) s += '<text x="' + cx.toFixed(1) + '" y="' + (H - 14) + '" font-size="9" text-anchor="middle" fill="var(--faible)">' + esc(c) + "</text>";
+  });
+  var lg = series.length > 1 || opts.legende ? '<p class="legende" style="margin:4px 0 6px">' + series.map(function (x) { return '<i class="case" style="background:' + x.couleur + '"></i> ' + esc(x.nom); }).join(" &nbsp; ") + "</p>" : "";
+  return '<div class="graphe"><div class="gt"><b>' + esc(titre) + "</b></div>" + s + "</svg>" + lg + "</div>";
+}
+function poserTreso(h) {
+  el("contenu").innerHTML = h;
+  var s = el("tr-delai"); if (s) s.addEventListener("change", function () { etat.delai = s.value; majContenu(); });
+}
+var BLEU = "#007298", ORANGE = "#DE7233";
+
+PAGES.tr_position = function (p) {
+  var A = arreteTreso(), ms = moisTreso(), ds = p.dossiers;
+  var h = enTete("Position de trésorerie", p, "Arrêté au " + dateFinMois(A));
+  var sans = ds.filter(function (d) { return !TR.dossiers[d].position; });
+  if (sans.length) { poserTreso(h + blocNC("Aucun compte de disponibilités (51, 53) dans les écritures de " + nomsDossiers(sans) + ". Sans eux, le solde n’est pas égal à zéro : il est inconnu.")); return; }
+  var parMois = function (m) { var v = [0, 0, 0]; ds.forEach(function (d) { v = vecSomme(v, TR.dossiers[d].position[m]); }); return v; };
+  var agg = ms.map(parMois), tous = TR.mois, aggTous = tous.map(parMois), hors = tous.map(function (m) { return ms.indexOf(m) < 0; });
+  var solde = 0, enc = 0, dec = 0;
+  ds.forEach(function (d) { solde += TR.dossiers[d].position[A][0]; });
+  agg.forEach(function (v) { enc += v[1]; dec += v[2]; });
+  var cartes = [carte("Solde de trésorerie à l’arrêté", eurC(solde), "Comptes 51 et 53 au " + dateFinMois(A) + ", nets des concours bancaires"),
+    carte("Encaissements de la période", eurC(enc), "Mouvements au débit des disponibilités, hors à-nouveaux"),
+    carte("Décaissements de la période", eurC(dec), "Mouvements au crédit des disponibilités, hors à-nouveaux"),
+    carte("Flux net de la période", '<span class="' + (enc - dec < 0 ? "neg" : "") + '">' + eurC(enc - dec) + "</span>", "Encaissements moins décaissements")];
+  [["creances", "Créances clients ouvertes", "Pièces clients non soldées à l’arrêté"], ["dettes", "Dettes fournisseurs ouvertes", "Pièces fournisseurs non soldées à l’arrêté"]].forEach(function (c) {
+    var man = ds.filter(function (d) { return !TR.dossiers[d][c[0]]; });
+    if (man.length) cartes.push(carte(c[1], "", "Lettrage absent : " + nomsDossiers(man), true));
+    else cartes.push(carte(c[1], eurC(ds.reduce(function (s, d) { return s + somme(TR.dossiers[d][c[0]][A].ouvert["30"]); }, 0)), c[2]));
+  });
+  h += '<div class="ruban">' + cartes.join("") + "</div>";
+  var cats = tous.map(moisCourt);
+  h += '<div class="graphes" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+    barres("Solde de trésorerie en fin de mois", cats, [{ nom: "Solde", couleur: BLEU, valeurs: aggTous.map(function (v) { return v[0] / 100; }) }], { hors: hors }) +
+    barres("Encaissements et décaissements", cats, [{ nom: "Encaissements", couleur: BLEU, valeurs: aggTous.map(function (v) { return v[1] / 100; }) }, { nom: "Décaissements", couleur: ORANGE, valeurs: aggTous.map(function (v) { return v[2] / 100; }) }], { hors: hors }) + "</div>" +
+    '<p class="legende" style="margin:-16px 0 24px">Barres pleines : période choisie. Barres estompées : autres mois importés.</p>';
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Mois par mois, ' + esc(libFenetre()) + '</h2></div><div class="defile"><table class="tab"><thead><tr><th>Mois</th><th class="num">Encaissements</th><th class="num">Décaissements</th><th class="num">Flux net</th><th class="num">Solde en fin de mois</th></tr></thead><tbody>';
+  ms.forEach(function (m, i) { var v = agg[i];
+    h += "<tr><td>" + esc(moisLong(m)) + '</td><td class="num">' + eurC(v[1]) + '</td><td class="num">' + eurC(v[2]) + '</td><td class="num ' + (v[1] - v[2] < 0 ? "neg" : "") + '">' + eurC(v[1] - v[2]) + '</td><td class="num"><b>' + eurC(v[0]) + "</b></td></tr>"; });
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Disponibilités : comptes 51 et 53 (banques, caisse), nets des concours bancaires courants, placements exclus. Les ajustements (comptes simulés, provisions) ne s’appliquent pas à la trésorerie. Au-delà de ' + esc(moisLong(D.meta.dernier_mois_importe)) + ", aucune donnée importée : l’arrêté est plafonné au dernier mois importé.</p></div>";
+  poserTreso(h);
+};
+
+function pageTiers(p, cle) {
+  var cre = cle === "creances", A = arreteTreso(), ms = moisTreso(), ds = p.dossiers, mode = etat.delai || "30";
+  var L = cre ? { titre: "Analyse des créances", fact: "Facturé aux clients", enc: "Encaissé", taux: "Taux de recouvrement", ouv: "Créances ouvertes à l’arrêté", ech: "dont échues", nech: "dont non échues", hist: "Historique de recouvrement des créances", encN: "Encaissé", nencN: "Non encaissé", age: "Balance âgée des créances ouvertes", tiers: "clients" } :
+    { titre: "Analyse des dettes", fact: "Facturé par les fournisseurs", enc: "Réglé", taux: "Taux d’apurement", ouv: "Dettes ouvertes à l’arrêté", ech: "dont échues", nech: "dont non échues", hist: "Historique de l’apurement des dettes", encN: "Réglé", nencN: "Non réglé", age: "Balance âgée des dettes ouvertes", tiers: "fournisseurs" };
+  var outils = '<label for="tr-delai">Échéance <select id="tr-delai">' + [["30", "Date de pièce + 30 jours"], ["45", "Date de pièce + 45 jours"], ["60", "Date de pièce + 60 jours"], ["piece", "Échéance de la pièce"]].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === mode ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+  var h = enTete(L.titre, p, "Arrêté au " + dateFinMois(A), outils);
+  var sans = ds.filter(function (d) { return !TR.dossiers[d][cle]; });
+  if (sans.length) { poserTreso(h + blocNC("Lettrage absent des écritures de " + nomsDossiers(sans) + ". Sans lettrage, on ne distingue pas les pièces réglées des pièces ouvertes : les indicateurs ne sont pas égaux à zéro, ils sont inconnus.")); return; }
+  var tot = { fact: 0, enc: 0, ouv: [0, 0, 0, 0, 0, 0], an: [0, 0, 0], cred: 0 }, hist = {}, lignes = [];
+  var tousM = TR.mois.filter(function (m) { return m <= A; });
+  ds.forEach(function (d) {
+    var X = TR.dossiers[d][cle][A], l = { d: d, fact: 0, enc: 0, ouv: X.ouvert[mode] };
+    tousM.forEach(function (m) { var v = X.hist[m]; if (ms.indexOf(m) >= 0) { l.fact += v[0]; l.enc += v[1]; } hist[m] = hist[m] ? [hist[m][0] + v[0], hist[m][1] + v[1]] : v.slice(); });
+    tot.fact += l.fact; tot.enc += l.enc; tot.ouv = vecSomme(tot.ouv, l.ouv); tot.an = vecSomme(tot.an, X.an); tot.cred += X.credits_non_affectes; lignes.push(l);
+  });
+  var echu = tot.ouv[1] + tot.ouv[2] + tot.ouv[3] + tot.ouv[4], nonEchu = tot.ouv[0], ouvTot = somme(tot.ouv);
+  var taux = tot.fact ? pct1(tot.enc / tot.fact) : null;
+  var cartes = [carte(L.fact, eurC(tot.fact), "Pièces datées de la période, hors à-nouveaux"),
+    carte(L.enc, eurC(tot.enc), "Pièces de la période soldées au " + dateFinMois(A)),
+    taux ? carte(L.taux, taux, "Somme des soldées sur somme des facturées") : carte(L.taux, "", "Aucune pièce sur la période", true),
+    carte(L.ouv, eurC(ouvTot), "Dont à-nouveaux : " + eurC(tot.an[2])),
+    carte(L.ech, eurC(echu), "Échéance antérieure au " + dateFinMois(A)),
+    carte(L.nech, eurC(nonEchu), "Échéance à venir ou du jour")];
+  h += '<div class="ruban">' + cartes.join("") + "</div>";
+  var cats = tousM.map(moisCourt), ho = tousM.map(function (m) { return hist[m]; }), hors = tousM.map(function (m) { return ms.indexOf(m) < 0; });
+  h += '<div class="graphes" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+    barres(L.hist, cats, [{ nom: L.encN, couleur: BLEU, valeurs: ho.map(function (v) { return v[1] / 100; }) }, { nom: L.nencN, couleur: ORANGE, valeurs: ho.map(function (v) { return (v[0] - v[1]) / 100; }) }],
+      { empile: true, hors: hors, etiquettes: ho.map(function (v) { return v[0] ? Math.round(v[1] / v[0] * 100) + " %" : "n.c."; }) }) +
+    barres(L.age, TR.tranches.map(function (t) { return t.libelle; }), [{ nom: "Montant ouvert", couleur: BLEU, valeurs: tot.ouv.map(function (v) { return v / 100; }) }],
+      { couleurs: [BLEU, "#E3A15E", "#DE7233", "#C4501F", "#9B2C1A", "#8A97A1"] }) + "</div>";
+  h += '<p class="legende" style="margin:-16px 0 24px">Historique : barres pleines = période choisie, estompées = autres mois jusqu’à l’arrêté. Pourcentage = part soldée au ' + esc(dateFinMois(A)) + ".</p>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par résidence, ' + esc(libFenetre()) + '</h2></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">' + L.fact + '</th><th class="num">' + L.enc + '</th><th class="num">' + L.taux + '</th><th class="num">Ouvert à l’arrêté</th><th class="num">Dont échu</th><th class="num">Dont non échu</th></tr></thead><tbody>';
+  lignes.forEach(function (l) { var e = l.ouv[1] + l.ouv[2] + l.ouv[3] + l.ouv[4];
+    h += "<tr><td><b>" + esc(residence(l.d).nom) + '</b></td><td class="num">' + eurC(l.fact) + '</td><td class="num">' + eurC(l.enc) + '</td><td class="num">' + (l.fact ? pct1(l.enc / l.fact) : '<span class="nc-cell">n.c.</span>') + '</td><td class="num"><b>' + eurC(somme(l.ouv)) + '</b></td><td class="num">' + eurC(e) + '</td><td class="num">' + eurC(l.ouv[0]) + "</td></tr>"; });
+  h += "</tbody></table></div>";
+  var notes = ["Une pièce est soldée si son lettrage est équilibré et son dernier mouvement daté au plus de l’arrêté ; un lettrage partiel laisse la pièce ouverte pour son montant total.",
+    "Le taux porte sur les pièces de la période réglées à l’arrêté (ratio de sommes). Les stocks (ouvert, échu, non échu) portent sur toutes les pièces datées jusqu’à l’arrêté, y compris avant la période.",
+    "Balance âgée : retard par rapport à l’échéance, au " + dateFinMois(A) + "."];
+  if (tot.ouv[5]) notes.push("Échéance inconnue (non exportée) : " + eurC(tot.ouv[5]) + ", classée à part, jamais en non échu.");
+  if (tot.cred) notes.push("Lignes de sens inverse non lettrées (avoirs, acomptes, règlements à affecter) : " + eurC(tot.cred) + ", non déduites de l’ouvert.");
+  h += '<p class="legende" style="margin:10px 0 0">' + notes.map(esc).join(" ") + "</p></div>";
+  poserTreso(h);
+}
+PAGES.tr_creances = function (p) { pageTiers(p, "creances"); };
+PAGES.tr_dettes = function (p) { pageTiers(p, "dettes"); };
 
 /* ---------- Contrôle des données ---------- */
 function grilleCouverture(p, compta) {

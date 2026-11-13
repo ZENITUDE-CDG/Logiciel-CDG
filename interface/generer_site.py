@@ -17,6 +17,7 @@ from datetime import date, datetime
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RACINE)
 
+from zenitude.comptes import pcg, tresorerie  # noqa: E402
 from zenitude.config import controles as c, couverture, formules, publication  # noqa: E402
 from zenitude.config.versions import Depot  # noqa: E402
 from zenitude.kpi import moteur  # noqa: E402
@@ -420,12 +421,21 @@ def construire(demo=DEMO):
     finance = []
     for r in residences:
         try:
-            _, inst = publication.publier(depot, ECR, EXE, r["dossier"], "carol")
+            _pid, inst = publication.publier(depot, ECR, EXE, r["dossier"], "carol")
             finance.append({"dossier": r["dossier"], "nom": r["nom"], "exercice": inst["exercice"],
-                            "resultat": inst["resultat"], "statut": "publié"})
+                            "resultat": inst["resultat"], "statut": "publié", "publication": _pid,
+                            "compte_resultat": inst["compte_resultat"]})
         except publication.PublicationBloquee as e:
             finance.append({"dossier": r["dossier"], "nom": r["nom"], "statut": "bloqué",
                             "motif": "comptes non classés : " + ", ".join(e.non_classes)})
+
+    # Trésorerie (lot 11) : agrégats par dossier et par arrêté (fin de mois jusqu'au dernier mois importé).
+    # La page ne fait que sommer ces agrégats sur le périmètre (voir docs/decisions/0003).
+    mois_treso = liste_mois(min(e["date"][:7] for e in ecritures), DERNIER_MOIS_IMPORTE)
+    treso = {"mois": mois_treso, "modes": list(tresorerie.MODES),
+             "tranches": [{"code": t, "libelle": tresorerie.LIBELLES_TRANCHES[t]} for t in tresorerie.TRANCHES],
+             "dossiers": {r["dossier"]: tresorerie.calculer_dossier(ecritures, r["dossier"], mois_treso)
+                          for r in residences}}
 
     # Couverture des données par dossier et par mois
     mois_annee = liste_mois(f"{ANNEE}-01", f"{ANNEE}-12")
@@ -497,6 +507,7 @@ def construire(demo=DEMO):
                  "dernier_mois_importe": DERNIER_MOIS_IMPORTE},
         "residences": residences, "perimetres": perimetres, "periodes": periodes,
         "kpi": kpi_defs, "resultats": resultats, "finance": finance, "couverture": couv,
+        "cr_lignes": pcg.lignes_exportees(), "cr_reference": pcg.REFERENCE, "tresorerie": treso,
         "mois": mois_annee,
         "lignes_ebitda": _lignes_exportees(LIGNES_EBITDA),
         "ebitda": ebitda,

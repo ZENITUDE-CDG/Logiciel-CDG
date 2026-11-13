@@ -44,7 +44,7 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (128 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9 ; ces deux derniers demandent Playwright et Chromium, sinon ils sont ignorés).
+- Tests : `python -m pytest` (238 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11 ; les tests de page des lots 9 et 11 demandent Playwright et Chromium, sinon ils sont ignorés).
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
 - Configuration de test complète : `python tests/generer_config_complete.py config_modele/Zenitude_Configuration_modele.xlsx tests/fixtures tests/fixtures/ecritures_synthetiques.csv`.
 - Écritures synthétiques : `python tests/generer_ecritures.py tests/fixtures`.
@@ -153,3 +153,11 @@ Limites : stub de publication (lot 5) ; un seul rédacteur à la fois, sans verr
 - La réglette de période reste figée en haut de page quand on fait défiler (Synthèse, Indicateurs, Comptes et provisions, Écarts) : la période se lit et se modifie à tout moment.
 - Aucun changement du moteur, de la configuration ni des calculs.
 
+
+## Lot 11 - STATUT : réalisé (compte de résultat PCG et onglet Trésorerie)
+- Référentiel : règlement ANC 2014-03 modifié par ANC 2022-06, **système de base** (art. 821-2), applicable aux exercices ouverts à compter du 1er janvier 2025. Le système développé n'existe plus ; les transferts de charges (791, 796, 797) sont supprimés. Détail et rattachements à valider : `docs/compte_resultat_pcg.md`.
+- `zenitude/comptes/pcg.py` : compte de résultat en liste, un compte dans un seul poste (préfixe le plus long), compte non classé = résultat bloqué, absence d'écriture = non calculable, N-1 « n.d. ». Figé dans l'instantané de publication (`compte_resultat`, avec rapprochement sur le résultat du lot 5). Page « Compte de résultat » : liste des publications, détail du modèle ANC, cumul des résidences de même exercice (jamais d'exercices décalés additionnés).
+- `zenitude/comptes/tresorerie.py` : position (comptes 51 et 53), créances (411, 413, 416, 418) et dettes (401, 403) avec lettrage, échéance (pièce + 30, 45, 60 jours ou échéance de la pièce), balance âgée, à-nouveaux. Définitions : `docs/tresorerie.md`. Sans lettrage : non calculable. Échéance absente : « échéance inconnue ».
+- Section « Trésorerie » du site (position, créances, dettes) : la page additionne les agrégats par dossier fournis par le moteur (décision `docs/decisions/0003-tresorerie-et-compte-de-resultat-pcg.md`), taux = ratio de sommes. Les ajustements du lot 9 ne s'appliquent pas à la trésorerie.
+- Écritures : trois colonnes facultatives `tiers`, `lettrage`, `echeance` (changement de contrat, voir `docs/tresorerie.md`). Jeu de démonstration étendu (règlements fictifs jusqu'à octobre 2026, à-nouveaux, un acompte non affecté, un dossier sans échéance) ; les écritures de classes 6 et 7, les mesures et la configuration sont inchangées.
+- Limites : N-1 non importé ; lettrage partiel traité comme pièce ouverte ; pas de prévision de trésorerie (module Budgets) ; colonnes tiers, lettrage, échéance à confirmer dans l'extraction Pennylane réelle ; règlement ANC 2026-03 non analysé ; rattachements 708, 709, 608, 648, 649 provisoires.

@@ -10,6 +10,11 @@ Conventions :
 - résultat = CA hébergement + CA services - charges ;
 - montants en Decimal, arrondis au centime à la fin uniquement ;
 - aucune annualisation : un exercice court reste sur sa durée réelle.
+
+Lot 11 : l'instantané contient aussi le compte de résultat du PCG (système de base, règlement ANC
+2022-06, voir zenitude/comptes/pcg.py) et son rapprochement avec le résultat ci-dessus. Un compte non
+classé dans ce modèle ne bloque pas la publication du lot 5 : il rend le compte de résultat PCG « bloqué »,
+avec la liste des comptes.
 """
 import hashlib
 import json
@@ -19,6 +24,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from . import controles as c
 from . import couverture
+from ..comptes import pcg
 
 
 class PublicationBloquee(Exception):
@@ -120,6 +126,11 @@ def publier(depot, ecritures_csv, exercices_csv, dossier, auteur):
         raise
     lignes = [e for e in ecritures if e["dossier"] == dossier and e["compte"][:1] in ("6", "7")
               and (not e.get("date") or debut <= date.fromisoformat(e["date"]) <= fin)]
+    cr = pcg.calculer(ecritures, [dossier], debut, fin)
+    if cr["statut"] == "calculé":
+        ecart = Decimal(cr["lignes"]["RESULTAT"]) - Decimal(resultat(montants)["RESULTAT"])
+        cr["rapprochement"] = {"resultat_publie": resultat(montants)["RESULTAT"],
+                               "resultat_pcg": cr["lignes"]["RESULTAT"], "ecart": str(_arrondi(ecart))}
     instantane = {
         "dossier": dossier,
         "exercice": {"debut": debut.isoformat(), "fin": fin.isoformat(),
@@ -128,6 +139,7 @@ def publier(depot, ecritures_csv, exercices_csv, dossier, auteur):
         "empreinte_config": version["empreinte"],
         "rubriques_utilisees": utilisees,
         "resultat": resultat(montants),
+        "compte_resultat": cr,
         "empreinte_donnees": hashlib.sha256(
             json.dumps(lignes, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest(),
         "date": datetime.now().replace(microsecond=0).isoformat(),

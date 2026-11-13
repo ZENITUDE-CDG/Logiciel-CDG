@@ -24,6 +24,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 8 | Charte Zenitude, connexion, choix du périmètre, tableau EBITDA, onglet Import et paramètres | - |
 | 9 | Thème clair / sombre / auto, réglette de période libre, ajustements (comptes simulés, provisions), vue Réel / Ajusté | 2 (navigateur) |
 | 10 | Menu latéral réductible (remplace les barres du haut), page Résidence (fiche complète) | - |
+| 11 | Compte de résultat PCG (système de base, ANC 2022-06) figé dans la publication ; section Trésorerie (position, créances, dettes) ; colonnes tiers, lettrage, échéance | 110 |
 
 Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). L'ancienne maquette (`maquette/`) est remplacée.
 
@@ -50,13 +51,15 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 9. Lot 5 limité : pas de PDF/PPTX, une publication par dossier et exercice.
 11. Lot 6 : définitions des six KPI à valider par le contrôle de gestion (notamment RevPAC : CA hébergement + services / nuitées clients ; captage PDJ : couverts / nuitées clients). Source réelle des mesures d'exploitation (Mews, saisie) à décider. Groupes de l'onglet Groupes non encore utilisés par la vue groupe. Pas de publication figée des KPI.
 12. Calculateur d'ajustements de la page (lot 9) : à remplacer par le backend en production, avec la même structure d'ajustement. Validation à deux personnes des ajustements et droits non définis.
+13. Lot 11 : colonnes `tiers`, `lettrage`, `echeance` à confirmer dans l'extraction Pennylane réelle (sans lettrage, créances et dettes sont non calculables).
+14. Lot 11 : rattachements PCG provisoires (708, 709, 608, 648, 649) et comptes non classés (643, 644, 646, 681 sans subdivision, 697, 768) à valider par la direction financière ; règlement ANC 2026-03 (titre V du PCG) à analyser ; exercice N-1 à importer pour remplir la colonne N-1.
 10. Charte graphique : appliquée au lot 8. Présentation EBITDA à valider par le contrôle de gestion.
 
 ## Comment reprendre
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 128 tests attendus (2 demandent Playwright)
+python -m pytest            # 238 tests attendus (les tests de page demandent Playwright)
 sh demo.sh                  # démonstration complète
 python interface/generer_site.py   # régénère index.html
 ```

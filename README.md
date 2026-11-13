@@ -82,6 +82,14 @@ taux de captage petit-déjeuner), calculés par dossier ou sur un groupe (ratio 
 
 Une donnée absente ou un dénominateur nul donne « non calculable » avec le motif, jamais zéro.
 
+## Compte de résultat PCG et trésorerie (lot 11)
+
+Le compte de résultat du Plan comptable général (système de base, règlement ANC 2022-06) est calculé par
+`zenitude/comptes/pcg.py` et figé dans chaque publication ; la trésorerie, les créances et les dettes sont
+calculées par `zenitude/comptes/tresorerie.py` à partir des colonnes facultatives `tiers`, `lettrage` et
+`echeance` des écritures. Règles : `docs/compte_resultat_pcg.md` et `docs/tresorerie.md`. Les deux sont
+affichés par le site (page Compte de résultat, section Trésorerie), calculés sur les données fictives.
+
 ## Tests
 
     python -m pytest

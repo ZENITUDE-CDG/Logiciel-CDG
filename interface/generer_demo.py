@@ -61,6 +61,8 @@ def saison(activite, m):
 def main(SORTIE=SORTIE):
     os.makedirs(SORTIE, exist_ok=True)
     rng = random.Random(GRAINE)
+    # Générateur séparé pour les comptes ajoutés avec le SIG (lot 8) : les montants existants ne changent pas
+    rng2 = random.Random(GRAINE + 8)
     ecr, mes, exe = [], [], []
     for code, nom, dossier, act, region, logts, prix, dms, occ, typ in RESIDENCES:
         debut_ex, fin_ex = ((date(2025, 10, 1), date(2026, 9, 30)) if typ == "oct"
@@ -103,6 +105,17 @@ def main(SORTIE=SORTIE):
                 op("HA", compte, "401", f"Charge {compte} (fictif)",
                    round((ca_heb + ca_serv) * part * rng.uniform(0.85, 1.15), 2))
             op("HA", "6132", "401", "Loyer (fictif)", round((ca_heb + ca_serv) * rng.uniform(0.15, 0.19), 2))
+            # Comptes du SIG (lot 8) : boutique, matières premières de restauration, taxes, amortissements
+            ca = ca_heb + ca_serv
+            ventes = round(ca * (0.012 if act in ("Hôtellerie", "Mixte") else 0.004) * rng2.uniform(0.7, 1.3), 2)
+            op("VT", "411", "707", "Ventes boutique (fictif)", ventes)
+            op("HA", "607", "401", "Achats marchandises (fictif)", round(ventes * rng2.uniform(0.55, 0.7), 2))
+            if act != "Étudiants":
+                op("HA", "601", "401", "Matières premières restauration (fictif)", round(pdj * rng2.uniform(2.2, 3.0), 2))
+            op("HA", "635", "447", "Impôts et taxes (fictif)", round(ca * rng2.uniform(0.006, 0.01), 2))
+            op("OD", "6811", "2813", "Dotation aux amortissements (fictif)", round(ca * rng2.uniform(0.03, 0.045), 2))
+            if (dossier, m.month, m.year) == ("DEMO-2001", 7, 2026):
+                op("HA", "671", "401", "Pénalité (fictif)", 380.00)
     entete_e = ["dossier", "exercice", "date", "journal", "piece", "compte", "libelle", "debit", "credit"]
     for nom, entete, lignes in (("ecritures.csv", entete_e, ecr),
                                 ("exercices.csv", ["dossier", "debut", "fin", "duree_mois"], exe),
@@ -115,6 +128,9 @@ def main(SORTIE=SORTIE):
     # Configuration de démonstration
     comptes = sorted({l[5] for l in ecr})
     rub = lignes_rubriques(comptes)
+    # Ventes de marchandises (lot 8) : rattachées à l'agrégat des services pour le compte de résultat publié
+    rub.append(["CA-MARCH", "Ventes de marchandises (exemple)", "produit", "*", "707", "", "CA_SERVICES", 1,
+                date(2026, 1, 1), None, "actif", "Exemple fictif : compte PCG"])
     for r in rub:
         r[8] = date(2025, 1, 1)
     chemin = os.path.join(SORTIE, "configuration.xlsx")

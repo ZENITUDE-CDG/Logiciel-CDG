@@ -38,19 +38,62 @@ LIGNES_EBITDA = [
     # code, libellé, préfixes de comptes ou formule, sens (produit / charge / total), niveau
     ("CA_HEB", "CA hébergement", ["706"], "produit", 2),
     ("CA_SERV", "CA autres services", ["708"], "produit", 2),
-    ("CA_NET", "Montant net du chiffre d'affaires", ("+", "CA_HEB", "CA_SERV"), "total", 1),
+    ("CA_VENTES", "Ventes de marchandises", ["707"], "produit", 2),
+    ("CA_NET", "Montant net du chiffre d'affaires", ("+", "CA_HEB", "CA_SERV", "CA_VENTES"), "total", 1),
     ("PERSO", "Charges de personnel", ["641", "645"], "charge", 2),
-    ("ACHATS", "Achats consommés et énergies", ["606"], "charge", 2),
+    ("ACHATS", "Achats consommés et énergies", ["601", "606", "607"], "charge", 2),
     ("MAINT", "Entretien et maintenance", ["615"], "charge", 2),
     ("TELECOM", "Frais postaux et télécommunications", ["626"], "charge", 2),
     ("DEPL", "Déplacements, missions et réceptions", ["625"], "charge", 2),
+    ("TAXES", "Impôts et taxes", ["635"], "charge", 2),
     ("AUTRES", "Autres charges de gestion courante", ["658"], "charge", 2),
-    ("FRAIS_OP", "Frais opérationnels", ("+", "PERSO", "ACHATS", "MAINT", "TELECOM", "DEPL", "AUTRES"), "total", 1),
+    ("FRAIS_OP", "Frais opérationnels", ("+", "PERSO", "ACHATS", "MAINT", "TELECOM", "DEPL", "TAXES", "AUTRES"), "total", 1),
     ("GOP", "Résultat brut d'exploitation (GOP)", ("-", "CA_NET", "FRAIS_OP"), "total", 1),
     ("LOYERS", "Loyers immobiliers", ["6132"], "charge", 2),
     ("EBITDA", "EBITDA", ("-", "GOP", "LOYERS"), "total", 0),
+    ("DOT", "Dotations aux amortissements", ["681"], "charge", 2),
     ("FIN", "Charges financières", ["661"], "charge", 2),
-    ("RCAI", "Résultat courant avant impôt", ("-", "EBITDA", "FIN"), "total", 1),
+    ("RCAI", "Résultat courant avant impôt", ("-", "EBITDA", "DOT", "FIN"), "total", 1),
+    ("EXC", "Charges exceptionnelles", ["671"], "charge", 2),
+]
+
+# Soldes intermédiaires de gestion (lot 8), selon le plan comptable général. Chaque compte de classe 6
+# ou 7 tombe dans la ligne de son préfixe le plus long (707 en ventes de marchandises, le reste du 70 en
+# production vendue, 686 en charges financières plutôt qu'en dotations...). Provisoire, à valider par le
+# contrôle de gestion comme le tableau EBITDA.
+LIGNES_SIG = [
+    ("CA_VENTES", "Ventes de marchandises", ["707", "7097"], "produit", 2),
+    ("ACH_MARCH", "Achats consommés de marchandises", ["607", "6037", "6097"], "charge", 2),
+    ("MARGE_COM", "Marge commerciale", ("+", "CA_VENTES", "-", "ACH_MARCH"), "total", 1),
+    ("CA_HEB", "CA hébergement", ["706"], "produit", 2),
+    ("CA_SERV", "CA autres services", ["70"], "produit", 2),
+    ("CA_ANNEX", "Produits des activités annexes", ["7088"], "produit", 2),
+    ("PROD_STOCK", "Production stockée et immobilisée", ["71", "72"], "produit", 2),
+    ("ACH_MP", "Achats consommés de matières premières", ["601", "602", "6031", "6032", "6091", "6092"], "charge", 2),
+    ("MARGE_PROD", "Marge sur production", ("+", "CA_HEB", "CA_SERV", "CA_ANNEX", "PROD_STOCK", "-", "ACH_MP"), "total", 1),
+    ("VENTES_PROD", "Ventes et production", ("+", "CA_VENTES", "CA_HEB", "CA_SERV", "CA_ANNEX", "PROD_STOCK"), "total", 1),
+    ("ACH_CONSO", "Achats consommés", ("+", "ACH_MARCH", "ACH_MP"), "total", 2),
+    ("MARGE_GLOB", "Marge globale", ("+", "VENTES_PROD", "-", "ACH_CONSO"), "total", 1),
+    ("CONSO_INT", "Consommations intermédiaires", ("+", "FOURN", "SERV_EXT"), "total", 1),
+    ("FOURN", "Fournitures et autres achats", ["60"], "charge", 2),
+    ("SERV_EXT", "Services extérieurs (dont loyers)", ["61", "62"], "charge", 2),
+    ("VA", "Valeur ajoutée", ("+", "MARGE_GLOB", "-", "CONSO_INT"), "total", 1),
+    ("SUBV", "Subventions d'exploitation", ["74"], "produit", 2),
+    ("TAXES", "Impôts et taxes", ["63"], "charge", 2),
+    ("PERSO", "Charges de personnel", ["64"], "charge", 2),
+    ("EBE", "Excédent brut d'exploitation (EBE)", ("+", "VA", "SUBV", "-", "TAXES", "PERSO"), "total", 0),
+    ("AUTRES_PROD", "Autres produits et reprises", ["75", "78", "79"], "produit", 2),
+    ("AUTRES_CH", "Autres charges de gestion", ["65"], "charge", 2),
+    ("DOT", "Dotations aux amortissements et provisions", ["68"], "charge", 2),
+    ("REX", "Résultat d'exploitation", ("+", "EBE", "AUTRES_PROD", "-", "AUTRES_CH", "DOT"), "total", 0),
+    ("PROD_FIN", "Produits financiers", ["76", "786", "796"], "produit", 2),
+    ("CH_FIN", "Charges financières", ["66", "686"], "charge", 2),
+    ("RCAI", "Résultat courant avant impôts", ("+", "REX", "PROD_FIN", "-", "CH_FIN"), "total", 1),
+    ("PROD_EXC", "Produits exceptionnels", ["77", "787", "797"], "produit", 2),
+    ("CH_EXC", "Charges exceptionnelles", ["67", "687"], "charge", 2),
+    ("REXC", "Résultat exceptionnel", ("+", "PROD_EXC", "-", "CH_EXC"), "total", 1),
+    ("IS", "Participation et impôt sur les bénéfices", ["69"], "charge", 2),
+    ("RN", "Résultat net", ("+", "RCAI", "REXC", "-", "IS"), "total", 0),
 ]
 LIBELLES_JOURNAUX = {"VT": "Ventes", "HA": "Achats", "BQ": "Banque", "OD": "Opérations diverses", "AN": "À-nouveaux"}
 
@@ -86,10 +129,10 @@ def _resume(res):
                         "motif": k["motif"]} for k in res}
 
 
-def _ligne_du_compte(compte):
-    """Ligne EBITDA d'un compte (préfixe le plus long), ou None si non couvert."""
+def _ligne_du_compte(compte, lignes=None):
+    """Ligne d'un compte dans un tableau (préfixe le plus long), ou None si non couvert."""
     meilleur = None
-    for code, _, regle, sens, _ in LIGNES_EBITDA:
+    for code, _, regle, sens, _ in (lignes or LIGNES_EBITDA):
         if isinstance(regle, list):
             for pref in regle:
                 if compte.startswith(pref) and (meilleur is None or len(pref) > meilleur[1]):
@@ -97,8 +140,24 @@ def _ligne_du_compte(compte):
     return meilleur[0] if meilleur else None
 
 
-def _ebitda(ecritures, dossiers, mois):
-    """Tableau EBITDA par mois (montants en Decimal arrondis au centime, chaînes dans la page)."""
+def _termes(regle):
+    """Formule d'une ligne de total : liste de (signe, code). ("-", A, B, C) = A - B - C ;
+    ("+", A, B, "-", C) = A + B - C."""
+    op, *codes = regle
+    if op == "-" and "-" not in codes and "+" not in codes:
+        return [(1, codes[0])] + [(-1, c) for c in codes[1:]]
+    out, signe = [], 1
+    for c in codes:
+        if c in ("+", "-"):
+            signe = 1 if c == "+" else -1
+        else:
+            out.append((signe, c))
+    return out
+
+
+def _tableau(lignes, ecritures, dossiers, mois, taux):
+    """Tableau de gestion par mois (montants en Decimal arrondis au centime, chaînes dans la page).
+    taux = (code du ratio, numérateur, dénominateur), en pourcentage."""
     dossiers = set(dossiers)
     brut = {m: {} for m in mois}
     non_classes = set()
@@ -108,49 +167,62 @@ def _ebitda(ecritures, dossiers, mois):
         m = e["date"][:7]
         if m not in brut or not e["compte"][:1] in ("6", "7"):
             continue
-        ligne = _ligne_du_compte(e["compte"])
+        ligne = _ligne_du_compte(e["compte"], lignes)
         if ligne is None:
             non_classes.add(e["compte"])
             continue
         montant = Decimal(e["credit"] or 0) - Decimal(e["debit"] or 0)
         brut[m][ligne] = brut[m].get(ligne, Decimal("0")) + montant
-    sens = {code: s for code, _, _, s, _ in LIGNES_EBITDA}
+    regles = {code: (regle, s) for code, _, regle, s, _ in lignes}
 
     def calc(valeurs):
         out = {}
-        for code, _, regle, s, _ in LIGNES_EBITDA:
+
+        def val(code):
+            if code in out:
+                return out[code]
+            regle, s = regles[code]
             if isinstance(regle, list):
                 v = valeurs.get(code)
                 out[code] = None if v is None else (v if s == "produit" else -v)
             else:
-                op, *termes = regle
-                vals = [out[t] for t in termes]
-                if all(v is None for v in vals):
-                    out[code] = None
-                    continue
-                vals = [v or Decimal("0") for v in vals]
-                out[code] = sum(vals, Decimal("0")) if op == "+" else vals[0] - sum(vals[1:], Decimal("0"))
+                termes = [(sg, val(c)) for sg, c in _termes(regle)]
+                out[code] = None if all(v is None for _, v in termes) else \
+                    sum(((v or Decimal("0")) * sg for sg, v in termes), Decimal("0"))
+            return out[code]
+        for code in regles:
+            val(code)
         return out
 
     def chaine(d):
         return {k: (None if v is None else str(v.quantize(Decimal("0.01")))) for k, v in d.items()}
 
-    def taux(d):
-        if d.get("CA_NET") in (None, Decimal("0")) or d.get("EBITDA") is None:
+    code_taux, num, den = taux
+
+    def ratio(d):
+        if d.get(den) in (None, Decimal("0")) or d.get(num) is None:
             return None
-        return str((d["EBITDA"] / d["CA_NET"] * 100).quantize(Decimal("0.1")))
+        return str((d[num] / d[den] * 100).quantize(Decimal("0.1")))
 
     par_mois, cumul_r, cumul_t = {}, {}, {}
     for m in mois:
         d = calc(brut[m])
-        par_mois[m] = dict(chaine(d), TAUX_EBITDA=taux(d))
+        par_mois[m] = dict(chaine(d), **{code_taux: ratio(d)})
         for code in brut[m]:
             cumul_t[code] = cumul_t.get(code, Decimal("0")) + brut[m][code]
             if m <= DERNIER_MOIS_IMPORTE:
                 cumul_r[code] = cumul_r.get(code, Decimal("0")) + brut[m][code]
     tr, tt = calc(cumul_r), calc(cumul_t)
-    return {"mois": par_mois, "realise": dict(chaine(tr), TAUX_EBITDA=taux(tr)),
-            "total": dict(chaine(tt), TAUX_EBITDA=taux(tt)), "non_classes": sorted(non_classes)}
+    return {"mois": par_mois, "realise": dict(chaine(tr), **{code_taux: ratio(tr)}),
+            "total": dict(chaine(tt), **{code_taux: ratio(tt)}), "non_classes": sorted(non_classes)}
+
+
+def _ebitda(ecritures, dossiers, mois):
+    return _tableau(LIGNES_EBITDA, ecritures, dossiers, mois, ("TAUX_EBITDA", "EBITDA", "CA_NET"))
+
+
+def _sig(ecritures, dossiers, mois):
+    return _tableau(LIGNES_SIG, ecritures, dossiers, mois, ("TAUX_EBE", "EBE", "VENTES_PROD"))
 
 
 def _groupes_crees(feuille, residences):
@@ -271,6 +343,8 @@ def construire(demo=DEMO):
 
     # Tableau EBITDA (lot 8) par périmètre, mois civils de l'année
     ebitda = {p["id"]: _ebitda(ecritures, p["dossiers"], mois_annee) for p in perimetres}
+    # Soldes intermédiaires de gestion (lot 8), même découpage réalisé / projection
+    sig = {p["id"]: _sig(ecritures, p["dossiers"], mois_annee) for p in perimetres}
 
     # Import comptable : exercices N-1, N, N+1 de chaque dossier et volume d'écritures
     imports = {}
@@ -303,14 +377,17 @@ def construire(demo=DEMO):
         c_ = comptes.setdefault(e["compte"], {"compte": e["compte"], "lignes": 0})
         c_["lignes"] += 1
     libelles = {l[0]: l[1] for l in LIGNES_EBITDA}
+    libelles_sig = {l[0]: l[1] for l in LIGNES_SIG}
     plan = []
     for num in sorted(comptes):
         rub = [r for r in rubriques if num.startswith(str(r.get("Préfixe ou plage de comptes") or "#"))]
         ligne = _ligne_du_compte(num) if num[:1] in "67" else None
+        ligne_sig = _ligne_du_compte(num, LIGNES_SIG) if num[:1] in "67" else None
         plan.append({"compte": num, "classe": num[0], "lignes": comptes[num]["lignes"],
                      "rubrique": rub[0]["Code rubrique"] if rub else None,
                      "agregat": rub[0]["Agrégat de base"] if rub else None,
-                     "ligne_ebitda": libelles.get(ligne) if ligne else None})
+                     "ligne_ebitda": libelles.get(ligne) if ligne else None,
+                     "ligne_sig": libelles_sig.get(ligne_sig) if ligne_sig else None})
     journaux = [dict(j, dossiers=len(j["dossiers"])) for j in sorted(journaux.values(), key=lambda x: x["code"])]
 
     statut = depot.statut()
@@ -325,7 +402,9 @@ def construire(demo=DEMO):
         "kpi": kpi_defs, "resultats": resultats, "finance": finance, "couverture": couv,
         "mois": mois_annee,
         "lignes_ebitda": [{"code": c_, "libelle": l, "niveau": n, "sens": s_} for c_, l, _, s_, n in LIGNES_EBITDA],
-        "ebitda": ebitda, "imports": imports, "journaux": journaux, "plan": plan,
+        "ebitda": ebitda,
+        "lignes_sig": [{"code": c_, "libelle": l, "niveau": n, "sens": s_} for c_, l, _, s_, n in LIGNES_SIG],
+        "sig": sig, "imports": imports, "journaux": journaux, "plan": plan,
         "versions": statut["versions"], "journal": statut["journal"],
     }
 

@@ -55,6 +55,7 @@
 - Configuration de test avec les six KPI (lot 6) : `python tests/generer_config_kpi.py tests/fixtures/config_complete_v1.xlsx tests/fixtures/config_kpi_lot6.xlsx`.
 - KPI d'un dossier : `python -m zenitude.kpi calcul <store> <dossier> <ecritures.csv> <exercices.csv> <mesures.csv> [--du AAAA-MM --au AAAA-MM] [--json]`.
 - Site (lot 7) : `python interface/generer_demo.py` puis `python interface/generer_site.py` (écrit `index.html` à la racine, affiché par GitHub Pages).
+- Lot 8 (site) : soldes intermédiaires de gestion (`LIGNES_SIG` dans `interface/generer_site.py`, préfixe de compte le plus long, calculés en Python comme le tableau EBITDA) affichés dans la Synthèse d'activité avec un sélecteur EBITDA / SIG ; charte allégée dans `interface/gabarit.html`. Découpage SIG provisoire, à valider par le contrôle de gestion.
 - Vue groupe : `python -m zenitude.kpi groupe <store> <ecritures.csv> <mesures.csv> --du AAAA-MM --au AAAA-MM (--dossiers A,B | --activite Seniors) [--json]`.
 
 ## Règles de modification

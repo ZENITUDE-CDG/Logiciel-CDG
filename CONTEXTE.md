@@ -21,8 +21,9 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 5 | Compte de résultat par dossier et exercice, instantané figé, P1 bloquant | 7 |
 | 6 | Moteur de KPI (TO, prix moyen, RevPAR, RevPAC, DMS, captage PDJ) et vue groupe | 15 |
 | 7 | Site de démonstration (`index.html`, GitHub Pages) calculé par le moteur réel | 5 |
+| 8 | Charte Zenitude, connexion, choix du périmètre, tableau EBITDA, onglet Import et paramètres | - |
 
-Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique à venir. L'ancienne maquette (`maquette/`) est remplacée.
+Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). L'ancienne maquette (`maquette/`) est remplacée.
 
 ## Décisions prises
 
@@ -45,7 +46,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 8. Hébergement, plateforme Git, accès : décisions DSI.
 9. Lot 5 limité : pas de PDF/PPTX, une publication par dossier et exercice.
 11. Lot 6 : définitions des six KPI à valider par le contrôle de gestion (notamment RevPAC : CA hébergement + services / nuitées clients ; captage PDJ : couverts / nuitées clients). Source réelle des mesures d'exploitation (Mews, saisie) à décider. Groupes de l'onglet Groupes non encore utilisés par la vue groupe. Pas de publication figée des KPI.
-10. Charte graphique : à recevoir pour adapter la maquette.
+10. Charte graphique : appliquée au lot 8. Présentation EBITDA à valider par le contrôle de gestion.
 
 ## Comment reprendre
 

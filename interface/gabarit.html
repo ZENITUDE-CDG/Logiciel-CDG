@@ -1,358 +1,676 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zenitude · Pilotage</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zenitude – Pilotage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* Charte Zenitude : bleu foncé #0F506C, bleu clair #007298, gris #333E48, orange #DE7233 (accent), Montserrat */
 :root {
-  --encre: #17303A; --page: #EDF0EF; --surface: #FFFFFF; --trait: #D5DCDA;
-  --accent: #2C6E6A; --accent-pale: #E1EEEC; --attention: #9A5B06; --attention-pale: #FBF0DF;
-  --muet: #5B6B70; --texte: #1C2A30;
-  color-scheme: light;
+  --bleu-fonce:#0F506C; --bleu-clair:#007298; --gris:#333E48; --orange:#DE7233;
+  --fond:#F3F5F7; --surface:#FFFFFF; --txt:#333E48; --mut:#5E6B76; --bord:#DCE2E7; --bord-fort:#C5CED6;
+  --titre:#0F506C; --chiffre:#007298; --entete:#E5EFF3; --survol:#F2F6F8;
+  --proj:#FCF1E9; --proj-entete:#F7DCC8; --total:#E9F1F5; --total-entete:#D3E4EC;
+  --bandeau-fond:#FBE9DD; --bandeau-txt:#8A3E12; --accent-txt:#B5541B;
+  --ok:#007298; --attente:#B5541B; --erreur:#B00020; --ombre:0 1px 2px rgba(15,80,108,.08), 0 4px 14px rgba(15,80,108,.06);
+  color-scheme: light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body { margin: 0; font-family: "Public Sans", "Segoe UI", Arial, sans-serif; color: var(--texte);
-  background: var(--page); font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; }
-a { color: var(--accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-aside { background: var(--encre); color: #DCE6E4; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
-.marque { padding: 22px 20px 18px; border-bottom: 1px solid rgba(255,255,255,.12); }
-.marque b { display: block; font-size: 19px; color: #fff; letter-spacing: .2px; }
-.marque span { font-size: 13px; color: #9FB4B1; }
-aside nav { flex: 1; padding: 10px 0; }
-aside nav a { display: block; padding: 10px 20px; color: #DCE6E4; text-decoration: none; border-left: 3px solid transparent; }
-aside nav a small { display: block; color: #8EA6A2; font-size: 12px; }
-aside nav a:hover { background: rgba(255,255,255,.05); }
-aside nav a.actif { background: rgba(255,255,255,.09); border-left-color: #7FC2BB; color: #fff; }
-aside nav a.bientot { opacity: .62; }
-aside .pied { padding: 14px 20px; font-size: 12px; color: #8EA6A2; border-top: 1px solid rgba(255,255,255,.12); }
-
-main { min-width: 0; }
-.bandeau { background: var(--surface); border-bottom: 1px solid var(--trait); padding: 12px 28px;
-  display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; position: sticky; top: 0; z-index: 5; }
-.bandeau label { display: flex; flex-direction: column; font-size: 12px; color: var(--muet); gap: 3px; }
-.bandeau select { font: inherit; font-size: 15px; padding: 6px 8px; border: 1px solid var(--trait); border-radius: 4px;
-  background: #fff; color: var(--texte); min-width: 200px; }
-.bandeau .infos { margin-left: auto; font-size: 12px; color: var(--muet); text-align: right; }
-.bandeau .test { color: var(--attention); font-weight: 600; }
-
-.contenu { padding: 26px 28px 60px; max-width: 1280px; }
-.vue { display: none; }
-.vue.actif { display: block; }
-h1 { font-size: 26px; margin: 0 0 4px; color: var(--encre); font-weight: 700; }
-h2 { font-size: 17px; margin: 34px 0 10px; color: var(--encre); font-weight: 600; }
-.chapeau { color: var(--muet); margin: 0 0 22px; max-width: 70ch; }
-
-/* Ruban des indicateurs : l'élément principal de la page */
-.ruban { display: grid; grid-template-columns: repeat(6, 1fr); background: var(--surface);
-  border: 1px solid var(--trait); border-top: 4px solid var(--encre); }
-.indic { padding: 16px 16px 14px; border-left: 1px solid var(--trait); min-width: 0; }
-.indic:first-child { border-left: 0; }
-.indic .nom { font-size: 13px; color: var(--muet); min-height: 2.6em; }
-.indic .val { font-size: 30px; font-weight: 700; color: var(--encre); letter-spacing: -.5px; margin: 4px 0 2px; white-space: nowrap; }
-.indic .val .unite { font-size: 15px; font-weight: 600; color: var(--muet); letter-spacing: 0; }
-.indic .formule { font-size: 12px; color: var(--muet); }
-.indic.nc { background: repeating-linear-gradient(135deg, var(--attention-pale) 0 8px, #fff 8px 16px); }
-.indic.nc .val { font-size: 17px; color: var(--attention); letter-spacing: 0; padding: 9px 0 6px; }
-.indic.nc .motif { font-size: 12px; color: var(--attention); overflow-wrap: anywhere; }
-
-.panneau { background: var(--surface); border: 1px solid var(--trait); padding: 18px 20px; }
-.ligne-titre { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.ligne-titre select { font: inherit; padding: 4px 6px; border: 1px solid var(--trait); border-radius: 4px; }
-svg text { font-family: inherit; }
-.legende { font-size: 12px; color: var(--muet); margin-top: 6px; }
-.legende i { display: inline-block; width: 12px; height: 10px; vertical-align: -1px; margin: 0 4px 0 12px; }
-
-.tableau { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 14px; }
-th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--trait); vertical-align: top; }
-thead th { font-weight: 600; color: var(--muet); font-size: 13px; border-bottom: 2px solid var(--encre); background: var(--surface); }
-td.num, th.num { text-align: right; white-space: nowrap; }
-tr.total td { font-weight: 700; background: var(--accent-pale); }
-tr.cliquable { cursor: pointer; }
-tr.cliquable:hover td { background: #F6F8F8; }
-.nc-txt { color: var(--attention); }
-.pastille { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; border: 1px solid; }
-.pastille.ok { color: var(--accent); border-color: var(--accent); }
-.pastille.att { color: var(--attention); border-color: var(--attention); }
-code { font-size: 13px; background: #F1F4F3; padding: 1px 5px; border-radius: 3px; }
-
-.grille td.c { text-align: center; padding: 6px 4px; font-size: 12px; }
-.case { display: inline-block; width: 22px; height: 16px; border-radius: 2px; }
-.case.pleine { background: var(--accent); }
-.case.partielle { background: #A9CFCB; }
-.case.vide { background: repeating-linear-gradient(135deg, var(--attention-pale) 0 4px, #fff 4px 8px); border: 1px solid #E3C79C; }
-
-.vide-ecran { background: var(--surface); border: 1px dashed var(--trait); padding: 28px; color: var(--muet); max-width: 70ch; }
-.deux { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-@media (max-width: 1100px) { .ruban { grid-template-columns: repeat(3, 1fr); }
-  .indic:nth-child(4) { border-left: 0; } .indic:nth-child(n+4) { border-top: 1px solid var(--trait); } }
-@media (max-width: 780px) {
-  .app { grid-template-columns: 1fr; }
-  aside { position: static; height: auto; }
-  aside nav { display: flex; overflow-x: auto; padding: 0; }
-  aside nav a { white-space: nowrap; border-left: 0; border-bottom: 3px solid transparent; }
-  aside nav a.actif { border-bottom-color: #7FC2BB; }
-  aside nav a small, aside .pied { display: none; }
-  .bandeau { position: static; padding: 12px 16px; }
-  .bandeau .infos { margin-left: 0; text-align: left; }
-  .contenu { padding: 20px 16px 50px; }
-  .ruban { grid-template-columns: repeat(2, 1fr); }
-  .indic:nth-child(odd) { border-left: 0; } .indic:nth-child(n+3) { border-top: 1px solid var(--trait); }
-  .deux { grid-template-columns: 1fr; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond:#141C23; --surface:#1D2830; --txt:#E2E7EB; --mut:#9DAAB5; --bord:#2F3D48; --bord-fort:#40505C;
+    --titre:#8CCBE0; --chiffre:#5DB8D6; --entete:#1A3442; --survol:#24313A;
+    --proj:#2B241E; --proj-entete:#45311F; --total:#1B2F3A; --total-entete:#21404F;
+    --bandeau-fond:#3B2719; --bandeau-txt:#F3B58F; --accent-txt:#F0A273;
+    --ok:#5DB8D6; --attente:#EE9A66; --erreur:#FF8A80; --ombre:0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+:root[data-theme="dark"] {
+  --fond:#141C23; --surface:#1D2830; --txt:#E2E7EB; --mut:#9DAAB5; --bord:#2F3D48; --bord-fort:#40505C;
+  --titre:#8CCBE0; --chiffre:#5DB8D6; --entete:#1A3442; --survol:#24313A;
+  --proj:#2B241E; --proj-entete:#45311F; --total:#1B2F3A; --total-entete:#21404F;
+  --bandeau-fond:#3B2719; --bandeau-txt:#F3B58F; --accent-txt:#F0A273;
+  --ok:#5DB8D6; --attente:#EE9A66; --erreur:#FF8A80; --ombre:0 1px 2px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing:inherit; }
+html { height:100%; scroll-padding-top:env(safe-area-inset-top,0px); }
+body { margin:0; min-height:100%; font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif; font-size:14px; line-height:1.5;
+  color:var(--txt); background:var(--fond); }
+body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); }
+button, input, select { font:inherit; color:inherit; }
+:focus-visible { outline:2px solid var(--orange); outline-offset:2px; }
+.ecran { display:none; min-height:100vh; }
+.ecran.visible { display:block; }
+.bandeau { background:var(--bandeau-fond); color:var(--bandeau-txt); padding:6px 20px; font-size:12px; font-weight:500; text-align:center; }
+.bandeau b { font-weight:700; }
+.logo-carte { background:#fff; display:inline-flex; align-items:center; border-radius:6px; }
+.logo-carte img { display:block; height:auto; }
+h1, h2, h3 { color:var(--titre); font-weight:700; margin:0; }
+h1 { font-size:24px; line-height:1.25; }
+h2 { font-size:17px; }
+h3 { font-size:14px; }
+.mut { color:var(--mut); }
+.petit { font-size:12px; }
+code { font-family:Consolas,'Courier New',monospace; font-size:12px; background:var(--entete); padding:1px 5px; border-radius:3px; }
+
+/* ---------- Connexion ---------- */
+#ecran-connexion.visible { display:grid; grid-template-columns:minmax(320px,5fr) 7fr; }
+.cnx-gauche { background:var(--bleu-fonce); color:#fff; padding:48px 52px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; }
+.cnx-gauche::after { content:""; position:absolute; right:-120px; bottom:-120px; width:360px; height:360px; border-radius:50%; border:56px solid rgba(255,255,255,.05); }
+.cnx-gauche .logo-carte { padding:16px 22px; align-self:flex-start; }
+.cnx-gauche .logo-carte img { width:190px; }
+.cnx-gauche h1 { color:#fff; font-size:34px; font-weight:800; margin-top:56px; max-width:13ch; }
+.cnx-gauche p { color:rgba(255,255,255,.78); max-width:40ch; font-size:15px; }
+.cnx-gauche .filet { width:56px; height:4px; background:var(--orange); margin:22px 0 18px; }
+.cnx-gauche small { color:rgba(255,255,255,.55); font-size:12px; position:relative; z-index:1; }
+.cnx-droite { display:flex; align-items:center; justify-content:center; padding:40px 24px; background:var(--surface); }
+.cnx-form { width:100%; max-width:380px; }
+.cnx-form h2 { font-size:22px; margin-bottom:6px; }
+.champ { display:block; margin-top:18px; }
+.champ span { display:block; font-size:12px; font-weight:600; color:var(--mut); margin-bottom:6px; }
+.champ input { width:100%; padding:11px 12px; border:1px solid var(--bord-fort); border-radius:6px; background:var(--surface); font-size:15px; }
+.champ input:focus { border-color:var(--bleu-clair); outline:none; box-shadow:0 0 0 3px rgba(0,114,152,.15); }
+.btn { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:6px; border:1px solid transparent; cursor:pointer; font-weight:600; font-size:14px; }
+.btn-principal { background:var(--bleu-fonce); color:#fff; }
+.btn-principal:hover { background:var(--bleu-clair); }
+.btn-accent { background:var(--orange); color:#fff; }
+.btn-accent[disabled] { opacity:.55; cursor:not-allowed; }
+.btn-ligne { background:transparent; border-color:var(--bord-fort); color:var(--txt); }
+.btn-ligne:hover { background:var(--survol); }
+.cnx-form .btn-principal { width:100%; justify-content:center; margin-top:24px; padding:12px; font-size:15px; }
+.erreur-form { color:var(--erreur); font-size:13px; min-height:20px; margin-top:10px; }
+.note { margin-top:22px; padding:10px 12px; border-left:3px solid var(--orange); background:var(--bandeau-fond); color:var(--bandeau-txt); font-size:12px; border-radius:0 4px 4px 0; }
+
+/* ---------- Barre haute commune ---------- */
+.barre { position:sticky; top:env(safe-area-inset-top,0px); z-index:20; background:var(--surface); border-bottom:1px solid var(--bord); box-shadow:var(--ombre); }
+.barre-1 { display:flex; align-items:center; gap:14px; padding:8px 18px; min-height:60px; flex-wrap:wrap; }
+.bouton-zenitude { border:0; background:#fff; padding:6px 10px; border-radius:6px; cursor:pointer; display:flex; align-items:center; box-shadow:inset 0 0 0 1px var(--bord); }
+.bouton-zenitude img { width:112px; display:block; }
+.bouton-zenitude:hover { box-shadow:inset 0 0 0 2px var(--orange); }
+.perim-btn { display:flex; align-items:center; gap:10px; border:1px solid var(--bord-fort); background:var(--surface); border-radius:8px; padding:6px 12px 6px 10px; cursor:pointer; text-align:left; min-width:220px; max-width:320px; }
+.perim-btn:hover { border-color:var(--bleu-clair); }
+.perim-btn .ico { width:30px; height:30px; flex-shrink:0; border-radius:6px; background:var(--entete); color:var(--titre); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; }
+.perim-btn .t1 { display:block; font-size:11px; color:var(--mut); font-weight:600; line-height:1.2; }
+.perim-btn .t2 { display:block; font-size:14px; font-weight:700; color:var(--titre); line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:230px; }
+.perim-btn svg { margin-left:auto; flex-shrink:0; }
+.sep { width:1px; height:32px; background:var(--bord); }
+.nav-principale { display:flex; gap:2px; flex-wrap:wrap; }
+.nav-principale button { border:0; background:transparent; padding:9px 14px; border-radius:6px; cursor:pointer; font-weight:600; color:var(--txt); display:flex; align-items:center; gap:8px; }
+.nav-principale button:hover { background:var(--survol); }
+.nav-principale button.actif { background:var(--entete); color:var(--titre); }
+.nav-principale button[data-avenir] { color:var(--mut); }
+.nav-principale .tag { font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; background:var(--bandeau-fond); color:var(--bandeau-txt); }
+.utilisateur { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.avatar { width:34px; height:34px; border-radius:50%; background:var(--bleu-fonce); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; }
+.utilisateur .nom { font-size:12px; line-height:1.3; text-align:right; }
+.utilisateur .nom b { display:block; font-size:13px; }
+.lien { border:0; background:none; color:var(--chiffre); cursor:pointer; padding:0; font-weight:600; font-size:12px; text-decoration:underline; text-underline-offset:2px; }
+.barre-2 { display:flex; align-items:stretch; gap:4px; padding:0 18px; border-top:1px solid var(--bord); overflow-x:auto; }
+.barre-2 button { border:0; background:none; padding:12px 14px 10px; cursor:pointer; font-weight:600; color:var(--mut); border-bottom:3px solid transparent; white-space:nowrap; }
+.barre-2 button:hover { color:var(--titre); }
+.barre-2 button.actif { color:var(--titre); border-bottom-color:var(--orange); }
+
+/* Menu déroulant Périmètres */
+.deroulant { position:absolute; z-index:40; top:58px; width:420px; max-width:calc(100vw - 24px); background:var(--surface); border:1px solid var(--bord-fort); border-radius:10px; box-shadow:0 12px 32px rgba(15,80,108,.18); display:none; }
+.deroulant.ouvert { display:block; }
+.deroulant .rech { padding:10px; border-bottom:1px solid var(--bord); }
+.deroulant .rech input { width:100%; padding:8px 10px; border:1px solid var(--bord-fort); border-radius:6px; background:var(--surface); }
+.deroulant .liste { max-height:60vh; overflow:auto; padding:6px 0; }
+.deroulant .grp { font-size:11px; font-weight:700; color:var(--mut); padding:10px 14px 4px; }
+.deroulant .opt { display:flex; justify-content:space-between; gap:10px; width:100%; border:0; background:none; text-align:left; padding:7px 14px; cursor:pointer; }
+.deroulant .opt:hover { background:var(--survol); }
+.deroulant .opt.actif { background:var(--entete); font-weight:700; color:var(--titre); }
+.deroulant .opt small { color:var(--mut); white-space:nowrap; }
+.deroulant .pied { border-top:1px solid var(--bord); padding:10px 14px; }
+
+/* ---------- Choix du périmètre ---------- */
+.choix { max-width:1120px; margin:0 auto; padding:34px 22px 60px; }
+.choix-tete { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:26px; }
+.choix-tete p { margin:6px 0 0; color:var(--mut); }
+.choix-tete input { width:320px; max-width:100%; padding:10px 12px; border:1px solid var(--bord-fort); border-radius:6px; background:var(--surface); }
+.choix h2 { margin:28px 0 12px; display:flex; align-items:baseline; gap:10px; }
+.choix h2 span { font-size:12px; color:var(--mut); font-weight:600; }
+.grille-groupes { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+.carte-groupe { text-align:left; border:1px solid var(--bord); border-top:3px solid var(--bleu-clair); background:var(--surface); border-radius:8px; padding:14px 16px; cursor:pointer; }
+.carte-groupe.principal { border-top-color:var(--orange); }
+.carte-groupe:hover { border-color:var(--bleu-clair); box-shadow:var(--ombre); }
+.carte-groupe b { display:block; color:var(--titre); font-size:15px; }
+.carte-groupe span { font-size:12px; color:var(--mut); }
+.liste-res { background:var(--surface); border:1px solid var(--bord); border-radius:8px; overflow:hidden; }
+.liste-res button { display:grid; grid-template-columns:2.2fr 1fr 1fr 1fr; gap:12px; width:100%; border:0; border-bottom:1px solid var(--bord); background:none; padding:12px 16px; text-align:left; cursor:pointer; align-items:center; }
+.liste-res button:last-child { border-bottom:0; }
+.liste-res button:hover { background:var(--survol); }
+.liste-res .tete { font-size:11px; font-weight:700; color:var(--mut); background:var(--entete); cursor:default; }
+.liste-res .tete:hover { background:var(--entete); }
+.liste-res b { color:var(--titre); }
+.vide { padding:18px; color:var(--mut); }
+
+/* ---------- Contenu ---------- */
+main.contenu { max-width:1680px; margin:0 auto; padding:20px 18px 48px; }
+.titre-page { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+.titre-page p { margin:4px 0 0; color:var(--mut); font-size:13px; }
+.outils { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.outils label { font-size:12px; font-weight:600; color:var(--mut); display:flex; align-items:center; gap:8px; }
+select { padding:7px 10px; border:1px solid var(--bord-fort); border-radius:6px; background:var(--surface); }
+.bloc { background:var(--surface); border:1px solid var(--bord); border-radius:8px; padding:16px 18px; margin-bottom:16px; }
+.bloc-tete { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+.legende { font-size:12px; color:var(--mut); }
+
+/* Frise de l'année (rappel de la capture : réalisé / projection) */
+.frise { display:grid; grid-template-columns:repeat(12,1fr); gap:3px; margin:4px 0 16px; }
+.frise button { border:0; padding:8px 0 6px; font-size:12px; font-weight:600; cursor:pointer; background:var(--entete); color:var(--titre); border-radius:4px; position:relative; }
+.frise button.proj { background:var(--proj-entete); color:var(--accent-txt); }
+.frise button.sel { box-shadow:inset 0 0 0 2px var(--orange); }
+.frise button.dans { outline:2px solid var(--bleu-clair); outline-offset:-2px; }
+.frise-leg { display:flex; gap:16px; font-size:12px; color:var(--mut); margin-top:-8px; margin-bottom:14px; flex-wrap:wrap; }
+.frise-leg i { display:inline-block; width:12px; height:12px; border-radius:2px; vertical-align:-2px; margin-right:6px; }
+
+/* Bandeau des KPI */
+.ruban { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:1px; background:var(--bord); border:1px solid var(--bord); border-radius:8px; overflow:hidden; margin-bottom:16px; }
+.indic { background:var(--surface); padding:14px 16px; }
+.indic .nom { font-size:12px; font-weight:600; color:var(--mut); }
+.indic .val { font-size:26px; font-weight:800; color:var(--chiffre); line-height:1.25; margin-top:4px; font-variant-numeric:tabular-nums; }
+.indic .val .unite { font-size:14px; font-weight:700; margin-left:2px; }
+.indic .def { font-size:11px; color:var(--mut); margin-top:4px; }
+.indic.nc .val { font-size:15px; color:var(--attente); font-weight:700; }
+.indic .motif { font-size:11px; color:var(--attente); margin-top:4px; }
+
+/* Graphiques KPI */
+.graphes { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+.graphe { background:var(--surface); border:1px solid var(--bord); border-radius:8px; padding:12px 14px 8px; }
+.graphe .gt { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.graphe .gt b { color:var(--titre); font-size:13px; }
+.graphe .gt span { font-size:12px; color:var(--chiffre); font-weight:700; white-space:nowrap; }
+.graphe svg { display:block; width:100%; height:auto; margin-top:4px; }
+svg text { font-family:inherit; }
+
+/* Tableau EBITDA (format de la capture) */
+.defile { overflow-x:auto; border:1px solid var(--bord); border-radius:6px; }
+table { border-collapse:collapse; width:100%; }
+.tab { font-size:13px; }
+.tab th, .tab td { padding:7px 10px; border-bottom:1px solid var(--bord); text-align:left; vertical-align:top; }
+.tab thead th { background:var(--entete); color:var(--titre); font-size:12px; font-weight:700; white-space:nowrap; }
+.tab tbody tr:hover td { background:var(--survol); }
+.num { text-align:right !important; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.c { text-align:center !important; }
+.ebitda { font-size:12.5px; min-width:1500px; }
+.ebitda th, .ebitda td { padding:6px 9px; border-bottom:1px solid var(--bord); border-right:1px solid var(--bord); }
+.ebitda thead th { background:var(--entete); color:var(--titre); font-weight:700; text-align:center; white-space:nowrap; }
+.ebitda thead tr:nth-child(2) th { font-weight:600; font-size:11px; }
+.ebitda th.ind { text-align:left; min-width:250px; position:sticky; left:0; z-index:2; }
+.ebitda td.ind { position:sticky; left:0; background:var(--surface); z-index:1; white-space:nowrap; }
+.ebitda thead th.proj { background:var(--proj-entete); color:var(--accent-txt); }
+.ebitda td.proj { background:var(--proj); }
+.ebitda thead th.tot { background:var(--total-entete); }
+.ebitda td.tot { background:var(--total); font-weight:700; }
+.ebitda tr.n2 td.ind { padding-left:24px; }
+.ebitda tr.n1 td { font-weight:700; color:var(--chiffre); }
+.ebitda tr.n1 td.ind { color:var(--titre); }
+.ebitda tr.frais td { color:var(--accent-txt); }
+.ebitda tr.n0 td { font-weight:800; color:#fff; background:var(--bleu-fonce); border-color:var(--bleu-fonce); }
+.ebitda tr.n0 td.ind { background:var(--bleu-fonce); }
+.ebitda tr.n0 td.proj, .ebitda tr.n0 td.tot { background:#0B4560; }
+.ebitda tr.taux td { font-style:italic; color:var(--mut); font-size:12px; }
+.ebitda tr:hover td { filter:brightness(.98); }
+.neg { color:var(--erreur) !important; }
+.ebitda tr.n0 td.neg { color:#FFC4BC !important; }
+
+/* Indicateurs, pastilles, cases */
+.pastille { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:700; white-space:nowrap; }
+.pastille.ok { background:rgba(0,114,152,.12); color:var(--ok); }
+.pastille.att { background:var(--bandeau-fond); color:var(--attente); }
+.pastille.ko { background:rgba(176,0,32,.1); color:var(--erreur); }
+.case { display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:middle; }
+.case.pleine { background:var(--bleu-clair); }
+.case.partielle { background:var(--orange); }
+.case.vide { background:transparent; box-shadow:inset 0 0 0 1.5px var(--bord-fort); }
+tr.cliquable { cursor:pointer; }
+.nc-cell { color:var(--attente); font-weight:600; }
+.coche { color:#6AAE1F; font-weight:800; }
+
+/* Import et paramètres (format de la capture Sage, relié à Pennylane) */
+.import-grille { display:grid; grid-template-columns:minmax(260px,1fr) minmax(360px,2fr) auto; gap:14px; align-items:start; margin-bottom:16px; }
+.cadre { border:1px solid var(--proj-entete); border-radius:8px; background:var(--surface); }
+.cadre h3 { padding:12px 14px; border-bottom:1px solid var(--bord); display:flex; justify-content:space-between; align-items:center; }
+.cadre .corps { padding:12px 14px 16px; }
+.duo { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.mini { font-size:11px; color:var(--mut); display:block; margin-bottom:2px; }
+.options { display:grid; grid-template-columns:auto auto 1fr; gap:10px 14px; align-items:center; }
+.bascule { width:36px; height:20px; border-radius:10px; background:var(--bord-fort); position:relative; border:0; padding:0; cursor:not-allowed; }
+.bascule::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:left .15s; }
+.bascule.on { background:var(--orange); }
+.bascule.on::after { left:18px; }
+.info-ronde { display:inline-flex; width:14px; height:14px; border-radius:50%; background:var(--orange); color:#fff; font-size:10px; font-weight:800; align-items:center; justify-content:center; vertical-align:1px; margin-left:4px; cursor:help; }
+.phrase { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:6px 0 12px; }
+.phrase em { color:var(--mut); }
+.connexion-etat { display:flex; gap:12px; align-items:center; padding:12px 14px; border-radius:8px; background:var(--bandeau-fond); color:var(--bandeau-txt); margin-bottom:14px; font-size:13px; }
+.connexion-etat b { font-weight:700; }
+.vide-etat { text-align:center; padding:48px 20px; color:var(--mut); }
+.vide-etat h2 { margin-bottom:8px; }
+
+@media (max-width:1200px) { .ruban { grid-template-columns:repeat(3,minmax(0,1fr)); } .graphes { grid-template-columns:repeat(2,minmax(0,1fr)); } .import-grille { grid-template-columns:1fr; } }
+@media (max-width:760px) {
+  #ecran-connexion.visible { grid-template-columns:1fr; }
+  .cnx-gauche { padding:28px 24px; } .cnx-gauche h1 { margin-top:24px; font-size:26px; }
+  .ruban, .graphes { grid-template-columns:1fr 1fr; } .graphes { grid-template-columns:1fr; }
+  .utilisateur .nom { display:none; } .sep { display:none; }
+  .perim-btn { min-width:0; flex:1; }
+  .liste-res button { grid-template-columns:1fr 1fr; }
+  .indic .val { font-size:21px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
 </style>
 </head>
 <body>
-<div class="app">
-  <aside>
-    <div class="marque"><b>Zenitude</b><span>Pilotage des résidences</span></div>
-    <nav>
-      <a href="#tableau" data-v="tableau">Tableau de bord<small>Indicateurs et comparaison</small></a>
-      <a href="#residences" data-v="residences">Résidences<small>Référentiel</small></a>
-      <a href="#finance" data-v="finance">Compte de résultat<small>Par résidence et exercice</small></a>
-      <a href="#donnees" data-v="donnees">Données<small>Imports et complétude</small></a>
-      <a href="#configuration" data-v="configuration">Configuration<small>Indicateurs et versions</small></a>
-      <a href="#budgets" data-v="budgets" class="bientot">Budgets<small>À venir</small></a>
-      <a href="#rapports" data-v="rapports" class="bientot">Rapports<small>À venir</small></a>
-    </nav>
-    <div class="pied" id="pied"></div>
-  </aside>
-  <main>
-    <div class="bandeau">
-      <label>Périmètre<select id="sel-perim"></select></label>
-      <label>Période<select id="sel-periode"></select></label>
-      <div class="infos"><span class="test">Phase test : données fictives</span><br><span id="infos-version"></span></div>
+
+<!-- 1. Connexion -->
+<section id="ecran-connexion" class="ecran" aria-label="Connexion">
+  <div class="cnx-gauche">
+    <div>
+      <div class="logo-carte"><img src="__LOGO__" alt="Zenitude"></div>
+      <h1>Pilotage des résidences</h1>
+      <div class="filet"></div>
+      <p>Indicateurs, compte de résultat jusqu’à l’EBITDA et imports comptables, pour une résidence ou un groupe de résidences.</p>
     </div>
-    <div class="contenu">
+    <small>Phase test : données fictives. Aucune donnée réelle n’est chargée.</small>
+  </div>
+  <div class="cnx-droite">
+    <form class="cnx-form" id="form-connexion" novalidate>
+      <h2>Connexion</h2>
+      <div class="mut">Identifiez-vous avec votre adresse e-mail professionnelle.</div>
+      <label class="champ"><span>Adresse e-mail</span><input type="email" id="cnx-mail" autocomplete="username" placeholder="prenom.nom@zenitude.fr" required></label>
+      <label class="champ"><span>Mot de passe</span><input type="password" id="cnx-mdp" autocomplete="current-password" required></label>
+      <div class="erreur-form" id="cnx-erreur" role="alert"></div>
+      <button class="btn btn-principal" type="submit">Se connecter</button>
+      <div class="note"><b>Démonstration.</b> Il n’y a pas encore d’authentification réelle (point ouvert n° 7, à décider avec la DSI). Toute adresse e-mail valide et tout mot de passe non vide ouvrent la démonstration. Le mot de passe n’est ni envoyé ni conservé.</div>
+    </form>
+  </div>
+</section>
 
-      <section class="vue" id="v-tableau">
-        <h1 id="titre-tableau">Tableau de bord</h1>
-        <p class="chapeau" id="chapeau-tableau"></p>
-        <div class="ruban" id="ruban"></div>
-        <h2>Évolution mensuelle</h2>
-        <div class="panneau">
-          <div class="ligne-titre"><span id="titre-graph"></span>
-            <label class="legende">Indicateur <select id="sel-graph"></select></label></div>
-          <div id="graph"></div>
-          <div class="legende"><i style="background:var(--accent)"></i>mois calculé<i class="case vide" style="width:12px;height:10px"></i>non calculable (donnée absente)</div>
-        </div>
-        <h2 id="titre-comparaison">Comparaison des résidences</h2>
-        <div class="tableau"><table id="comparaison"></table></div>
-        <p class="legende">Cliquez sur une résidence pour l'afficher seule. Le total est un ratio de sommes, jamais une moyenne des taux.</p>
-      </section>
-
-      <section class="vue" id="v-residences">
-        <h1>Résidences</h1>
-        <p class="chapeau">Résidences actives de la configuration appliquée. Chaque résidence correspond à un dossier comptable Pennylane.</p>
-        <div class="tableau"><table id="tab-residences"></table></div>
-      </section>
-
-      <section class="vue" id="v-finance">
-        <h1>Compte de résultat</h1>
-        <p class="chapeau">Un compte de résultat par résidence, sur son exercice comptable réel. Un exercice court n'est jamais ramené à douze mois.</p>
-        <div class="tableau"><table id="tab-finance"></table></div>
-      </section>
-
-      <section class="vue" id="v-donnees">
-        <h1>Données</h1>
-        <p class="chapeau" id="chapeau-donnees"></p>
-        <div class="deux">
-          <div class="panneau"><h2 style="margin-top:0">Comptabilité</h2><p id="txt-compta"></p><p class="legende">Connexion Pennylane : non active en phase test.</p></div>
-          <div class="panneau"><h2 style="margin-top:0">Exploitation</h2><p id="txt-exploit"></p><p class="legende">Source future : Mews ou saisie (à décider).</p></div>
-        </div>
-        <h2>Complétude par mois</h2>
-        <div class="tableau"><table class="grille" id="tab-couverture"></table></div>
-        <p class="legende"><i class="case pleine" style="width:12px;height:10px"></i>complet<i class="case partielle" style="width:12px;height:10px"></i>partiel<i class="case vide" style="width:12px;height:10px"></i>absent. Un mois absent rend les indicateurs qui en dépendent non calculables.</p>
-      </section>
-
-      <section class="vue" id="v-configuration">
-        <h1>Configuration</h1>
-        <p class="chapeau">Les indicateurs sont définis dans le classeur de configuration, approuvé puis appliqué. Le site affiche les résultats du moteur de calcul ; aucune formule n'est recalculée dans le navigateur.</p>
-        <h2>Indicateurs actifs</h2>
-        <div class="tableau"><table id="tab-kpi"></table></div>
-        <h2>Versions de configuration</h2>
-        <div class="tableau"><table id="tab-versions"></table></div>
-        <h2>Journal</h2>
-        <div class="tableau"><table id="tab-journal"></table></div>
-      </section>
-
-      <section class="vue" id="v-budgets">
-        <h1>Budgets</h1>
-        <div class="vide-ecran">Les campagnes budgétaires et les scénarios Référence, Optimiste et Défavorable arrivent dans un prochain lot. Le moteur d'indicateurs est déjà prêt à les calculer.</div>
-      </section>
-      <section class="vue" id="v-rapports">
-        <h1>Rapports</h1>
-        <div class="vide-ecran">L'export PDF et PowerPoint par résidence arrive dans un prochain lot. Aucun envoi automatique n'est prévu en phase test.</div>
-      </section>
+<!-- 2. Choix du périmètre -->
+<section id="ecran-choix" class="ecran" aria-label="Choix du périmètre">
+  <div class="bandeau"><b>Phase test</b>, données fictives calculées par le moteur du logiciel.</div>
+  <div class="barre"><div class="barre-1">
+    <span class="bouton-zenitude" style="cursor:default"><img src="__LOGO__" alt="Zenitude"></span>
+    <div class="utilisateur"><div class="nom"><b class="u-nom"></b><span class="u-mail mut"></span></div><div class="avatar u-ini"></div><button class="lien" data-deconnexion>Se déconnecter</button></div>
+  </div></div>
+  <div class="choix">
+    <div class="choix-tete">
+      <div><h1>Choisissez un périmètre</h1><p>Un groupe de résidences ou une résidence. Vous pourrez en changer à tout moment avec le bouton Périmètre ou en cliquant sur le logo Zenitude.</p></div>
+      <input type="search" id="choix-rech" placeholder="Rechercher une résidence, un groupe, un dossier…" aria-label="Rechercher">
     </div>
-  </main>
-</div>
+    <h2>Groupes <span id="nb-groupes"></span></h2>
+    <div class="grille-groupes" id="choix-groupes"></div>
+    <h2>Résidences <span id="nb-res"></span></h2>
+    <div class="liste-res" id="choix-res"></div>
+  </div>
+</section>
+
+<!-- 3. Application -->
+<section id="ecran-app" class="ecran" aria-label="Pilotage">
+  <div class="bandeau"><b>Phase test</b>, données fictives. Données comptables importées jusqu’à <span id="b-import"></span> ; mois suivants en projection.</div>
+  <header class="barre">
+    <div class="barre-1" style="position:relative">
+      <button class="bouton-zenitude" id="btn-zenitude" title="Liste des résidences et des groupes"><img src="__LOGO__" alt="Zenitude : retour à la liste des périmètres"></button>
+      <button class="perim-btn" id="btn-perim" aria-haspopup="true" aria-expanded="false">
+        <span class="ico" id="perim-ico"></span>
+        <span><span class="t1">Périmètre</span><span class="t2" id="perim-nom"></span></span>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      </button>
+      <div class="deroulant" id="deroulant" role="dialog" aria-label="Changer de périmètre">
+        <div class="rech"><input type="search" id="der-rech" placeholder="Rechercher…" aria-label="Rechercher un périmètre"></div>
+        <div class="liste" id="der-liste"></div>
+        <div class="pied"><button class="lien" id="der-tous">Voir la liste complète</button></div>
+      </div>
+      <span class="sep"></span>
+      <nav class="nav-principale" aria-label="Sections">
+        <button data-section="tableaux">Tableaux de bord</button>
+        <button data-section="import">Import et paramètres</button>
+        <button data-section="budgets" data-avenir>Budgets <span class="tag">à venir</span></button>
+        <button data-section="rapports" data-avenir>Rapports <span class="tag">à venir</span></button>
+      </nav>
+      <div class="utilisateur"><div class="nom"><b class="u-nom"></b><span class="u-mail mut"></span></div><div class="avatar u-ini"></div><button class="lien" data-deconnexion>Se déconnecter</button></div>
+    </div>
+    <nav class="barre-2" id="sous-onglets" aria-label="Pages"></nav>
+  </header>
+  <main class="contenu" id="contenu"></main>
+</section>
 
 <script>
 var D = /*__DONNEES__*/null;
-var etat = { perim: "GROUPE", periode: D.meta.periode_defaut, graph: "TO-SEN" };
+var LOGO = "__LOGO__";
+var SOUS = {
+  tableaux: [["synthese", "Synthèse d’activité"], ["indicateurs", "Indicateurs hôteliers"], ["resultat", "Compte de résultat"], ["controle", "Contrôle des données"]],
+  import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
+  budgets: [["budgets", "Budgets"]], rapports: [["rapports", "Rapports"]]
+};
+var etat = { utilisateur: null, perim: null, section: "tableaux", page: "synthese", periode: D.meta.periode_defaut };
 var principaux = D.kpi.filter(function (k) { return k.principal; });
+var MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+var MOIS_COURT = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
+var TYPES = { groupe: "Groupe", activite: "Activité", region: "Région", "groupe-cree": "Groupe créé", residence: "Résidence" };
 
 function el(id) { return document.getElementById(id); }
-function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-  return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 function perimetre(id) { return D.perimetres.find(function (p) { return p.id === id; }); }
-function periodes() {
-  var p = perimetre(etat.perim), liste = D.periodes.slice();
+function residence(d) { return D.residences.find(function (r) { return r.dossier === d; }); }
+function dateFr(iso) { var p = iso.slice(0, 10).split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+function moisCourt(m) { return MOIS_COURT[+m.slice(5) - 1] + " " + m.slice(2, 4); }
+function moisLong(m) { return MOIS_LONG[+m.slice(5) - 1] + " " + m.slice(0, 4); }
+function estProj(m) { return m > D.meta.dernier_mois_importe; }
+function resultat(perim, periode) { return D.resultats[perim + "|" + periode] || {}; }
+function eur(s) { if (s == null) return ""; var v = Math.round(+s); return v.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ") + " €"; }
+function nb(n) { return (+n).toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " "); }
+function initiales(p) { return p.type === "residence" ? (residence(p.id).activite || "R").slice(0, 1) : p.type === "groupe" ? "Z" : p.type === "activite" ? "A" : p.type === "region" ? "R" : "G"; }
+function session(k, v) { try { if (v === undefined) return JSON.parse(sessionStorage.getItem("zen-" + k)); if (v === null) sessionStorage.removeItem("zen-" + k); else sessionStorage.setItem("zen-" + k, JSON.stringify(v)); } catch (e) { return null; } }
+
+/* ---------- Écrans ---------- */
+function montrer(id) { document.querySelectorAll(".ecran").forEach(function (e) { e.classList.toggle("visible", e.id === id); }); window.scrollTo(0, 0); }
+function demarrer() {
+  etat.utilisateur = session("utilisateur");
+  var p = session("perim");
+  if (!etat.utilisateur) return montrer("ecran-connexion");
+  remplirUtilisateur();
+  if (p && perimetre(p)) { etat.perim = p; return ouvrirApp(); }
+  ouvrirChoix();
+}
+el("form-connexion").addEventListener("submit", function (ev) {
+  ev.preventDefault();
+  var mail = el("cnx-mail").value.trim(), mdp = el("cnx-mdp").value;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) { el("cnx-erreur").textContent = "Saisissez une adresse e-mail valide."; return; }
+  if (!mdp) { el("cnx-erreur").textContent = "Saisissez votre mot de passe."; return; }
+  el("cnx-erreur").textContent = ""; el("cnx-mdp").value = "";
+  var local = mail.split("@")[0].split(/[._-]/).filter(Boolean).map(function (x) { return x.charAt(0).toUpperCase() + x.slice(1); });
+  etat.utilisateur = { mail: mail, nom: local.join(" ") || mail, ini: local.map(function (x) { return x.charAt(0); }).join("").slice(0, 2) || "?" };
+  session("utilisateur", etat.utilisateur);
+  remplirUtilisateur(); ouvrirChoix();
+});
+document.querySelectorAll("[data-deconnexion]").forEach(function (b) { b.addEventListener("click", function () {
+  session("utilisateur", null); session("perim", null); etat.utilisateur = null; etat.perim = null; montrer("ecran-connexion"); }); });
+function remplirUtilisateur() {
+  document.querySelectorAll(".u-nom").forEach(function (x) { x.textContent = etat.utilisateur.nom; });
+  document.querySelectorAll(".u-mail").forEach(function (x) { x.textContent = etat.utilisateur.mail; });
+  document.querySelectorAll(".u-ini").forEach(function (x) { x.textContent = etat.utilisateur.ini.toUpperCase(); });
+}
+
+/* ---------- Choix du périmètre ---------- */
+function correspond(p, q) {
+  if (!q) return true; q = q.toLowerCase();
+  var r = p.type === "residence" ? residence(p.id) : null;
+  return [p.libelle, p.id, TYPES[p.type], r && r.activite, r && r.region].join(" ").toLowerCase().indexOf(q) >= 0;
+}
+function ouvrirChoix() { montrer("ecran-choix"); el("choix-rech").value = ""; dessinerChoix(); el("choix-rech").focus(); }
+function dessinerChoix() {
+  var q = el("choix-rech").value.trim();
+  var gr = D.perimetres.filter(function (p) { return p.type !== "residence" && correspond(p, q); });
+  var rs = D.perimetres.filter(function (p) { return p.type === "residence" && correspond(p, q); });
+  el("nb-groupes").textContent = gr.length; el("nb-res").textContent = rs.length;
+  el("choix-groupes").innerHTML = gr.map(function (p) {
+    return '<button class="carte-groupe' + (p.type === "groupe" ? " principal" : "") + '" data-p="' + esc(p.id) + '"><b>' + esc(p.libelle) + "</b><span>" +
+      esc(TYPES[p.type]) + ", " + p.dossiers.length + " résidence" + (p.dossiers.length > 1 ? "s" : "") + "</span></button>";
+  }).join("") || '<div class="vide">Aucun groupe ne correspond.</div>';
+  el("choix-res").innerHTML = '<button class="tete" tabindex="-1"><span>Résidence</span><span>Activité</span><span>Région</span><span>Dossier Pennylane</span></button>' +
+    (rs.map(function (p) { var r = residence(p.id);
+      return '<button data-p="' + esc(p.id) + '"><b>' + esc(r.nom) + "</b><span>" + esc(r.activite) + "</span><span>" + esc(r.region) + "</span><span><code>" + esc(r.dossier) + "</code></span></button>";
+    }).join("") || '<div class="vide">Aucune résidence ne correspond.</div>');
+  document.querySelectorAll("#ecran-choix [data-p]").forEach(function (b) { b.addEventListener("click", function () { choisir(b.dataset.p); }); });
+}
+el("choix-rech").addEventListener("input", dessinerChoix);
+function choisir(id) { etat.perim = id; session("perim", id); fermerDeroulant(); if (!el("ecran-app").classList.contains("visible")) ouvrirApp(); else rendre(); }
+
+/* ---------- Application ---------- */
+function ouvrirApp() { montrer("ecran-app"); el("b-import").textContent = moisLong(D.meta.dernier_mois_importe); rendre(); }
+el("btn-zenitude").addEventListener("click", function () { fermerDeroulant(); ouvrirChoix(); });
+document.querySelectorAll(".nav-principale button").forEach(function (b) { b.addEventListener("click", function () {
+  etat.section = b.dataset.section; etat.page = SOUS[etat.section][0][0]; rendre(); }); });
+
+function ouvrirDeroulant() { el("deroulant").classList.add("ouvert"); el("btn-perim").setAttribute("aria-expanded", "true");
+  el("deroulant").style.left = el("btn-perim").offsetLeft + "px"; el("der-rech").value = ""; dessinerDeroulant(); el("der-rech").focus(); }
+function fermerDeroulant() { el("deroulant").classList.remove("ouvert"); el("btn-perim").setAttribute("aria-expanded", "false"); }
+el("btn-perim").addEventListener("click", function (e) { e.stopPropagation(); el("deroulant").classList.contains("ouvert") ? fermerDeroulant() : ouvrirDeroulant(); });
+el("deroulant").addEventListener("click", function (e) { e.stopPropagation(); });
+document.addEventListener("click", fermerDeroulant);
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") fermerDeroulant(); });
+el("der-rech").addEventListener("input", dessinerDeroulant);
+el("der-tous").addEventListener("click", function () { fermerDeroulant(); ouvrirChoix(); });
+function dessinerDeroulant() {
+  var q = el("der-rech").value.trim(), html = "", courant = null;
+  var ordre = ["groupe", "groupe-cree", "activite", "region", "residence"], titres = { groupe: "Groupe", "groupe-cree": "Groupes créés", activite: "Par activité", region: "Par région", residence: "Résidences" };
+  ordre.forEach(function (t) {
+    var ps = D.perimetres.filter(function (p) { return p.type === t && correspond(p, q); });
+    if (!ps.length) return;
+    html += '<div class="grp">' + titres[t] + "</div>" + ps.map(function (p) {
+      return '<button class="opt' + (p.id === etat.perim ? " actif" : "") + '" data-p="' + esc(p.id) + '"><span>' + esc(p.libelle) + "</span><small>" +
+        (p.type === "residence" ? esc(residence(p.id).activite) : p.dossiers.length + " rés.") + "</small></button>";
+    }).join("");
+  });
+  el("der-liste").innerHTML = html || '<div class="vide">Aucun résultat.</div>';
+  el("der-liste").querySelectorAll("[data-p]").forEach(function (b) { b.addEventListener("click", function () { choisir(b.dataset.p); }); });
+}
+
+function rendre() {
+  var p = perimetre(etat.perim);
+  el("perim-nom").textContent = p.libelle; el("perim-ico").textContent = initiales(p);
+  document.querySelectorAll(".nav-principale button").forEach(function (b) { b.classList.toggle("actif", b.dataset.section === etat.section); });
+  el("sous-onglets").innerHTML = SOUS[etat.section].map(function (s) { return '<button data-page="' + s[0] + '" class="' + (s[0] === etat.page ? "actif" : "") + '">' + esc(s[1]) + "</button>"; }).join("");
+  el("sous-onglets").querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () { etat.page = b.dataset.page; rendre(); }); });
+  var f = PAGES[etat.page]; el("contenu").innerHTML = ""; f(p);
+}
+
+/* ---------- Périodes ---------- */
+function periodes(p) {
+  var liste = D.periodes.slice();
   if (p.type === "residence" && D.resultats[p.id + "|EXERCICE"]) {
-    var r = D.residences.find(function (x) { return x.dossier === p.id; });
-    liste.unshift({ id: "EXERCICE", libelle: "Exercice comptable (" + dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) + ")" });
+    var r = residence(p.id);
+    liste.push({ id: "EXERCICE", libelle: "Exercice comptable (" + dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) + ")", mois: [] });
   }
   return liste;
 }
-function dateFr(iso) { var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
-function resultat(perim, periode) { return D.resultats[perim + "|" + periode] || {}; }
-function libellePeriode() { var p = periodes().find(function (x) { return x.id === etat.periode; }); return p ? p.libelle : ""; }
-function nomMois(m) { return ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."][+m.slice(5) - 1]; }
-
-function remplirSelecteurs() {
-  var groupes = { groupe: "Ensemble", activite: "Par activité", residence: "Par résidence" }, html = "", courant = "";
-  D.perimetres.forEach(function (p) {
-    if (p.type !== courant) { if (courant) html += "</optgroup>"; html += '<optgroup label="' + groupes[p.type] + '">'; courant = p.type; }
-    html += '<option value="' + esc(p.id) + '">' + esc(p.libelle) + "</option>";
-  });
-  el("sel-perim").innerHTML = html + "</optgroup>";
-  el("sel-perim").value = etat.perim;
-  var ps = periodes();
-  if (!ps.some(function (p) { return p.id === etat.periode; })) etat.periode = D.meta.periode_defaut;
-  el("sel-periode").innerHTML = ps.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.libelle) + "</option>"; }).join("");
-  el("sel-periode").value = etat.periode;
-  el("sel-graph").innerHTML = principaux.map(function (k) { return '<option value="' + k.code + '">' + esc(k.nom) + "</option>"; }).join("");
-  el("sel-graph").value = etat.graph;
+function selecteurPeriode(p) {
+  var ps = periodes(p);
+  if (!ps.some(function (x) { return x.id === etat.periode; })) etat.periode = D.meta.periode_defaut;
+  return '<label>Période des indicateurs <select id="sel-periode">' + ps.map(function (x) {
+    return '<option value="' + esc(x.id) + '"' + (x.id === etat.periode ? " selected" : "") + ">" + esc(x.libelle) + "</option>"; }).join("") + "</select></label>";
+}
+function brancherPeriode() { var s = el("sel-periode"); if (s) s.addEventListener("change", function () { etat.periode = s.value; rendre(); }); }
+function frise(p) {
+  var per = periodes(p).find(function (x) { return x.id === etat.periode; }) || { mois: [] };
+  return '<div class="frise" role="group" aria-label="Mois de ' + D.meta.annee + '">' + D.mois.map(function (m) {
+    var cl = (estProj(m) ? "proj" : "") + (etat.periode === m ? " sel" : "") + (per.mois.indexOf(m) >= 0 && etat.periode !== m ? " dans" : "");
+    return '<button class="' + cl + '" data-m="' + m + '" title="' + moisLong(m) + (estProj(m) ? " (projection)" : " (réalisé)") + '">' + MOIS_COURT[+m.slice(5) - 1] + "</button>";
+  }).join("") + '</div><div class="frise-leg"><span><i style="background:var(--entete)"></i>Réalisé (comptabilité importée)</span><span><i style="background:var(--proj-entete)"></i>Projection</span><span>Cliquez sur un mois pour afficher ses indicateurs.</span></div>';
+}
+function brancherFrise() { document.querySelectorAll(".frise [data-m]").forEach(function (b) { b.addEventListener("click", function () { etat.periode = b.dataset.m; rendre(); }); }); }
+function enTete(titre, p, sousTitre, outils) {
+  var n = p.dossiers.length;
+  return '<div class="titre-page"><div><h1>' + esc(titre) + "</h1><p>" + esc(p.libelle) + (p.type === "residence" ? ", " + esc(residence(p.id).activite) + ", " + esc(residence(p.id).region) :
+    ", " + n + " résidence" + (n > 1 ? "s" : "")) + (sousTitre ? ". " + sousTitre : "") + '</p></div><div class="outils">' + (outils || "") + "</div></div>";
 }
 
-function valeurUnite(a) {
-  var i = a.lastIndexOf(" ");
-  return i < 0 ? esc(a) : esc(a.slice(0, i)) + '<span class="unite">' + esc(a.slice(i)) + "</span>";
-}
-function ruban() {
-  var r = resultat(etat.perim, etat.periode);
-  el("ruban").innerHTML = principaux.map(function (k) {
+/* ---------- Tableaux de bord : synthèse ---------- */
+function valeurUnite(a) { var i = a.lastIndexOf(" "); return i < 0 ? esc(a) : esc(a.slice(0, i)) + '<span class="unite">' + esc(a.slice(i)) + "</span>"; }
+function ruban(p) {
+  var r = resultat(p.id, etat.periode);
+  return '<div class="ruban">' + principaux.map(function (k) {
     var v = r[k.code] || { statut: "non calculable", motif: "indicateur absent" };
-    if (v.statut === "calculé")
-      return '<div class="indic"><div class="nom">' + esc(k.nom) + '</div><div class="val">' + valeurUnite(v.affichage) +
-        '</div><div class="formule">' + esc(k.definition) + "</div></div>";
-    return '<div class="indic nc"><div class="nom">' + esc(k.nom) + '</div><div class="val">Non calculable</div><div class="motif">' +
-      esc(v.motif) + "</div></div>";
-  }).join("");
+    if (v.statut === "calculé") return '<div class="indic"><div class="nom">' + esc(k.nom) + '</div><div class="val">' + valeurUnite(v.affichage) + '</div><div class="def">' + esc(k.definition) + "</div></div>";
+    return '<div class="indic nc"><div class="nom">' + esc(k.nom) + '</div><div class="val">Non calculable</div><div class="motif">' + esc(v.motif) + "</div></div>";
+  }).join("") + "</div>";
 }
-
-function graphique() {
-  var k = D.kpi.find(function (x) { return x.code === etat.graph; }), p = perimetre(etat.perim);
-  el("titre-graph").textContent = k.nom + " · " + p.libelle + " · " + D.meta.annee;
-  var pts = D.mois.map(function (m) { var v = resultat(etat.perim, m)[k.code]; return { m: m, v: v && v.statut === "calculé" ? +v.valeur : null, a: v ? v.affichage : "" }; });
+function graphe(p, k) {
+  var pct = k.unite === "%";
+  var pts = D.mois.map(function (m) { var v = resultat(p.id, m)[k.code]; return { m: m, v: v && v.statut === "calculé" ? +v.valeur * (pct ? 100 : 1) : null, a: v ? (v.statut === "calculé" ? v.affichage : "non calculable") : "" }; });
   var vals = pts.filter(function (x) { return x.v !== null; }).map(function (x) { return x.v; });
-  var max = vals.length ? Math.max.apply(null, vals) * 1.15 : 1;
-  if (k.unite === "%") max = vals.length && Math.max.apply(null, vals) > 1 ? max : 1;
-  var L = 760, H = 230, g = 40, b = 28, h = 22, l = (L - g) / pts.length, s = "";
-  s += '<svg viewBox="0 0 ' + L + " " + H + '" width="100%" role="img" aria-label="' + esc(k.nom) + ' par mois">';
-  for (var i = 0; i <= 4; i++) {
-    var y = h + (H - h - b) * i / 4, val = max * (1 - i / 4);
-    s += '<line x1="' + g + '" x2="' + L + '" y1="' + y + '" y2="' + y + '" stroke="#E4E9E8"/>';
-    s += '<text x="' + (g - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#5B6B70">' +
-      (k.unite === "%" ? Math.round(val * 100) + " %" : Math.round(val)) + "</text>";
-  }
-  s += '<defs><pattern id="hach" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fff"/><rect width="3" height="6" fill="#FBF0DF"/></pattern></defs>';
+  var W = 360, H = 170, g = 34, d = 8, h = 14, b = 24;
+  var min = vals.length ? Math.min.apply(null, vals) : 0, max = vals.length ? Math.max.apply(null, vals) : 1;
+  var marge = (max - min) * 0.18 || Math.abs(max) * 0.1 || 1; min = Math.max(0, min - marge); max = max + marge;
+  var x = function (i) { return g + (W - g - d) * i / 11; }, y = function (v) { return h + (H - h - b) * (1 - (v - min) / (max - min)); };
+  var fmt = function (v) { return pct ? Math.round(v) + " %" : Math.round(v).toLocaleString("fr-FR"); };
+  var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(k.nom) + " par mois, " + D.meta.annee + '">';
+  var iCoupe = D.mois.findIndex(estProj);
+  if (iCoupe > 0) s += '<rect x="' + (x(iCoupe) - (W - g - d) / 22) + '" y="' + h + '" width="' + (W - d - x(iCoupe) + (W - g - d) / 22) + '" height="' + (H - h - b) + '" fill="var(--proj)"/>' +
+    '<line x1="' + (x(iCoupe) - (W - g - d) / 22) + '" x2="' + (x(iCoupe) - (W - g - d) / 22) + '" y1="' + (h - 4) + '" y2="' + (H - b) + '" stroke="#DE7233" stroke-width="1.5"/>';
+  for (var t = 0; t <= 3; t++) { var vv = min + (max - min) * t / 3;
+    s += '<line x1="' + g + '" x2="' + (W - d) + '" y1="' + y(vv) + '" y2="' + y(vv) + '" stroke="var(--bord)" stroke-width="1"/>' +
+      '<text x="' + (g - 5) + '" y="' + (y(vv) + 3.5) + '" font-size="9.5" text-anchor="end" fill="var(--mut)">' + fmt(vv) + "</text>"; }
+  pts.forEach(function (pt, i) { if (i % 2 === 0 || i === 11) s += '<text x="' + x(i) + '" y="' + (H - 7) + '" font-size="9.5" text-anchor="middle" fill="var(--mut)">' + MOIS_COURT[i] + "</text>"; });
+  var seg = function (filtre, dash, couleur) { var d2 = "", ouvert = false;
+    pts.forEach(function (pt, i) { if (pt.v === null || !filtre(i)) { ouvert = false; return; } d2 += (ouvert ? "L" : "M") + x(i).toFixed(1) + " " + y(pt.v).toFixed(1); ouvert = true; });
+    return d2 ? '<path d="' + d2 + '" fill="none" stroke="' + couleur + '" stroke-width="2.2" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="4 3"' : "") + "/>" : ""; };
+  s += seg(function (i) { return !estProj(D.mois[i]); }, false, "#007298");
+  s += seg(function (i) { return i >= iCoupe - 1 && iCoupe > 0; }, true, "#DE7233");
   pts.forEach(function (pt, i) {
-    var x = g + i * l + l * 0.18, w = l * 0.64, sel = pt.m === etat.periode;
-    if (pt.v === null) s += '<rect x="' + x + '" y="' + h + '" width="' + w + '" height="' + (H - h - b) + '" fill="url(#hach)" stroke="#E3C79C"><title>' + nomMois(pt.m) + " : non calculable</title></rect>";
-    else { var hh = (H - h - b) * pt.v / max;
-      s += '<rect x="' + x + '" y="' + (H - b - hh) + '" width="' + w + '" height="' + hh + '" fill="' + (sel ? "#17303A" : "#2C6E6A") + '"><title>' + nomMois(pt.m) + " : " + esc(pt.a) + "</title></rect>";
-      if (sel) s += '<text x="' + (x + w / 2) + '" y="' + (H - b - hh - 6) + '" text-anchor="middle" font-size="11" font-weight="600" fill="#17303A">' + esc(pt.a) + "</text>"; }
-    s += '<text x="' + (x + w / 2) + '" y="' + (H - 9) + '" text-anchor="middle" font-size="11" fill="' + (sel ? "#17303A" : "#5B6B70") + '"' + (sel ? ' font-weight="700"' : "") + ">" + nomMois(pt.m) + "</text>";
+    if (pt.v === null) { s += '<text x="' + x(i) + '" y="' + (H - b - 4) + '" font-size="9" text-anchor="middle" fill="var(--attente)" font-weight="700">n.c.<title>' + esc(moisLong(pt.m)) + " : non calculable</title></text>"; return; }
+    s += '<circle cx="' + x(i) + '" cy="' + y(pt.v) + '" r="3" fill="var(--surface)" stroke="' + (estProj(pt.m) ? "#DE7233" : "#007298") + '" stroke-width="1.8"><title>' + esc(moisLong(pt.m)) + " : " + esc(pt.a) + (estProj(pt.m) ? " (projection)" : "") + "</title></circle>";
   });
-  el("graph").innerHTML = s + "</svg>";
+  var an = resultat(p.id, "A-" + D.meta.annee)[k.code];
+  return '<div class="graphe"><div class="gt"><b>' + esc(k.nom) + "</b><span>" + (an && an.statut === "calculé" ? "Année : " + esc(an.affichage) : "Année : n.c.") + "</span></div>" + s + "</svg></div>";
 }
-
-function comparaison() {
-  var p = perimetre(etat.perim), per = etat.periode === "EXERCICE" ? null : etat.periode;
-  var dossiers = p.type === "residence" ? D.residences.map(function (r) { return r.dossier; }) : p.dossiers;
-  el("titre-comparaison").textContent = "Comparaison des résidences · " + (per ? libellePeriode() : "choisissez une période civile");
-  if (!per) { el("comparaison").innerHTML = '<tr><td class="nc-txt">Chaque résidence a son propre exercice : choisissez un mois, un trimestre ou l\'année pour comparer.</td></tr>'; return; }
-  var tete = "<thead><tr><th>Résidence</th><th>Activité</th>" + principaux.map(function (k) { return '<th class="num">' + esc(k.nom) + "</th>"; }).join("") + "</tr></thead>";
-  function cellules(r) { return principaux.map(function (k) { var v = r[k.code];
-    return v && v.statut === "calculé" ? '<td class="num">' + esc(v.affichage) + "</td>" : '<td class="num nc-txt" title="' + esc(v ? v.motif : "") + '">non calculable</td>'; }).join(""); }
-  var corps = dossiers.map(function (d) { var r = D.residences.find(function (x) { return x.dossier === d; });
-    return '<tr class="cliquable" data-d="' + esc(d) + '"><td>' + esc(r.nom) + '</td><td>' + esc(r.activite) + "</td>" + cellules(resultat(d, per)) + "</tr>"; }).join("");
-  var totalId = p.type === "residence" ? "GROUPE" : p.id, totalNom = perimetre(totalId).libelle;
-  corps += '<tr class="total"><td colspan="2">Total ' + esc(totalNom.toLowerCase()) + "</td>" + cellules(resultat(totalId, per)) + "</tr>";
-  el("comparaison").innerHTML = tete + "<tbody>" + corps + "</tbody>";
-  document.querySelectorAll("#comparaison tr.cliquable").forEach(function (tr) {
-    tr.addEventListener("click", function () { etat.perim = tr.dataset.d; remplirSelecteurs(); rendre(); window.scrollTo(0, 0); });
+function tableauEbitda(p) {
+  var E = D.ebitda[p.id], dm = D.meta.dernier_mois_importe;
+  var t = '<div class="defile"><table class="ebitda"><thead><tr><th class="ind" rowspan="2">Indicateur</th>' +
+    D.mois.map(function (m) { return '<th class="' + (estProj(m) ? "proj" : "") + '">' + moisCourt(m) + "</th>"; }).join("") +
+    '<th class="tot" colspan="2">Total période</th></tr><tr>' +
+    D.mois.map(function (m) { return '<th class="' + (estProj(m) ? "proj" : "") + '">' + (estProj(m) ? "Projection" : "Réalisé") + "</th>"; }).join("") +
+    '<th class="tot">Réalisé<br><span style="font-weight:500">janv. – ' + MOIS_COURT[+dm.slice(5) - 1].toLowerCase() + " " + dm.slice(2, 4) + '</span></th><th class="tot">Projection<br><span style="font-weight:500">' + D.meta.annee + "</span></th></tr></thead><tbody>";
+  function cell(v, cl) { var neg = v != null && +v < 0; return '<td class="num ' + cl + (neg ? " neg" : "") + '">' + (v == null ? "" : eur(v)) + "</td>"; }
+  D.lignes_ebitda.forEach(function (l) {
+    t += '<tr class="n' + l.niveau + (l.code === "FRAIS_OP" ? " frais" : "") + '"><td class="ind">' + esc(l.libelle) + "</td>" +
+      D.mois.map(function (m) { return cell(E.mois[m][l.code], estProj(m) ? "proj" : ""); }).join("") +
+      cell(E.realise[l.code], "tot") + cell(E.total[l.code], "tot") + "</tr>";
   });
+  function pc(v) { return v == null ? "" : String(v).replace(".", ",") + " %"; }
+  t += '<tr class="taux"><td class="ind">Taux d’EBITDA (sur CA net)</td>' + D.mois.map(function (m) { return '<td class="num ' + (estProj(m) ? "proj" : "") + '">' + pc(E.mois[m].TAUX_EBITDA) + "</td>"; }).join("") +
+    '<td class="num tot">' + pc(E.realise.TAUX_EBITDA) + '</td><td class="num tot">' + pc(E.total.TAUX_EBITDA) + "</td></tr>";
+  t += "</tbody></table></div>";
+  if (E.non_classes.length) t += '<p class="legende" style="color:var(--erreur)">Comptes non classés, exclus du tableau : ' + E.non_classes.map(esc).join(", ") + "</p>";
+  return t;
 }
+var PAGES = {};
+PAGES.synthese = function (p) {
+  var h = enTete("Synthèse d’activité", p, "", selecteurPeriode(p)) + frise(p) + ruban(p);
+  h += '<div class="bloc-tete"><h2>Indicateurs clés, mois par mois (' + D.meta.annee + ')</h2><span class="legende">Trait plein : réalisé. Pointillé orange : projection. « n.c. » : non calculable (survolez pour le motif).</span></div>';
+  h += '<div class="graphes">' + principaux.map(function (k) { return graphe(p, k); }).join("") + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Compte de résultat jusqu’à l’EBITDA, ' + D.meta.annee + '</h2><span class="legende">Mois civils. Colonnes orangées : projection (données fictives en attendant le module Budgets).</span></div>' + tableauEbitda(p) + "</div>";
+  el("contenu").innerHTML = h; brancherPeriode(); brancherFrise();
+};
 
-function tableau() {
-  var p = perimetre(etat.perim);
-  el("titre-tableau").textContent = p.libelle;
-  el("chapeau-tableau").textContent = libellePeriode() + " · " + (p.dossiers.length > 1 ? p.dossiers.length + " résidences, chiffres additionnés avant chaque ratio" : "1 résidence, dossier " + p.dossiers[0]);
-  ruban(); graphique(); comparaison();
+/* ---------- Indicateurs hôteliers ---------- */
+PAGES.indicateurs = function (p) {
+  var dossiers = p.dossiers;
+  var h = enTete("Indicateurs hôteliers", p, "", selecteurPeriode(p)) + frise(p) + ruban(p);
+  var t = '<div class="bloc"><div class="bloc-tete"><h2>Détail par résidence</h2><span class="legende">Cliquez sur une résidence pour l’ouvrir.</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Activité</th>' +
+    principaux.map(function (k) { return '<th class="num">' + esc(k.nom) + "</th>"; }).join("") + "</tr></thead><tbody>";
+  dossiers.forEach(function (d) { var r = residence(d), per = etat.periode === "EXERCICE" ? "EXERCICE" : etat.periode, v = resultat(d, per);
+    t += '<tr class="cliquable" data-d="' + esc(d) + '"><td><b>' + esc(r.nom) + "</b></td><td>" + esc(r.activite) + "</td>" + principaux.map(function (k) { var x = v[k.code];
+      return x && x.statut === "calculé" ? '<td class="num">' + esc(x.affichage) + "</td>" : '<td class="num nc-cell" title="' + esc(x ? x.motif : "") + '">n.c.</td>'; }).join("") + "</tr>"; });
+  if (dossiers.length > 1) { var g = resultat(p.id, etat.periode);
+    t += '<tr><td><b>' + esc(p.libelle) + "</b></td><td class=\"mut\">ratio de sommes</td>" + principaux.map(function (k) { var x = g[k.code];
+      return x && x.statut === "calculé" ? '<td class="num"><b>' + esc(x.affichage) + "</b></td>" : '<td class="num nc-cell" title="' + esc(x ? x.motif : "") + '">n.c.</td>'; }).join("") + "</tr>"; }
+  el("contenu").innerHTML = h + t + "</tbody></table></div></div>";
+  brancherPeriode(); brancherFrise();
+  document.querySelectorAll("tr[data-d]").forEach(function (tr) { tr.addEventListener("click", function () { choisir(tr.dataset.d); }); });
+};
+
+/* ---------- Compte de résultat publié (lot 5) ---------- */
+PAGES.resultat = function (p) {
+  var lignes = D.finance.filter(function (f) { return p.dossiers.indexOf(f.dossier) >= 0; });
+  var t = enTete("Compte de résultat publié", p, "Une publication par résidence, sur son exercice comptable") +
+    '<div class="bloc"><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Exercice</th><th class="num">CA hébergement</th><th class="num">CA services</th><th class="num">Charges</th><th class="num">Résultat</th><th>Statut</th></tr></thead><tbody>';
+  lignes.forEach(function (f) {
+    if (f.statut !== "publié") { t += "<tr><td><b>" + esc(f.nom) + '</b></td><td colspan="5" class="nc-cell">' + esc(f.motif) + '</td><td><span class="pastille ko">bloqué</span></td></tr>'; return; }
+    t += "<tr><td><b>" + esc(f.nom) + "</b></td><td>" + dateFr(f.exercice.debut) + " au " + dateFr(f.exercice.fin) + '</td><td class="num">' + eur(f.resultat.CA_HEBERGEMENT) + '</td><td class="num">' + eur(f.resultat.CA_SERVICES) +
+      '</td><td class="num">' + eur(f.resultat.PL_CHARGES) + '</td><td class="num"><b>' + eur(f.resultat.RESULTAT) + '</b></td><td><span class="pastille ok">publié</span></td></tr>';
+  });
+  el("contenu").innerHTML = t + '</tbody></table></div><p class="legende">Instantané figé et vérifiable (version de configuration ' + esc(D.meta.version_config) + "). Les exercices décalés ne sont pas additionnés entre résidences.</p></div>";
+};
+
+/* ---------- Contrôle des données ---------- */
+function grilleCouverture(p, compta) {
+  var t = '<div class="defile"><table class="tab"><thead><tr><th>Résidence</th>' + (compta ? "<th>Source</th>" : "") + D.mois.map(function (m) { return '<th class="c">' + MOIS_COURT[+m.slice(5) - 1] + "</th>"; }).join("") + "</tr></thead><tbody>";
+  p.dossiers.forEach(function (d) { var r = residence(d), c = D.couverture[d];
+    if (compta) t += '<tr><td rowspan="2"><b>' + esc(r.nom) + "</b></td><td>Comptabilité</td>" + D.mois.map(function (m) { var ok = c[m].compta && !estProj(m);
+      return '<td class="c"><span class="case ' + (ok ? "pleine" : "vide") + '" title="' + moisLong(m) + (ok ? " : importé" : estProj(m) ? " : non importé (projection)" : " : absent") + '"></span></td>'; }).join("") + "</tr><tr><td>Exploitation</td>";
+    else t += "<tr><td><b>" + esc(r.nom) + "</b></td>";
+    t += D.mois.map(function (m) { var x = c[m], cl = x.exploitation === x.attendu ? "pleine" : x.exploitation ? "partielle" : "vide";
+      return '<td class="c"><span class="case ' + cl + '" title="' + moisLong(m) + " : " + x.exploitation + " mesure(s) sur " + x.attendu + '"></span></td>'; }).join("") + "</tr>"; });
+  return t + '</tbody></table></div><p class="legende"><span class="case pleine"></span> complet &nbsp; <span class="case partielle"></span> partiel &nbsp; <span class="case vide"></span> absent</p>';
 }
+PAGES.controle = function (p) {
+  el("contenu").innerHTML = enTete("Contrôle des données", p, "Présence des données par mois, année " + D.meta.annee) + '<div class="bloc">' + grilleCouverture(p, true) +
+    '<p class="legende">Seuils de fraîcheur : 45 jours pour la comptabilité, 2 jours pour l’exploitation. Une donnée absente rend l’indicateur « non calculable », jamais égal à zéro.</p></div>';
+};
 
-function eur(s) { var v = Math.round(+s); return v.toLocaleString("fr-FR").replace(/\u202f/g, " ") + " €"; }
+/* ---------- Import et paramètres ---------- */
+function bascule(on, titre) { return '<button class="bascule' + (on ? " on" : "") + '" disabled aria-pressed="' + on + '" title="' + esc(titre || "Non modifiable en phase test") + '"></button>'; }
+PAGES.pennylane = function (p) {
+  var h = enTete("Import comptable", p, "") +
+    '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Connexion Pennylane non activée.</b> Phase test : les écritures affichées sont fictives. Le branchement de l’API Pennylane (jeton par dossier, droits d’accès) reste à décider avec la DSI.</div></div>' +
+    '<h2 style="margin-bottom:12px">Import des données par l’API Pennylane</h2><div class="import-grille">' +
+    '<div class="cadre"><h3>Dates d’import</h3><div class="corps duo"><div><span class="mini">Import manuel de</span><select disabled><option>Janvier ' + D.meta.annee + '</option></select></div><div><span class="mini">à</span><select disabled><option>' + MOIS_LONG[+D.meta.dernier_mois_importe.slice(5) - 1].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + D.meta.annee + "</option></select></div></div></div>" +
+    '<div class="cadre"><h3>Options</h3><div class="corps"><div class="options">' +
+      "<span>Analytique</span>" + bascule(false) + '<span class="mini">Préfixes de regroupement <span class="info-ronde" title="Regrouper des sous-comptes Pennylane sous un même compte">i</span></span>' +
+      '<span>À-nouveaux gérés par Pennylane <span class="info-ronde" title="Les écritures d’ouverture viennent du logiciel comptable">i</span></span>' + bascule(true) + '<span class="mini">Import automatique <span class="info-ronde" title="Fréquence à fixer (point ouvert)">i</span> : aucun</span>' +
+      "<span>Balances mensuelles</span>" + bascule(false) + "<span></span>" +
+      '<span>Forcer la longueur des comptes <span class="info-ronde" title="Compléter les numéros de compte par des zéros">i</span></span>' + bascule(false) + "<span></span>" +
+    "</div></div></div>" +
+    '<div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-accent" disabled title="Disponible quand la connexion Pennylane sera activée">Importer</button><button class="btn btn-ligne" disabled>Historique d’import</button></div></div>' +
+    '<div class="phrase"><button class="btn btn-ligne" disabled>Éditer les exercices</button><em>L’exercice N correspond au premier exercice non clôturé en comptabilité.</em></div>';
+  var t = '<div class="bloc"><div class="defile"><table class="tab"><thead><tr>' + (p.dossiers.length > 1 ? "<th>Résidence</th>" : "") +
+    '<th>Rang</th><th>Exercice</th><th>Dossier Pennylane</th><th>Période importée</th><th class="num">Écritures (lignes)</th><th class="num">Données budgétaires</th><th class="c">Statut</th></tr></thead><tbody>';
+  p.dossiers.forEach(function (d) { var r = residence(d), rangs = D.imports[d] || [];
+    rangs.forEach(function (x, i) {
+      t += "<tr>" + (p.dossiers.length > 1 ? (i === 0 ? '<td rowspan="' + rangs.length + '"><b>' + esc(r.nom) + "</b></td>" : "") : "") + "<td><b>" + x.rang + "</b></td><td>Du " + dateFr(x.debut) + " au " + dateFr(x.fin) +
+        "</td><td><code>" + esc(d) + "</code></td><td>" + (x.periode_importee ? "Du " + dateFr(x.periode_importee[0]) + " au " + dateFr(x.periode_importee[1]) : '<span class="mut">aucune écriture</span>') +
+        '</td><td class="num">' + nb(x.ecritures) + '</td><td class="num mut">0</td><td class="c">' + (x.ecritures ? '<span class="coche" title="Données présentes">✓</span>' : '<span class="pastille att">à importer</span>') + "</td></tr>";
+    }); });
+  el("contenu").innerHTML = h + t + '</tbody></table></div><p class="legende">Données budgétaires : à venir avec le module Budgets. Écritures comptées jusqu’au dernier mois importé (' + moisLong(D.meta.dernier_mois_importe) + ").</p></div>";
+};
+PAGES.externes = function (p) {
+  var h = enTete("Données externes", p, "Mesures d’exploitation hors comptabilité") +
+    '<div class="bloc"><div class="bloc-tete"><h2>Sources</h2></div><div class="defile"><table class="tab"><thead><tr><th>Source</th><th>Contenu</th><th>Fréquence</th><th>État</th></tr></thead><tbody>' +
+    '<tr><td><b>Mews</b> (PMS)</td><td>Logements-nuits disponibles et vendus, séjours, nuitées, couverts petit-déjeuner</td><td>Quotidienne (seuil 2 jours)</td><td><span class="pastille att">non connecté</span></td></tr>' +
+    '<tr><td><b>Fichier de mesures</b> (CSV)</td><td>' + D.meta.mesures.map(function (m) { return "<code>" + esc(m) + "</code>"; }).join(" ") + '</td><td>Mensuelle</td><td><span class="pastille ok">démonstration</span> ' + nb(D.meta.nb_mesures) + " valeurs</td></tr>" +
+    '<tr><td><b>Données sociales</b></td><td>Effectifs, heures travaillées</td><td>Mensuelle</td><td><span class="pastille att">à venir</span></td></tr>' +
+    "</tbody></table></div></div>";
+  el("contenu").innerHTML = h + '<div class="bloc"><div class="bloc-tete"><h2>Mesures d’exploitation reçues, ' + D.meta.annee + "</h2></div>" + grilleCouverture(p, false) + "</div>";
+};
+PAGES.plan = function () {
+  var t = enTete("Plan comptable", perimetre(etat.perim), "Comptes présents dans les écritures et leur classement") +
+    '<div class="bloc"><div class="defile"><table class="tab"><thead><tr><th>Compte</th><th>Classe</th><th>Rubrique</th><th>Agrégat de base</th><th>Ligne du tableau EBITDA</th><th class="num">Lignes d’écritures</th></tr></thead><tbody>';
+  D.plan.forEach(function (c) { var gestion = c.classe === "6" || c.classe === "7";
+    t += "<tr><td><code>" + esc(c.compte) + "</code></td><td>" + esc(c.classe) + "</td><td>" + (c.rubrique ? esc(c.rubrique) : gestion ? '<span class="pastille ko">non classé</span>' : '<span class="mut">bilan</span>') +
+      "</td><td>" + esc(c.agregat || "") + "</td><td>" + (c.ligne_ebitda ? esc(c.ligne_ebitda) : gestion ? '<span class="pastille ko">non affecté</span>' : "") + '</td><td class="num">' + nb(c.lignes) + "</td></tr>"; });
+  el("contenu").innerHTML = t + '</tbody></table></div><p class="legende">Libellés du plan comptable général à vérifier contre l’extrait Pennylane (point ouvert n° 1). Le classement vient de l’onglet Rubriques du classeur de configuration.</p></div>';
+};
+PAGES.journaux = function () {
+  el("contenu").innerHTML = enTete("Journaux", perimetre(etat.perim), "Journaux présents dans les écritures importées") +
+    '<div class="bloc"><div class="defile"><table class="tab"><thead><tr><th>Code</th><th>Libellé</th><th class="num">Lignes d’écritures</th><th class="num">Dossiers</th></tr></thead><tbody>' +
+    D.journaux.map(function (j) { return "<tr><td><code>" + esc(j.code) + "</code></td><td>" + esc(j.libelle) + '</td><td class="num">' + nb(j.lignes) + '</td><td class="num">' + j.dossiers + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+};
+PAGES.analytique = function () {
+  el("contenu").innerHTML = enTete("Sections analytiques", perimetre(etat.perim), "") +
+    '<div class="bloc vide-etat"><h2>Aucune section analytique</h2><p>L’option Analytique de l’import Pennylane est désactivée. Les axes (par exemple hébergement, restauration, services) seront paramétrés ici une fois définis par le contrôle de gestion.</p></div>';
+};
+PAGES.parametres = function () {
+  var h = enTete("Paramètres KPI", perimetre(etat.perim), "Configuration appliquée : version " + esc(D.meta.version_config)) +
+    '<div class="bloc"><div class="bloc-tete"><h2>Définitions des indicateurs</h2></div><div class="defile"><table class="tab"><thead><tr><th>Code</th><th>Indicateur</th><th>Formule</th><th>Unité</th><th>Approbateur</th></tr></thead><tbody>' +
+    D.kpi.map(function (k) { return "<tr><td><code>" + esc(k.code) + "</code></td><td><b>" + esc(k.nom) + '</b><br><span class="legende">' + esc(k.definition) + "</span></td><td><code>" + esc(k.formule) + "</code></td><td>" + esc(k.unite) + "</td><td>" + esc(k.approbateur) + "</td></tr>"; }).join("") +
+    '</tbody></table></div></div><div class="bloc"><div class="bloc-tete"><h2>Versions de la configuration</h2></div><div class="defile"><table class="tab"><thead><tr><th>Version</th><th>Statut</th><th>Déposée par</th><th>Approuvée par</th><th>Date</th></tr></thead><tbody>' +
+    D.versions.map(function (v) { return "<tr><td>" + esc(v.id) + '</td><td><span class="pastille ' + (v.statut === "appliquée" ? "ok" : "att") + '">' + esc(v.statut) + "</span></td><td>" + esc(v.auteur_depot) + "</td><td>" + esc(v.approbations.join(", ") || "-") + "</td><td>" + esc(v.date_depot.replace("T", " ")) + "</td></tr>"; }).join("") +
+    '</tbody></table></div></div><div class="bloc"><div class="bloc-tete"><h2>Journal</h2></div><div class="defile"><table class="tab"><thead><tr><th>Date</th><th>Action</th><th>Auteur</th><th>Détail</th></tr></thead><tbody>' +
+    D.journal.map(function (j) { return "<tr><td>" + esc(j.date.replace("T", " ")) + "</td><td>" + esc(j.action) + "</td><td>" + esc(j.auteur) + "</td><td>" + esc(j.detail) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  el("contenu").innerHTML = h + '<p class="legende">Page générée le ' + esc(D.meta.genere_le) + ", empreinte de configuration <code>" + esc(D.meta.empreinte_config.slice(0, 12)) + "</code>.</p>";
+};
+PAGES.budgets = function (p) { el("contenu").innerHTML = enTete("Budgets", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Saisie et import des budgets par résidence. Il alimentera les colonnes Projection du tableau EBITDA.</p></div>'; };
+PAGES.rapports = function (p) { el("contenu").innerHTML = enTete("Rapports", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Plaquettes PDF et présentations par résidence ou par groupe.</p></div>'; };
 
-function statiques() {
-  el("pied").innerHTML = "Configuration " + esc(D.meta.version_config) + "<br>Calculé le " + esc(D.meta.genere_le);
-  el("infos-version").textContent = "Configuration " + D.meta.version_config + " · calculé le " + D.meta.genere_le;
-  el("tab-residences").innerHTML = "<thead><tr><th>Résidence</th><th>Dossier Pennylane</th><th>Activité</th><th>Région</th><th>Exercice comptable</th><th></th></tr></thead><tbody>" +
-    D.residences.map(function (r) { return "<tr><td>" + esc(r.nom) + "</td><td><code>" + esc(r.dossier) + "</code></td><td>" + esc(r.activite) + "</td><td>" + esc(r.region) +
-      "</td><td>" + (r.exercice ? dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) : "-") + '</td><td><a href="#tableau" data-d="' + esc(r.dossier) + '">Voir les indicateurs</a></td></tr>'; }).join("") + "</tbody>";
-  document.querySelectorAll("#tab-residences a[data-d]").forEach(function (a) { a.addEventListener("click", function () { etat.perim = a.dataset.d; remplirSelecteurs(); rendre(); }); });
-
-  el("tab-finance").innerHTML = '<thead><tr><th>Résidence</th><th>Exercice</th><th class="num">Durée</th><th class="num">CA hébergement</th><th class="num">CA services</th><th class="num">Charges</th><th class="num">Résultat</th><th>État</th></tr></thead><tbody>' +
-    D.finance.map(function (f) {
-      if (f.statut !== "publié") return "<tr><td>" + esc(f.nom) + '</td><td colspan="6" class="nc-txt">' + esc(f.motif) + '</td><td><span class="pastille att">bloqué</span></td></tr>';
-      var r = f.resultat, e = f.exercice;
-      return "<tr><td>" + esc(f.nom) + "</td><td>" + dateFr(e.debut) + " au " + dateFr(e.fin) + '</td><td class="num">' + e.duree_mois + " mois</td>" +
-        '<td class="num">' + eur(r.CA_HEBERGEMENT) + '</td><td class="num">' + eur(r.CA_SERVICES) + '</td><td class="num">' + eur(r.PL_CHARGES) +
-        '</td><td class="num"><b>' + eur(r.RESULTAT) + '</b></td><td><span class="pastille ok">publié</span></td></tr>'; }).join("") + "</tbody>";
-
-  el("chapeau-donnees").textContent = "Données disponibles pour " + D.meta.annee + ", par résidence et par mois. Toutes les données sont fictives.";
-  el("txt-compta").innerHTML = "<b>" + D.meta.nb_ecritures.toLocaleString("fr-FR") + "</b> lignes d'écritures synthétiques, plan comptable général.";
-  el("txt-exploit").innerHTML = "<b>" + D.meta.nb_mesures.toLocaleString("fr-FR") + "</b> valeurs mensuelles : " + D.meta.mesures.map(function (m) { return "<code>" + esc(m) + "</code>"; }).join(" ");
-  var t = "<thead><tr><th>Résidence</th><th>Source</th>" + D.mois.map(function (m) { return '<th class="num">' + nomMois(m) + "</th>"; }).join("") + "</tr></thead><tbody>";
-  D.residences.forEach(function (r) { var c = D.couverture[r.dossier];
-    t += '<tr><td rowspan="2">' + esc(r.nom) + "</td><td>Comptabilité</td>" + D.mois.map(function (m) { return '<td class="c"><span class="case ' + (c[m].compta ? "pleine" : "vide") + '" title="' + nomMois(m) + '"></span></td>'; }).join("") + "</tr>";
-    t += "<tr><td>Exploitation</td>" + D.mois.map(function (m) { var x = c[m], cl = x.exploitation === x.attendu ? "pleine" : x.exploitation ? "partielle" : "vide";
-      return '<td class="c"><span class="case ' + cl + '" title="' + x.exploitation + " / " + x.attendu + ' mesures"></span></td>'; }).join("") + "</tr>"; });
-  el("tab-couverture").innerHTML = t + "</tbody>";
-
-  el("tab-kpi").innerHTML = "<thead><tr><th>Code</th><th>Indicateur</th><th>Formule</th><th>Unité</th><th>Approuvé par</th></tr></thead><tbody>" +
-    D.kpi.map(function (k) { return "<tr><td><code>" + esc(k.code) + "</code></td><td>" + esc(k.nom) + "<br><span class=\"legende\">" + esc(k.definition) + "</span></td><td><code>" + esc(k.formule) + "</code></td><td>" + esc(k.unite) + "</td><td>" + esc(k.approbateur) + "</td></tr>"; }).join("") + "</tbody>";
-  el("tab-versions").innerHTML = "<thead><tr><th>Version</th><th>État</th><th>Déposée par</th><th>Approuvée par</th><th>Date</th></tr></thead><tbody>" +
-    D.versions.map(function (v) { return "<tr><td>" + esc(v.id) + '</td><td><span class="pastille ' + (v.statut === "appliquée" ? "ok" : "att") + '">' + esc(v.statut) + "</span></td><td>" + esc(v.auteur_depot) + "</td><td>" + esc(v.approbations.join(", ") || "-") + "</td><td>" + esc(v.date_depot) + "</td></tr>"; }).join("") + "</tbody>";
-  el("tab-journal").innerHTML = "<thead><tr><th>Date</th><th>Action</th><th>Par</th><th>Détail</th></tr></thead><tbody>" +
-    D.journal.map(function (j) { return "<tr><td>" + esc(j.date) + "</td><td>" + esc(j.action) + "</td><td>" + esc(j.auteur) + "</td><td>" + esc(j.detail) + "</td></tr>"; }).join("") + "</tbody>";
-}
-
-function rendre() { tableau(); }
-function afficherVue() {
-  var v = (location.hash || "#tableau").slice(1);
-  if (!el("v-" + v)) v = "tableau";
-  document.querySelectorAll(".vue").forEach(function (s) { s.classList.toggle("actif", s.id === "v-" + v); });
-  document.querySelectorAll("aside nav a").forEach(function (a) { a.classList.toggle("actif", a.dataset.v === v); });
-  document.querySelector(".bandeau").style.display = v === "tableau" ? "" : "none";
-}
-el("sel-perim").addEventListener("change", function (e) { etat.perim = e.target.value; remplirSelecteurs(); rendre(); });
-el("sel-periode").addEventListener("change", function (e) { etat.periode = e.target.value; rendre(); });
-el("sel-graph").addEventListener("change", function (e) { etat.graph = e.target.value; graphique(); });
-window.addEventListener("hashchange", afficherVue);
-remplirSelecteurs(); statiques(); rendre(); afficherVue();
+demarrer();
 </script>
 </body>
 </html>

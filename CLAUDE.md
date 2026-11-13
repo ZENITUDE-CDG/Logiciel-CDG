@@ -124,3 +124,13 @@ Limites : stub de publication (lot 5) ; un seul rédacteur à la fois, sans verr
 - Correction du lot 5 : la publication ne retient que les écritures datées dans l'exercice publié.
 - Après toute modification du moteur, de la configuration de démonstration ou du gabarit, régénérer `index.html` et le committer.
 - Limites : site statique (pas de saisie, pas de dépôt de configuration, pas d'authentification) ; le dossier `maquette/` est remplacé par ce site et peut être supprimé.
+
+
+## Lot 8 - STATUT : réalisé (charte Zenitude et parcours de connexion)
+- Charte graphique Zenitude appliquée au gabarit : bleu foncé #0F506C, bleu clair #007298, gris #333E48, orange #DE7233 (accent), police Montserrat ; logo `interface/logo_zenitude.png` intégré à la page par `generer_site.py`.
+- Parcours en trois écrans : connexion (e-mail + mot de passe, factice), choix du périmètre (groupes et résidences), application.
+- Le périmètre se change uniquement par le logo Zenitude (retour à la liste) ou le bouton Périmètre (menu déroulant). Il n'y a plus d'onglet Résidences.
+- Tableaux de bord : synthèse (6 KPI, graphiques mensuels, tableau jusqu'à l'EBITDA avec colonnes Réalisé / Projection et totaux), indicateurs hôteliers, compte de résultat, contrôle des données.
+- Import et paramètres : import comptable Pennylane (factice), données externes, plan comptable, journaux, sections analytiques, paramètres KPI.
+- Présentation EBITDA provisoire dans `LIGNES_EBITDA` (`generer_site.py`) : à reporter dans l'onglet Rubriques et à valider par le contrôle de gestion. La projection reprend les écritures fictives tant que le module Budgets n'existe pas.
+- Limites : l'authentification n'est pas réelle (point ouvert n° 7) ; pas de connexion Pennylane.

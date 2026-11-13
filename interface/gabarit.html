@@ -323,22 +323,21 @@ tr.cliquable { cursor:pointer; }
 .btn-petit:hover { background:var(--survol); } .btn-petit.actif { background:var(--bleu-fonce); border-color:var(--bleu-fonce); color:#fff; }
 .reg-vue { display:flex; align-items:center; gap:10px; }
 .reg-badge { font-size:11px; color:var(--mut); } .reg-badge.on { color:var(--accent-txt); font-weight:600; }
-.reg-piste { position:relative; padding-top:26px; margin:0 9px; }
-.reg-rail { position:absolute; top:6px; left:0; right:0; height:6px; border-radius:3px; background:var(--bord); }
-.reg-fill { position:absolute; top:0; bottom:0; border-radius:3px; background:var(--bleu-clair); }
-.reg-piste input[type=range] { position:absolute; left:-9px; top:0; width:calc(100% + 18px); height:18px; margin:0; padding:0; background:none; pointer-events:none; -webkit-appearance:none; appearance:none; }
-.reg-piste input[type=range]::-webkit-slider-runnable-track { background:transparent; height:18px; }
-.reg-piste input[type=range]::-moz-range-track { background:transparent; height:18px; }
-.reg-piste input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; pointer-events:auto; width:18px; height:18px; border-radius:50%; background:var(--surface); border:2px solid var(--bleu-fonce); box-shadow:0 1px 3px rgba(20,35,45,.25); cursor:grab; }
-.reg-piste input[type=range]::-moz-range-thumb { pointer-events:auto; width:14px; height:14px; border-radius:50%; background:var(--surface); border:2px solid var(--bleu-fonce); box-shadow:0 1px 3px rgba(20,35,45,.25); cursor:grab; }
+.reg-piste { position:relative; height:70px; margin:0 9px; }
+.reg-rail { position:absolute; top:6px; left:0; right:0; height:4px; border-radius:2px; background:var(--bord-fort); overflow:hidden; }
+.reg-proj { position:absolute; top:0; bottom:0; right:0; background:var(--orange); opacity:.35; }
+.reg-fill { position:absolute; top:0; bottom:0; background:var(--bleu-clair); }
+.reg-import { position:absolute; top:0; width:2px; height:16px; margin-left:-1px; background:var(--orange); border-radius:1px; cursor:help; }
+.reg-grad { position:absolute; top:14px; width:1px; height:5px; background:var(--bord-fort); }
+.reg-grad.an { height:9px; background:var(--faible); }
+.reg-an { position:absolute; top:25px; transform:translateX(-50%); font-size:11px; color:var(--mut); white-space:nowrap; }
+.reg-bulle { position:absolute; top:42px; padding:3px 9px; border-radius:6px; background:var(--gris); color:#fff; font-size:11px; font-weight:500; white-space:nowrap; line-height:1.3; z-index:2; pointer-events:none; }
+.reg-piste input[type=range] { position:absolute; left:-9px; top:0; width:calc(100% + 18px); height:16px; margin:0; padding:0; background:none; pointer-events:none; -webkit-appearance:none; appearance:none; z-index:3; }
+.reg-piste input[type=range]::-webkit-slider-runnable-track { background:transparent; height:16px; }
+.reg-piste input[type=range]::-moz-range-track { background:transparent; height:16px; }
+.reg-piste input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; pointer-events:auto; width:18px; height:18px; margin-top:-1px; border-radius:50%; background:var(--bleu-fonce); border:3px solid var(--surface); box-shadow:0 1px 3px rgba(20,35,45,.35); cursor:grab; }
+.reg-piste input[type=range]::-moz-range-thumb { pointer-events:auto; width:12px; height:12px; border-radius:50%; background:var(--bleu-fonce); border:3px solid var(--surface); box-shadow:0 1px 3px rgba(20,35,45,.35); cursor:grab; }
 .reg-piste input[type=range]:focus-visible::-webkit-slider-thumb { outline:2px solid var(--bleu-clair); outline-offset:2px; }
-.reg-cases { display:grid; grid-template-columns:repeat(var(--n),1fr); margin:0; }
-.reg-case { border:0; background:transparent; padding:3px 0 4px; cursor:pointer; border-radius:6px; font-size:11.5px; color:var(--mut); line-height:1.25; position:relative; }
-.reg-case small { display:block; font-size:9.5px; color:var(--faible); min-height:12px; }
-.reg-case::after { content:""; position:absolute; left:24%; right:24%; bottom:0; height:2px; border-radius:2px; background:var(--bleu-clair); opacity:.5; }
-.reg-case.proj::after { background:var(--orange); opacity:.7; }
-.reg-case:hover { background:var(--survol); } .reg-case.dans { color:var(--titre); font-weight:600; background:var(--selection); }
-.zone-periode .frise-leg { margin:8px 0 0; }
 .connexion-etat.info { background:var(--selection); }
 .aj-pastille { display:inline-block; font-size:10px; font-weight:600; color:var(--accent-txt); background:var(--attente-fond); padding:0 6px; border-radius:10px; margin-left:6px; vertical-align:1px; }
 .aj-barre { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
@@ -359,7 +358,7 @@ tr.cliquable { cursor:pointer; }
 .inactif td { opacity:.55; }
 .aj-nvcompte { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:10px; } .aj-nvcompte .champ-aj { min-width:200px; } .aj-nvcompte .champ-aj.large { min-width:280px; grid-column:auto; }
 @media (max-width:1650px) { .utilisateur .nom .u-mail { display:none; } }
-@media (max-width:760px) { .zone-periode { padding:12px 14px 0; } .champ-aj.large { grid-column:auto; } .reg-case { font-size:9.5px; } .reg-case small { font-size:8px; } }
+@media (max-width:760px) { .zone-periode { padding:12px 14px 0; } .champ-aj.large { grid-column:auto; } .reg-an { font-size:10px; } .reg-bulle { font-size:10px; padding:2px 6px; } }
 @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
 </style>
 </head>
@@ -858,28 +857,42 @@ function raccourcis(p) {
   r.push(["Toute la période", 0, n]);
   return r;
 }
+function dateDebutMois(m) { return "01 " + MOIS_COURT[+m.slice(5) - 1].toLowerCase() + " " + m.slice(0, 4); }
+function dateFinMois(m) { var j = new Date(+m.slice(0, 4), +m.slice(5), 0).getDate(); return j + " " + MOIS_COURT[+m.slice(5) - 1].toLowerCase() + " " + m.slice(0, 4); }
 function dessinerReglette(p) {
   var z = el("zone-periode");
   if (PAGES_PERIODE.indexOf(etat.page) < 0) { z.innerHTML = ""; z.style.display = "none"; return; }
   z.style.display = "block";
-  var n = MOIS.length;
+  var n = MOIS.length, iD = idxMois(D.meta.dernier_mois_importe), grad = "";
+  MOIS.forEach(function (m, i) {
+    var an = m.slice(5) === "01" || i === 0;
+    grad += '<i class="reg-grad' + (an ? " an" : "") + '" style="left:' + (i / n * 100) + '%"></i>';
+    if (an) grad += '<span class="reg-an" style="left:' + (i / n * 100) + '%">' + (m.slice(5) === "01" ? "janv. " : MOIS_COURT[+m.slice(5) - 1].toLowerCase() + " ") + m.slice(0, 4) + "</span>";
+  });
+  grad += '<i class="reg-grad" style="left:100%"></i>';
   z.innerHTML = '<div class="reglette"><div class="reg-haut"><div class="reg-lib"><span class="mut">Période</span> <b id="reg-lib"></b> <span class="mut" id="reg-nb"></span></div>' +
     '<div class="reg-rac" id="reg-rac">' + raccourcis(p).map(function (r, i) { return '<button class="btn-petit" data-r="' + i + '">' + esc(r[0]) + "</button>"; }).join("") + "</div>" +
-    '<div class="reg-vue"><div class="segment" role="group" aria-label="Données affichées"><button data-vue="ajuste" title="Comptabilité avec les ajustements et provisions">Ajusté</button><button data-vue="reel" title="Comptabilité brute importée">Réel</button></div><span class="reg-badge" id="reg-badge"></span></div></div>' +
-    '<div class="reg-piste" style="--n:' + n + '"><div class="reg-rail"><div class="reg-fill" id="reg-fill"></div></div>' +
+    '<div class="reg-vue"><div class="segment" role="group" aria-label="Données affichées"><button data-vue="ajuste" title="Comptabilité avec les ajustements et provisions">Ajusté</button><button data-vue="reel" title="Comptabilité importée telle quelle">Réel</button></div><span class="reg-badge" id="reg-badge"></span></div></div>' +
+    '<div class="reg-piste"><div class="reg-rail"><div class="reg-proj" style="left:' + ((iD + 1) / n * 100) + '%"></div><div class="reg-fill" id="reg-fill"></div></div>' +
+    '<div class="reg-import" style="left:' + ((iD + 1) / n * 100) + '%" title="Comptabilité importée jusqu’à ' + esc(moisLong(D.meta.dernier_mois_importe)) + '. Au-delà : projection."></div>' + grad +
     '<input type="range" id="reg-lo" min="0" max="' + n + '" step="1" aria-label="Début de la période"><input type="range" id="reg-hi" min="0" max="' + n + '" step="1" aria-label="Fin de la période">' +
-    '<div class="reg-cases">' + MOIS.map(function (m, i) { var an = m.slice(0, 4);
-      return '<button class="reg-case' + (estProj(m) ? " proj" : "") + '" data-i="' + i + '" title="' + moisLong(m) + (estProj(m) ? " (projection)" : " (réalisé)") + '"><span>' + MOIS_COURT[+m.slice(5) - 1] + "</span><small>" + (i === 0 || m.slice(5) === "01" ? an : "&nbsp;") + "</small></button>"; }).join("") + "</div></div>" +
-    '<div class="frise-leg"><span><i style="background:var(--bleu-clair)"></i>Réalisé, comptabilité importée jusqu’à ' + moisLong(D.meta.dernier_mois_importe) + '</span><span><i style="background:var(--orange)"></i>Projection</span><span>Faites glisser les poignées, ou cliquez sur un mois (Maj + clic pour étendre).</span></div></div>';
+    '<span class="reg-bulle" id="reg-b-lo"></span><span class="reg-bulle" id="reg-b-hi"></span></div></div>';
   var raccs = raccourcis(p);
   el("reg-lo").addEventListener("input", function () { var lo = Math.min(+this.value, etat.hi - 1); reglerFenetre(Math.max(0, lo), etat.hi); });
   el("reg-hi").addEventListener("input", function () { var hi = Math.max(+this.value, etat.lo + 1); reglerFenetre(etat.lo, Math.min(MOIS.length, hi)); });
   z.querySelectorAll("[data-r]").forEach(function (b) { b.addEventListener("click", function () { var r = raccs[+b.dataset.r]; reglerFenetre(r[1], r[2]); }); });
-  z.querySelectorAll(".reg-case").forEach(function (b) { b.addEventListener("click", function (ev) {
-    var i = +b.dataset.i;
-    if (ev.shiftKey) reglerFenetre(Math.min(etat.lo, i), Math.max(etat.hi, i + 1)); else reglerFenetre(i, i + 1); }); });
   z.querySelectorAll("[data-vue]").forEach(function (b) { b.addEventListener("click", function () { etat.vue = b.dataset.vue; majReglette(); majContenu(); }); });
+  window.addEventListener("resize", positionnerBulles);
   majReglette();
+}
+function positionnerBulles() {
+  var piste = document.querySelector(".reg-piste"), bl = el("reg-b-lo"), bh = el("reg-b-hi");
+  if (!piste || !bl || !bh) return;
+  var W = piste.clientWidth, n = MOIS.length, wl = bl.offsetWidth, wh = bh.offsetWidth;
+  var xl = etat.lo / n * W, xh = etat.hi / n * W;
+  var gl = Math.min(Math.max(xl - wl / 2, 0), W - wl), gh = Math.min(Math.max(xh - wh / 2, 0), W - wh);
+  if (gl + wl + 6 > gh) { var rec = (gl + wl + 6 - gh) / 2; gl -= rec; gh += rec; if (gl < 0) { gh -= gl; gl = 0; } if (gh + wh > W) { gl -= gh + wh - W; gh = W - wh; } }
+  bl.style.left = gl + "px"; bh.style.left = gh + "px";
 }
 function majReglette() {
   if (!el("reg-lo")) return;
@@ -887,7 +900,8 @@ function majReglette() {
   el("reg-lo").value = etat.lo; el("reg-hi").value = etat.hi;
   el("reg-fill").style.left = (etat.lo / n * 100) + "%"; el("reg-fill").style.width = (nbm / n * 100) + "%";
   el("reg-lib").textContent = libFenetre(); el("reg-nb").textContent = nbm + " mois";
-  document.querySelectorAll(".reg-case").forEach(function (b) { var i = +b.dataset.i; b.classList.toggle("dans", i >= etat.lo && i < etat.hi); });
+  el("reg-b-lo").textContent = dateDebutMois(MOIS[etat.lo]); el("reg-b-hi").textContent = dateFinMois(MOIS[etat.hi - 1]);
+  positionnerBulles();
   document.querySelectorAll("[data-vue]").forEach(function (b) { var on = b.dataset.vue === etat.vue; b.classList.toggle("actif", on); b.setAttribute("aria-pressed", on); });
   var raccs = raccourcis(perimetre(etat.perim));
   document.querySelectorAll("[data-r]").forEach(function (b) { var r = raccs[+b.dataset.r]; b.classList.toggle("actif", r[1] === etat.lo && r[2] === etat.hi); });

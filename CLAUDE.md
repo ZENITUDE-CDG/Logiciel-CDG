@@ -143,3 +143,13 @@ Limites : stub de publication (lot 5) ; un seul rédacteur à la fois, sans verr
 - Ajustements (section « Ajustements ») : comptes simulés (exemple 70610000P, classés par le plus long préfixe commun avec les comptes réels) et provisions ou ajustements de compte, par résidence ou pour toutes. Règle = somme de termes (montant fixe par mois, pourcentage d'un ou plusieurs comptes, montant par donnée externe) ou saisie mensuelle pour une résidence. Période d'application optionnelle. Commutateur Réel / Ajusté sur tous les tableaux de bord, page Écarts Réel → Ajusté, export et import JSON.
 - Calculateur dans la page (décision 0002) : `generer_site.py` fournit `calcul` (montants mensuels par compte crédit - débit, couverture, données d'exploitation, rubriques, libellés PCG) et les règles des lignes EBITDA et SIG ; `gabarit.html` rejoue les mêmes règles que le moteur Python.
 - Limites : ajustements enregistrés dans le navigateur seulement ; la page ne rejoue que les rubriques « tous dossiers, préfixe, sans exception ni date de fin » (le générateur refuse le reste) ; MOYENNE_PONDEREE et DERNIERE restent non calculables ; les publications figées ne tiennent pas compte des ajustements ; pas de validation à deux personnes des ajustements.
+
+
+## Lot 10 - STATUT : réalisé (site : menu latéral et fiche résidence)
+- Les barres du haut (sections et sous-onglets) sont remplacées par un menu latéral à gauche : logo, bouton Périmètre, sections (Tableaux de bord, Résidence, Ajustements, Import et paramètres, Budgets, Rapports) avec leurs pages dépliées sous la section active, puis utilisateur, thème et déconnexion en bas.
+- Le menu se réduit en icônes seules (bouton chevron en haut du menu) ; le choix est mémorisé dans le navigateur (`zen-menu-reduit`). Sur écran étroit (900 px et moins) il devient un tiroir ouvert par le bouton de la barre du haut.
+- Nouvelle section « Résidence » : sur une résidence, fiche complète (identité du référentiel : code, dossier Pennylane, société, activité, région, marque, dates ; indicateurs du dernier mois importé ; exercices et écritures ; résultat de l'exercice publié ; groupes d'appartenance ; ajustements actifs ; couverture des données). Sur un groupe, liste des résidences du périmètre : un clic ouvre la fiche.
+- `generer_site.py` exporte en plus pour chaque résidence : société, marque, date d'ouverture, date d'effet, statut (colonnes déjà présentes dans l'onglet Referentiel).
+- La réglette de période reste figée en haut de page quand on fait défiler (Synthèse, Indicateurs, Comptes et provisions, Écarts) : la période se lit et se modifie à tout moment.
+- Aucun changement du moteur, de la configuration ni des calculs.
+

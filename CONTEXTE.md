@@ -23,6 +23,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 7 | Site de démonstration (`index.html`, GitHub Pages) calculé par le moteur réel | 5 |
 | 8 | Charte Zenitude, connexion, choix du périmètre, tableau EBITDA, onglet Import et paramètres | - |
 | 9 | Thème clair / sombre / auto, réglette de période libre, ajustements (comptes simulés, provisions), vue Réel / Ajusté | 2 (navigateur) |
+| 10 | Menu latéral réductible (remplace les barres du haut), page Résidence (fiche complète) | - |
 
 Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). L'ancienne maquette (`maquette/`) est remplacée.
 

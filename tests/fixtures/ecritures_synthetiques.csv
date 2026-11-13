@@ -1,0 +1,1397 @@
+dossier;exercice;date;journal;piece;compte;libelle;debit;credit
+PENNY-1001;2026-01-01/2026-12-31;2026-01-27;HA;HA00001;606;Fournitures d'entretien (exemple) - facture;578.65;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-27;HA;HA00001;401;Fournitures d'entretien (exemple) - facture;;578.65
+PENNY-1001;2026-01-01/2026-12-31;2026-01-27;BQ;BQ00002;401;Fournitures d'entretien (exemple) - règlement;578.65;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-27;BQ;BQ00002;512;Fournitures d'entretien (exemple) - règlement;;578.65
+PENNY-1001;2026-01-01/2026-12-31;2026-01-21;HA;HA00003;615;Entretien et réparations (exemple) - facture;409.00;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-21;HA;HA00003;401;Entretien et réparations (exemple) - facture;;409.00
+PENNY-1001;2026-01-01/2026-12-31;2026-01-21;BQ;BQ00004;401;Entretien et réparations (exemple) - règlement;409.00;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-21;BQ;BQ00004;512;Entretien et réparations (exemple) - règlement;;409.00
+PENNY-1001;2026-01-01/2026-12-31;2026-01-15;HA;HA00005;625;Déplacements (exemple) - facture;369.11;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-15;HA;HA00005;401;Déplacements (exemple) - facture;;369.11
+PENNY-1001;2026-01-01/2026-12-31;2026-01-15;BQ;BQ00006;401;Déplacements (exemple) - règlement;369.11;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-15;BQ;BQ00006;512;Déplacements (exemple) - règlement;;369.11
+PENNY-1001;2026-01-01/2026-12-31;2026-01-05;HA;HA00007;626;Télécommunications (exemple) - facture;91.17;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-05;HA;HA00007;401;Télécommunications (exemple) - facture;;91.17
+PENNY-1001;2026-01-01/2026-12-31;2026-01-05;BQ;BQ00008;401;Télécommunications (exemple) - règlement;91.17;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-05;BQ;BQ00008;512;Télécommunications (exemple) - règlement;;91.17
+PENNY-1001;2026-01-01/2026-12-31;2026-01-13;HA;HA00009;641;Salaires (exemple) - facture;22570.20;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-13;HA;HA00009;401;Salaires (exemple) - facture;;22570.20
+PENNY-1001;2026-01-01/2026-12-31;2026-01-13;BQ;BQ00010;401;Salaires (exemple) - règlement;22570.20;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-13;BQ;BQ00010;512;Salaires (exemple) - règlement;;22570.20
+PENNY-1001;2026-01-01/2026-12-31;2026-01-04;HA;HA00011;645;Charges sociales (exemple) - facture;7130.28;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-04;HA;HA00011;401;Charges sociales (exemple) - facture;;7130.28
+PENNY-1001;2026-01-01/2026-12-31;2026-01-04;BQ;BQ00012;401;Charges sociales (exemple) - règlement;7130.28;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-04;BQ;BQ00012;512;Charges sociales (exemple) - règlement;;7130.28
+PENNY-1001;2026-01-01/2026-12-31;2026-01-01;HA;HA00013;661;Intérêts d'emprunt (exemple) - facture;660.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-01;HA;HA00013;401;Intérêts d'emprunt (exemple) - facture;;660.10
+PENNY-1001;2026-01-01/2026-12-31;2026-01-01;BQ;BQ00014;401;Intérêts d'emprunt (exemple) - règlement;660.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-01;BQ;BQ00014;512;Intérêts d'emprunt (exemple) - règlement;;660.10
+PENNY-1001;2026-01-01/2026-12-31;2026-01-16;HA;HA00015;658;Charges diverses (exemple) - facture;103.87;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-16;HA;HA00015;401;Charges diverses (exemple) - facture;;103.87
+PENNY-1001;2026-01-01/2026-12-31;2026-01-16;BQ;BQ00016;401;Charges diverses (exemple) - règlement;103.87;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-16;BQ;BQ00016;512;Charges diverses (exemple) - règlement;;103.87
+PENNY-1001;2026-01-01/2026-12-31;2026-01-22;HA;HA00017;6161;Assurance multirisques (exemple) - facture;909.82;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-22;HA;HA00017;401;Assurance multirisques (exemple) - facture;;909.82
+PENNY-1001;2026-01-01/2026-12-31;2026-01-22;BQ;BQ00018;401;Assurance multirisques (exemple) - règlement;909.82;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-22;BQ;BQ00018;512;Assurance multirisques (exemple) - règlement;;909.82
+PENNY-1001;2026-01-01/2026-12-31;2026-01-22;VT;VT00019;411;Hébergement (exemple) - facture;51381.80;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-22;VT;VT00019;706;Hébergement (exemple) - facture;;51381.80
+PENNY-1001;2026-01-01/2026-12-31;2026-01-22;BQ;BQ00020;512;Hébergement (exemple) - encaissement;51381.80;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-22;BQ;BQ00020;411;Hébergement (exemple) - encaissement;;51381.80
+PENNY-1001;2026-01-01/2026-12-31;2026-01-23;VT;VT00021;411;Prestations annexes (exemple) - facture;2319.64;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-23;VT;VT00021;708;Prestations annexes (exemple) - facture;;2319.64
+PENNY-1001;2026-01-01/2026-12-31;2026-01-23;BQ;BQ00022;512;Prestations annexes (exemple) - encaissement;2319.64;
+PENNY-1001;2026-01-01/2026-12-31;2026-01-23;BQ;BQ00022;411;Prestations annexes (exemple) - encaissement;;2319.64
+PENNY-1001;2026-01-01/2026-12-31;2026-02-09;HA;HA00023;606;Fournitures d'entretien (exemple) - facture;1343.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-09;HA;HA00023;401;Fournitures d'entretien (exemple) - facture;;1343.15
+PENNY-1001;2026-01-01/2026-12-31;2026-02-09;BQ;BQ00024;401;Fournitures d'entretien (exemple) - règlement;1343.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-09;BQ;BQ00024;512;Fournitures d'entretien (exemple) - règlement;;1343.15
+PENNY-1001;2026-01-01/2026-12-31;2026-02-16;HA;HA00025;615;Entretien et réparations (exemple) - facture;1482.25;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-16;HA;HA00025;401;Entretien et réparations (exemple) - facture;;1482.25
+PENNY-1001;2026-01-01/2026-12-31;2026-02-16;BQ;BQ00026;401;Entretien et réparations (exemple) - règlement;1482.25;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-16;BQ;BQ00026;512;Entretien et réparations (exemple) - règlement;;1482.25
+PENNY-1001;2026-01-01/2026-12-31;2026-02-13;HA;HA00027;625;Déplacements (exemple) - facture;346.63;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-13;HA;HA00027;401;Déplacements (exemple) - facture;;346.63
+PENNY-1001;2026-01-01/2026-12-31;2026-02-13;BQ;BQ00028;401;Déplacements (exemple) - règlement;346.63;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-13;BQ;BQ00028;512;Déplacements (exemple) - règlement;;346.63
+PENNY-1001;2026-01-01/2026-12-31;2026-02-24;HA;HA00029;626;Télécommunications (exemple) - facture;136.52;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-24;HA;HA00029;401;Télécommunications (exemple) - facture;;136.52
+PENNY-1001;2026-01-01/2026-12-31;2026-02-24;BQ;BQ00030;401;Télécommunications (exemple) - règlement;136.52;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-24;BQ;BQ00030;512;Télécommunications (exemple) - règlement;;136.52
+PENNY-1001;2026-01-01/2026-12-31;2026-02-26;HA;HA00031;641;Salaires (exemple) - facture;23696.63;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-26;HA;HA00031;401;Salaires (exemple) - facture;;23696.63
+PENNY-1001;2026-01-01/2026-12-31;2026-02-26;BQ;BQ00032;401;Salaires (exemple) - règlement;23696.63;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-26;BQ;BQ00032;512;Salaires (exemple) - règlement;;23696.63
+PENNY-1001;2026-01-01/2026-12-31;2026-02-28;HA;HA00033;645;Charges sociales (exemple) - facture;7414.67;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-28;HA;HA00033;401;Charges sociales (exemple) - facture;;7414.67
+PENNY-1001;2026-01-01/2026-12-31;2026-02-28;BQ;BQ00034;401;Charges sociales (exemple) - règlement;7414.67;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-28;BQ;BQ00034;512;Charges sociales (exemple) - règlement;;7414.67
+PENNY-1001;2026-01-01/2026-12-31;2026-02-12;HA;HA00035;661;Intérêts d'emprunt (exemple) - facture;826.09;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-12;HA;HA00035;401;Intérêts d'emprunt (exemple) - facture;;826.09
+PENNY-1001;2026-01-01/2026-12-31;2026-02-12;BQ;BQ00036;401;Intérêts d'emprunt (exemple) - règlement;826.09;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-12;BQ;BQ00036;512;Intérêts d'emprunt (exemple) - règlement;;826.09
+PENNY-1001;2026-01-01/2026-12-31;2026-02-26;HA;HA00037;658;Charges diverses (exemple) - facture;154.91;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-26;HA;HA00037;401;Charges diverses (exemple) - facture;;154.91
+PENNY-1001;2026-01-01/2026-12-31;2026-02-26;BQ;BQ00038;401;Charges diverses (exemple) - règlement;154.91;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-26;BQ;BQ00038;512;Charges diverses (exemple) - règlement;;154.91
+PENNY-1001;2026-01-01/2026-12-31;2026-02-09;VT;VT00039;411;Hébergement (exemple) - facture;54610.00;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-09;VT;VT00039;706;Hébergement (exemple) - facture;;54610.00
+PENNY-1001;2026-01-01/2026-12-31;2026-02-09;BQ;BQ00040;512;Hébergement (exemple) - encaissement;54610.00;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-09;BQ;BQ00040;411;Hébergement (exemple) - encaissement;;54610.00
+PENNY-1001;2026-01-01/2026-12-31;2026-02-11;VT;VT00041;411;Prestations annexes (exemple) - facture;3624.80;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-11;VT;VT00041;708;Prestations annexes (exemple) - facture;;3624.80
+PENNY-1001;2026-01-01/2026-12-31;2026-02-11;BQ;BQ00042;512;Prestations annexes (exemple) - encaissement;3624.80;
+PENNY-1001;2026-01-01/2026-12-31;2026-02-11;BQ;BQ00042;411;Prestations annexes (exemple) - encaissement;;3624.80
+PENNY-1001;2026-01-01/2026-12-31;2026-03-17;HA;HA00043;606;Fournitures d'entretien (exemple) - facture;924.91;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-17;HA;HA00043;401;Fournitures d'entretien (exemple) - facture;;924.91
+PENNY-1001;2026-01-01/2026-12-31;2026-03-17;BQ;BQ00044;401;Fournitures d'entretien (exemple) - règlement;924.91;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-17;BQ;BQ00044;512;Fournitures d'entretien (exemple) - règlement;;924.91
+PENNY-1001;2026-01-01/2026-12-31;2026-03-24;HA;HA00045;615;Entretien et réparations (exemple) - facture;903.34;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-24;HA;HA00045;401;Entretien et réparations (exemple) - facture;;903.34
+PENNY-1001;2026-01-01/2026-12-31;2026-03-24;BQ;BQ00046;401;Entretien et réparations (exemple) - règlement;903.34;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-24;BQ;BQ00046;512;Entretien et réparations (exemple) - règlement;;903.34
+PENNY-1001;2026-01-01/2026-12-31;2026-03-18;HA;HA00047;625;Déplacements (exemple) - facture;196.24;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-18;HA;HA00047;401;Déplacements (exemple) - facture;;196.24
+PENNY-1001;2026-01-01/2026-12-31;2026-03-18;BQ;BQ00048;401;Déplacements (exemple) - règlement;196.24;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-18;BQ;BQ00048;512;Déplacements (exemple) - règlement;;196.24
+PENNY-1001;2026-01-01/2026-12-31;2026-03-10;HA;HA00049;626;Télécommunications (exemple) - facture;159.29;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-10;HA;HA00049;401;Télécommunications (exemple) - facture;;159.29
+PENNY-1001;2026-01-01/2026-12-31;2026-03-10;BQ;BQ00050;401;Télécommunications (exemple) - règlement;159.29;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-10;BQ;BQ00050;512;Télécommunications (exemple) - règlement;;159.29
+PENNY-1001;2026-01-01/2026-12-31;2026-03-01;HA;HA00051;641;Salaires (exemple) - facture;27025.65;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-01;HA;HA00051;401;Salaires (exemple) - facture;;27025.65
+PENNY-1001;2026-01-01/2026-12-31;2026-03-01;BQ;BQ00052;401;Salaires (exemple) - règlement;27025.65;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-01;BQ;BQ00052;512;Salaires (exemple) - règlement;;27025.65
+PENNY-1001;2026-01-01/2026-12-31;2026-03-06;HA;HA00053;645;Charges sociales (exemple) - facture;7001.89;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-06;HA;HA00053;401;Charges sociales (exemple) - facture;;7001.89
+PENNY-1001;2026-01-01/2026-12-31;2026-03-06;BQ;BQ00054;401;Charges sociales (exemple) - règlement;7001.89;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-06;BQ;BQ00054;512;Charges sociales (exemple) - règlement;;7001.89
+PENNY-1001;2026-01-01/2026-12-31;2026-03-22;HA;HA00055;661;Intérêts d'emprunt (exemple) - facture;720.16;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-22;HA;HA00055;401;Intérêts d'emprunt (exemple) - facture;;720.16
+PENNY-1001;2026-01-01/2026-12-31;2026-03-22;BQ;BQ00056;401;Intérêts d'emprunt (exemple) - règlement;720.16;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-22;BQ;BQ00056;512;Intérêts d'emprunt (exemple) - règlement;;720.16
+PENNY-1001;2026-01-01/2026-12-31;2026-03-28;HA;HA00057;658;Charges diverses (exemple) - facture;208.50;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-28;HA;HA00057;401;Charges diverses (exemple) - facture;;208.50
+PENNY-1001;2026-01-01/2026-12-31;2026-03-28;BQ;BQ00058;401;Charges diverses (exemple) - règlement;208.50;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-28;BQ;BQ00058;512;Charges diverses (exemple) - règlement;;208.50
+PENNY-1001;2026-01-01/2026-12-31;2026-03-16;VT;VT00059;411;Hébergement (exemple) - facture;40255.35;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-16;VT;VT00059;706;Hébergement (exemple) - facture;;40255.35
+PENNY-1001;2026-01-01/2026-12-31;2026-03-16;BQ;BQ00060;512;Hébergement (exemple) - encaissement;40255.35;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-16;BQ;BQ00060;411;Hébergement (exemple) - encaissement;;40255.35
+PENNY-1001;2026-01-01/2026-12-31;2026-03-05;VT;VT00061;411;Prestations annexes (exemple) - facture;4128.20;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-05;VT;VT00061;708;Prestations annexes (exemple) - facture;;4128.20
+PENNY-1001;2026-01-01/2026-12-31;2026-03-05;BQ;BQ00062;512;Prestations annexes (exemple) - encaissement;4128.20;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-05;BQ;BQ00062;411;Prestations annexes (exemple) - encaissement;;4128.20
+PENNY-1001;2026-01-01/2026-12-31;2026-03-13;HA;HA00063;601;Matières premières (exemple) - facture;1526.30;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-13;HA;HA00063;401;Matières premières (exemple) - facture;;1526.30
+PENNY-1001;2026-01-01/2026-12-31;2026-03-13;BQ;BQ00064;401;Matières premières (exemple) - règlement;1526.30;
+PENNY-1001;2026-01-01/2026-12-31;2026-03-13;BQ;BQ00064;512;Matières premières (exemple) - règlement;;1526.30
+PENNY-1001;2026-01-01/2026-12-31;2026-04-08;HA;HA00065;606;Fournitures d'entretien (exemple) - facture;717.81;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-08;HA;HA00065;401;Fournitures d'entretien (exemple) - facture;;717.81
+PENNY-1001;2026-01-01/2026-12-31;2026-04-08;BQ;BQ00066;401;Fournitures d'entretien (exemple) - règlement;717.81;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-08;BQ;BQ00066;512;Fournitures d'entretien (exemple) - règlement;;717.81
+PENNY-1001;2026-01-01/2026-12-31;2026-04-11;HA;HA00067;615;Entretien et réparations (exemple) - facture;531.25;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-11;HA;HA00067;401;Entretien et réparations (exemple) - facture;;531.25
+PENNY-1001;2026-01-01/2026-12-31;2026-04-11;BQ;BQ00068;401;Entretien et réparations (exemple) - règlement;531.25;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-11;BQ;BQ00068;512;Entretien et réparations (exemple) - règlement;;531.25
+PENNY-1001;2026-01-01/2026-12-31;2026-04-19;HA;HA00069;625;Déplacements (exemple) - facture;82.79;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-19;HA;HA00069;401;Déplacements (exemple) - facture;;82.79
+PENNY-1001;2026-01-01/2026-12-31;2026-04-19;BQ;BQ00070;401;Déplacements (exemple) - règlement;82.79;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-19;BQ;BQ00070;512;Déplacements (exemple) - règlement;;82.79
+PENNY-1001;2026-01-01/2026-12-31;2026-04-28;HA;HA00071;626;Télécommunications (exemple) - facture;208.37;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-28;HA;HA00071;401;Télécommunications (exemple) - facture;;208.37
+PENNY-1001;2026-01-01/2026-12-31;2026-04-28;BQ;BQ00072;401;Télécommunications (exemple) - règlement;208.37;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-28;BQ;BQ00072;512;Télécommunications (exemple) - règlement;;208.37
+PENNY-1001;2026-01-01/2026-12-31;2026-04-17;HA;HA00073;641;Salaires (exemple) - facture;22547.44;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-17;HA;HA00073;401;Salaires (exemple) - facture;;22547.44
+PENNY-1001;2026-01-01/2026-12-31;2026-04-17;BQ;BQ00074;401;Salaires (exemple) - règlement;22547.44;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-17;BQ;BQ00074;512;Salaires (exemple) - règlement;;22547.44
+PENNY-1001;2026-01-01/2026-12-31;2026-04-20;HA;HA00075;645;Charges sociales (exemple) - facture;7391.25;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-20;HA;HA00075;401;Charges sociales (exemple) - facture;;7391.25
+PENNY-1001;2026-01-01/2026-12-31;2026-04-20;BQ;BQ00076;401;Charges sociales (exemple) - règlement;7391.25;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-20;BQ;BQ00076;512;Charges sociales (exemple) - règlement;;7391.25
+PENNY-1001;2026-01-01/2026-12-31;2026-04-17;HA;HA00077;661;Intérêts d'emprunt (exemple) - facture;449.17;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-17;HA;HA00077;401;Intérêts d'emprunt (exemple) - facture;;449.17
+PENNY-1001;2026-01-01/2026-12-31;2026-04-17;BQ;BQ00078;401;Intérêts d'emprunt (exemple) - règlement;449.17;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-17;BQ;BQ00078;512;Intérêts d'emprunt (exemple) - règlement;;449.17
+PENNY-1001;2026-01-01/2026-12-31;2026-04-23;HA;HA00079;658;Charges diverses (exemple) - facture;141.66;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-23;HA;HA00079;401;Charges diverses (exemple) - facture;;141.66
+PENNY-1001;2026-01-01/2026-12-31;2026-04-23;BQ;BQ00080;401;Charges diverses (exemple) - règlement;141.66;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-23;BQ;BQ00080;512;Charges diverses (exemple) - règlement;;141.66
+PENNY-1001;2026-01-01/2026-12-31;2026-04-24;HA;HA00081;6161;Assurance multirisques (exemple) - facture;1398.61;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-24;HA;HA00081;401;Assurance multirisques (exemple) - facture;;1398.61
+PENNY-1001;2026-01-01/2026-12-31;2026-04-24;BQ;BQ00082;401;Assurance multirisques (exemple) - règlement;1398.61;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-24;BQ;BQ00082;512;Assurance multirisques (exemple) - règlement;;1398.61
+PENNY-1001;2026-01-01/2026-12-31;2026-04-05;VT;VT00083;411;Hébergement (exemple) - facture;39141.38;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-05;VT;VT00083;706;Hébergement (exemple) - facture;;39141.38
+PENNY-1001;2026-01-01/2026-12-31;2026-04-05;BQ;BQ00084;512;Hébergement (exemple) - encaissement;39141.38;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-05;BQ;BQ00084;411;Hébergement (exemple) - encaissement;;39141.38
+PENNY-1001;2026-01-01/2026-12-31;2026-04-26;VT;VT00085;411;Prestations annexes (exemple) - facture;3791.51;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-26;VT;VT00085;708;Prestations annexes (exemple) - facture;;3791.51
+PENNY-1001;2026-01-01/2026-12-31;2026-04-26;BQ;BQ00086;512;Prestations annexes (exemple) - encaissement;3791.51;
+PENNY-1001;2026-01-01/2026-12-31;2026-04-26;BQ;BQ00086;411;Prestations annexes (exemple) - encaissement;;3791.51
+PENNY-1001;2026-01-01/2026-12-31;2026-05-18;HA;HA00087;606;Fournitures d'entretien (exemple) - facture;1107.46;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-18;HA;HA00087;401;Fournitures d'entretien (exemple) - facture;;1107.46
+PENNY-1001;2026-01-01/2026-12-31;2026-05-18;BQ;BQ00088;401;Fournitures d'entretien (exemple) - règlement;1107.46;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-18;BQ;BQ00088;512;Fournitures d'entretien (exemple) - règlement;;1107.46
+PENNY-1001;2026-01-01/2026-12-31;2026-05-27;HA;HA00089;615;Entretien et réparations (exemple) - facture;1233.96;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-27;HA;HA00089;401;Entretien et réparations (exemple) - facture;;1233.96
+PENNY-1001;2026-01-01/2026-12-31;2026-05-27;BQ;BQ00090;401;Entretien et réparations (exemple) - règlement;1233.96;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-27;BQ;BQ00090;512;Entretien et réparations (exemple) - règlement;;1233.96
+PENNY-1001;2026-01-01/2026-12-31;2026-05-25;HA;HA00091;625;Déplacements (exemple) - facture;52.56;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-25;HA;HA00091;401;Déplacements (exemple) - facture;;52.56
+PENNY-1001;2026-01-01/2026-12-31;2026-05-25;BQ;BQ00092;401;Déplacements (exemple) - règlement;52.56;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-25;BQ;BQ00092;512;Déplacements (exemple) - règlement;;52.56
+PENNY-1001;2026-01-01/2026-12-31;2026-05-14;HA;HA00093;626;Télécommunications (exemple) - facture;109.42;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-14;HA;HA00093;401;Télécommunications (exemple) - facture;;109.42
+PENNY-1001;2026-01-01/2026-12-31;2026-05-14;BQ;BQ00094;401;Télécommunications (exemple) - règlement;109.42;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-14;BQ;BQ00094;512;Télécommunications (exemple) - règlement;;109.42
+PENNY-1001;2026-01-01/2026-12-31;2026-05-22;HA;HA00095;641;Salaires (exemple) - facture;27101.50;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-22;HA;HA00095;401;Salaires (exemple) - facture;;27101.50
+PENNY-1001;2026-01-01/2026-12-31;2026-05-22;BQ;BQ00096;401;Salaires (exemple) - règlement;27101.50;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-22;BQ;BQ00096;512;Salaires (exemple) - règlement;;27101.50
+PENNY-1001;2026-01-01/2026-12-31;2026-05-17;HA;HA00097;645;Charges sociales (exemple) - facture;7338.23;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-17;HA;HA00097;401;Charges sociales (exemple) - facture;;7338.23
+PENNY-1001;2026-01-01/2026-12-31;2026-05-17;BQ;BQ00098;401;Charges sociales (exemple) - règlement;7338.23;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-17;BQ;BQ00098;512;Charges sociales (exemple) - règlement;;7338.23
+PENNY-1001;2026-01-01/2026-12-31;2026-05-16;HA;HA00099;661;Intérêts d'emprunt (exemple) - facture;422.27;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-16;HA;HA00099;401;Intérêts d'emprunt (exemple) - facture;;422.27
+PENNY-1001;2026-01-01/2026-12-31;2026-05-16;BQ;BQ00100;401;Intérêts d'emprunt (exemple) - règlement;422.27;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-16;BQ;BQ00100;512;Intérêts d'emprunt (exemple) - règlement;;422.27
+PENNY-1001;2026-01-01/2026-12-31;2026-05-02;HA;HA00101;658;Charges diverses (exemple) - facture;107.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-02;HA;HA00101;401;Charges diverses (exemple) - facture;;107.10
+PENNY-1001;2026-01-01/2026-12-31;2026-05-02;BQ;BQ00102;401;Charges diverses (exemple) - règlement;107.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-02;BQ;BQ00102;512;Charges diverses (exemple) - règlement;;107.10
+PENNY-1001;2026-01-01/2026-12-31;2026-05-10;VT;VT00103;411;Hébergement (exemple) - facture;49579.73;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-10;VT;VT00103;706;Hébergement (exemple) - facture;;49579.73
+PENNY-1001;2026-01-01/2026-12-31;2026-05-10;BQ;BQ00104;512;Hébergement (exemple) - encaissement;49579.73;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-10;BQ;BQ00104;411;Hébergement (exemple) - encaissement;;49579.73
+PENNY-1001;2026-01-01/2026-12-31;2026-05-19;VT;VT00105;411;Prestations annexes (exemple) - facture;1505.07;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-19;VT;VT00105;708;Prestations annexes (exemple) - facture;;1505.07
+PENNY-1001;2026-01-01/2026-12-31;2026-05-19;BQ;BQ00106;512;Prestations annexes (exemple) - encaissement;1505.07;
+PENNY-1001;2026-01-01/2026-12-31;2026-05-19;BQ;BQ00106;411;Prestations annexes (exemple) - encaissement;;1505.07
+PENNY-1001;2026-01-01/2026-12-31;2026-06-13;HA;HA00107;606;Fournitures d'entretien (exemple) - facture;613.96;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-13;HA;HA00107;401;Fournitures d'entretien (exemple) - facture;;613.96
+PENNY-1001;2026-01-01/2026-12-31;2026-06-13;BQ;BQ00108;401;Fournitures d'entretien (exemple) - règlement;613.96;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-13;BQ;BQ00108;512;Fournitures d'entretien (exemple) - règlement;;613.96
+PENNY-1001;2026-01-01/2026-12-31;2026-06-17;HA;HA00109;615;Entretien et réparations (exemple) - facture;772.62;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-17;HA;HA00109;401;Entretien et réparations (exemple) - facture;;772.62
+PENNY-1001;2026-01-01/2026-12-31;2026-06-17;BQ;BQ00110;401;Entretien et réparations (exemple) - règlement;772.62;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-17;BQ;BQ00110;512;Entretien et réparations (exemple) - règlement;;772.62
+PENNY-1001;2026-01-01/2026-12-31;2026-06-02;HA;HA00111;625;Déplacements (exemple) - facture;180.53;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-02;HA;HA00111;401;Déplacements (exemple) - facture;;180.53
+PENNY-1001;2026-01-01/2026-12-31;2026-06-02;BQ;BQ00112;401;Déplacements (exemple) - règlement;180.53;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-02;BQ;BQ00112;512;Déplacements (exemple) - règlement;;180.53
+PENNY-1001;2026-01-01/2026-12-31;2026-06-10;HA;HA00113;626;Télécommunications (exemple) - facture;186.02;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-10;HA;HA00113;401;Télécommunications (exemple) - facture;;186.02
+PENNY-1001;2026-01-01/2026-12-31;2026-06-10;BQ;BQ00114;401;Télécommunications (exemple) - règlement;186.02;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-10;BQ;BQ00114;512;Télécommunications (exemple) - règlement;;186.02
+PENNY-1001;2026-01-01/2026-12-31;2026-06-08;HA;HA00115;641;Salaires (exemple) - facture;22624.69;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-08;HA;HA00115;401;Salaires (exemple) - facture;;22624.69
+PENNY-1001;2026-01-01/2026-12-31;2026-06-08;BQ;BQ00116;401;Salaires (exemple) - règlement;22624.69;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-08;BQ;BQ00116;512;Salaires (exemple) - règlement;;22624.69
+PENNY-1001;2026-01-01/2026-12-31;2026-06-06;HA;HA00117;645;Charges sociales (exemple) - facture;8937.89;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-06;HA;HA00117;401;Charges sociales (exemple) - facture;;8937.89
+PENNY-1001;2026-01-01/2026-12-31;2026-06-06;BQ;BQ00118;401;Charges sociales (exemple) - règlement;8937.89;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-06;BQ;BQ00118;512;Charges sociales (exemple) - règlement;;8937.89
+PENNY-1001;2026-01-01/2026-12-31;2026-06-12;HA;HA00119;661;Intérêts d'emprunt (exemple) - facture;379.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-12;HA;HA00119;401;Intérêts d'emprunt (exemple) - facture;;379.15
+PENNY-1001;2026-01-01/2026-12-31;2026-06-12;BQ;BQ00120;401;Intérêts d'emprunt (exemple) - règlement;379.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-12;BQ;BQ00120;512;Intérêts d'emprunt (exemple) - règlement;;379.15
+PENNY-1001;2026-01-01/2026-12-31;2026-06-25;HA;HA00121;658;Charges diverses (exemple) - facture;89.97;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-25;HA;HA00121;401;Charges diverses (exemple) - facture;;89.97
+PENNY-1001;2026-01-01/2026-12-31;2026-06-25;BQ;BQ00122;401;Charges diverses (exemple) - règlement;89.97;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-25;BQ;BQ00122;512;Charges diverses (exemple) - règlement;;89.97
+PENNY-1001;2026-01-01/2026-12-31;2026-06-07;VT;VT00123;411;Hébergement (exemple) - facture;38815.16;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-07;VT;VT00123;706;Hébergement (exemple) - facture;;38815.16
+PENNY-1001;2026-01-01/2026-12-31;2026-06-07;BQ;BQ00124;512;Hébergement (exemple) - encaissement;38815.16;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-07;BQ;BQ00124;411;Hébergement (exemple) - encaissement;;38815.16
+PENNY-1001;2026-01-01/2026-12-31;2026-06-11;VT;VT00125;411;Prestations annexes (exemple) - facture;4029.38;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-11;VT;VT00125;708;Prestations annexes (exemple) - facture;;4029.38
+PENNY-1001;2026-01-01/2026-12-31;2026-06-11;BQ;BQ00126;512;Prestations annexes (exemple) - encaissement;4029.38;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-11;BQ;BQ00126;411;Prestations annexes (exemple) - encaissement;;4029.38
+PENNY-1001;2026-01-01/2026-12-31;2026-06-18;HA;HA00127;601;Matières premières (exemple) - facture;1881.31;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-18;HA;HA00127;401;Matières premières (exemple) - facture;;1881.31
+PENNY-1001;2026-01-01/2026-12-31;2026-06-18;BQ;BQ00128;401;Matières premières (exemple) - règlement;1881.31;
+PENNY-1001;2026-01-01/2026-12-31;2026-06-18;BQ;BQ00128;512;Matières premières (exemple) - règlement;;1881.31
+PENNY-1001;2026-01-01/2026-12-31;2026-07-20;HA;HA00129;606;Fournitures d'entretien (exemple) - facture;1261.12;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-20;HA;HA00129;401;Fournitures d'entretien (exemple) - facture;;1261.12
+PENNY-1001;2026-01-01/2026-12-31;2026-07-20;BQ;BQ00130;401;Fournitures d'entretien (exemple) - règlement;1261.12;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-20;BQ;BQ00130;512;Fournitures d'entretien (exemple) - règlement;;1261.12
+PENNY-1001;2026-01-01/2026-12-31;2026-07-21;HA;HA00131;615;Entretien et réparations (exemple) - facture;856.64;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-21;HA;HA00131;401;Entretien et réparations (exemple) - facture;;856.64
+PENNY-1001;2026-01-01/2026-12-31;2026-07-21;BQ;BQ00132;401;Entretien et réparations (exemple) - règlement;856.64;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-21;BQ;BQ00132;512;Entretien et réparations (exemple) - règlement;;856.64
+PENNY-1001;2026-01-01/2026-12-31;2026-07-03;HA;HA00133;625;Déplacements (exemple) - facture;231.11;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-03;HA;HA00133;401;Déplacements (exemple) - facture;;231.11
+PENNY-1001;2026-01-01/2026-12-31;2026-07-03;BQ;BQ00134;401;Déplacements (exemple) - règlement;231.11;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-03;BQ;BQ00134;512;Déplacements (exemple) - règlement;;231.11
+PENNY-1001;2026-01-01/2026-12-31;2026-07-08;HA;HA00135;626;Télécommunications (exemple) - facture;237.39;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-08;HA;HA00135;401;Télécommunications (exemple) - facture;;237.39
+PENNY-1001;2026-01-01/2026-12-31;2026-07-08;BQ;BQ00136;401;Télécommunications (exemple) - règlement;237.39;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-08;BQ;BQ00136;512;Télécommunications (exemple) - règlement;;237.39
+PENNY-1001;2026-01-01/2026-12-31;2026-07-09;HA;HA00137;641;Salaires (exemple) - facture;22120.40;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-09;HA;HA00137;401;Salaires (exemple) - facture;;22120.40
+PENNY-1001;2026-01-01/2026-12-31;2026-07-09;BQ;BQ00138;401;Salaires (exemple) - règlement;22120.40;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-09;BQ;BQ00138;512;Salaires (exemple) - règlement;;22120.40
+PENNY-1001;2026-01-01/2026-12-31;2026-07-19;HA;HA00139;645;Charges sociales (exemple) - facture;9169.36;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-19;HA;HA00139;401;Charges sociales (exemple) - facture;;9169.36
+PENNY-1001;2026-01-01/2026-12-31;2026-07-19;BQ;BQ00140;401;Charges sociales (exemple) - règlement;9169.36;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-19;BQ;BQ00140;512;Charges sociales (exemple) - règlement;;9169.36
+PENNY-1001;2026-01-01/2026-12-31;2026-07-27;HA;HA00141;661;Intérêts d'emprunt (exemple) - facture;424.21;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-27;HA;HA00141;401;Intérêts d'emprunt (exemple) - facture;;424.21
+PENNY-1001;2026-01-01/2026-12-31;2026-07-27;BQ;BQ00142;401;Intérêts d'emprunt (exemple) - règlement;424.21;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-27;BQ;BQ00142;512;Intérêts d'emprunt (exemple) - règlement;;424.21
+PENNY-1001;2026-01-01/2026-12-31;2026-07-21;HA;HA00143;658;Charges diverses (exemple) - facture;288.78;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-21;HA;HA00143;401;Charges diverses (exemple) - facture;;288.78
+PENNY-1001;2026-01-01/2026-12-31;2026-07-21;BQ;BQ00144;401;Charges diverses (exemple) - règlement;288.78;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-21;BQ;BQ00144;512;Charges diverses (exemple) - règlement;;288.78
+PENNY-1001;2026-01-01/2026-12-31;2026-07-12;HA;HA00145;6161;Assurance multirisques (exemple) - facture;1371.34;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-12;HA;HA00145;401;Assurance multirisques (exemple) - facture;;1371.34
+PENNY-1001;2026-01-01/2026-12-31;2026-07-12;BQ;BQ00146;401;Assurance multirisques (exemple) - règlement;1371.34;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-12;BQ;BQ00146;512;Assurance multirisques (exemple) - règlement;;1371.34
+PENNY-1001;2026-01-01/2026-12-31;2026-07-08;VT;VT00147;411;Hébergement (exemple) - facture;46979.79;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-08;VT;VT00147;706;Hébergement (exemple) - facture;;46979.79
+PENNY-1001;2026-01-01/2026-12-31;2026-07-08;BQ;BQ00148;512;Hébergement (exemple) - encaissement;46979.79;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-08;BQ;BQ00148;411;Hébergement (exemple) - encaissement;;46979.79
+PENNY-1001;2026-01-01/2026-12-31;2026-07-17;VT;VT00149;411;Prestations annexes (exemple) - facture;2950.39;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-17;VT;VT00149;708;Prestations annexes (exemple) - facture;;2950.39
+PENNY-1001;2026-01-01/2026-12-31;2026-07-17;BQ;BQ00150;512;Prestations annexes (exemple) - encaissement;2950.39;
+PENNY-1001;2026-01-01/2026-12-31;2026-07-17;BQ;BQ00150;411;Prestations annexes (exemple) - encaissement;;2950.39
+PENNY-1001;2026-01-01/2026-12-31;2026-08-20;HA;HA00151;606;Fournitures d'entretien (exemple) - facture;1096.92;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-20;HA;HA00151;401;Fournitures d'entretien (exemple) - facture;;1096.92
+PENNY-1001;2026-01-01/2026-12-31;2026-08-20;BQ;BQ00152;401;Fournitures d'entretien (exemple) - règlement;1096.92;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-20;BQ;BQ00152;512;Fournitures d'entretien (exemple) - règlement;;1096.92
+PENNY-1001;2026-01-01/2026-12-31;2026-08-02;HA;HA00153;615;Entretien et réparations (exemple) - facture;1231.96;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-02;HA;HA00153;401;Entretien et réparations (exemple) - facture;;1231.96
+PENNY-1001;2026-01-01/2026-12-31;2026-08-02;BQ;BQ00154;401;Entretien et réparations (exemple) - règlement;1231.96;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-02;BQ;BQ00154;512;Entretien et réparations (exemple) - règlement;;1231.96
+PENNY-1001;2026-01-01/2026-12-31;2026-08-11;HA;HA00155;625;Déplacements (exemple) - facture;309.90;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-11;HA;HA00155;401;Déplacements (exemple) - facture;;309.90
+PENNY-1001;2026-01-01/2026-12-31;2026-08-11;BQ;BQ00156;401;Déplacements (exemple) - règlement;309.90;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-11;BQ;BQ00156;512;Déplacements (exemple) - règlement;;309.90
+PENNY-1001;2026-01-01/2026-12-31;2026-08-19;HA;HA00157;626;Télécommunications (exemple) - facture;160.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-19;HA;HA00157;401;Télécommunications (exemple) - facture;;160.10
+PENNY-1001;2026-01-01/2026-12-31;2026-08-19;BQ;BQ00158;401;Télécommunications (exemple) - règlement;160.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-19;BQ;BQ00158;512;Télécommunications (exemple) - règlement;;160.10
+PENNY-1001;2026-01-01/2026-12-31;2026-08-18;HA;HA00159;641;Salaires (exemple) - facture;22790.07;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-18;HA;HA00159;401;Salaires (exemple) - facture;;22790.07
+PENNY-1001;2026-01-01/2026-12-31;2026-08-18;BQ;BQ00160;401;Salaires (exemple) - règlement;22790.07;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-18;BQ;BQ00160;512;Salaires (exemple) - règlement;;22790.07
+PENNY-1001;2026-01-01/2026-12-31;2026-08-03;HA;HA00161;645;Charges sociales (exemple) - facture;7253.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-03;HA;HA00161;401;Charges sociales (exemple) - facture;;7253.15
+PENNY-1001;2026-01-01/2026-12-31;2026-08-03;BQ;BQ00162;401;Charges sociales (exemple) - règlement;7253.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-03;BQ;BQ00162;512;Charges sociales (exemple) - règlement;;7253.15
+PENNY-1001;2026-01-01/2026-12-31;2026-08-10;HA;HA00163;661;Intérêts d'emprunt (exemple) - facture;709.72;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-10;HA;HA00163;401;Intérêts d'emprunt (exemple) - facture;;709.72
+PENNY-1001;2026-01-01/2026-12-31;2026-08-10;BQ;BQ00164;401;Intérêts d'emprunt (exemple) - règlement;709.72;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-10;BQ;BQ00164;512;Intérêts d'emprunt (exemple) - règlement;;709.72
+PENNY-1001;2026-01-01/2026-12-31;2026-08-04;HA;HA00165;658;Charges diverses (exemple) - facture;140.04;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-04;HA;HA00165;401;Charges diverses (exemple) - facture;;140.04
+PENNY-1001;2026-01-01/2026-12-31;2026-08-04;BQ;BQ00166;401;Charges diverses (exemple) - règlement;140.04;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-04;BQ;BQ00166;512;Charges diverses (exemple) - règlement;;140.04
+PENNY-1001;2026-01-01/2026-12-31;2026-08-02;VT;VT00167;411;Hébergement (exemple) - facture;40984.51;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-02;VT;VT00167;706;Hébergement (exemple) - facture;;40984.51
+PENNY-1001;2026-01-01/2026-12-31;2026-08-02;BQ;BQ00168;512;Hébergement (exemple) - encaissement;40984.51;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-02;BQ;BQ00168;411;Hébergement (exemple) - encaissement;;40984.51
+PENNY-1001;2026-01-01/2026-12-31;2026-08-23;VT;VT00169;411;Prestations annexes (exemple) - facture;3437.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-23;VT;VT00169;708;Prestations annexes (exemple) - facture;;3437.15
+PENNY-1001;2026-01-01/2026-12-31;2026-08-23;BQ;BQ00170;512;Prestations annexes (exemple) - encaissement;3437.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-08-23;BQ;BQ00170;411;Prestations annexes (exemple) - encaissement;;3437.15
+PENNY-1001;2026-01-01/2026-12-31;2026-09-16;HA;HA00171;606;Fournitures d'entretien (exemple) - facture;996.35;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-16;HA;HA00171;401;Fournitures d'entretien (exemple) - facture;;996.35
+PENNY-1001;2026-01-01/2026-12-31;2026-09-16;BQ;BQ00172;401;Fournitures d'entretien (exemple) - règlement;996.35;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-16;BQ;BQ00172;512;Fournitures d'entretien (exemple) - règlement;;996.35
+PENNY-1001;2026-01-01/2026-12-31;2026-09-06;HA;HA00173;615;Entretien et réparations (exemple) - facture;294.31;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-06;HA;HA00173;401;Entretien et réparations (exemple) - facture;;294.31
+PENNY-1001;2026-01-01/2026-12-31;2026-09-06;BQ;BQ00174;401;Entretien et réparations (exemple) - règlement;294.31;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-06;BQ;BQ00174;512;Entretien et réparations (exemple) - règlement;;294.31
+PENNY-1001;2026-01-01/2026-12-31;2026-09-25;HA;HA00175;625;Déplacements (exemple) - facture;260.24;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-25;HA;HA00175;401;Déplacements (exemple) - facture;;260.24
+PENNY-1001;2026-01-01/2026-12-31;2026-09-25;BQ;BQ00176;401;Déplacements (exemple) - règlement;260.24;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-25;BQ;BQ00176;512;Déplacements (exemple) - règlement;;260.24
+PENNY-1001;2026-01-01/2026-12-31;2026-09-05;HA;HA00177;626;Télécommunications (exemple) - facture;197.90;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-05;HA;HA00177;401;Télécommunications (exemple) - facture;;197.90
+PENNY-1001;2026-01-01/2026-12-31;2026-09-05;BQ;BQ00178;401;Télécommunications (exemple) - règlement;197.90;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-05;BQ;BQ00178;512;Télécommunications (exemple) - règlement;;197.90
+PENNY-1001;2026-01-01/2026-12-31;2026-09-21;HA;HA00179;641;Salaires (exemple) - facture;23507.85;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-21;HA;HA00179;401;Salaires (exemple) - facture;;23507.85
+PENNY-1001;2026-01-01/2026-12-31;2026-09-21;BQ;BQ00180;401;Salaires (exemple) - règlement;23507.85;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-21;BQ;BQ00180;512;Salaires (exemple) - règlement;;23507.85
+PENNY-1001;2026-01-01/2026-12-31;2026-09-04;HA;HA00181;645;Charges sociales (exemple) - facture;8026.60;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-04;HA;HA00181;401;Charges sociales (exemple) - facture;;8026.60
+PENNY-1001;2026-01-01/2026-12-31;2026-09-04;BQ;BQ00182;401;Charges sociales (exemple) - règlement;8026.60;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-04;BQ;BQ00182;512;Charges sociales (exemple) - règlement;;8026.60
+PENNY-1001;2026-01-01/2026-12-31;2026-09-18;HA;HA00183;661;Intérêts d'emprunt (exemple) - facture;559.58;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-18;HA;HA00183;401;Intérêts d'emprunt (exemple) - facture;;559.58
+PENNY-1001;2026-01-01/2026-12-31;2026-09-18;BQ;BQ00184;401;Intérêts d'emprunt (exemple) - règlement;559.58;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-18;BQ;BQ00184;512;Intérêts d'emprunt (exemple) - règlement;;559.58
+PENNY-1001;2026-01-01/2026-12-31;2026-09-11;HA;HA00185;658;Charges diverses (exemple) - facture;265.31;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-11;HA;HA00185;401;Charges diverses (exemple) - facture;;265.31
+PENNY-1001;2026-01-01/2026-12-31;2026-09-11;BQ;BQ00186;401;Charges diverses (exemple) - règlement;265.31;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-11;BQ;BQ00186;512;Charges diverses (exemple) - règlement;;265.31
+PENNY-1001;2026-01-01/2026-12-31;2026-09-18;VT;VT00187;411;Hébergement (exemple) - facture;49213.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-18;VT;VT00187;706;Hébergement (exemple) - facture;;49213.15
+PENNY-1001;2026-01-01/2026-12-31;2026-09-18;BQ;BQ00188;512;Hébergement (exemple) - encaissement;49213.15;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-18;BQ;BQ00188;411;Hébergement (exemple) - encaissement;;49213.15
+PENNY-1001;2026-01-01/2026-12-31;2026-09-28;VT;VT00189;411;Prestations annexes (exemple) - facture;1740.11;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-28;VT;VT00189;708;Prestations annexes (exemple) - facture;;1740.11
+PENNY-1001;2026-01-01/2026-12-31;2026-09-28;BQ;BQ00190;512;Prestations annexes (exemple) - encaissement;1740.11;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-28;BQ;BQ00190;411;Prestations annexes (exemple) - encaissement;;1740.11
+PENNY-1001;2026-01-01/2026-12-31;2026-09-22;HA;HA00191;601;Matières premières (exemple) - facture;529.83;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-22;HA;HA00191;401;Matières premières (exemple) - facture;;529.83
+PENNY-1001;2026-01-01/2026-12-31;2026-09-22;BQ;BQ00192;401;Matières premières (exemple) - règlement;529.83;
+PENNY-1001;2026-01-01/2026-12-31;2026-09-22;BQ;BQ00192;512;Matières premières (exemple) - règlement;;529.83
+PENNY-1001;2026-01-01/2026-12-31;2026-10-07;HA;HA00193;606;Fournitures d'entretien (exemple) - facture;683.60;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-07;HA;HA00193;401;Fournitures d'entretien (exemple) - facture;;683.60
+PENNY-1001;2026-01-01/2026-12-31;2026-10-07;BQ;BQ00194;401;Fournitures d'entretien (exemple) - règlement;683.60;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-07;BQ;BQ00194;512;Fournitures d'entretien (exemple) - règlement;;683.60
+PENNY-1001;2026-01-01/2026-12-31;2026-10-08;HA;HA00195;615;Entretien et réparations (exemple) - facture;1023.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-08;HA;HA00195;401;Entretien et réparations (exemple) - facture;;1023.10
+PENNY-1001;2026-01-01/2026-12-31;2026-10-08;BQ;BQ00196;401;Entretien et réparations (exemple) - règlement;1023.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-08;BQ;BQ00196;512;Entretien et réparations (exemple) - règlement;;1023.10
+PENNY-1001;2026-01-01/2026-12-31;2026-10-24;HA;HA00197;625;Déplacements (exemple) - facture;235.66;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-24;HA;HA00197;401;Déplacements (exemple) - facture;;235.66
+PENNY-1001;2026-01-01/2026-12-31;2026-10-24;BQ;BQ00198;401;Déplacements (exemple) - règlement;235.66;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-24;BQ;BQ00198;512;Déplacements (exemple) - règlement;;235.66
+PENNY-1001;2026-01-01/2026-12-31;2026-10-13;HA;HA00199;626;Télécommunications (exemple) - facture;180.36;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-13;HA;HA00199;401;Télécommunications (exemple) - facture;;180.36
+PENNY-1001;2026-01-01/2026-12-31;2026-10-13;BQ;BQ00200;401;Télécommunications (exemple) - règlement;180.36;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-13;BQ;BQ00200;512;Télécommunications (exemple) - règlement;;180.36
+PENNY-1001;2026-01-01/2026-12-31;2026-10-06;HA;HA00201;641;Salaires (exemple) - facture;25531.31;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-06;HA;HA00201;401;Salaires (exemple) - facture;;25531.31
+PENNY-1001;2026-01-01/2026-12-31;2026-10-06;BQ;BQ00202;401;Salaires (exemple) - règlement;25531.31;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-06;BQ;BQ00202;512;Salaires (exemple) - règlement;;25531.31
+PENNY-1001;2026-01-01/2026-12-31;2026-10-18;HA;HA00203;645;Charges sociales (exemple) - facture;7795.20;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-18;HA;HA00203;401;Charges sociales (exemple) - facture;;7795.20
+PENNY-1001;2026-01-01/2026-12-31;2026-10-18;BQ;BQ00204;401;Charges sociales (exemple) - règlement;7795.20;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-18;BQ;BQ00204;512;Charges sociales (exemple) - règlement;;7795.20
+PENNY-1001;2026-01-01/2026-12-31;2026-10-23;HA;HA00205;661;Intérêts d'emprunt (exemple) - facture;590.84;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-23;HA;HA00205;401;Intérêts d'emprunt (exemple) - facture;;590.84
+PENNY-1001;2026-01-01/2026-12-31;2026-10-23;BQ;BQ00206;401;Intérêts d'emprunt (exemple) - règlement;590.84;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-23;BQ;BQ00206;512;Intérêts d'emprunt (exemple) - règlement;;590.84
+PENNY-1001;2026-01-01/2026-12-31;2026-10-27;HA;HA00207;658;Charges diverses (exemple) - facture;158.65;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-27;HA;HA00207;401;Charges diverses (exemple) - facture;;158.65
+PENNY-1001;2026-01-01/2026-12-31;2026-10-27;BQ;BQ00208;401;Charges diverses (exemple) - règlement;158.65;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-27;BQ;BQ00208;512;Charges diverses (exemple) - règlement;;158.65
+PENNY-1001;2026-01-01/2026-12-31;2026-10-18;HA;HA00209;6161;Assurance multirisques (exemple) - facture;1509.73;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-18;HA;HA00209;401;Assurance multirisques (exemple) - facture;;1509.73
+PENNY-1001;2026-01-01/2026-12-31;2026-10-18;BQ;BQ00210;401;Assurance multirisques (exemple) - règlement;1509.73;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-18;BQ;BQ00210;512;Assurance multirisques (exemple) - règlement;;1509.73
+PENNY-1001;2026-01-01/2026-12-31;2026-10-13;VT;VT00211;411;Hébergement (exemple) - facture;48233.08;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-13;VT;VT00211;706;Hébergement (exemple) - facture;;48233.08
+PENNY-1001;2026-01-01/2026-12-31;2026-10-13;BQ;BQ00212;512;Hébergement (exemple) - encaissement;48233.08;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-13;BQ;BQ00212;411;Hébergement (exemple) - encaissement;;48233.08
+PENNY-1001;2026-01-01/2026-12-31;2026-10-10;VT;VT00213;411;Prestations annexes (exemple) - facture;3070.91;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-10;VT;VT00213;708;Prestations annexes (exemple) - facture;;3070.91
+PENNY-1001;2026-01-01/2026-12-31;2026-10-10;BQ;BQ00214;512;Prestations annexes (exemple) - encaissement;3070.91;
+PENNY-1001;2026-01-01/2026-12-31;2026-10-10;BQ;BQ00214;411;Prestations annexes (exemple) - encaissement;;3070.91
+PENNY-1001;2026-01-01/2026-12-31;2026-11-20;HA;HA00215;606;Fournitures d'entretien (exemple) - facture;466.97;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-20;HA;HA00215;401;Fournitures d'entretien (exemple) - facture;;466.97
+PENNY-1001;2026-01-01/2026-12-31;2026-11-20;BQ;BQ00216;401;Fournitures d'entretien (exemple) - règlement;466.97;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-20;BQ;BQ00216;512;Fournitures d'entretien (exemple) - règlement;;466.97
+PENNY-1001;2026-01-01/2026-12-31;2026-11-28;HA;HA00217;615;Entretien et réparations (exemple) - facture;1292.84;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-28;HA;HA00217;401;Entretien et réparations (exemple) - facture;;1292.84
+PENNY-1001;2026-01-01/2026-12-31;2026-11-28;BQ;BQ00218;401;Entretien et réparations (exemple) - règlement;1292.84;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-28;BQ;BQ00218;512;Entretien et réparations (exemple) - règlement;;1292.84
+PENNY-1001;2026-01-01/2026-12-31;2026-11-06;HA;HA00219;625;Déplacements (exemple) - facture;119.17;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-06;HA;HA00219;401;Déplacements (exemple) - facture;;119.17
+PENNY-1001;2026-01-01/2026-12-31;2026-11-06;BQ;BQ00220;401;Déplacements (exemple) - règlement;119.17;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-06;BQ;BQ00220;512;Déplacements (exemple) - règlement;;119.17
+PENNY-1001;2026-01-01/2026-12-31;2026-11-22;HA;HA00221;626;Télécommunications (exemple) - facture;205.67;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-22;HA;HA00221;401;Télécommunications (exemple) - facture;;205.67
+PENNY-1001;2026-01-01/2026-12-31;2026-11-22;BQ;BQ00222;401;Télécommunications (exemple) - règlement;205.67;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-22;BQ;BQ00222;512;Télécommunications (exemple) - règlement;;205.67
+PENNY-1001;2026-01-01/2026-12-31;2026-11-03;HA;HA00223;641;Salaires (exemple) - facture;22612.44;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-03;HA;HA00223;401;Salaires (exemple) - facture;;22612.44
+PENNY-1001;2026-01-01/2026-12-31;2026-11-03;BQ;BQ00224;401;Salaires (exemple) - règlement;22612.44;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-03;BQ;BQ00224;512;Salaires (exemple) - règlement;;22612.44
+PENNY-1001;2026-01-01/2026-12-31;2026-11-13;HA;HA00225;645;Charges sociales (exemple) - facture;7333.37;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-13;HA;HA00225;401;Charges sociales (exemple) - facture;;7333.37
+PENNY-1001;2026-01-01/2026-12-31;2026-11-13;BQ;BQ00226;401;Charges sociales (exemple) - règlement;7333.37;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-13;BQ;BQ00226;512;Charges sociales (exemple) - règlement;;7333.37
+PENNY-1001;2026-01-01/2026-12-31;2026-11-01;HA;HA00227;661;Intérêts d'emprunt (exemple) - facture;795.58;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-01;HA;HA00227;401;Intérêts d'emprunt (exemple) - facture;;795.58
+PENNY-1001;2026-01-01/2026-12-31;2026-11-01;BQ;BQ00228;401;Intérêts d'emprunt (exemple) - règlement;795.58;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-01;BQ;BQ00228;512;Intérêts d'emprunt (exemple) - règlement;;795.58
+PENNY-1001;2026-01-01/2026-12-31;2026-11-11;HA;HA00229;658;Charges diverses (exemple) - facture;205.68;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-11;HA;HA00229;401;Charges diverses (exemple) - facture;;205.68
+PENNY-1001;2026-01-01/2026-12-31;2026-11-11;BQ;BQ00230;401;Charges diverses (exemple) - règlement;205.68;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-11;BQ;BQ00230;512;Charges diverses (exemple) - règlement;;205.68
+PENNY-1001;2026-01-01/2026-12-31;2026-11-17;VT;VT00231;411;Hébergement (exemple) - facture;48949.44;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-17;VT;VT00231;706;Hébergement (exemple) - facture;;48949.44
+PENNY-1001;2026-01-01/2026-12-31;2026-11-17;BQ;BQ00232;512;Hébergement (exemple) - encaissement;48949.44;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-17;BQ;BQ00232;411;Hébergement (exemple) - encaissement;;48949.44
+PENNY-1001;2026-01-01/2026-12-31;2026-11-02;VT;VT00233;411;Prestations annexes (exemple) - facture;2483.33;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-02;VT;VT00233;708;Prestations annexes (exemple) - facture;;2483.33
+PENNY-1001;2026-01-01/2026-12-31;2026-11-02;BQ;BQ00234;512;Prestations annexes (exemple) - encaissement;2483.33;
+PENNY-1001;2026-01-01/2026-12-31;2026-11-02;BQ;BQ00234;411;Prestations annexes (exemple) - encaissement;;2483.33
+PENNY-1001;2026-01-01/2026-12-31;2026-12-25;HA;HA00235;606;Fournitures d'entretien (exemple) - facture;748.84;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-25;HA;HA00235;401;Fournitures d'entretien (exemple) - facture;;748.84
+PENNY-1001;2026-01-01/2026-12-31;2026-12-25;BQ;BQ00236;401;Fournitures d'entretien (exemple) - règlement;748.84;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-25;BQ;BQ00236;512;Fournitures d'entretien (exemple) - règlement;;748.84
+PENNY-1001;2026-01-01/2026-12-31;2026-12-09;HA;HA00237;615;Entretien et réparations (exemple) - facture;1179.21;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-09;HA;HA00237;401;Entretien et réparations (exemple) - facture;;1179.21
+PENNY-1001;2026-01-01/2026-12-31;2026-12-09;BQ;BQ00238;401;Entretien et réparations (exemple) - règlement;1179.21;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-09;BQ;BQ00238;512;Entretien et réparations (exemple) - règlement;;1179.21
+PENNY-1001;2026-01-01/2026-12-31;2026-12-13;HA;HA00239;625;Déplacements (exemple) - facture;96.24;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-13;HA;HA00239;401;Déplacements (exemple) - facture;;96.24
+PENNY-1001;2026-01-01/2026-12-31;2026-12-13;BQ;BQ00240;401;Déplacements (exemple) - règlement;96.24;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-13;BQ;BQ00240;512;Déplacements (exemple) - règlement;;96.24
+PENNY-1001;2026-01-01/2026-12-31;2026-12-11;HA;HA00241;626;Télécommunications (exemple) - facture;240.54;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-11;HA;HA00241;401;Télécommunications (exemple) - facture;;240.54
+PENNY-1001;2026-01-01/2026-12-31;2026-12-11;BQ;BQ00242;401;Télécommunications (exemple) - règlement;240.54;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-11;BQ;BQ00242;512;Télécommunications (exemple) - règlement;;240.54
+PENNY-1001;2026-01-01/2026-12-31;2026-12-25;HA;HA00243;641;Salaires (exemple) - facture;23184.85;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-25;HA;HA00243;401;Salaires (exemple) - facture;;23184.85
+PENNY-1001;2026-01-01/2026-12-31;2026-12-25;BQ;BQ00244;401;Salaires (exemple) - règlement;23184.85;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-25;BQ;BQ00244;512;Salaires (exemple) - règlement;;23184.85
+PENNY-1001;2026-01-01/2026-12-31;2026-12-01;HA;HA00245;645;Charges sociales (exemple) - facture;8555.52;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-01;HA;HA00245;401;Charges sociales (exemple) - facture;;8555.52
+PENNY-1001;2026-01-01/2026-12-31;2026-12-01;BQ;BQ00246;401;Charges sociales (exemple) - règlement;8555.52;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-01;BQ;BQ00246;512;Charges sociales (exemple) - règlement;;8555.52
+PENNY-1001;2026-01-01/2026-12-31;2026-12-26;HA;HA00247;661;Intérêts d'emprunt (exemple) - facture;559.59;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-26;HA;HA00247;401;Intérêts d'emprunt (exemple) - facture;;559.59
+PENNY-1001;2026-01-01/2026-12-31;2026-12-26;BQ;BQ00248;401;Intérêts d'emprunt (exemple) - règlement;559.59;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-26;BQ;BQ00248;512;Intérêts d'emprunt (exemple) - règlement;;559.59
+PENNY-1001;2026-01-01/2026-12-31;2026-12-11;HA;HA00249;658;Charges diverses (exemple) - facture;298.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-11;HA;HA00249;401;Charges diverses (exemple) - facture;;298.10
+PENNY-1001;2026-01-01/2026-12-31;2026-12-11;BQ;BQ00250;401;Charges diverses (exemple) - règlement;298.10;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-11;BQ;BQ00250;512;Charges diverses (exemple) - règlement;;298.10
+PENNY-1001;2026-01-01/2026-12-31;2026-12-26;VT;VT00251;411;Hébergement (exemple) - facture;48378.08;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-26;VT;VT00251;706;Hébergement (exemple) - facture;;48378.08
+PENNY-1001;2026-01-01/2026-12-31;2026-12-26;BQ;BQ00252;512;Hébergement (exemple) - encaissement;48378.08;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-26;BQ;BQ00252;411;Hébergement (exemple) - encaissement;;48378.08
+PENNY-1001;2026-01-01/2026-12-31;2026-12-27;VT;VT00253;411;Prestations annexes (exemple) - facture;1639.77;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-27;VT;VT00253;708;Prestations annexes (exemple) - facture;;1639.77
+PENNY-1001;2026-01-01/2026-12-31;2026-12-27;BQ;BQ00254;512;Prestations annexes (exemple) - encaissement;1639.77;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-27;BQ;BQ00254;411;Prestations annexes (exemple) - encaissement;;1639.77
+PENNY-1001;2026-01-01/2026-12-31;2026-12-06;HA;HA00255;601;Matières premières (exemple) - facture;1831.96;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-06;HA;HA00255;401;Matières premières (exemple) - facture;;1831.96
+PENNY-1001;2026-01-01/2026-12-31;2026-12-06;BQ;BQ00256;401;Matières premières (exemple) - règlement;1831.96;
+PENNY-1001;2026-01-01/2026-12-31;2026-12-06;BQ;BQ00256;512;Matières premières (exemple) - règlement;;1831.96
+PENNY-1002;2025-04-01/2026-03-31;2025-04-07;HA;HA00001;606;Fournitures d'entretien (exemple) - facture;1201.22;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-07;HA;HA00001;401;Fournitures d'entretien (exemple) - facture;;1201.22
+PENNY-1002;2025-04-01/2026-03-31;2025-04-07;BQ;BQ00002;401;Fournitures d'entretien (exemple) - règlement;1201.22;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-07;BQ;BQ00002;512;Fournitures d'entretien (exemple) - règlement;;1201.22
+PENNY-1002;2025-04-01/2026-03-31;2025-04-04;HA;HA00003;615;Entretien et réparations (exemple) - facture;1301.79;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-04;HA;HA00003;401;Entretien et réparations (exemple) - facture;;1301.79
+PENNY-1002;2025-04-01/2026-03-31;2025-04-04;BQ;BQ00004;401;Entretien et réparations (exemple) - règlement;1301.79;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-04;BQ;BQ00004;512;Entretien et réparations (exemple) - règlement;;1301.79
+PENNY-1002;2025-04-01/2026-03-31;2025-04-01;HA;HA00005;625;Déplacements (exemple) - facture;273.55;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-01;HA;HA00005;401;Déplacements (exemple) - facture;;273.55
+PENNY-1002;2025-04-01/2026-03-31;2025-04-01;BQ;BQ00006;401;Déplacements (exemple) - règlement;273.55;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-01;BQ;BQ00006;512;Déplacements (exemple) - règlement;;273.55
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;HA;HA00007;626;Télécommunications (exemple) - facture;112.80;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;HA;HA00007;401;Télécommunications (exemple) - facture;;112.80
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;BQ;BQ00008;401;Télécommunications (exemple) - règlement;112.80;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;BQ;BQ00008;512;Télécommunications (exemple) - règlement;;112.80
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;HA;HA00009;641;Salaires (exemple) - facture;24996.69;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;HA;HA00009;401;Salaires (exemple) - facture;;24996.69
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;BQ;BQ00010;401;Salaires (exemple) - règlement;24996.69;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;BQ;BQ00010;512;Salaires (exemple) - règlement;;24996.69
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;HA;HA00011;645;Charges sociales (exemple) - facture;7408.14;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;HA;HA00011;401;Charges sociales (exemple) - facture;;7408.14
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;BQ;BQ00012;401;Charges sociales (exemple) - règlement;7408.14;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-12;BQ;BQ00012;512;Charges sociales (exemple) - règlement;;7408.14
+PENNY-1002;2025-04-01/2026-03-31;2025-04-23;HA;HA00013;661;Intérêts d'emprunt (exemple) - facture;318.57;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-23;HA;HA00013;401;Intérêts d'emprunt (exemple) - facture;;318.57
+PENNY-1002;2025-04-01/2026-03-31;2025-04-23;BQ;BQ00014;401;Intérêts d'emprunt (exemple) - règlement;318.57;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-23;BQ;BQ00014;512;Intérêts d'emprunt (exemple) - règlement;;318.57
+PENNY-1002;2025-04-01/2026-03-31;2025-04-25;HA;HA00015;658;Charges diverses (exemple) - facture;43.28;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-25;HA;HA00015;401;Charges diverses (exemple) - facture;;43.28
+PENNY-1002;2025-04-01/2026-03-31;2025-04-25;BQ;BQ00016;401;Charges diverses (exemple) - règlement;43.28;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-25;BQ;BQ00016;512;Charges diverses (exemple) - règlement;;43.28
+PENNY-1002;2025-04-01/2026-03-31;2025-04-27;HA;HA00017;6161;Assurance multirisques (exemple) - facture;1208.98;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-27;HA;HA00017;401;Assurance multirisques (exemple) - facture;;1208.98
+PENNY-1002;2025-04-01/2026-03-31;2025-04-27;BQ;BQ00018;401;Assurance multirisques (exemple) - règlement;1208.98;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-27;BQ;BQ00018;512;Assurance multirisques (exemple) - règlement;;1208.98
+PENNY-1002;2025-04-01/2026-03-31;2025-04-18;VT;VT00019;411;Hébergement (exemple) - facture;43805.85;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-18;VT;VT00019;706;Hébergement (exemple) - facture;;43805.85
+PENNY-1002;2025-04-01/2026-03-31;2025-04-18;BQ;BQ00020;512;Hébergement (exemple) - encaissement;43805.85;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-18;BQ;BQ00020;411;Hébergement (exemple) - encaissement;;43805.85
+PENNY-1002;2025-04-01/2026-03-31;2025-04-25;VT;VT00021;411;Prestations annexes (exemple) - facture;1894.69;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-25;VT;VT00021;708;Prestations annexes (exemple) - facture;;1894.69
+PENNY-1002;2025-04-01/2026-03-31;2025-04-25;BQ;BQ00022;512;Prestations annexes (exemple) - encaissement;1894.69;
+PENNY-1002;2025-04-01/2026-03-31;2025-04-25;BQ;BQ00022;411;Prestations annexes (exemple) - encaissement;;1894.69
+PENNY-1002;2025-04-01/2026-03-31;2025-05-19;HA;HA00023;606;Fournitures d'entretien (exemple) - facture;1223.12;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-19;HA;HA00023;401;Fournitures d'entretien (exemple) - facture;;1223.12
+PENNY-1002;2025-04-01/2026-03-31;2025-05-19;BQ;BQ00024;401;Fournitures d'entretien (exemple) - règlement;1223.12;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-19;BQ;BQ00024;512;Fournitures d'entretien (exemple) - règlement;;1223.12
+PENNY-1002;2025-04-01/2026-03-31;2025-05-08;HA;HA00025;615;Entretien et réparations (exemple) - facture;1474.45;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-08;HA;HA00025;401;Entretien et réparations (exemple) - facture;;1474.45
+PENNY-1002;2025-04-01/2026-03-31;2025-05-08;BQ;BQ00026;401;Entretien et réparations (exemple) - règlement;1474.45;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-08;BQ;BQ00026;512;Entretien et réparations (exemple) - règlement;;1474.45
+PENNY-1002;2025-04-01/2026-03-31;2025-05-10;HA;HA00027;625;Déplacements (exemple) - facture;88.51;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-10;HA;HA00027;401;Déplacements (exemple) - facture;;88.51
+PENNY-1002;2025-04-01/2026-03-31;2025-05-10;BQ;BQ00028;401;Déplacements (exemple) - règlement;88.51;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-10;BQ;BQ00028;512;Déplacements (exemple) - règlement;;88.51
+PENNY-1002;2025-04-01/2026-03-31;2025-05-25;HA;HA00029;626;Télécommunications (exemple) - facture;188.71;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-25;HA;HA00029;401;Télécommunications (exemple) - facture;;188.71
+PENNY-1002;2025-04-01/2026-03-31;2025-05-25;BQ;BQ00030;401;Télécommunications (exemple) - règlement;188.71;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-25;BQ;BQ00030;512;Télécommunications (exemple) - règlement;;188.71
+PENNY-1002;2025-04-01/2026-03-31;2025-05-28;HA;HA00031;641;Salaires (exemple) - facture;23462.57;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-28;HA;HA00031;401;Salaires (exemple) - facture;;23462.57
+PENNY-1002;2025-04-01/2026-03-31;2025-05-28;BQ;BQ00032;401;Salaires (exemple) - règlement;23462.57;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-28;BQ;BQ00032;512;Salaires (exemple) - règlement;;23462.57
+PENNY-1002;2025-04-01/2026-03-31;2025-05-23;HA;HA00033;645;Charges sociales (exemple) - facture;7361.28;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-23;HA;HA00033;401;Charges sociales (exemple) - facture;;7361.28
+PENNY-1002;2025-04-01/2026-03-31;2025-05-23;BQ;BQ00034;401;Charges sociales (exemple) - règlement;7361.28;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-23;BQ;BQ00034;512;Charges sociales (exemple) - règlement;;7361.28
+PENNY-1002;2025-04-01/2026-03-31;2025-05-24;HA;HA00035;661;Intérêts d'emprunt (exemple) - facture;835.78;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-24;HA;HA00035;401;Intérêts d'emprunt (exemple) - facture;;835.78
+PENNY-1002;2025-04-01/2026-03-31;2025-05-24;BQ;BQ00036;401;Intérêts d'emprunt (exemple) - règlement;835.78;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-24;BQ;BQ00036;512;Intérêts d'emprunt (exemple) - règlement;;835.78
+PENNY-1002;2025-04-01/2026-03-31;2025-05-24;HA;HA00037;658;Charges diverses (exemple) - facture;254.64;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-24;HA;HA00037;401;Charges diverses (exemple) - facture;;254.64
+PENNY-1002;2025-04-01/2026-03-31;2025-05-24;BQ;BQ00038;401;Charges diverses (exemple) - règlement;254.64;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-24;BQ;BQ00038;512;Charges diverses (exemple) - règlement;;254.64
+PENNY-1002;2025-04-01/2026-03-31;2025-05-22;VT;VT00039;411;Hébergement (exemple) - facture;44648.06;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-22;VT;VT00039;706;Hébergement (exemple) - facture;;44648.06
+PENNY-1002;2025-04-01/2026-03-31;2025-05-22;BQ;BQ00040;512;Hébergement (exemple) - encaissement;44648.06;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-22;BQ;BQ00040;411;Hébergement (exemple) - encaissement;;44648.06
+PENNY-1002;2025-04-01/2026-03-31;2025-05-23;VT;VT00041;411;Prestations annexes (exemple) - facture;2838.37;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-23;VT;VT00041;708;Prestations annexes (exemple) - facture;;2838.37
+PENNY-1002;2025-04-01/2026-03-31;2025-05-23;BQ;BQ00042;512;Prestations annexes (exemple) - encaissement;2838.37;
+PENNY-1002;2025-04-01/2026-03-31;2025-05-23;BQ;BQ00042;411;Prestations annexes (exemple) - encaissement;;2838.37
+PENNY-1002;2025-04-01/2026-03-31;2025-06-10;HA;HA00043;606;Fournitures d'entretien (exemple) - facture;942.86;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-10;HA;HA00043;401;Fournitures d'entretien (exemple) - facture;;942.86
+PENNY-1002;2025-04-01/2026-03-31;2025-06-10;BQ;BQ00044;401;Fournitures d'entretien (exemple) - règlement;942.86;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-10;BQ;BQ00044;512;Fournitures d'entretien (exemple) - règlement;;942.86
+PENNY-1002;2025-04-01/2026-03-31;2025-06-26;HA;HA00045;615;Entretien et réparations (exemple) - facture;585.36;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-26;HA;HA00045;401;Entretien et réparations (exemple) - facture;;585.36
+PENNY-1002;2025-04-01/2026-03-31;2025-06-26;BQ;BQ00046;401;Entretien et réparations (exemple) - règlement;585.36;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-26;BQ;BQ00046;512;Entretien et réparations (exemple) - règlement;;585.36
+PENNY-1002;2025-04-01/2026-03-31;2025-06-27;HA;HA00047;625;Déplacements (exemple) - facture;149.31;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-27;HA;HA00047;401;Déplacements (exemple) - facture;;149.31
+PENNY-1002;2025-04-01/2026-03-31;2025-06-27;BQ;BQ00048;401;Déplacements (exemple) - règlement;149.31;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-27;BQ;BQ00048;512;Déplacements (exemple) - règlement;;149.31
+PENNY-1002;2025-04-01/2026-03-31;2025-06-11;HA;HA00049;626;Télécommunications (exemple) - facture;169.50;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-11;HA;HA00049;401;Télécommunications (exemple) - facture;;169.50
+PENNY-1002;2025-04-01/2026-03-31;2025-06-11;BQ;BQ00050;401;Télécommunications (exemple) - règlement;169.50;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-11;BQ;BQ00050;512;Télécommunications (exemple) - règlement;;169.50
+PENNY-1002;2025-04-01/2026-03-31;2025-06-14;HA;HA00051;641;Salaires (exemple) - facture;23902.15;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-14;HA;HA00051;401;Salaires (exemple) - facture;;23902.15
+PENNY-1002;2025-04-01/2026-03-31;2025-06-14;BQ;BQ00052;401;Salaires (exemple) - règlement;23902.15;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-14;BQ;BQ00052;512;Salaires (exemple) - règlement;;23902.15
+PENNY-1002;2025-04-01/2026-03-31;2025-06-20;HA;HA00053;645;Charges sociales (exemple) - facture;7315.93;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-20;HA;HA00053;401;Charges sociales (exemple) - facture;;7315.93
+PENNY-1002;2025-04-01/2026-03-31;2025-06-20;BQ;BQ00054;401;Charges sociales (exemple) - règlement;7315.93;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-20;BQ;BQ00054;512;Charges sociales (exemple) - règlement;;7315.93
+PENNY-1002;2025-04-01/2026-03-31;2025-06-08;HA;HA00055;661;Intérêts d'emprunt (exemple) - facture;578.99;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-08;HA;HA00055;401;Intérêts d'emprunt (exemple) - facture;;578.99
+PENNY-1002;2025-04-01/2026-03-31;2025-06-08;BQ;BQ00056;401;Intérêts d'emprunt (exemple) - règlement;578.99;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-08;BQ;BQ00056;512;Intérêts d'emprunt (exemple) - règlement;;578.99
+PENNY-1002;2025-04-01/2026-03-31;2025-06-21;HA;HA00057;658;Charges diverses (exemple) - facture;232.14;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-21;HA;HA00057;401;Charges diverses (exemple) - facture;;232.14
+PENNY-1002;2025-04-01/2026-03-31;2025-06-21;BQ;BQ00058;401;Charges diverses (exemple) - règlement;232.14;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-21;BQ;BQ00058;512;Charges diverses (exemple) - règlement;;232.14
+PENNY-1002;2025-04-01/2026-03-31;2025-06-18;VT;VT00059;411;Hébergement (exemple) - facture;50185.06;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-18;VT;VT00059;706;Hébergement (exemple) - facture;;50185.06
+PENNY-1002;2025-04-01/2026-03-31;2025-06-18;BQ;BQ00060;512;Hébergement (exemple) - encaissement;50185.06;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-18;BQ;BQ00060;411;Hébergement (exemple) - encaissement;;50185.06
+PENNY-1002;2025-04-01/2026-03-31;2025-06-17;VT;VT00061;411;Prestations annexes (exemple) - facture;1558.50;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-17;VT;VT00061;708;Prestations annexes (exemple) - facture;;1558.50
+PENNY-1002;2025-04-01/2026-03-31;2025-06-17;BQ;BQ00062;512;Prestations annexes (exemple) - encaissement;1558.50;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-17;BQ;BQ00062;411;Prestations annexes (exemple) - encaissement;;1558.50
+PENNY-1002;2025-04-01/2026-03-31;2025-06-22;HA;HA00063;601;Matières premières (exemple) - facture;2098.48;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-22;HA;HA00063;401;Matières premières (exemple) - facture;;2098.48
+PENNY-1002;2025-04-01/2026-03-31;2025-06-22;BQ;BQ00064;401;Matières premières (exemple) - règlement;2098.48;
+PENNY-1002;2025-04-01/2026-03-31;2025-06-22;BQ;BQ00064;512;Matières premières (exemple) - règlement;;2098.48
+PENNY-1002;2025-04-01/2026-03-31;2025-07-03;HA;HA00065;606;Fournitures d'entretien (exemple) - facture;958.25;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-03;HA;HA00065;401;Fournitures d'entretien (exemple) - facture;;958.25
+PENNY-1002;2025-04-01/2026-03-31;2025-07-03;BQ;BQ00066;401;Fournitures d'entretien (exemple) - règlement;958.25;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-03;BQ;BQ00066;512;Fournitures d'entretien (exemple) - règlement;;958.25
+PENNY-1002;2025-04-01/2026-03-31;2025-07-02;HA;HA00067;615;Entretien et réparations (exemple) - facture;221.09;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-02;HA;HA00067;401;Entretien et réparations (exemple) - facture;;221.09
+PENNY-1002;2025-04-01/2026-03-31;2025-07-02;BQ;BQ00068;401;Entretien et réparations (exemple) - règlement;221.09;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-02;BQ;BQ00068;512;Entretien et réparations (exemple) - règlement;;221.09
+PENNY-1002;2025-04-01/2026-03-31;2025-07-02;HA;HA00069;625;Déplacements (exemple) - facture;250.65;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-02;HA;HA00069;401;Déplacements (exemple) - facture;;250.65
+PENNY-1002;2025-04-01/2026-03-31;2025-07-02;BQ;BQ00070;401;Déplacements (exemple) - règlement;250.65;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-02;BQ;BQ00070;512;Déplacements (exemple) - règlement;;250.65
+PENNY-1002;2025-04-01/2026-03-31;2025-07-24;HA;HA00071;626;Télécommunications (exemple) - facture;224.10;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-24;HA;HA00071;401;Télécommunications (exemple) - facture;;224.10
+PENNY-1002;2025-04-01/2026-03-31;2025-07-24;BQ;BQ00072;401;Télécommunications (exemple) - règlement;224.10;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-24;BQ;BQ00072;512;Télécommunications (exemple) - règlement;;224.10
+PENNY-1002;2025-04-01/2026-03-31;2025-07-23;HA;HA00073;641;Salaires (exemple) - facture;26909.94;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-23;HA;HA00073;401;Salaires (exemple) - facture;;26909.94
+PENNY-1002;2025-04-01/2026-03-31;2025-07-23;BQ;BQ00074;401;Salaires (exemple) - règlement;26909.94;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-23;BQ;BQ00074;512;Salaires (exemple) - règlement;;26909.94
+PENNY-1002;2025-04-01/2026-03-31;2025-07-21;HA;HA00075;645;Charges sociales (exemple) - facture;8719.37;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-21;HA;HA00075;401;Charges sociales (exemple) - facture;;8719.37
+PENNY-1002;2025-04-01/2026-03-31;2025-07-21;BQ;BQ00076;401;Charges sociales (exemple) - règlement;8719.37;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-21;BQ;BQ00076;512;Charges sociales (exemple) - règlement;;8719.37
+PENNY-1002;2025-04-01/2026-03-31;2025-07-28;HA;HA00077;661;Intérêts d'emprunt (exemple) - facture;802.92;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-28;HA;HA00077;401;Intérêts d'emprunt (exemple) - facture;;802.92
+PENNY-1002;2025-04-01/2026-03-31;2025-07-28;BQ;BQ00078;401;Intérêts d'emprunt (exemple) - règlement;802.92;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-28;BQ;BQ00078;512;Intérêts d'emprunt (exemple) - règlement;;802.92
+PENNY-1002;2025-04-01/2026-03-31;2025-07-10;HA;HA00079;658;Charges diverses (exemple) - facture;121.87;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-10;HA;HA00079;401;Charges diverses (exemple) - facture;;121.87
+PENNY-1002;2025-04-01/2026-03-31;2025-07-10;BQ;BQ00080;401;Charges diverses (exemple) - règlement;121.87;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-10;BQ;BQ00080;512;Charges diverses (exemple) - règlement;;121.87
+PENNY-1002;2025-04-01/2026-03-31;2025-07-11;HA;HA00081;6161;Assurance multirisques (exemple) - facture;1063.61;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-11;HA;HA00081;401;Assurance multirisques (exemple) - facture;;1063.61
+PENNY-1002;2025-04-01/2026-03-31;2025-07-11;BQ;BQ00082;401;Assurance multirisques (exemple) - règlement;1063.61;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-11;BQ;BQ00082;512;Assurance multirisques (exemple) - règlement;;1063.61
+PENNY-1002;2025-04-01/2026-03-31;2025-07-07;VT;VT00083;411;Hébergement (exemple) - facture;44511.93;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-07;VT;VT00083;706;Hébergement (exemple) - facture;;44511.93
+PENNY-1002;2025-04-01/2026-03-31;2025-07-07;BQ;BQ00084;512;Hébergement (exemple) - encaissement;44511.93;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-07;BQ;BQ00084;411;Hébergement (exemple) - encaissement;;44511.93
+PENNY-1002;2025-04-01/2026-03-31;2025-07-23;VT;VT00085;411;Prestations annexes (exemple) - facture;2836.04;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-23;VT;VT00085;708;Prestations annexes (exemple) - facture;;2836.04
+PENNY-1002;2025-04-01/2026-03-31;2025-07-23;BQ;BQ00086;512;Prestations annexes (exemple) - encaissement;2836.04;
+PENNY-1002;2025-04-01/2026-03-31;2025-07-23;BQ;BQ00086;411;Prestations annexes (exemple) - encaissement;;2836.04
+PENNY-1002;2025-04-01/2026-03-31;2025-08-01;HA;HA00087;606;Fournitures d'entretien (exemple) - facture;907.86;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-01;HA;HA00087;401;Fournitures d'entretien (exemple) - facture;;907.86
+PENNY-1002;2025-04-01/2026-03-31;2025-08-01;BQ;BQ00088;401;Fournitures d'entretien (exemple) - règlement;907.86;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-01;BQ;BQ00088;512;Fournitures d'entretien (exemple) - règlement;;907.86
+PENNY-1002;2025-04-01/2026-03-31;2025-08-15;HA;HA00089;615;Entretien et réparations (exemple) - facture;340.40;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-15;HA;HA00089;401;Entretien et réparations (exemple) - facture;;340.40
+PENNY-1002;2025-04-01/2026-03-31;2025-08-15;BQ;BQ00090;401;Entretien et réparations (exemple) - règlement;340.40;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-15;BQ;BQ00090;512;Entretien et réparations (exemple) - règlement;;340.40
+PENNY-1002;2025-04-01/2026-03-31;2025-08-05;HA;HA00091;625;Déplacements (exemple) - facture;158.68;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-05;HA;HA00091;401;Déplacements (exemple) - facture;;158.68
+PENNY-1002;2025-04-01/2026-03-31;2025-08-05;BQ;BQ00092;401;Déplacements (exemple) - règlement;158.68;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-05;BQ;BQ00092;512;Déplacements (exemple) - règlement;;158.68
+PENNY-1002;2025-04-01/2026-03-31;2025-08-18;HA;HA00093;626;Télécommunications (exemple) - facture;246.99;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-18;HA;HA00093;401;Télécommunications (exemple) - facture;;246.99
+PENNY-1002;2025-04-01/2026-03-31;2025-08-18;BQ;BQ00094;401;Télécommunications (exemple) - règlement;246.99;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-18;BQ;BQ00094;512;Télécommunications (exemple) - règlement;;246.99
+PENNY-1002;2025-04-01/2026-03-31;2025-08-11;HA;HA00095;641;Salaires (exemple) - facture;25822.27;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-11;HA;HA00095;401;Salaires (exemple) - facture;;25822.27
+PENNY-1002;2025-04-01/2026-03-31;2025-08-11;BQ;BQ00096;401;Salaires (exemple) - règlement;25822.27;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-11;BQ;BQ00096;512;Salaires (exemple) - règlement;;25822.27
+PENNY-1002;2025-04-01/2026-03-31;2025-08-28;HA;HA00097;645;Charges sociales (exemple) - facture;8146.75;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-28;HA;HA00097;401;Charges sociales (exemple) - facture;;8146.75
+PENNY-1002;2025-04-01/2026-03-31;2025-08-28;BQ;BQ00098;401;Charges sociales (exemple) - règlement;8146.75;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-28;BQ;BQ00098;512;Charges sociales (exemple) - règlement;;8146.75
+PENNY-1002;2025-04-01/2026-03-31;2025-08-24;HA;HA00099;661;Intérêts d'emprunt (exemple) - facture;662.85;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-24;HA;HA00099;401;Intérêts d'emprunt (exemple) - facture;;662.85
+PENNY-1002;2025-04-01/2026-03-31;2025-08-24;BQ;BQ00100;401;Intérêts d'emprunt (exemple) - règlement;662.85;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-24;BQ;BQ00100;512;Intérêts d'emprunt (exemple) - règlement;;662.85
+PENNY-1002;2025-04-01/2026-03-31;2025-08-09;HA;HA00101;658;Charges diverses (exemple) - facture;146.35;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-09;HA;HA00101;401;Charges diverses (exemple) - facture;;146.35
+PENNY-1002;2025-04-01/2026-03-31;2025-08-09;BQ;BQ00102;401;Charges diverses (exemple) - règlement;146.35;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-09;BQ;BQ00102;512;Charges diverses (exemple) - règlement;;146.35
+PENNY-1002;2025-04-01/2026-03-31;2025-08-13;VT;VT00103;411;Hébergement (exemple) - facture;38476.07;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-13;VT;VT00103;706;Hébergement (exemple) - facture;;38476.07
+PENNY-1002;2025-04-01/2026-03-31;2025-08-13;BQ;BQ00104;512;Hébergement (exemple) - encaissement;38476.07;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-13;BQ;BQ00104;411;Hébergement (exemple) - encaissement;;38476.07
+PENNY-1002;2025-04-01/2026-03-31;2025-08-15;VT;VT00105;411;Prestations annexes (exemple) - facture;3845.76;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-15;VT;VT00105;708;Prestations annexes (exemple) - facture;;3845.76
+PENNY-1002;2025-04-01/2026-03-31;2025-08-15;BQ;BQ00106;512;Prestations annexes (exemple) - encaissement;3845.76;
+PENNY-1002;2025-04-01/2026-03-31;2025-08-15;BQ;BQ00106;411;Prestations annexes (exemple) - encaissement;;3845.76
+PENNY-1002;2025-04-01/2026-03-31;2025-09-17;HA;HA00107;606;Fournitures d'entretien (exemple) - facture;1317.93;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-17;HA;HA00107;401;Fournitures d'entretien (exemple) - facture;;1317.93
+PENNY-1002;2025-04-01/2026-03-31;2025-09-17;BQ;BQ00108;401;Fournitures d'entretien (exemple) - règlement;1317.93;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-17;BQ;BQ00108;512;Fournitures d'entretien (exemple) - règlement;;1317.93
+PENNY-1002;2025-04-01/2026-03-31;2025-09-01;HA;HA00109;615;Entretien et réparations (exemple) - facture;1371.52;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-01;HA;HA00109;401;Entretien et réparations (exemple) - facture;;1371.52
+PENNY-1002;2025-04-01/2026-03-31;2025-09-01;BQ;BQ00110;401;Entretien et réparations (exemple) - règlement;1371.52;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-01;BQ;BQ00110;512;Entretien et réparations (exemple) - règlement;;1371.52
+PENNY-1002;2025-04-01/2026-03-31;2025-09-28;HA;HA00111;625;Déplacements (exemple) - facture;328.29;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-28;HA;HA00111;401;Déplacements (exemple) - facture;;328.29
+PENNY-1002;2025-04-01/2026-03-31;2025-09-28;BQ;BQ00112;401;Déplacements (exemple) - règlement;328.29;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-28;BQ;BQ00112;512;Déplacements (exemple) - règlement;;328.29
+PENNY-1002;2025-04-01/2026-03-31;2025-09-27;HA;HA00113;626;Télécommunications (exemple) - facture;229.56;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-27;HA;HA00113;401;Télécommunications (exemple) - facture;;229.56
+PENNY-1002;2025-04-01/2026-03-31;2025-09-27;BQ;BQ00114;401;Télécommunications (exemple) - règlement;229.56;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-27;BQ;BQ00114;512;Télécommunications (exemple) - règlement;;229.56
+PENNY-1002;2025-04-01/2026-03-31;2025-09-26;HA;HA00115;641;Salaires (exemple) - facture;24089.46;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-26;HA;HA00115;401;Salaires (exemple) - facture;;24089.46
+PENNY-1002;2025-04-01/2026-03-31;2025-09-26;BQ;BQ00116;401;Salaires (exemple) - règlement;24089.46;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-26;BQ;BQ00116;512;Salaires (exemple) - règlement;;24089.46
+PENNY-1002;2025-04-01/2026-03-31;2025-09-14;HA;HA00117;645;Charges sociales (exemple) - facture;8351.80;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-14;HA;HA00117;401;Charges sociales (exemple) - facture;;8351.80
+PENNY-1002;2025-04-01/2026-03-31;2025-09-14;BQ;BQ00118;401;Charges sociales (exemple) - règlement;8351.80;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-14;BQ;BQ00118;512;Charges sociales (exemple) - règlement;;8351.80
+PENNY-1002;2025-04-01/2026-03-31;2025-09-21;HA;HA00119;661;Intérêts d'emprunt (exemple) - facture;506.65;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-21;HA;HA00119;401;Intérêts d'emprunt (exemple) - facture;;506.65
+PENNY-1002;2025-04-01/2026-03-31;2025-09-21;BQ;BQ00120;401;Intérêts d'emprunt (exemple) - règlement;506.65;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-21;BQ;BQ00120;512;Intérêts d'emprunt (exemple) - règlement;;506.65
+PENNY-1002;2025-04-01/2026-03-31;2025-09-19;HA;HA00121;658;Charges diverses (exemple) - facture;88.84;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-19;HA;HA00121;401;Charges diverses (exemple) - facture;;88.84
+PENNY-1002;2025-04-01/2026-03-31;2025-09-19;BQ;BQ00122;401;Charges diverses (exemple) - règlement;88.84;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-19;BQ;BQ00122;512;Charges diverses (exemple) - règlement;;88.84
+PENNY-1002;2025-04-01/2026-03-31;2025-09-19;VT;VT00123;411;Hébergement (exemple) - facture;39358.64;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-19;VT;VT00123;706;Hébergement (exemple) - facture;;39358.64
+PENNY-1002;2025-04-01/2026-03-31;2025-09-19;BQ;BQ00124;512;Hébergement (exemple) - encaissement;39358.64;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-19;BQ;BQ00124;411;Hébergement (exemple) - encaissement;;39358.64
+PENNY-1002;2025-04-01/2026-03-31;2025-09-09;VT;VT00125;411;Prestations annexes (exemple) - facture;2909.14;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-09;VT;VT00125;708;Prestations annexes (exemple) - facture;;2909.14
+PENNY-1002;2025-04-01/2026-03-31;2025-09-09;BQ;BQ00126;512;Prestations annexes (exemple) - encaissement;2909.14;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-09;BQ;BQ00126;411;Prestations annexes (exemple) - encaissement;;2909.14
+PENNY-1002;2025-04-01/2026-03-31;2025-09-16;HA;HA00127;601;Matières premières (exemple) - facture;1391.15;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-16;HA;HA00127;401;Matières premières (exemple) - facture;;1391.15
+PENNY-1002;2025-04-01/2026-03-31;2025-09-16;BQ;BQ00128;401;Matières premières (exemple) - règlement;1391.15;
+PENNY-1002;2025-04-01/2026-03-31;2025-09-16;BQ;BQ00128;512;Matières premières (exemple) - règlement;;1391.15
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;HA;HA00129;606;Fournitures d'entretien (exemple) - facture;1151.15;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;HA;HA00129;401;Fournitures d'entretien (exemple) - facture;;1151.15
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;BQ;BQ00130;401;Fournitures d'entretien (exemple) - règlement;1151.15;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;BQ;BQ00130;512;Fournitures d'entretien (exemple) - règlement;;1151.15
+PENNY-1002;2025-04-01/2026-03-31;2025-10-05;HA;HA00131;615;Entretien et réparations (exemple) - facture;1042.89;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-05;HA;HA00131;401;Entretien et réparations (exemple) - facture;;1042.89
+PENNY-1002;2025-04-01/2026-03-31;2025-10-05;BQ;BQ00132;401;Entretien et réparations (exemple) - règlement;1042.89;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-05;BQ;BQ00132;512;Entretien et réparations (exemple) - règlement;;1042.89
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;HA;HA00133;625;Déplacements (exemple) - facture;295.74;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;HA;HA00133;401;Déplacements (exemple) - facture;;295.74
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;BQ;BQ00134;401;Déplacements (exemple) - règlement;295.74;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;BQ;BQ00134;512;Déplacements (exemple) - règlement;;295.74
+PENNY-1002;2025-04-01/2026-03-31;2025-10-21;HA;HA00135;626;Télécommunications (exemple) - facture;238.45;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-21;HA;HA00135;401;Télécommunications (exemple) - facture;;238.45
+PENNY-1002;2025-04-01/2026-03-31;2025-10-21;BQ;BQ00136;401;Télécommunications (exemple) - règlement;238.45;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-21;BQ;BQ00136;512;Télécommunications (exemple) - règlement;;238.45
+PENNY-1002;2025-04-01/2026-03-31;2025-10-19;HA;HA00137;641;Salaires (exemple) - facture;27189.82;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-19;HA;HA00137;401;Salaires (exemple) - facture;;27189.82
+PENNY-1002;2025-04-01/2026-03-31;2025-10-19;BQ;BQ00138;401;Salaires (exemple) - règlement;27189.82;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-19;BQ;BQ00138;512;Salaires (exemple) - règlement;;27189.82
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;HA;HA00139;645;Charges sociales (exemple) - facture;7405.45;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;HA;HA00139;401;Charges sociales (exemple) - facture;;7405.45
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;BQ;BQ00140;401;Charges sociales (exemple) - règlement;7405.45;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-08;BQ;BQ00140;512;Charges sociales (exemple) - règlement;;7405.45
+PENNY-1002;2025-04-01/2026-03-31;2025-10-03;HA;HA00141;661;Intérêts d'emprunt (exemple) - facture;717.34;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-03;HA;HA00141;401;Intérêts d'emprunt (exemple) - facture;;717.34
+PENNY-1002;2025-04-01/2026-03-31;2025-10-03;BQ;BQ00142;401;Intérêts d'emprunt (exemple) - règlement;717.34;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-03;BQ;BQ00142;512;Intérêts d'emprunt (exemple) - règlement;;717.34
+PENNY-1002;2025-04-01/2026-03-31;2025-10-23;HA;HA00143;658;Charges diverses (exemple) - facture;63.97;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-23;HA;HA00143;401;Charges diverses (exemple) - facture;;63.97
+PENNY-1002;2025-04-01/2026-03-31;2025-10-23;BQ;BQ00144;401;Charges diverses (exemple) - règlement;63.97;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-23;BQ;BQ00144;512;Charges diverses (exemple) - règlement;;63.97
+PENNY-1002;2025-04-01/2026-03-31;2025-10-10;HA;HA00145;6161;Assurance multirisques (exemple) - facture;947.26;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-10;HA;HA00145;401;Assurance multirisques (exemple) - facture;;947.26
+PENNY-1002;2025-04-01/2026-03-31;2025-10-10;BQ;BQ00146;401;Assurance multirisques (exemple) - règlement;947.26;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-10;BQ;BQ00146;512;Assurance multirisques (exemple) - règlement;;947.26
+PENNY-1002;2025-04-01/2026-03-31;2025-10-21;VT;VT00147;411;Hébergement (exemple) - facture;38360.71;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-21;VT;VT00147;706;Hébergement (exemple) - facture;;38360.71
+PENNY-1002;2025-04-01/2026-03-31;2025-10-21;BQ;BQ00148;512;Hébergement (exemple) - encaissement;38360.71;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-21;BQ;BQ00148;411;Hébergement (exemple) - encaissement;;38360.71
+PENNY-1002;2025-04-01/2026-03-31;2025-10-19;VT;VT00149;411;Prestations annexes (exemple) - facture;2774.01;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-19;VT;VT00149;708;Prestations annexes (exemple) - facture;;2774.01
+PENNY-1002;2025-04-01/2026-03-31;2025-10-19;BQ;BQ00150;512;Prestations annexes (exemple) - encaissement;2774.01;
+PENNY-1002;2025-04-01/2026-03-31;2025-10-19;BQ;BQ00150;411;Prestations annexes (exemple) - encaissement;;2774.01
+PENNY-1002;2025-04-01/2026-03-31;2025-11-10;HA;HA00151;606;Fournitures d'entretien (exemple) - facture;1354.09;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-10;HA;HA00151;401;Fournitures d'entretien (exemple) - facture;;1354.09
+PENNY-1002;2025-04-01/2026-03-31;2025-11-10;BQ;BQ00152;401;Fournitures d'entretien (exemple) - règlement;1354.09;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-10;BQ;BQ00152;512;Fournitures d'entretien (exemple) - règlement;;1354.09
+PENNY-1002;2025-04-01/2026-03-31;2025-11-08;HA;HA00153;615;Entretien et réparations (exemple) - facture;646.71;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-08;HA;HA00153;401;Entretien et réparations (exemple) - facture;;646.71
+PENNY-1002;2025-04-01/2026-03-31;2025-11-08;BQ;BQ00154;401;Entretien et réparations (exemple) - règlement;646.71;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-08;BQ;BQ00154;512;Entretien et réparations (exemple) - règlement;;646.71
+PENNY-1002;2025-04-01/2026-03-31;2025-11-18;HA;HA00155;625;Déplacements (exemple) - facture;190.07;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-18;HA;HA00155;401;Déplacements (exemple) - facture;;190.07
+PENNY-1002;2025-04-01/2026-03-31;2025-11-18;BQ;BQ00156;401;Déplacements (exemple) - règlement;190.07;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-18;BQ;BQ00156;512;Déplacements (exemple) - règlement;;190.07
+PENNY-1002;2025-04-01/2026-03-31;2025-11-09;HA;HA00157;626;Télécommunications (exemple) - facture;104.61;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-09;HA;HA00157;401;Télécommunications (exemple) - facture;;104.61
+PENNY-1002;2025-04-01/2026-03-31;2025-11-09;BQ;BQ00158;401;Télécommunications (exemple) - règlement;104.61;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-09;BQ;BQ00158;512;Télécommunications (exemple) - règlement;;104.61
+PENNY-1002;2025-04-01/2026-03-31;2025-11-23;HA;HA00159;641;Salaires (exemple) - facture;26744.51;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-23;HA;HA00159;401;Salaires (exemple) - facture;;26744.51
+PENNY-1002;2025-04-01/2026-03-31;2025-11-23;BQ;BQ00160;401;Salaires (exemple) - règlement;26744.51;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-23;BQ;BQ00160;512;Salaires (exemple) - règlement;;26744.51
+PENNY-1002;2025-04-01/2026-03-31;2025-11-19;HA;HA00161;645;Charges sociales (exemple) - facture;9042.94;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-19;HA;HA00161;401;Charges sociales (exemple) - facture;;9042.94
+PENNY-1002;2025-04-01/2026-03-31;2025-11-19;BQ;BQ00162;401;Charges sociales (exemple) - règlement;9042.94;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-19;BQ;BQ00162;512;Charges sociales (exemple) - règlement;;9042.94
+PENNY-1002;2025-04-01/2026-03-31;2025-11-04;HA;HA00163;661;Intérêts d'emprunt (exemple) - facture;470.82;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-04;HA;HA00163;401;Intérêts d'emprunt (exemple) - facture;;470.82
+PENNY-1002;2025-04-01/2026-03-31;2025-11-04;BQ;BQ00164;401;Intérêts d'emprunt (exemple) - règlement;470.82;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-04;BQ;BQ00164;512;Intérêts d'emprunt (exemple) - règlement;;470.82
+PENNY-1002;2025-04-01/2026-03-31;2025-11-05;HA;HA00165;658;Charges diverses (exemple) - facture;131.27;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-05;HA;HA00165;401;Charges diverses (exemple) - facture;;131.27
+PENNY-1002;2025-04-01/2026-03-31;2025-11-05;BQ;BQ00166;401;Charges diverses (exemple) - règlement;131.27;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-05;BQ;BQ00166;512;Charges diverses (exemple) - règlement;;131.27
+PENNY-1002;2025-04-01/2026-03-31;2025-11-06;VT;VT00167;411;Hébergement (exemple) - facture;50895.90;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-06;VT;VT00167;706;Hébergement (exemple) - facture;;50895.90
+PENNY-1002;2025-04-01/2026-03-31;2025-11-06;BQ;BQ00168;512;Hébergement (exemple) - encaissement;50895.90;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-06;BQ;BQ00168;411;Hébergement (exemple) - encaissement;;50895.90
+PENNY-1002;2025-04-01/2026-03-31;2025-11-07;VT;VT00169;411;Prestations annexes (exemple) - facture;2440.62;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-07;VT;VT00169;708;Prestations annexes (exemple) - facture;;2440.62
+PENNY-1002;2025-04-01/2026-03-31;2025-11-07;BQ;BQ00170;512;Prestations annexes (exemple) - encaissement;2440.62;
+PENNY-1002;2025-04-01/2026-03-31;2025-11-07;BQ;BQ00170;411;Prestations annexes (exemple) - encaissement;;2440.62
+PENNY-1002;2025-04-01/2026-03-31;2025-12-01;HA;HA00171;606;Fournitures d'entretien (exemple) - facture;1333.10;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-01;HA;HA00171;401;Fournitures d'entretien (exemple) - facture;;1333.10
+PENNY-1002;2025-04-01/2026-03-31;2025-12-01;BQ;BQ00172;401;Fournitures d'entretien (exemple) - règlement;1333.10;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-01;BQ;BQ00172;512;Fournitures d'entretien (exemple) - règlement;;1333.10
+PENNY-1002;2025-04-01/2026-03-31;2025-12-10;HA;HA00173;615;Entretien et réparations (exemple) - facture;1284.14;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-10;HA;HA00173;401;Entretien et réparations (exemple) - facture;;1284.14
+PENNY-1002;2025-04-01/2026-03-31;2025-12-10;BQ;BQ00174;401;Entretien et réparations (exemple) - règlement;1284.14;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-10;BQ;BQ00174;512;Entretien et réparations (exemple) - règlement;;1284.14
+PENNY-1002;2025-04-01/2026-03-31;2025-12-05;HA;HA00175;625;Déplacements (exemple) - facture;345.12;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-05;HA;HA00175;401;Déplacements (exemple) - facture;;345.12
+PENNY-1002;2025-04-01/2026-03-31;2025-12-05;BQ;BQ00176;401;Déplacements (exemple) - règlement;345.12;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-05;BQ;BQ00176;512;Déplacements (exemple) - règlement;;345.12
+PENNY-1002;2025-04-01/2026-03-31;2025-12-24;HA;HA00177;626;Télécommunications (exemple) - facture;235.13;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-24;HA;HA00177;401;Télécommunications (exemple) - facture;;235.13
+PENNY-1002;2025-04-01/2026-03-31;2025-12-24;BQ;BQ00178;401;Télécommunications (exemple) - règlement;235.13;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-24;BQ;BQ00178;512;Télécommunications (exemple) - règlement;;235.13
+PENNY-1002;2025-04-01/2026-03-31;2025-12-22;HA;HA00179;641;Salaires (exemple) - facture;24012.93;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-22;HA;HA00179;401;Salaires (exemple) - facture;;24012.93
+PENNY-1002;2025-04-01/2026-03-31;2025-12-22;BQ;BQ00180;401;Salaires (exemple) - règlement;24012.93;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-22;BQ;BQ00180;512;Salaires (exemple) - règlement;;24012.93
+PENNY-1002;2025-04-01/2026-03-31;2025-12-18;HA;HA00181;645;Charges sociales (exemple) - facture;8603.00;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-18;HA;HA00181;401;Charges sociales (exemple) - facture;;8603.00
+PENNY-1002;2025-04-01/2026-03-31;2025-12-18;BQ;BQ00182;401;Charges sociales (exemple) - règlement;8603.00;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-18;BQ;BQ00182;512;Charges sociales (exemple) - règlement;;8603.00
+PENNY-1002;2025-04-01/2026-03-31;2025-12-26;HA;HA00183;661;Intérêts d'emprunt (exemple) - facture;837.10;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-26;HA;HA00183;401;Intérêts d'emprunt (exemple) - facture;;837.10
+PENNY-1002;2025-04-01/2026-03-31;2025-12-26;BQ;BQ00184;401;Intérêts d'emprunt (exemple) - règlement;837.10;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-26;BQ;BQ00184;512;Intérêts d'emprunt (exemple) - règlement;;837.10
+PENNY-1002;2025-04-01/2026-03-31;2025-12-02;HA;HA00185;658;Charges diverses (exemple) - facture;229.46;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-02;HA;HA00185;401;Charges diverses (exemple) - facture;;229.46
+PENNY-1002;2025-04-01/2026-03-31;2025-12-02;BQ;BQ00186;401;Charges diverses (exemple) - règlement;229.46;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-02;BQ;BQ00186;512;Charges diverses (exemple) - règlement;;229.46
+PENNY-1002;2025-04-01/2026-03-31;2025-12-26;VT;VT00187;411;Hébergement (exemple) - facture;48082.91;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-26;VT;VT00187;706;Hébergement (exemple) - facture;;48082.91
+PENNY-1002;2025-04-01/2026-03-31;2025-12-26;BQ;BQ00188;512;Hébergement (exemple) - encaissement;48082.91;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-26;BQ;BQ00188;411;Hébergement (exemple) - encaissement;;48082.91
+PENNY-1002;2025-04-01/2026-03-31;2025-12-17;VT;VT00189;411;Prestations annexes (exemple) - facture;1761.08;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-17;VT;VT00189;708;Prestations annexes (exemple) - facture;;1761.08
+PENNY-1002;2025-04-01/2026-03-31;2025-12-17;BQ;BQ00190;512;Prestations annexes (exemple) - encaissement;1761.08;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-17;BQ;BQ00190;411;Prestations annexes (exemple) - encaissement;;1761.08
+PENNY-1002;2025-04-01/2026-03-31;2025-12-09;HA;HA00191;601;Matières premières (exemple) - facture;1460.40;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-09;HA;HA00191;401;Matières premières (exemple) - facture;;1460.40
+PENNY-1002;2025-04-01/2026-03-31;2025-12-09;BQ;BQ00192;401;Matières premières (exemple) - règlement;1460.40;
+PENNY-1002;2025-04-01/2026-03-31;2025-12-09;BQ;BQ00192;512;Matières premières (exemple) - règlement;;1460.40
+PENNY-1002;2025-04-01/2026-03-31;2026-01-07;HA;HA00193;606;Fournitures d'entretien (exemple) - facture;543.91;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-07;HA;HA00193;401;Fournitures d'entretien (exemple) - facture;;543.91
+PENNY-1002;2025-04-01/2026-03-31;2026-01-07;BQ;BQ00194;401;Fournitures d'entretien (exemple) - règlement;543.91;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-07;BQ;BQ00194;512;Fournitures d'entretien (exemple) - règlement;;543.91
+PENNY-1002;2025-04-01/2026-03-31;2026-01-10;HA;HA00195;615;Entretien et réparations (exemple) - facture;1132.45;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-10;HA;HA00195;401;Entretien et réparations (exemple) - facture;;1132.45
+PENNY-1002;2025-04-01/2026-03-31;2026-01-10;BQ;BQ00196;401;Entretien et réparations (exemple) - règlement;1132.45;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-10;BQ;BQ00196;512;Entretien et réparations (exemple) - règlement;;1132.45
+PENNY-1002;2025-04-01/2026-03-31;2026-01-18;HA;HA00197;625;Déplacements (exemple) - facture;84.80;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-18;HA;HA00197;401;Déplacements (exemple) - facture;;84.80
+PENNY-1002;2025-04-01/2026-03-31;2026-01-18;BQ;BQ00198;401;Déplacements (exemple) - règlement;84.80;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-18;BQ;BQ00198;512;Déplacements (exemple) - règlement;;84.80
+PENNY-1002;2025-04-01/2026-03-31;2026-01-26;HA;HA00199;626;Télécommunications (exemple) - facture;89.83;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-26;HA;HA00199;401;Télécommunications (exemple) - facture;;89.83
+PENNY-1002;2025-04-01/2026-03-31;2026-01-26;BQ;BQ00200;401;Télécommunications (exemple) - règlement;89.83;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-26;BQ;BQ00200;512;Télécommunications (exemple) - règlement;;89.83
+PENNY-1002;2025-04-01/2026-03-31;2026-01-20;HA;HA00201;641;Salaires (exemple) - facture;25991.98;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-20;HA;HA00201;401;Salaires (exemple) - facture;;25991.98
+PENNY-1002;2025-04-01/2026-03-31;2026-01-20;BQ;BQ00202;401;Salaires (exemple) - règlement;25991.98;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-20;BQ;BQ00202;512;Salaires (exemple) - règlement;;25991.98
+PENNY-1002;2025-04-01/2026-03-31;2026-01-07;HA;HA00203;645;Charges sociales (exemple) - facture;9409.12;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-07;HA;HA00203;401;Charges sociales (exemple) - facture;;9409.12
+PENNY-1002;2025-04-01/2026-03-31;2026-01-07;BQ;BQ00204;401;Charges sociales (exemple) - règlement;9409.12;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-07;BQ;BQ00204;512;Charges sociales (exemple) - règlement;;9409.12
+PENNY-1002;2025-04-01/2026-03-31;2026-01-04;HA;HA00205;661;Intérêts d'emprunt (exemple) - facture;795.92;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-04;HA;HA00205;401;Intérêts d'emprunt (exemple) - facture;;795.92
+PENNY-1002;2025-04-01/2026-03-31;2026-01-04;BQ;BQ00206;401;Intérêts d'emprunt (exemple) - règlement;795.92;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-04;BQ;BQ00206;512;Intérêts d'emprunt (exemple) - règlement;;795.92
+PENNY-1002;2025-04-01/2026-03-31;2026-01-11;HA;HA00207;658;Charges diverses (exemple) - facture;273.20;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-11;HA;HA00207;401;Charges diverses (exemple) - facture;;273.20
+PENNY-1002;2025-04-01/2026-03-31;2026-01-11;BQ;BQ00208;401;Charges diverses (exemple) - règlement;273.20;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-11;BQ;BQ00208;512;Charges diverses (exemple) - règlement;;273.20
+PENNY-1002;2025-04-01/2026-03-31;2026-01-10;HA;HA00209;6161;Assurance multirisques (exemple) - facture;935.62;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-10;HA;HA00209;401;Assurance multirisques (exemple) - facture;;935.62
+PENNY-1002;2025-04-01/2026-03-31;2026-01-10;BQ;BQ00210;401;Assurance multirisques (exemple) - règlement;935.62;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-10;BQ;BQ00210;512;Assurance multirisques (exemple) - règlement;;935.62
+PENNY-1002;2025-04-01/2026-03-31;2026-01-01;VT;VT00211;411;Hébergement (exemple) - facture;47151.37;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-01;VT;VT00211;706;Hébergement (exemple) - facture;;47151.37
+PENNY-1002;2025-04-01/2026-03-31;2026-01-01;BQ;BQ00212;512;Hébergement (exemple) - encaissement;47151.37;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-01;BQ;BQ00212;411;Hébergement (exemple) - encaissement;;47151.37
+PENNY-1002;2025-04-01/2026-03-31;2026-01-26;VT;VT00213;411;Prestations annexes (exemple) - facture;2632.97;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-26;VT;VT00213;708;Prestations annexes (exemple) - facture;;2632.97
+PENNY-1002;2025-04-01/2026-03-31;2026-01-26;BQ;BQ00214;512;Prestations annexes (exemple) - encaissement;2632.97;
+PENNY-1002;2025-04-01/2026-03-31;2026-01-26;BQ;BQ00214;411;Prestations annexes (exemple) - encaissement;;2632.97
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;HA;HA00215;606;Fournitures d'entretien (exemple) - facture;974.58;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;HA;HA00215;401;Fournitures d'entretien (exemple) - facture;;974.58
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;BQ;BQ00216;401;Fournitures d'entretien (exemple) - règlement;974.58;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;BQ;BQ00216;512;Fournitures d'entretien (exemple) - règlement;;974.58
+PENNY-1002;2025-04-01/2026-03-31;2026-02-24;HA;HA00217;615;Entretien et réparations (exemple) - facture;1629.21;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-24;HA;HA00217;401;Entretien et réparations (exemple) - facture;;1629.21
+PENNY-1002;2025-04-01/2026-03-31;2026-02-24;BQ;BQ00218;401;Entretien et réparations (exemple) - règlement;1629.21;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-24;BQ;BQ00218;512;Entretien et réparations (exemple) - règlement;;1629.21
+PENNY-1002;2025-04-01/2026-03-31;2026-02-20;HA;HA00219;625;Déplacements (exemple) - facture;99.78;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-20;HA;HA00219;401;Déplacements (exemple) - facture;;99.78
+PENNY-1002;2025-04-01/2026-03-31;2026-02-20;BQ;BQ00220;401;Déplacements (exemple) - règlement;99.78;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-20;BQ;BQ00220;512;Déplacements (exemple) - règlement;;99.78
+PENNY-1002;2025-04-01/2026-03-31;2026-02-07;HA;HA00221;626;Télécommunications (exemple) - facture;144.99;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-07;HA;HA00221;401;Télécommunications (exemple) - facture;;144.99
+PENNY-1002;2025-04-01/2026-03-31;2026-02-07;BQ;BQ00222;401;Télécommunications (exemple) - règlement;144.99;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-07;BQ;BQ00222;512;Télécommunications (exemple) - règlement;;144.99
+PENNY-1002;2025-04-01/2026-03-31;2026-02-22;HA;HA00223;641;Salaires (exemple) - facture;22032.04;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-22;HA;HA00223;401;Salaires (exemple) - facture;;22032.04
+PENNY-1002;2025-04-01/2026-03-31;2026-02-22;BQ;BQ00224;401;Salaires (exemple) - règlement;22032.04;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-22;BQ;BQ00224;512;Salaires (exemple) - règlement;;22032.04
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;HA;HA00225;645;Charges sociales (exemple) - facture;8418.15;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;HA;HA00225;401;Charges sociales (exemple) - facture;;8418.15
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;BQ;BQ00226;401;Charges sociales (exemple) - règlement;8418.15;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;BQ;BQ00226;512;Charges sociales (exemple) - règlement;;8418.15
+PENNY-1002;2025-04-01/2026-03-31;2026-02-11;HA;HA00227;661;Intérêts d'emprunt (exemple) - facture;539.14;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-11;HA;HA00227;401;Intérêts d'emprunt (exemple) - facture;;539.14
+PENNY-1002;2025-04-01/2026-03-31;2026-02-11;BQ;BQ00228;401;Intérêts d'emprunt (exemple) - règlement;539.14;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-11;BQ;BQ00228;512;Intérêts d'emprunt (exemple) - règlement;;539.14
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;HA;HA00229;658;Charges diverses (exemple) - facture;129.84;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;HA;HA00229;401;Charges diverses (exemple) - facture;;129.84
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;BQ;BQ00230;401;Charges diverses (exemple) - règlement;129.84;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-02;BQ;BQ00230;512;Charges diverses (exemple) - règlement;;129.84
+PENNY-1002;2025-04-01/2026-03-31;2026-02-06;VT;VT00231;411;Hébergement (exemple) - facture;45264.35;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-06;VT;VT00231;706;Hébergement (exemple) - facture;;45264.35
+PENNY-1002;2025-04-01/2026-03-31;2026-02-06;BQ;BQ00232;512;Hébergement (exemple) - encaissement;45264.35;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-06;BQ;BQ00232;411;Hébergement (exemple) - encaissement;;45264.35
+PENNY-1002;2025-04-01/2026-03-31;2026-02-16;VT;VT00233;411;Prestations annexes (exemple) - facture;2679.20;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-16;VT;VT00233;708;Prestations annexes (exemple) - facture;;2679.20
+PENNY-1002;2025-04-01/2026-03-31;2026-02-16;BQ;BQ00234;512;Prestations annexes (exemple) - encaissement;2679.20;
+PENNY-1002;2025-04-01/2026-03-31;2026-02-16;BQ;BQ00234;411;Prestations annexes (exemple) - encaissement;;2679.20
+PENNY-1002;2025-04-01/2026-03-31;2026-03-14;HA;HA00235;606;Fournitures d'entretien (exemple) - facture;901.92;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-14;HA;HA00235;401;Fournitures d'entretien (exemple) - facture;;901.92
+PENNY-1002;2025-04-01/2026-03-31;2026-03-14;BQ;BQ00236;401;Fournitures d'entretien (exemple) - règlement;901.92;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-14;BQ;BQ00236;512;Fournitures d'entretien (exemple) - règlement;;901.92
+PENNY-1002;2025-04-01/2026-03-31;2026-03-28;HA;HA00237;615;Entretien et réparations (exemple) - facture;1320.07;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-28;HA;HA00237;401;Entretien et réparations (exemple) - facture;;1320.07
+PENNY-1002;2025-04-01/2026-03-31;2026-03-28;BQ;BQ00238;401;Entretien et réparations (exemple) - règlement;1320.07;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-28;BQ;BQ00238;512;Entretien et réparations (exemple) - règlement;;1320.07
+PENNY-1002;2025-04-01/2026-03-31;2026-03-11;HA;HA00239;625;Déplacements (exemple) - facture;354.75;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-11;HA;HA00239;401;Déplacements (exemple) - facture;;354.75
+PENNY-1002;2025-04-01/2026-03-31;2026-03-11;BQ;BQ00240;401;Déplacements (exemple) - règlement;354.75;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-11;BQ;BQ00240;512;Déplacements (exemple) - règlement;;354.75
+PENNY-1002;2025-04-01/2026-03-31;2026-03-22;HA;HA00241;626;Télécommunications (exemple) - facture;244.12;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-22;HA;HA00241;401;Télécommunications (exemple) - facture;;244.12
+PENNY-1002;2025-04-01/2026-03-31;2026-03-22;BQ;BQ00242;401;Télécommunications (exemple) - règlement;244.12;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-22;BQ;BQ00242;512;Télécommunications (exemple) - règlement;;244.12
+PENNY-1002;2025-04-01/2026-03-31;2026-03-08;HA;HA00243;641;Salaires (exemple) - facture;23933.62;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-08;HA;HA00243;401;Salaires (exemple) - facture;;23933.62
+PENNY-1002;2025-04-01/2026-03-31;2026-03-08;BQ;BQ00244;401;Salaires (exemple) - règlement;23933.62;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-08;BQ;BQ00244;512;Salaires (exemple) - règlement;;23933.62
+PENNY-1002;2025-04-01/2026-03-31;2026-03-12;HA;HA00245;645;Charges sociales (exemple) - facture;8395.70;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-12;HA;HA00245;401;Charges sociales (exemple) - facture;;8395.70
+PENNY-1002;2025-04-01/2026-03-31;2026-03-12;BQ;BQ00246;401;Charges sociales (exemple) - règlement;8395.70;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-12;BQ;BQ00246;512;Charges sociales (exemple) - règlement;;8395.70
+PENNY-1002;2025-04-01/2026-03-31;2026-03-07;HA;HA00247;661;Intérêts d'emprunt (exemple) - facture;512.15;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-07;HA;HA00247;401;Intérêts d'emprunt (exemple) - facture;;512.15
+PENNY-1002;2025-04-01/2026-03-31;2026-03-07;BQ;BQ00248;401;Intérêts d'emprunt (exemple) - règlement;512.15;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-07;BQ;BQ00248;512;Intérêts d'emprunt (exemple) - règlement;;512.15
+PENNY-1002;2025-04-01/2026-03-31;2026-03-11;HA;HA00249;658;Charges diverses (exemple) - facture;29.34;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-11;HA;HA00249;401;Charges diverses (exemple) - facture;;29.34
+PENNY-1002;2025-04-01/2026-03-31;2026-03-11;BQ;BQ00250;401;Charges diverses (exemple) - règlement;29.34;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-11;BQ;BQ00250;512;Charges diverses (exemple) - règlement;;29.34
+PENNY-1002;2025-04-01/2026-03-31;2026-03-13;VT;VT00251;411;Hébergement (exemple) - facture;53907.37;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-13;VT;VT00251;706;Hébergement (exemple) - facture;;53907.37
+PENNY-1002;2025-04-01/2026-03-31;2026-03-13;BQ;BQ00252;512;Hébergement (exemple) - encaissement;53907.37;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-13;BQ;BQ00252;411;Hébergement (exemple) - encaissement;;53907.37
+PENNY-1002;2025-04-01/2026-03-31;2026-03-06;VT;VT00253;411;Prestations annexes (exemple) - facture;3752.44;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-06;VT;VT00253;708;Prestations annexes (exemple) - facture;;3752.44
+PENNY-1002;2025-04-01/2026-03-31;2026-03-06;BQ;BQ00254;512;Prestations annexes (exemple) - encaissement;3752.44;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-06;BQ;BQ00254;411;Prestations annexes (exemple) - encaissement;;3752.44
+PENNY-1002;2025-04-01/2026-03-31;2026-03-05;HA;HA00255;601;Matières premières (exemple) - facture;2245.24;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-05;HA;HA00255;401;Matières premières (exemple) - facture;;2245.24
+PENNY-1002;2025-04-01/2026-03-31;2026-03-05;BQ;BQ00256;401;Matières premières (exemple) - règlement;2245.24;
+PENNY-1002;2025-04-01/2026-03-31;2026-03-05;BQ;BQ00256;512;Matières premières (exemple) - règlement;;2245.24
+PENNY-1003;2026-03-01/2026-11-30;2026-03-22;HA;HA00001;606;Fournitures d'entretien (exemple) - facture;416.04;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-22;HA;HA00001;401;Fournitures d'entretien (exemple) - facture;;416.04
+PENNY-1003;2026-03-01/2026-11-30;2026-03-22;BQ;BQ00002;401;Fournitures d'entretien (exemple) - règlement;416.04;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-22;BQ;BQ00002;512;Fournitures d'entretien (exemple) - règlement;;416.04
+PENNY-1003;2026-03-01/2026-11-30;2026-03-09;HA;HA00003;615;Entretien et réparations (exemple) - facture;278.54;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-09;HA;HA00003;401;Entretien et réparations (exemple) - facture;;278.54
+PENNY-1003;2026-03-01/2026-11-30;2026-03-09;BQ;BQ00004;401;Entretien et réparations (exemple) - règlement;278.54;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-09;BQ;BQ00004;512;Entretien et réparations (exemple) - règlement;;278.54
+PENNY-1003;2026-03-01/2026-11-30;2026-03-21;HA;HA00005;625;Déplacements (exemple) - facture;196.55;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-21;HA;HA00005;401;Déplacements (exemple) - facture;;196.55
+PENNY-1003;2026-03-01/2026-11-30;2026-03-21;BQ;BQ00006;401;Déplacements (exemple) - règlement;196.55;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-21;BQ;BQ00006;512;Déplacements (exemple) - règlement;;196.55
+PENNY-1003;2026-03-01/2026-11-30;2026-03-23;HA;HA00007;626;Télécommunications (exemple) - facture;162.00;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-23;HA;HA00007;401;Télécommunications (exemple) - facture;;162.00
+PENNY-1003;2026-03-01/2026-11-30;2026-03-23;BQ;BQ00008;401;Télécommunications (exemple) - règlement;162.00;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-23;BQ;BQ00008;512;Télécommunications (exemple) - règlement;;162.00
+PENNY-1003;2026-03-01/2026-11-30;2026-03-04;HA;HA00009;641;Salaires (exemple) - facture;23173.91;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-04;HA;HA00009;401;Salaires (exemple) - facture;;23173.91
+PENNY-1003;2026-03-01/2026-11-30;2026-03-04;BQ;BQ00010;401;Salaires (exemple) - règlement;23173.91;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-04;BQ;BQ00010;512;Salaires (exemple) - règlement;;23173.91
+PENNY-1003;2026-03-01/2026-11-30;2026-03-25;HA;HA00011;645;Charges sociales (exemple) - facture;8091.23;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-25;HA;HA00011;401;Charges sociales (exemple) - facture;;8091.23
+PENNY-1003;2026-03-01/2026-11-30;2026-03-25;BQ;BQ00012;401;Charges sociales (exemple) - règlement;8091.23;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-25;BQ;BQ00012;512;Charges sociales (exemple) - règlement;;8091.23
+PENNY-1003;2026-03-01/2026-11-30;2026-03-11;HA;HA00013;661;Intérêts d'emprunt (exemple) - facture;462.21;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-11;HA;HA00013;401;Intérêts d'emprunt (exemple) - facture;;462.21
+PENNY-1003;2026-03-01/2026-11-30;2026-03-11;BQ;BQ00014;401;Intérêts d'emprunt (exemple) - règlement;462.21;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-11;BQ;BQ00014;512;Intérêts d'emprunt (exemple) - règlement;;462.21
+PENNY-1003;2026-03-01/2026-11-30;2026-03-21;HA;HA00015;658;Charges diverses (exemple) - facture;229.78;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-21;HA;HA00015;401;Charges diverses (exemple) - facture;;229.78
+PENNY-1003;2026-03-01/2026-11-30;2026-03-21;BQ;BQ00016;401;Charges diverses (exemple) - règlement;229.78;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-21;BQ;BQ00016;512;Charges diverses (exemple) - règlement;;229.78
+PENNY-1003;2026-03-01/2026-11-30;2026-03-19;VT;VT00017;411;Hébergement (exemple) - facture;42569.87;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-19;VT;VT00017;706;Hébergement (exemple) - facture;;42569.87
+PENNY-1003;2026-03-01/2026-11-30;2026-03-19;BQ;BQ00018;512;Hébergement (exemple) - encaissement;42569.87;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-19;BQ;BQ00018;411;Hébergement (exemple) - encaissement;;42569.87
+PENNY-1003;2026-03-01/2026-11-30;2026-03-26;VT;VT00019;411;Prestations annexes (exemple) - facture;2086.65;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-26;VT;VT00019;708;Prestations annexes (exemple) - facture;;2086.65
+PENNY-1003;2026-03-01/2026-11-30;2026-03-26;BQ;BQ00020;512;Prestations annexes (exemple) - encaissement;2086.65;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-26;BQ;BQ00020;411;Prestations annexes (exemple) - encaissement;;2086.65
+PENNY-1003;2026-03-01/2026-11-30;2026-03-22;HA;HA00021;601;Matières premières (exemple) - facture;1772.44;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-22;HA;HA00021;401;Matières premières (exemple) - facture;;1772.44
+PENNY-1003;2026-03-01/2026-11-30;2026-03-22;BQ;BQ00022;401;Matières premières (exemple) - règlement;1772.44;
+PENNY-1003;2026-03-01/2026-11-30;2026-03-22;BQ;BQ00022;512;Matières premières (exemple) - règlement;;1772.44
+PENNY-1003;2026-03-01/2026-11-30;2026-04-20;HA;HA00023;606;Fournitures d'entretien (exemple) - facture;779.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-20;HA;HA00023;401;Fournitures d'entretien (exemple) - facture;;779.56
+PENNY-1003;2026-03-01/2026-11-30;2026-04-20;BQ;BQ00024;401;Fournitures d'entretien (exemple) - règlement;779.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-20;BQ;BQ00024;512;Fournitures d'entretien (exemple) - règlement;;779.56
+PENNY-1003;2026-03-01/2026-11-30;2026-04-24;HA;HA00025;615;Entretien et réparations (exemple) - facture;271.27;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-24;HA;HA00025;401;Entretien et réparations (exemple) - facture;;271.27
+PENNY-1003;2026-03-01/2026-11-30;2026-04-24;BQ;BQ00026;401;Entretien et réparations (exemple) - règlement;271.27;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-24;BQ;BQ00026;512;Entretien et réparations (exemple) - règlement;;271.27
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;HA;HA00027;625;Déplacements (exemple) - facture;72.41;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;HA;HA00027;401;Déplacements (exemple) - facture;;72.41
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;BQ;BQ00028;401;Déplacements (exemple) - règlement;72.41;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;BQ;BQ00028;512;Déplacements (exemple) - règlement;;72.41
+PENNY-1003;2026-03-01/2026-11-30;2026-04-10;HA;HA00029;626;Télécommunications (exemple) - facture;194.75;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-10;HA;HA00029;401;Télécommunications (exemple) - facture;;194.75
+PENNY-1003;2026-03-01/2026-11-30;2026-04-10;BQ;BQ00030;401;Télécommunications (exemple) - règlement;194.75;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-10;BQ;BQ00030;512;Télécommunications (exemple) - règlement;;194.75
+PENNY-1003;2026-03-01/2026-11-30;2026-04-11;HA;HA00031;641;Salaires (exemple) - facture;25601.40;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-11;HA;HA00031;401;Salaires (exemple) - facture;;25601.40
+PENNY-1003;2026-03-01/2026-11-30;2026-04-11;BQ;BQ00032;401;Salaires (exemple) - règlement;25601.40;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-11;BQ;BQ00032;512;Salaires (exemple) - règlement;;25601.40
+PENNY-1003;2026-03-01/2026-11-30;2026-04-04;HA;HA00033;645;Charges sociales (exemple) - facture;8047.96;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-04;HA;HA00033;401;Charges sociales (exemple) - facture;;8047.96
+PENNY-1003;2026-03-01/2026-11-30;2026-04-04;BQ;BQ00034;401;Charges sociales (exemple) - règlement;8047.96;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-04;BQ;BQ00034;512;Charges sociales (exemple) - règlement;;8047.96
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;HA;HA00035;661;Intérêts d'emprunt (exemple) - facture;877.38;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;HA;HA00035;401;Intérêts d'emprunt (exemple) - facture;;877.38
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;BQ;BQ00036;401;Intérêts d'emprunt (exemple) - règlement;877.38;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;BQ;BQ00036;512;Intérêts d'emprunt (exemple) - règlement;;877.38
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;HA;HA00037;658;Charges diverses (exemple) - facture;62.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;HA;HA00037;401;Charges diverses (exemple) - facture;;62.56
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;BQ;BQ00038;401;Charges diverses (exemple) - règlement;62.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-05;BQ;BQ00038;512;Charges diverses (exemple) - règlement;;62.56
+PENNY-1003;2026-03-01/2026-11-30;2026-04-04;VT;VT00039;411;Hébergement (exemple) - facture;52402.84;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-04;VT;VT00039;706;Hébergement (exemple) - facture;;52402.84
+PENNY-1003;2026-03-01/2026-11-30;2026-04-04;BQ;BQ00040;512;Hébergement (exemple) - encaissement;52402.84;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-04;BQ;BQ00040;411;Hébergement (exemple) - encaissement;;52402.84
+PENNY-1003;2026-03-01/2026-11-30;2026-04-15;VT;VT00041;411;Prestations annexes (exemple) - facture;2184.50;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-15;VT;VT00041;708;Prestations annexes (exemple) - facture;;2184.50
+PENNY-1003;2026-03-01/2026-11-30;2026-04-15;BQ;BQ00042;512;Prestations annexes (exemple) - encaissement;2184.50;
+PENNY-1003;2026-03-01/2026-11-30;2026-04-15;BQ;BQ00042;411;Prestations annexes (exemple) - encaissement;;2184.50
+PENNY-1003;2026-03-01/2026-11-30;2026-05-24;HA;HA00043;606;Fournitures d'entretien (exemple) - facture;965.48;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-24;HA;HA00043;401;Fournitures d'entretien (exemple) - facture;;965.48
+PENNY-1003;2026-03-01/2026-11-30;2026-05-24;BQ;BQ00044;401;Fournitures d'entretien (exemple) - règlement;965.48;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-24;BQ;BQ00044;512;Fournitures d'entretien (exemple) - règlement;;965.48
+PENNY-1003;2026-03-01/2026-11-30;2026-05-23;HA;HA00045;615;Entretien et réparations (exemple) - facture;656.90;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-23;HA;HA00045;401;Entretien et réparations (exemple) - facture;;656.90
+PENNY-1003;2026-03-01/2026-11-30;2026-05-23;BQ;BQ00046;401;Entretien et réparations (exemple) - règlement;656.90;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-23;BQ;BQ00046;512;Entretien et réparations (exemple) - règlement;;656.90
+PENNY-1003;2026-03-01/2026-11-30;2026-05-17;HA;HA00047;625;Déplacements (exemple) - facture;248.70;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-17;HA;HA00047;401;Déplacements (exemple) - facture;;248.70
+PENNY-1003;2026-03-01/2026-11-30;2026-05-17;BQ;BQ00048;401;Déplacements (exemple) - règlement;248.70;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-17;BQ;BQ00048;512;Déplacements (exemple) - règlement;;248.70
+PENNY-1003;2026-03-01/2026-11-30;2026-05-22;HA;HA00049;626;Télécommunications (exemple) - facture;209.42;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-22;HA;HA00049;401;Télécommunications (exemple) - facture;;209.42
+PENNY-1003;2026-03-01/2026-11-30;2026-05-22;BQ;BQ00050;401;Télécommunications (exemple) - règlement;209.42;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-22;BQ;BQ00050;512;Télécommunications (exemple) - règlement;;209.42
+PENNY-1003;2026-03-01/2026-11-30;2026-05-08;HA;HA00051;641;Salaires (exemple) - facture;25432.28;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-08;HA;HA00051;401;Salaires (exemple) - facture;;25432.28
+PENNY-1003;2026-03-01/2026-11-30;2026-05-08;BQ;BQ00052;401;Salaires (exemple) - règlement;25432.28;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-08;BQ;BQ00052;512;Salaires (exemple) - règlement;;25432.28
+PENNY-1003;2026-03-01/2026-11-30;2026-05-07;HA;HA00053;645;Charges sociales (exemple) - facture;9239.02;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-07;HA;HA00053;401;Charges sociales (exemple) - facture;;9239.02
+PENNY-1003;2026-03-01/2026-11-30;2026-05-07;BQ;BQ00054;401;Charges sociales (exemple) - règlement;9239.02;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-07;BQ;BQ00054;512;Charges sociales (exemple) - règlement;;9239.02
+PENNY-1003;2026-03-01/2026-11-30;2026-05-26;HA;HA00055;661;Intérêts d'emprunt (exemple) - facture;865.14;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-26;HA;HA00055;401;Intérêts d'emprunt (exemple) - facture;;865.14
+PENNY-1003;2026-03-01/2026-11-30;2026-05-26;BQ;BQ00056;401;Intérêts d'emprunt (exemple) - règlement;865.14;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-26;BQ;BQ00056;512;Intérêts d'emprunt (exemple) - règlement;;865.14
+PENNY-1003;2026-03-01/2026-11-30;2026-05-17;HA;HA00057;658;Charges diverses (exemple) - facture;89.67;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-17;HA;HA00057;401;Charges diverses (exemple) - facture;;89.67
+PENNY-1003;2026-03-01/2026-11-30;2026-05-17;BQ;BQ00058;401;Charges diverses (exemple) - règlement;89.67;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-17;BQ;BQ00058;512;Charges diverses (exemple) - règlement;;89.67
+PENNY-1003;2026-03-01/2026-11-30;2026-05-18;VT;VT00059;411;Hébergement (exemple) - facture;44783.69;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-18;VT;VT00059;706;Hébergement (exemple) - facture;;44783.69
+PENNY-1003;2026-03-01/2026-11-30;2026-05-18;BQ;BQ00060;512;Hébergement (exemple) - encaissement;44783.69;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-18;BQ;BQ00060;411;Hébergement (exemple) - encaissement;;44783.69
+PENNY-1003;2026-03-01/2026-11-30;2026-05-08;VT;VT00061;411;Prestations annexes (exemple) - facture;3169.03;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-08;VT;VT00061;708;Prestations annexes (exemple) - facture;;3169.03
+PENNY-1003;2026-03-01/2026-11-30;2026-05-08;BQ;BQ00062;512;Prestations annexes (exemple) - encaissement;3169.03;
+PENNY-1003;2026-03-01/2026-11-30;2026-05-08;BQ;BQ00062;411;Prestations annexes (exemple) - encaissement;;3169.03
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;HA;HA00063;606;Fournitures d'entretien (exemple) - facture;615.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;HA;HA00063;401;Fournitures d'entretien (exemple) - facture;;615.56
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;BQ;BQ00064;401;Fournitures d'entretien (exemple) - règlement;615.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;BQ;BQ00064;512;Fournitures d'entretien (exemple) - règlement;;615.56
+PENNY-1003;2026-03-01/2026-11-30;2026-06-01;HA;HA00065;615;Entretien et réparations (exemple) - facture;1509.19;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-01;HA;HA00065;401;Entretien et réparations (exemple) - facture;;1509.19
+PENNY-1003;2026-03-01/2026-11-30;2026-06-01;BQ;BQ00066;401;Entretien et réparations (exemple) - règlement;1509.19;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-01;BQ;BQ00066;512;Entretien et réparations (exemple) - règlement;;1509.19
+PENNY-1003;2026-03-01/2026-11-30;2026-06-26;HA;HA00067;625;Déplacements (exemple) - facture;309.37;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-26;HA;HA00067;401;Déplacements (exemple) - facture;;309.37
+PENNY-1003;2026-03-01/2026-11-30;2026-06-26;BQ;BQ00068;401;Déplacements (exemple) - règlement;309.37;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-26;BQ;BQ00068;512;Déplacements (exemple) - règlement;;309.37
+PENNY-1003;2026-03-01/2026-11-30;2026-06-02;HA;HA00069;626;Télécommunications (exemple) - facture;113.17;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-02;HA;HA00069;401;Télécommunications (exemple) - facture;;113.17
+PENNY-1003;2026-03-01/2026-11-30;2026-06-02;BQ;BQ00070;401;Télécommunications (exemple) - règlement;113.17;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-02;BQ;BQ00070;512;Télécommunications (exemple) - règlement;;113.17
+PENNY-1003;2026-03-01/2026-11-30;2026-06-03;HA;HA00071;641;Salaires (exemple) - facture;24842.99;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-03;HA;HA00071;401;Salaires (exemple) - facture;;24842.99
+PENNY-1003;2026-03-01/2026-11-30;2026-06-03;BQ;BQ00072;401;Salaires (exemple) - règlement;24842.99;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-03;BQ;BQ00072;512;Salaires (exemple) - règlement;;24842.99
+PENNY-1003;2026-03-01/2026-11-30;2026-06-25;HA;HA00073;645;Charges sociales (exemple) - facture;8923.13;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-25;HA;HA00073;401;Charges sociales (exemple) - facture;;8923.13
+PENNY-1003;2026-03-01/2026-11-30;2026-06-25;BQ;BQ00074;401;Charges sociales (exemple) - règlement;8923.13;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-25;BQ;BQ00074;512;Charges sociales (exemple) - règlement;;8923.13
+PENNY-1003;2026-03-01/2026-11-30;2026-06-03;HA;HA00075;661;Intérêts d'emprunt (exemple) - facture;533.06;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-03;HA;HA00075;401;Intérêts d'emprunt (exemple) - facture;;533.06
+PENNY-1003;2026-03-01/2026-11-30;2026-06-03;BQ;BQ00076;401;Intérêts d'emprunt (exemple) - règlement;533.06;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-03;BQ;BQ00076;512;Intérêts d'emprunt (exemple) - règlement;;533.06
+PENNY-1003;2026-03-01/2026-11-30;2026-06-27;HA;HA00077;658;Charges diverses (exemple) - facture;288.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-27;HA;HA00077;401;Charges diverses (exemple) - facture;;288.56
+PENNY-1003;2026-03-01/2026-11-30;2026-06-27;BQ;BQ00078;401;Charges diverses (exemple) - règlement;288.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-27;BQ;BQ00078;512;Charges diverses (exemple) - règlement;;288.56
+PENNY-1003;2026-03-01/2026-11-30;2026-06-23;VT;VT00079;411;Hébergement (exemple) - facture;47527.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-23;VT;VT00079;706;Hébergement (exemple) - facture;;47527.56
+PENNY-1003;2026-03-01/2026-11-30;2026-06-23;BQ;BQ00080;512;Hébergement (exemple) - encaissement;47527.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-23;BQ;BQ00080;411;Hébergement (exemple) - encaissement;;47527.56
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;VT;VT00081;411;Prestations annexes (exemple) - facture;2906.93;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;VT;VT00081;708;Prestations annexes (exemple) - facture;;2906.93
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;BQ;BQ00082;512;Prestations annexes (exemple) - encaissement;2906.93;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;BQ;BQ00082;411;Prestations annexes (exemple) - encaissement;;2906.93
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;HA;HA00083;601;Matières premières (exemple) - facture;1852.88;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;HA;HA00083;401;Matières premières (exemple) - facture;;1852.88
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;BQ;BQ00084;401;Matières premières (exemple) - règlement;1852.88;
+PENNY-1003;2026-03-01/2026-11-30;2026-06-28;BQ;BQ00084;512;Matières premières (exemple) - règlement;;1852.88
+PENNY-1003;2026-03-01/2026-11-30;2026-07-27;HA;HA00085;606;Fournitures d'entretien (exemple) - facture;1377.62;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-27;HA;HA00085;401;Fournitures d'entretien (exemple) - facture;;1377.62
+PENNY-1003;2026-03-01/2026-11-30;2026-07-27;BQ;BQ00086;401;Fournitures d'entretien (exemple) - règlement;1377.62;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-27;BQ;BQ00086;512;Fournitures d'entretien (exemple) - règlement;;1377.62
+PENNY-1003;2026-03-01/2026-11-30;2026-07-26;HA;HA00087;615;Entretien et réparations (exemple) - facture;468.28;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-26;HA;HA00087;401;Entretien et réparations (exemple) - facture;;468.28
+PENNY-1003;2026-03-01/2026-11-30;2026-07-26;BQ;BQ00088;401;Entretien et réparations (exemple) - règlement;468.28;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-26;BQ;BQ00088;512;Entretien et réparations (exemple) - règlement;;468.28
+PENNY-1003;2026-03-01/2026-11-30;2026-07-25;HA;HA00089;625;Déplacements (exemple) - facture;188.09;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-25;HA;HA00089;401;Déplacements (exemple) - facture;;188.09
+PENNY-1003;2026-03-01/2026-11-30;2026-07-25;BQ;BQ00090;401;Déplacements (exemple) - règlement;188.09;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-25;BQ;BQ00090;512;Déplacements (exemple) - règlement;;188.09
+PENNY-1003;2026-03-01/2026-11-30;2026-07-06;HA;HA00091;626;Télécommunications (exemple) - facture;238.74;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-06;HA;HA00091;401;Télécommunications (exemple) - facture;;238.74
+PENNY-1003;2026-03-01/2026-11-30;2026-07-06;BQ;BQ00092;401;Télécommunications (exemple) - règlement;238.74;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-06;BQ;BQ00092;512;Télécommunications (exemple) - règlement;;238.74
+PENNY-1003;2026-03-01/2026-11-30;2026-07-13;HA;HA00093;641;Salaires (exemple) - facture;27116.54;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-13;HA;HA00093;401;Salaires (exemple) - facture;;27116.54
+PENNY-1003;2026-03-01/2026-11-30;2026-07-13;BQ;BQ00094;401;Salaires (exemple) - règlement;27116.54;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-13;BQ;BQ00094;512;Salaires (exemple) - règlement;;27116.54
+PENNY-1003;2026-03-01/2026-11-30;2026-07-26;HA;HA00095;645;Charges sociales (exemple) - facture;8264.50;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-26;HA;HA00095;401;Charges sociales (exemple) - facture;;8264.50
+PENNY-1003;2026-03-01/2026-11-30;2026-07-26;BQ;BQ00096;401;Charges sociales (exemple) - règlement;8264.50;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-26;BQ;BQ00096;512;Charges sociales (exemple) - règlement;;8264.50
+PENNY-1003;2026-03-01/2026-11-30;2026-07-12;HA;HA00097;661;Intérêts d'emprunt (exemple) - facture;712.81;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-12;HA;HA00097;401;Intérêts d'emprunt (exemple) - facture;;712.81
+PENNY-1003;2026-03-01/2026-11-30;2026-07-12;BQ;BQ00098;401;Intérêts d'emprunt (exemple) - règlement;712.81;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-12;BQ;BQ00098;512;Intérêts d'emprunt (exemple) - règlement;;712.81
+PENNY-1003;2026-03-01/2026-11-30;2026-07-06;HA;HA00099;658;Charges diverses (exemple) - facture;161.64;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-06;HA;HA00099;401;Charges diverses (exemple) - facture;;161.64
+PENNY-1003;2026-03-01/2026-11-30;2026-07-06;BQ;BQ00100;401;Charges diverses (exemple) - règlement;161.64;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-06;BQ;BQ00100;512;Charges diverses (exemple) - règlement;;161.64
+PENNY-1003;2026-03-01/2026-11-30;2026-07-27;VT;VT00101;411;Hébergement (exemple) - facture;54330.76;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-27;VT;VT00101;706;Hébergement (exemple) - facture;;54330.76
+PENNY-1003;2026-03-01/2026-11-30;2026-07-27;BQ;BQ00102;512;Hébergement (exemple) - encaissement;54330.76;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-27;BQ;BQ00102;411;Hébergement (exemple) - encaissement;;54330.76
+PENNY-1003;2026-03-01/2026-11-30;2026-07-05;VT;VT00103;411;Prestations annexes (exemple) - facture;1708.08;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-05;VT;VT00103;708;Prestations annexes (exemple) - facture;;1708.08
+PENNY-1003;2026-03-01/2026-11-30;2026-07-05;BQ;BQ00104;512;Prestations annexes (exemple) - encaissement;1708.08;
+PENNY-1003;2026-03-01/2026-11-30;2026-07-05;BQ;BQ00104;411;Prestations annexes (exemple) - encaissement;;1708.08
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;HA;HA00105;606;Fournitures d'entretien (exemple) - facture;1270.13;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;HA;HA00105;401;Fournitures d'entretien (exemple) - facture;;1270.13
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;BQ;BQ00106;401;Fournitures d'entretien (exemple) - règlement;1270.13;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;BQ;BQ00106;512;Fournitures d'entretien (exemple) - règlement;;1270.13
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;HA;HA00107;615;Entretien et réparations (exemple) - facture;809.29;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;HA;HA00107;401;Entretien et réparations (exemple) - facture;;809.29
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;BQ;BQ00108;401;Entretien et réparations (exemple) - règlement;809.29;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;BQ;BQ00108;512;Entretien et réparations (exemple) - règlement;;809.29
+PENNY-1003;2026-03-01/2026-11-30;2026-08-27;HA;HA00109;625;Déplacements (exemple) - facture;196.78;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-27;HA;HA00109;401;Déplacements (exemple) - facture;;196.78
+PENNY-1003;2026-03-01/2026-11-30;2026-08-27;BQ;BQ00110;401;Déplacements (exemple) - règlement;196.78;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-27;BQ;BQ00110;512;Déplacements (exemple) - règlement;;196.78
+PENNY-1003;2026-03-01/2026-11-30;2026-08-02;HA;HA00111;626;Télécommunications (exemple) - facture;185.67;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-02;HA;HA00111;401;Télécommunications (exemple) - facture;;185.67
+PENNY-1003;2026-03-01/2026-11-30;2026-08-02;BQ;BQ00112;401;Télécommunications (exemple) - règlement;185.67;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-02;BQ;BQ00112;512;Télécommunications (exemple) - règlement;;185.67
+PENNY-1003;2026-03-01/2026-11-30;2026-08-09;HA;HA00113;641;Salaires (exemple) - facture;23400.04;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-09;HA;HA00113;401;Salaires (exemple) - facture;;23400.04
+PENNY-1003;2026-03-01/2026-11-30;2026-08-09;BQ;BQ00114;401;Salaires (exemple) - règlement;23400.04;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-09;BQ;BQ00114;512;Salaires (exemple) - règlement;;23400.04
+PENNY-1003;2026-03-01/2026-11-30;2026-08-06;HA;HA00115;645;Charges sociales (exemple) - facture;8717.97;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-06;HA;HA00115;401;Charges sociales (exemple) - facture;;8717.97
+PENNY-1003;2026-03-01/2026-11-30;2026-08-06;BQ;BQ00116;401;Charges sociales (exemple) - règlement;8717.97;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-06;BQ;BQ00116;512;Charges sociales (exemple) - règlement;;8717.97
+PENNY-1003;2026-03-01/2026-11-30;2026-08-08;HA;HA00117;661;Intérêts d'emprunt (exemple) - facture;600.29;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-08;HA;HA00117;401;Intérêts d'emprunt (exemple) - facture;;600.29
+PENNY-1003;2026-03-01/2026-11-30;2026-08-08;BQ;BQ00118;401;Intérêts d'emprunt (exemple) - règlement;600.29;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-08;BQ;BQ00118;512;Intérêts d'emprunt (exemple) - règlement;;600.29
+PENNY-1003;2026-03-01/2026-11-30;2026-08-11;HA;HA00119;658;Charges diverses (exemple) - facture;203.38;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-11;HA;HA00119;401;Charges diverses (exemple) - facture;;203.38
+PENNY-1003;2026-03-01/2026-11-30;2026-08-11;BQ;BQ00120;401;Charges diverses (exemple) - règlement;203.38;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-11;BQ;BQ00120;512;Charges diverses (exemple) - règlement;;203.38
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;VT;VT00121;411;Hébergement (exemple) - facture;55436.33;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;VT;VT00121;706;Hébergement (exemple) - facture;;55436.33
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;BQ;BQ00122;512;Hébergement (exemple) - encaissement;55436.33;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;BQ;BQ00122;411;Hébergement (exemple) - encaissement;;55436.33
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;VT;VT00123;411;Prestations annexes (exemple) - facture;4098.63;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;VT;VT00123;708;Prestations annexes (exemple) - facture;;4098.63
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;BQ;BQ00124;512;Prestations annexes (exemple) - encaissement;4098.63;
+PENNY-1003;2026-03-01/2026-11-30;2026-08-04;BQ;BQ00124;411;Prestations annexes (exemple) - encaissement;;4098.63
+PENNY-1003;2026-03-01/2026-11-30;2026-09-25;HA;HA00125;606;Fournitures d'entretien (exemple) - facture;899.40;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-25;HA;HA00125;401;Fournitures d'entretien (exemple) - facture;;899.40
+PENNY-1003;2026-03-01/2026-11-30;2026-09-25;BQ;BQ00126;401;Fournitures d'entretien (exemple) - règlement;899.40;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-25;BQ;BQ00126;512;Fournitures d'entretien (exemple) - règlement;;899.40
+PENNY-1003;2026-03-01/2026-11-30;2026-09-16;HA;HA00127;615;Entretien et réparations (exemple) - facture;1286.30;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-16;HA;HA00127;401;Entretien et réparations (exemple) - facture;;1286.30
+PENNY-1003;2026-03-01/2026-11-30;2026-09-16;BQ;BQ00128;401;Entretien et réparations (exemple) - règlement;1286.30;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-16;BQ;BQ00128;512;Entretien et réparations (exemple) - règlement;;1286.30
+PENNY-1003;2026-03-01/2026-11-30;2026-09-20;HA;HA00129;625;Déplacements (exemple) - facture;348.85;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-20;HA;HA00129;401;Déplacements (exemple) - facture;;348.85
+PENNY-1003;2026-03-01/2026-11-30;2026-09-20;BQ;BQ00130;401;Déplacements (exemple) - règlement;348.85;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-20;BQ;BQ00130;512;Déplacements (exemple) - règlement;;348.85
+PENNY-1003;2026-03-01/2026-11-30;2026-09-21;HA;HA00131;626;Télécommunications (exemple) - facture;216.38;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-21;HA;HA00131;401;Télécommunications (exemple) - facture;;216.38
+PENNY-1003;2026-03-01/2026-11-30;2026-09-21;BQ;BQ00132;401;Télécommunications (exemple) - règlement;216.38;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-21;BQ;BQ00132;512;Télécommunications (exemple) - règlement;;216.38
+PENNY-1003;2026-03-01/2026-11-30;2026-09-11;HA;HA00133;641;Salaires (exemple) - facture;25923.33;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-11;HA;HA00133;401;Salaires (exemple) - facture;;25923.33
+PENNY-1003;2026-03-01/2026-11-30;2026-09-11;BQ;BQ00134;401;Salaires (exemple) - règlement;25923.33;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-11;BQ;BQ00134;512;Salaires (exemple) - règlement;;25923.33
+PENNY-1003;2026-03-01/2026-11-30;2026-09-18;HA;HA00135;645;Charges sociales (exemple) - facture;7167.27;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-18;HA;HA00135;401;Charges sociales (exemple) - facture;;7167.27
+PENNY-1003;2026-03-01/2026-11-30;2026-09-18;BQ;BQ00136;401;Charges sociales (exemple) - règlement;7167.27;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-18;BQ;BQ00136;512;Charges sociales (exemple) - règlement;;7167.27
+PENNY-1003;2026-03-01/2026-11-30;2026-09-13;HA;HA00137;661;Intérêts d'emprunt (exemple) - facture;788.82;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-13;HA;HA00137;401;Intérêts d'emprunt (exemple) - facture;;788.82
+PENNY-1003;2026-03-01/2026-11-30;2026-09-13;BQ;BQ00138;401;Intérêts d'emprunt (exemple) - règlement;788.82;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-13;BQ;BQ00138;512;Intérêts d'emprunt (exemple) - règlement;;788.82
+PENNY-1003;2026-03-01/2026-11-30;2026-09-03;HA;HA00139;658;Charges diverses (exemple) - facture;249.37;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-03;HA;HA00139;401;Charges diverses (exemple) - facture;;249.37
+PENNY-1003;2026-03-01/2026-11-30;2026-09-03;BQ;BQ00140;401;Charges diverses (exemple) - règlement;249.37;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-03;BQ;BQ00140;512;Charges diverses (exemple) - règlement;;249.37
+PENNY-1003;2026-03-01/2026-11-30;2026-09-12;VT;VT00141;411;Hébergement (exemple) - facture;44231.37;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-12;VT;VT00141;706;Hébergement (exemple) - facture;;44231.37
+PENNY-1003;2026-03-01/2026-11-30;2026-09-12;BQ;BQ00142;512;Hébergement (exemple) - encaissement;44231.37;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-12;BQ;BQ00142;411;Hébergement (exemple) - encaissement;;44231.37
+PENNY-1003;2026-03-01/2026-11-30;2026-09-02;VT;VT00143;411;Prestations annexes (exemple) - facture;2413.14;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-02;VT;VT00143;708;Prestations annexes (exemple) - facture;;2413.14
+PENNY-1003;2026-03-01/2026-11-30;2026-09-02;BQ;BQ00144;512;Prestations annexes (exemple) - encaissement;2413.14;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-02;BQ;BQ00144;411;Prestations annexes (exemple) - encaissement;;2413.14
+PENNY-1003;2026-03-01/2026-11-30;2026-09-24;HA;HA00145;601;Matières premières (exemple) - facture;776.68;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-24;HA;HA00145;401;Matières premières (exemple) - facture;;776.68
+PENNY-1003;2026-03-01/2026-11-30;2026-09-24;BQ;BQ00146;401;Matières premières (exemple) - règlement;776.68;
+PENNY-1003;2026-03-01/2026-11-30;2026-09-24;BQ;BQ00146;512;Matières premières (exemple) - règlement;;776.68
+PENNY-1003;2026-03-01/2026-11-30;2026-10-25;HA;HA00147;606;Fournitures d'entretien (exemple) - facture;834.57;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-25;HA;HA00147;401;Fournitures d'entretien (exemple) - facture;;834.57
+PENNY-1003;2026-03-01/2026-11-30;2026-10-25;BQ;BQ00148;401;Fournitures d'entretien (exemple) - règlement;834.57;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-25;BQ;BQ00148;512;Fournitures d'entretien (exemple) - règlement;;834.57
+PENNY-1003;2026-03-01/2026-11-30;2026-10-16;HA;HA00149;615;Entretien et réparations (exemple) - facture;959.87;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-16;HA;HA00149;401;Entretien et réparations (exemple) - facture;;959.87
+PENNY-1003;2026-03-01/2026-11-30;2026-10-16;BQ;BQ00150;401;Entretien et réparations (exemple) - règlement;959.87;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-16;BQ;BQ00150;512;Entretien et réparations (exemple) - règlement;;959.87
+PENNY-1003;2026-03-01/2026-11-30;2026-10-15;HA;HA00151;625;Déplacements (exemple) - facture;346.17;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-15;HA;HA00151;401;Déplacements (exemple) - facture;;346.17
+PENNY-1003;2026-03-01/2026-11-30;2026-10-15;BQ;BQ00152;401;Déplacements (exemple) - règlement;346.17;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-15;BQ;BQ00152;512;Déplacements (exemple) - règlement;;346.17
+PENNY-1003;2026-03-01/2026-11-30;2026-10-17;HA;HA00153;626;Télécommunications (exemple) - facture;184.38;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-17;HA;HA00153;401;Télécommunications (exemple) - facture;;184.38
+PENNY-1003;2026-03-01/2026-11-30;2026-10-17;BQ;BQ00154;401;Télécommunications (exemple) - règlement;184.38;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-17;BQ;BQ00154;512;Télécommunications (exemple) - règlement;;184.38
+PENNY-1003;2026-03-01/2026-11-30;2026-10-06;HA;HA00155;641;Salaires (exemple) - facture;22302.31;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-06;HA;HA00155;401;Salaires (exemple) - facture;;22302.31
+PENNY-1003;2026-03-01/2026-11-30;2026-10-06;BQ;BQ00156;401;Salaires (exemple) - règlement;22302.31;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-06;BQ;BQ00156;512;Salaires (exemple) - règlement;;22302.31
+PENNY-1003;2026-03-01/2026-11-30;2026-10-11;HA;HA00157;645;Charges sociales (exemple) - facture;8314.73;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-11;HA;HA00157;401;Charges sociales (exemple) - facture;;8314.73
+PENNY-1003;2026-03-01/2026-11-30;2026-10-11;BQ;BQ00158;401;Charges sociales (exemple) - règlement;8314.73;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-11;BQ;BQ00158;512;Charges sociales (exemple) - règlement;;8314.73
+PENNY-1003;2026-03-01/2026-11-30;2026-10-02;HA;HA00159;661;Intérêts d'emprunt (exemple) - facture;643.02;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-02;HA;HA00159;401;Intérêts d'emprunt (exemple) - facture;;643.02
+PENNY-1003;2026-03-01/2026-11-30;2026-10-02;BQ;BQ00160;401;Intérêts d'emprunt (exemple) - règlement;643.02;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-02;BQ;BQ00160;512;Intérêts d'emprunt (exemple) - règlement;;643.02
+PENNY-1003;2026-03-01/2026-11-30;2026-10-19;HA;HA00161;658;Charges diverses (exemple) - facture;241.65;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-19;HA;HA00161;401;Charges diverses (exemple) - facture;;241.65
+PENNY-1003;2026-03-01/2026-11-30;2026-10-19;BQ;BQ00162;401;Charges diverses (exemple) - règlement;241.65;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-19;BQ;BQ00162;512;Charges diverses (exemple) - règlement;;241.65
+PENNY-1003;2026-03-01/2026-11-30;2026-10-03;VT;VT00163;411;Hébergement (exemple) - facture;45826.20;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-03;VT;VT00163;706;Hébergement (exemple) - facture;;45826.20
+PENNY-1003;2026-03-01/2026-11-30;2026-10-03;BQ;BQ00164;512;Hébergement (exemple) - encaissement;45826.20;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-03;BQ;BQ00164;411;Hébergement (exemple) - encaissement;;45826.20
+PENNY-1003;2026-03-01/2026-11-30;2026-10-15;VT;VT00165;411;Prestations annexes (exemple) - facture;4098.51;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-15;VT;VT00165;708;Prestations annexes (exemple) - facture;;4098.51
+PENNY-1003;2026-03-01/2026-11-30;2026-10-15;BQ;BQ00166;512;Prestations annexes (exemple) - encaissement;4098.51;
+PENNY-1003;2026-03-01/2026-11-30;2026-10-15;BQ;BQ00166;411;Prestations annexes (exemple) - encaissement;;4098.51
+PENNY-1003;2026-03-01/2026-11-30;2026-11-20;HA;HA00167;606;Fournitures d'entretien (exemple) - facture;1392.34;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-20;HA;HA00167;401;Fournitures d'entretien (exemple) - facture;;1392.34
+PENNY-1003;2026-03-01/2026-11-30;2026-11-20;BQ;BQ00168;401;Fournitures d'entretien (exemple) - règlement;1392.34;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-20;BQ;BQ00168;512;Fournitures d'entretien (exemple) - règlement;;1392.34
+PENNY-1003;2026-03-01/2026-11-30;2026-11-04;HA;HA00169;615;Entretien et réparations (exemple) - facture;531.87;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-04;HA;HA00169;401;Entretien et réparations (exemple) - facture;;531.87
+PENNY-1003;2026-03-01/2026-11-30;2026-11-04;BQ;BQ00170;401;Entretien et réparations (exemple) - règlement;531.87;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-04;BQ;BQ00170;512;Entretien et réparations (exemple) - règlement;;531.87
+PENNY-1003;2026-03-01/2026-11-30;2026-11-15;HA;HA00171;625;Déplacements (exemple) - facture;202.36;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-15;HA;HA00171;401;Déplacements (exemple) - facture;;202.36
+PENNY-1003;2026-03-01/2026-11-30;2026-11-15;BQ;BQ00172;401;Déplacements (exemple) - règlement;202.36;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-15;BQ;BQ00172;512;Déplacements (exemple) - règlement;;202.36
+PENNY-1003;2026-03-01/2026-11-30;2026-11-12;HA;HA00173;626;Télécommunications (exemple) - facture;188.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-12;HA;HA00173;401;Télécommunications (exemple) - facture;;188.56
+PENNY-1003;2026-03-01/2026-11-30;2026-11-12;BQ;BQ00174;401;Télécommunications (exemple) - règlement;188.56;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-12;BQ;BQ00174;512;Télécommunications (exemple) - règlement;;188.56
+PENNY-1003;2026-03-01/2026-11-30;2026-11-23;HA;HA00175;641;Salaires (exemple) - facture;25803.31;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-23;HA;HA00175;401;Salaires (exemple) - facture;;25803.31
+PENNY-1003;2026-03-01/2026-11-30;2026-11-23;BQ;BQ00176;401;Salaires (exemple) - règlement;25803.31;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-23;BQ;BQ00176;512;Salaires (exemple) - règlement;;25803.31
+PENNY-1003;2026-03-01/2026-11-30;2026-11-08;HA;HA00177;645;Charges sociales (exemple) - facture;9286.64;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-08;HA;HA00177;401;Charges sociales (exemple) - facture;;9286.64
+PENNY-1003;2026-03-01/2026-11-30;2026-11-08;BQ;BQ00178;401;Charges sociales (exemple) - règlement;9286.64;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-08;BQ;BQ00178;512;Charges sociales (exemple) - règlement;;9286.64
+PENNY-1003;2026-03-01/2026-11-30;2026-11-22;HA;HA00179;661;Intérêts d'emprunt (exemple) - facture;865.89;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-22;HA;HA00179;401;Intérêts d'emprunt (exemple) - facture;;865.89
+PENNY-1003;2026-03-01/2026-11-30;2026-11-22;BQ;BQ00180;401;Intérêts d'emprunt (exemple) - règlement;865.89;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-22;BQ;BQ00180;512;Intérêts d'emprunt (exemple) - règlement;;865.89
+PENNY-1003;2026-03-01/2026-11-30;2026-11-10;HA;HA00181;658;Charges diverses (exemple) - facture;144.74;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-10;HA;HA00181;401;Charges diverses (exemple) - facture;;144.74
+PENNY-1003;2026-03-01/2026-11-30;2026-11-10;BQ;BQ00182;401;Charges diverses (exemple) - règlement;144.74;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-10;BQ;BQ00182;512;Charges diverses (exemple) - règlement;;144.74
+PENNY-1003;2026-03-01/2026-11-30;2026-11-21;VT;VT00183;411;Hébergement (exemple) - facture;41008.18;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-21;VT;VT00183;706;Hébergement (exemple) - facture;;41008.18
+PENNY-1003;2026-03-01/2026-11-30;2026-11-21;BQ;BQ00184;512;Hébergement (exemple) - encaissement;41008.18;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-21;BQ;BQ00184;411;Hébergement (exemple) - encaissement;;41008.18
+PENNY-1003;2026-03-01/2026-11-30;2026-11-18;VT;VT00185;411;Prestations annexes (exemple) - facture;2392.71;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-18;VT;VT00185;708;Prestations annexes (exemple) - facture;;2392.71
+PENNY-1003;2026-03-01/2026-11-30;2026-11-18;BQ;BQ00186;512;Prestations annexes (exemple) - encaissement;2392.71;
+PENNY-1003;2026-03-01/2026-11-30;2026-11-18;BQ;BQ00186;411;Prestations annexes (exemple) - encaissement;;2392.71

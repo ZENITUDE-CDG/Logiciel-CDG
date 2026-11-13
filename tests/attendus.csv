@@ -1,0 +1,85 @@
+identifiant;attendu;description;fichier
+T-B1-a;REFUS:B1;Onglet Rubriques renommé;fixtures/T-B1-a.xlsx
+T-B1-b;ACCEPTE;Onglet Notes ajouté;fixtures/T-B1-b.xlsx
+T-B2-a;REFUS:B2;En-tête renommé;fixtures/T-B2-a.xlsx
+T-B2-b;ACCEPTE;Colonnes permutées, lecture par en-tête;fixtures/T-B2-b.xlsx
+T-B3-a;REFUS:B3;Texte dans une date;fixtures/T-B3-a.xlsx
+T-B3-b;ACCEPTE;Date au format texte jj/mm/aaaa reconnu;fixtures/T-B3-b.xlsx
+T-B4-a;REFUS:B4;Code sans libellé;fixtures/T-B4-a.xlsx
+T-B4-b;ACCEPTE;Ligne vide au milieu des données;fixtures/T-B4-b.xlsx
+T-B5-a;REFUS:B5;Doublon de résidence à même date d'effet;fixtures/T-B5-a.xlsx
+T-B5-b;ACCEPTE;Même résidence, date d'effet différente;fixtures/T-B5-b.xlsx
+T-B6-a;REFUS:B6;Dossier Pennylane inconnu, non déclaré à créer;fixtures/T-B6-a.xlsx
+T-B6-b;ACCEPTE:W6;Dossier déclaré à créer, avertissement W6;fixtures/T-B6-b.xlsx
+T-B7-a;REFUS:B7;Activité absente de Listes;fixtures/T-B7-a.xlsx
+T-B7-b;ACCEPTE;Activité ajoutée à Listes puis utilisée;fixtures/T-B7-b.xlsx
+T-B8-a;REFUS:B8;Rubrique en double à même date;fixtures/T-B8-a.xlsx
+T-B8-b;ACCEPTE;Rubrique en double à date différente;fixtures/T-B8-b.xlsx
+T-B9-a;REFUS:B9;Hypothèse sur une rubrique inconnue;fixtures/T-B9-a.xlsx
+T-B9-b;ACCEPTE;Seuil sur un KPI existant;fixtures/T-B9-b.xlsx
+T-B10-a;REFUS:B10;Fin antérieure à l'effet;fixtures/T-B10-a.xlsx
+T-B10-b;ACCEPTE;Fin égale à l'effet;fixtures/T-B10-b.xlsx
+T-B11-a;REFUS:B11;Deux règles actives qui se chevauchent;fixtures/T-B11-a.xlsx
+T-B11-b;ACCEPTE;Deux règles successives sans chevauchement;fixtures/T-B11-b.xlsx
+T-B12-a;REFUS:B12;KPI actif sans date d'effet;fixtures/T-B12-a.xlsx
+T-B12-b;ACCEPTE:W7;KPI brouillon sans date d'effet, avertissement W7;fixtures/T-B12-b.xlsx
+T-B13-a;REFUS:B13;Compte dans deux rubriques, même agrégat et priorité;fixtures/T-B13-a.xlsx
+T-B13-b;ACCEPTE;Même cas, priorités distinctes;fixtures/T-B13-b.xlsx
+T-B13-c;ACCEPTE;Même cas, agrégats différents;fixtures/T-B13-c.xlsx
+T-B14-a;REFUS:B14;Préfixe avec astérisque;fixtures/T-B14-a.xlsx
+T-B14-b;ACCEPTE;Plage 616-618;fixtures/T-B14-b.xlsx
+T-B15-a;REFUS:B15;Exception hors du préfixe;fixtures/T-B15-a.xlsx
+T-B15-b;ACCEPTE;Exception incluse dans le préfixe;fixtures/T-B15-b.xlsx
+T-B16-a;REFUS:B16;Parenthèse manquante;fixtures/T-B16-a.xlsx
+T-B16-b;ACCEPTE;Formule valide;fixtures/T-B16-b.xlsx
+T-B16-c;REFUS:B16;Fonction non autorisée;fixtures/T-B16-c.xlsx
+T-B16-d;REFUS:B16;Caractère interdit dans une mesure;fixtures/T-B16-d.xlsx
+T-B17-a;REFUS:B17;Référence circulaire;fixtures/T-B17-a.xlsx
+T-B17-b;ACCEPTE;Dépendance sans retour;fixtures/T-B17-b.xlsx
+T-B18-a;REFUS:B18;Addition € et %;fixtures/T-B18-a.xlsx
+T-B18-b;ACCEPTE;Ratio avec unité déclarée;fixtures/T-B18-b.xlsx
+T-B19-a;REFUS:B19;KPI actif sans approbateur;fixtures/T-B19-a.xlsx
+T-B19-b;ACCEPTE;KPI brouillon sans approbateur;fixtures/T-B19-b.xlsx
+T-B20-a;REFUS:B20;Groupe dynamique sans critère;fixtures/T-B20-a.xlsx
+T-B20-b;ACCEPTE;Groupe dynamique avec critère;fixtures/T-B20-b.xlsx
+T-B21-a;REFUS:B21;Attribut inconnu;fixtures/T-B21-a.xlsx
+T-B21-b;ACCEPTE;Attribut existant;fixtures/T-B21-b.xlsx
+T-B22-a;REFUS:B22;Cycle entre groupes composés;fixtures/T-B22-a.xlsx
+T-B22-b;ACCEPTE;Composition sans cycle;fixtures/T-B22-b.xlsx
+T-B23-a;REFUS:B23;Groupe manuel sans membre;fixtures/T-B23-a.xlsx
+T-B23-b;ACCEPTE;Groupe manuel avec membres;fixtures/T-B23-b.xlsx
+T-B24-a;REFUS:B24;Scénario non listé;fixtures/T-B24-a.xlsx
+T-B24-b;ACCEPTE;Scénario ajouté à Listes;fixtures/T-B24-b.xlsx
+T-B25-a;REFUS:B25;Hypothèse sans justification;fixtures/T-B25-a.xlsx
+T-B25-b;ACCEPTE;Hypothèse justifiée;fixtures/T-B25-b.xlsx
+T-B26-a;REFUS:B26;Valeur textuelle;fixtures/T-B26-a.xlsx
+T-B26-b;ACCEPTE;Valeur négative;fixtures/T-B26-b.xlsx
+T-B27-a;REFUS:B27;Seuil sans indicateur;fixtures/T-B27-a.xlsx
+T-B27-b;ACCEPTE;Seuil avec indicateur;fixtures/T-B27-b.xlsx
+T-B28-a;REFUS:B28;Section inconnue;fixtures/T-B28-a.xlsx
+T-B28-b;ACCEPTE;Sections du modèle;fixtures/T-B28-b.xlsx
+T-B29-a;REFUS:B29;Format non pris en charge;fixtures/T-B29-a.xlsx
+T-B29-b;ACCEPTE;Format PDF;fixtures/T-B29-b.xlsx
+T-B30-a;REFUS:B30;Adresse mal formée;fixtures/T-B30-a.xlsx
+T-B30-b;A_DEFINIR:colonne « externe » et périmètre de diffusion absents du classeur v0.1;Destinataire externe;
+T-B30-c;ACCEPTE;Adresse valide;fixtures/T-B30-c.xlsx
+T-B31-a;A_DEFINIR:approbation des envois absente du classeur v0.1;Envoi auto sans approbation;
+T-B31-b;A_DEFINIR:approbation des envois absente du classeur v0.1;Envoi auto approuvé;
+T-W1;ACCEPTE:W1;KPI non utilisé;fixtures/T-W1.xlsx
+T-W4;ACCEPTE:W4;Fin de règle dans moins de 30 jours;fixtures/T-W4.xlsx
+T-W5;ACCEPTE:W5;Optimiste identique à la Référence;fixtures/T-W5.xlsx
+T-W6;ACCEPTE:W6;Dossier à créer déclaré (cas T-B6-b, avertissement W6);fixtures/T-W6.xlsx
+T-W2;A_DEFINIR:dépend des données de test, non du classeur;Membre sans donnée;
+T-W3;ACCEPTE:W3;Seuil de 90 jours sur une donnée hebdomadaire (plus de 3 fois la période);fixtures/T-W3.xlsx
+T-W3-b;ACCEPTE;Seuil de 14 jours sur une donnée hebdomadaire;fixtures/T-W3-b.xlsx
+T-B27-c;REFUS:B27;Seuil de fraîcheur sans fréquence de source;fixtures/T-B27-c.xlsx
+T-P1-a;HORS_CHARGEMENT;Publication : données comptables requises;
+T-P1-b;HORS_CHARGEMENT;Publication : données comptables requises;
+T-P2-a;HORS_CHARGEMENT;Publication : données requises;
+T-P3-a;HORS_CHARGEMENT;Publication : données requises;
+T-P4-a;HORS_CHARGEMENT;Publication : données requises;
+T-P5-a;HORS_CHARGEMENT;Publication : données requises;
+T-V-1;HORS_CHARGEMENT;Versions : test d'exécution, pas de fixture;
+T-V-2;HORS_CHARGEMENT;Versions : test d'exécution;
+T-V-3;HORS_CHARGEMENT;Versions : test d'exécution;
+T-V-4;HORS_CHARGEMENT;Versions : test d'exécution;

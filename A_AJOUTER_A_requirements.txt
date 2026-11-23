@@ -1,3 +1,0 @@
-# Ajouter ces deux lignes à la fin du fichier requirements.txt existant (ne pas remplacer le fichier).
-psycopg[binary]>=3.1
-python-dotenv>=1.0

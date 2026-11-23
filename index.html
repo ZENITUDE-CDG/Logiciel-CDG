@@ -110,6 +110,16 @@ a.lat-user:hover, a.lien-compte:hover { background:rgba(0,114,152,.08); }
 .lis-masq { font-size:12.5px; white-space:nowrap; }
 tr.lis-a td:first-child { box-shadow:3px 0 0 var(--orange) inset; }
 .bascule:not([disabled]) { cursor:pointer; }
+/* Lot 15 : comptes bancaires, import des KPI */
+.bq-tab tr.bq-alerte td { background:rgba(222,114,51,.08); }
+.bq-tab tr.bq-total td { font-weight:600; border-top:1px solid var(--bord-fort); background:var(--fond); }
+.bq-tab tr.bq-grand td { font-weight:700; background:var(--cle); }
+.imp-etapes { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.imp-etapes p { margin:6px 0 10px; }
+.imp-resultat { margin-top:16px; border-top:1px solid var(--bord); padding-top:12px; }
+.imp-resultat h3 { font-size:14px; margin:0 0 10px; }
+.imp-err td { color:var(--erreur); }
+@media (max-width:900px) { .imp-etapes { grid-template-columns:1fr; } }
 /* Lot 13 : écran de démarrage en ligne (chargement, parc vide, données non publiées) */
 #ecran-demarrage .demarrage { max-width:520px; margin:12vh auto 0; padding:32px; background:var(--surface); border:1px solid rgba(0,0,0,.08); border-radius:12px; text-align:center; }
 #ecran-demarrage img { height:34px; margin-bottom:18px; }
@@ -307,6 +317,13 @@ table { border-collapse:collapse; width:100%; }
 .fin td.tot { font-weight:600; }
 .fin th.tot1, .fin td.tot1 { border-left:1px solid var(--bord-fort); }
 .fin tr.n2 td { color:var(--mut); }
+.fin tr.n3 td { color:var(--mut); }
+.fin tr.n3 td.ind { padding-left:42px; color:var(--txt); }
+.fin tr.n2.st td { font-weight:600; color:var(--txt); }
+.fin tr.ratio td { font-style:italic; color:var(--mut); font-size:12px; }
+.fin tr.ratio td.ind { padding-left:42px; }
+.fin tr.kpi td { color:var(--txt); }
+.fin tr.sect td { font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:.05em; color:var(--faible); background:var(--fond); }
 .fin tr.n2 td.ind { padding-left:26px; color:var(--txt); }
 .fin tr.n2 td.tot { color:var(--txt); font-weight:500; }
 .fin tr.n1 td { font-weight:600; color:var(--titre); border-top:1px solid var(--bord-fort); }
@@ -607,8 +624,8 @@ var LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAACwCAYAAAAhZDhOAA
      (intégrées à la page en démonstration locale, lues dans la base en ligne). -->
 <script type="text/plain" id="code-application">
 var SOUS = {
-  tableaux: [["synthese", "Synthèse d’activité"], ["indicateurs", "Indicateurs hôteliers"], ["resultat", "Compte de résultat"], ["controle", "Contrôle des données"]],
-  tresorerie: [["tr_position", "Position de trésorerie"], ["tr_creances", "Analyse des créances"], ["tr_dettes", "Analyse des dettes"]],
+  tableaux: [["synthese", "Synthèse d’activité"], ["indicateurs", "Indicateurs hôteliers"], ["resultat", "Compte de résultat"], ["equilibre", "FRNG, BFR et TN"], ["controle", "Contrôle des données"]],
+  tresorerie: [["tr_position", "Position de trésorerie"], ["tr_banques", "Comptes bancaires"], ["tr_analyse", "Analyse du solde"], ["tr_creances", "Analyse des créances"], ["tr_dettes", "Analyse des dettes"]],
   ajustements: [["provisions", "Comptes et provisions"], ["lissage", "Lissage de postes"], ["ecarts", "Écarts Réel → Ajusté"]],
   import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
   residence: [["residence", "Résidence"]],
@@ -733,11 +750,13 @@ function fermerTiroir() { el("app").classList.remove("menu-ouvert"); }
 el("btn-reduire").addEventListener("click", function () { appliquerMenu(!el("app").classList.contains("reduit")); });
 el("btn-burger").addEventListener("click", function (e) { e.stopPropagation(); el("app").classList.add("menu-ouvert"); });
 el("lat-voile").addEventListener("click", fermerTiroir);
-function allerA(section, page) { etat.section = section; etat.page = page || SOUS[section][0][0]; etat.brouillon = null; fermerTiroir(); rendre(); }
+/* Lot 15 : la vue des comptes bancaires est réservée aux administrateurs (en ligne). */
+function sousVisibles(sec) { return SOUS[sec].filter(function (x) { return x[0] !== "tr_banques" || !enLigne() || estAdmin(); }); }
+function allerA(section, page) { if (page === "tr_banques" && enLigne() && !estAdmin()) page = null; etat.section = section; etat.page = page || SOUS[section][0][0]; etat.brouillon = null; fermerTiroir(); rendre(); }
 function dessinerMenu() {
   var h = "";
   MENU.forEach(function (m) {
-    var sec = m[0], actif = etat.section === sec, sous = SOUS[sec];
+    var sec = m[0], actif = etat.section === sec, sous = sousVisibles(sec);
     h += '<button class="lat-item' + (actif ? " actif" : "") + '" data-section="' + sec + '" title="' + esc(m[1]) + '"' + (actif ? ' aria-current="page"' : "") + '>' +
       '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="' + m[2] + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '<span class="lat-txt">' + esc(m[1]) + "</span>" + (m[3] ? '<span class="tag lat-txt">à venir</span>' : "") + "</button>";
@@ -1020,11 +1039,33 @@ function soldes(d, ajuste) {
 }
 
 /* ---------- Tableaux de gestion (EBITDA, SIG) : mêmes règles que generer_site._tableau ---------- */
+/* Règles d'une ligne (lot 15, mêmes règles que generer_site._ligne_du_compte) : "706" préfixe, "=60320003" compte
+   exact, "6135:POUBELLE" préfixe dont le libellé du compte contient le mot (seulement si le libellé est connu).
+   Ordre : compte exact, puis mot-clé, puis préfixe le plus long. */
+var LIB_CPT = {};
+(D.plan || []).forEach(function (x) { if (x.libelle_compte) LIB_CPT[x.compte] = String(x.libelle_compte).toUpperCase(); });
+var CACHE_LIGNE = {};
 function ligneDuCompte(compte, lignes) {
-  var best = null;
+  var cle = (lignes === D.lignes_ebitda ? "E" : lignes === D.lignes_sig ? "S" : "") + "|" + compte;
+  if (cle.charAt(0) !== "|" && cle in CACHE_LIGNE) return CACHE_LIGNE[cle];
+  var exact = null, mot = null, best = null, lib = LIB_CPT[compte] || "";
   lignes.forEach(function (l) { if (l.regle.prefixes) l.regle.prefixes.forEach(function (p) {
+    if (p.charAt(0) === "=") { if (compte === p.slice(1)) exact = l.code; return; }
+    var i = p.indexOf(":");
+    if (i > 0) { var pr = p.slice(0, i); if (lib && compte.indexOf(pr) === 0 && lib.indexOf(p.slice(i + 1)) >= 0 && (!mot || pr.length > mot.n)) mot = { code: l.code, n: pr.length }; return; }
     if (compte.indexOf(p) === 0 && (best === null || p.length > best.n)) best = { code: l.code, n: p.length }; }); });
-  return best ? best.code : null;
+  var r = exact || (mot ? mot.code : null) || (best ? best.code : null);
+  if (cle.charAt(0) !== "|") CACHE_LIGNE[cle] = r;
+  return r;
+}
+function texteRegles(prefixes) {
+  var p = [], c = [], m = [];
+  prefixes.forEach(function (x) { if (x.charAt(0) === "=") c.push(x.slice(1)); else if (x.indexOf(":") > 0) m.push(x.replace(":", " dont le libellé contient ")); else p.push(x); });
+  var t = [];
+  if (p.length) t.push("comptes commençant par " + p.join(", "));
+  if (c.length) t.push("compte" + (c.length > 1 ? "s" : "") + " " + c.join(", "));
+  if (m.length) t.push("comptes " + m.join(" ; "));
+  return t.join(" ; ") || "aucun compte affecté pour l’instant";
 }
 function cumuler(o, code, v) { o[code] = (v === NC || o[code] === NC) ? NC : (o[code] || 0) + v; }
 function calcLignes(lignes, valeurs) {
@@ -1181,8 +1222,8 @@ function libFenetre() {
   var f = fenetre(), a = moisCourt(f[0]), b = moisCourt(f[f.length - 1]);
   return f.length === 1 ? moisLong(f[0]) : a + " → " + b;
 }
-var PAGES_PERIODE = ["synthese", "indicateurs", "provisions", "ecarts", "tr_position", "tr_creances", "tr_dettes"];
-var PAGES_SANS_VUE = ["tr_position", "tr_creances", "tr_dettes"];
+var PAGES_PERIODE = ["synthese", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_SANS_VUE = ["tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
 function raccourcis(p) {
   var iD = idxMois(D.meta.dernier_mois_importe), an = String(D.meta.annee), n = MOIS.length;
   var r = [["Dernier mois importé", iD, iD + 1], ["12 derniers mois", Math.max(0, iD - 11), iD + 1]];
@@ -1279,43 +1320,42 @@ function ruban(p) {
     return '<div class="indic nc"' + sp + '><div class="nom">' + esc(k.nom) + '</div><div class="val">Non calculable</div><div class="motif">' + esc(v.motif) + "</div></div>";
   }).join("") + "</div>";
 }
+/* Lot 15 : les graphiques suivent la réglette (mois de la période choisie). */
 function graphe(p, k) {
-  var pct = k.unite === "%", N = MOIS.length, aj = ajuste();
-  var fin = C.fin_donnees || MOIS[MOIS.length - 1];
-  var pts = MOIS.map(function (m) { var v = resultatFen(p.dossiers, [m], aj)[k.code]; return { m: m, v: v && v.statut === "calculé" ? +v.valeur * (pct ? 100 : 1) : null, a: v ? v.affichage : "", motif: v ? v.motif : "" }; });
+  var pct = k.unite === "%", MS = fenetre(), N = MS.length, aj = ajuste(), fin = C.fin_donnees || MOIS[MOIS.length - 1];
+  var pts = MS.map(function (m) { var v = resultatFen(p.dossiers, [m], aj)[k.code]; return { m: m, v: v && v.statut === "calculé" ? +v.valeur * (pct ? 100 : 1) : null, a: v ? v.affichage : "", motif: v ? v.motif : "" }; });
   var vals = pts.filter(function (x) { return x.v !== null; }).map(function (x) { return x.v; });
-  var W = 360, H = 160, g = 38, d = 6, h = 10, b = 22, pas = (W - g - d) / (N - 1);
+  var W = 360, H = 160, g = 38, d = 10, h = 10, b = 22, pas = N > 1 ? (W - g - d - 8) / (N - 1) : 0;
   var min = vals.length ? Math.min.apply(null, vals) : 0, max = vals.length ? Math.max.apply(null, vals) : 1;
   var marge = (max - min) * 0.18 || Math.abs(max) * 0.1 || 1; min = Math.max(0, min - marge); max = max + marge;
-  var x = function (i) { return g + pas * i; }, y = function (v) { return h + (H - h - b) * (1 - (v - min) / (max - min)); };
+  var x = function (i) { return N > 1 ? g + 4 + pas * i : (g + W - d) / 2; }, y = function (v) { return h + (H - h - b) * (1 - (v - min) / (max - min)); };
   var fmt = function (v) { return pct ? Math.round(v) + " %" : Math.round(v).toLocaleString("fr-FR"); };
   var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(k.nom) + ' par mois">';
-  var iCoupe = MOIS.findIndex(estProj);
-  if (iCoupe > 0) { var xc = x(iCoupe) - pas / 2; s += '<rect x="' + xc + '" y="' + h + '" width="' + (W - d - xc) + '" height="' + (H - h - b) + '" fill="var(--proj)"/>'; }
-  var x0 = Math.max(g, x(etat.lo) - pas / 2), x1 = Math.min(W - d, x(etat.hi - 1) + pas / 2);
-  s += '<rect x="' + x0 + '" y="' + h + '" width="' + (x1 - x0) + '" height="' + (H - h - b) + '" fill="var(--selection)" opacity=".75"/>';
+  var iCoupe = MS.findIndex(estProj);
+  if (iCoupe >= 0) { var xc = iCoupe > 0 ? x(iCoupe) - pas / 2 : g; s += '<rect x="' + xc + '" y="' + h + '" width="' + (W - d - xc) + '" height="' + (H - h - b) + '" fill="var(--proj)"/>'; }
   for (var t = 0; t <= 2; t++) { var vv = min + (max - min) * t / 2;
     s += '<line x1="' + g + '" x2="' + (W - d) + '" y1="' + y(vv) + '" y2="' + y(vv) + '" stroke="var(--bord)" stroke-width="1"' + (t ? ' stroke-dasharray="2 3"' : "") + "/>" +
       '<text x="' + (g - 6) + '" y="' + (y(vv) + 3.5) + '" font-size="9" text-anchor="end" fill="var(--faible)">' + fmt(vv) + "</text>"; }
-  pts.forEach(function (pt, i) { if (i % 3 === 0 || i === N - 1) s += '<text x="' + (i === N - 1 ? x(i) + 4 : x(i)) + '" y="' + (H - 6) + '" font-size="9" text-anchor="' + (i === N - 1 ? "end" : "middle") + '" fill="var(--faible)">' + moisCourt(pt.m) + "</text>"; });
+  var saut = Math.max(1, Math.ceil(N / 7));
+  pts.forEach(function (pt, i) { if (i % saut === 0 || i === N - 1) s += '<text x="' + x(i) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="var(--faible)">' + moisCourt(pt.m) + "</text>"; });
   var seg = function (filtre, dash, couleur) { var d2 = "", ouvert = false;
     pts.forEach(function (pt, i) { if (pt.v === null || !filtre(i)) { ouvert = false; return; } d2 += (ouvert ? "L" : "M") + x(i).toFixed(1) + " " + y(pt.v).toFixed(1); ouvert = true; });
     return d2 ? '<path d="' + d2 + '" fill="none" stroke="' + couleur + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"' + (dash ? ' stroke-dasharray="3 3"' : "") + "/>" : ""; };
-  s += seg(function (i) { return !estProj(MOIS[i]); }, false, "#007298");
-  s += seg(function (i) { return i >= iCoupe - 1 && iCoupe > 0; }, true, "#DE7233");
+  s += seg(function (i) { return !estProj(MS[i]); }, false, "#007298");
+  s += seg(function (i) { return iCoupe >= 0 && i >= Math.max(0, iCoupe - 1); }, true, "#DE7233");
   pts.forEach(function (pt, i) {
     var spk = xs({ t: "kpi", k: k.code, d: p.dossiers, m: [pt.m], a: aj });
     if (pt.v === null) { if (pt.m <= fin) s += '<text x="' + x(i) + '" y="' + (H - b - 4) + '" font-size="9" text-anchor="middle" fill="var(--attente)" font-weight="700"' + spk + ' style="cursor:pointer">n.c.<title>' + esc(moisLong(pt.m)) + " : non calculable</title></text>"; return; }
-    var dernier = !estProj(pt.m) && (i === N - 1 || estProj(MOIS[i + 1]));
-    if (dernier) s += '<circle cx="' + x(i) + '" cy="' + y(pt.v) + '" r="3" fill="#007298" stroke="var(--surface)" stroke-width="1.5"/>';
+    var r = N <= 13 ? 2.6 : 0;
+    if (r) s += '<circle cx="' + x(i) + '" cy="' + y(pt.v) + '" r="' + r + '" fill="' + (estProj(pt.m) ? "#DE7233" : "#007298") + '"/>';
     s += '<circle cx="' + x(i) + '" cy="' + y(pt.v) + '" r="9" fill="transparent"' + spk + ' style="cursor:pointer"><title>' + esc(moisLong(pt.m)) + " : " + esc(pt.a) + (estProj(pt.m) ? " (projection)" : "") + " (cliquer pour le détail)</title></circle>";
   });
-  var an = resultatFen(p.dossiers, fenetre(), aj)[k.code];
-  return '<div class="graphe"><div class="gt"><b>' + esc(k.nom) + "</b><span>Période <strong" + xa({ t: "kpi", k: k.code, d: p.dossiers, m: fenetre(), a: aj }) + ">" + (an && an.statut === "calculé" ? esc(an.affichage) : "n.c.") + "</strong></span></div>" + s + "</svg></div>";
+  var an = resultatFen(p.dossiers, MS, aj)[k.code];
+  return '<div class="graphe"><div class="gt"><b>' + esc(k.nom) + "</b><span>Période <strong" + xa({ t: "kpi", k: k.code, d: p.dossiers, m: MS, a: aj }) + ">" + (an && an.statut === "calculé" ? esc(an.affichage) : "n.c.") + "</strong></span></div>" + s + "</svg></div>";
 }
 /* Tableau financier : EBITDA ou soldes intermédiaires de gestion sur la période choisie. */
 var VUES_FIN = {
-  ebitda: { titre: "EBITDA", lignes: function () { return D.lignes_ebitda; }, ratio: ["TAUX_EBITDA", "EBITDA", "CA_NET"], libTaux: "Taux d’EBITDA (sur CA net)", titreBloc: "Compte de résultat jusqu’à l’EBITDA" },
+  ebitda: { titre: "EBITDA", lignes: function () { return D.lignes_ebitda; }, ratio: ["TAUX_EBITDA", "EBITDA", "CA"], libTaux: "EBITDA en % du CA total", titreBloc: "Compte de résultat de gestion jusqu’à l’EBITDA" },
   sig: { titre: "SIG", lignes: function () { return D.lignes_sig; }, ratio: ["TAUX_EBE", "EBE", "VENTES_PROD"], libTaux: "Taux d’EBE (sur ventes et production)", titreBloc: "Soldes intermédiaires de gestion" }
 };
 function tableauFinancier(p, vue) {
@@ -1335,20 +1375,44 @@ function tableauFinancier(p, vue) {
     return '<td class="' + cl + (neg ? " neg" : "") + '"' + (v === null || v === undefined ? "" : x) + ">" + (v === null || v === undefined ? '<span class="vide-val">–</span>' : eur(v / 100)) + "</td>";
   }
   var spec = function (c, ms) { return { t: "lig", v: vue, c: c, d: p.dossiers, m: ms, a: aj }; };
-  var masquees = 0;
+  var masquees = 0, nCol = mois.length + 3;
+  function pc(v) { return v === NC ? "n.c." : v === null || v === undefined ? "" : v.toFixed(1).replace(".", ",") + " %"; }
+  /* Lot 15 : ligne de ratio (en % du CA) sous une ligne du tableau */
+  function ligneRatio(lib, num, den, code) {
+    var sp = function (ms) { return ms.length ? xa({ t: "taux", v: vue, d: p.dossiers, m: ms, a: aj, num: num, den: den, lib: lib }) : ""; };
+    var r = function (o) { return ratioPct(o, num, den); };
+    return '<tr class="ratio"><td class="ind">' + esc(lib) + "</td>" + mois.map(function (m) { return '<td class="' + (estProj(m) ? "proj" : "") + '"' + sp([m]) + ">" + pc(r(E.mois[m])) + "</td>"; }).join("") +
+      '<td class="tot tot1"' + sp(reel) + ">" + pc(r(E.realise)) + '</td><td class="tot"' + sp(mois) + ">" + pc(r(E.total)) + "</td></tr>";
+  }
+  /* Lot 15 : données commerciales (KPI de la configuration, mesures importées) au-dessus du tableau EBITDA */
+  if (vue === "ebitda") {
+    t += '<tr class="sect"><td class="ind">Données commerciales</td><td colspan="' + (nCol - 1) + '"></td></tr>';
+    var kc = function (ms) { return resultatFen(p.dossiers, ms, aj); };
+    var parMois = mois.map(function (m) { return kc([m]); }), kr = reel.length ? kc(reel) : {}, kt = kc(mois);
+    principaux.forEach(function (k) {
+      var c = function (x, ms, cl) { var sp = ms.length ? xa({ t: "kpi", k: k.code, d: p.dossiers, m: ms, a: aj }) : "";
+        return !x ? '<td class="' + cl + '"></td>' : x.statut === "calculé" ? '<td class="' + cl + '"' + sp + ">" + esc(x.affichage) + "</td>" : '<td class="' + cl + ' nc-cell" title="' + esc(x.motif) + '"' + sp + ">n.c.</td>"; };
+      t += '<tr class="n3 kpi"><td class="ind">' + esc(k.nom) + "</td>" + mois.map(function (m, i) { return c(parMois[i][k.code], [m], estProj(m) ? "proj" : ""); }).join("") +
+        c(kr[k.code], reel, "tot tot1") + c(kt[k.code], mois, "tot") + "</tr>";
+    });
+    t += '<tr class="sect"><td class="ind">Données financières</td><td colspan="' + (nCol - 1) + '"></td></tr>';
+  }
   V.lignes().forEach(function (l) {
     var vals = mois.map(function (m) { return E.mois[m][l.code]; }).concat([E.realise[l.code], E.total[l.code]]);
-    if (l.niveau === 2 && vals.every(function (v) { return v === null || v === undefined; })) { masquees++; return; }
+    if (l.niveau >= 2 && vals.every(function (v) { return v === null || v === undefined; })) { masquees++; return; }
     var modif = R && E.total[l.code] !== R.total[l.code];
-    t += '<tr class="n' + l.niveau + '"><td class="ind">' + esc(l.libelle) + (modif ? ' <span class="aj-pastille" title="Cette ligne diffère de la comptabilité réelle sur la période">ajusté</span>' : "") + "</td>" +
+    t += '<tr class="n' + l.niveau + (l.sens === "total" ? " st" : "") + '"><td class="ind">' + esc(l.libelle) + (modif ? ' <span class="aj-pastille" title="Cette ligne diffère de la comptabilité réelle sur la période">ajusté</span>' : "") + "</td>" +
       mois.map(function (m) { return cell(E.mois[m][l.code], estProj(m) ? "proj" : "", spec(l.code, [m])); }).join("") +
       cell(E.realise[l.code], "tot tot1", reel.length ? spec(l.code, reel) : null) + cell(E.total[l.code], "tot", spec(l.code, mois)) + "</tr>";
+    if (vue === "ebitda") (D.ratios_ebitda || []).forEach(function (x) { if (x.apres === l.code) t += ligneRatio(x.libelle, x.num, x.den); });
+    if (l.code === V.ratio[1]) t += ligneTaux();
   });
-  function pc(v) { return v === NC ? "n.c." : v === null || v === undefined ? "" : v.toFixed(1).replace(".", ",") + " %"; }
-  var tc = V.ratio[0];
-  var spt = function (ms) { return ms.length ? xa({ t: "taux", v: vue, d: p.dossiers, m: ms, a: aj }) : ""; };
-  t += '<tr class="taux"><td class="ind">' + esc(V.libTaux) + "</td>" + mois.map(function (m) { return '<td class="' + (estProj(m) ? "proj" : "") + '"' + spt([m]) + ">" + pc(E.mois[m][tc]) + "</td>"; }).join("") +
-    '<td class="tot tot1"' + spt(reel) + ">" + pc(E.realise[tc]) + '</td><td class="tot"' + spt(mois) + ">" + pc(E.total[tc]) + "</td></tr>";
+  function ligneTaux() {
+    var tc = V.ratio[0];
+    var spt = function (ms) { return ms.length ? xa({ t: "taux", v: vue, d: p.dossiers, m: ms, a: aj }) : ""; };
+    return '<tr class="taux"><td class="ind">' + esc(V.libTaux) + "</td>" + mois.map(function (m) { return '<td class="' + (estProj(m) ? "proj" : "") + '"' + spt([m]) + ">" + pc(E.mois[m][tc]) + "</td>"; }).join("") +
+      '<td class="tot tot1"' + spt(reel) + ">" + pc(E.realise[tc]) + '</td><td class="tot"' + spt(mois) + ">" + pc(E.total[tc]) + "</td></tr>";
+  }
   t += "</tbody></table></div>";
   var notes = [];
   if (masquees) notes.push(masquees + " ligne" + (masquees > 1 ? "s" : "") + " sans écriture sur ce périmètre " + (masquees > 1 ? "sont masquées" : "est masquée") + ".");
@@ -1369,7 +1433,7 @@ function brancherVueFin() { document.querySelectorAll("[data-vue-fin]").forEach(
 var PAGES = {};
 PAGES.synthese = function (p) {
   var h = enTete("Synthèse d’activité", p, "") + bandeauAjuste() + ruban(p);
-  h += '<div class="section-tete"><h2>Indicateurs clés, mois par mois</h2><span class="legende">Trait plein : réalisé. Pointillé : projection. Fond bleuté : période choisie. « n.c. » : non calculable, survolez pour le motif.</span></div>';
+  h += '<div class="section-tete"><h2>Indicateurs clés, mois par mois</h2><span class="legende">Mois de la période choisie avec la réglette. Trait plein : réalisé. Pointillé : projection. « n.c. » : non calculable. Cliquez sur un point pour son détail.</span></div>';
   h += '<div class="graphes">' + principaux.map(function (k) { return graphe(p, k); }).join("") + "</div>";
   h += blocFinancier(p);
   el("contenu").innerHTML = h; brancherVueFin();
@@ -1685,7 +1749,7 @@ PAGES.ecarts = function (p) {
     t += "<tr><td><code>" + esc(c) + "</code></td><td>" + esc(libelleCompte(c)) + '</td><td class="num"' + sr + ">" + eur(r / 100) + '</td><td class="num"' + sa + ">" + (a === NC ? '<span class="nc-cell">n.c.</span>' : eur((a - r) / 100)) + '</td><td class="num"' + sa + "><b>" + (a === NC ? '<span class="nc-cell">n.c.</span>' : eur(a / 100)) + "</b></td></tr>";
   });
   t += "</tbody></table></div></div>";
-  var lignes = [["ebitda", "CA_NET", "Chiffre d’affaires net"], ["ebitda", "GOP", "GOP"], ["ebitda", "EBITDA", "EBITDA"], ["sig", "EBE", "EBE"], ["sig", "RN", "Résultat net"]];
+  var lignes = [["ebitda", "CA", "Chiffre d’affaires"], ["ebitda", "MARGE_VAR", "Marge variable"], ["ebitda", "EBITDAR", "EBITDAR"], ["ebitda", "EBITDA", "EBITDA"], ["sig", "EBE", "EBE"], ["sig", "RN", "Résultat net"]];
   var tr = '<div class="bloc"><div class="bloc-tete"><h2>Effet sur les soldes</h2></div><div class="defile"><table class="tab"><thead><tr><th>Solde</th><th class="num">Réel</th><th class="num">Ajusté</th><th class="num">Écart</th></tr></thead><tbody>';
   lignes.forEach(function (x) {
     var V = VUES_FIN[x[0]], r = tableauJS(V.lignes(), p.dossiers, mois, false, V.ratio).total[x[1]], a = tableauJS(V.lignes(), p.dossiers, mois, true, V.ratio).total[x[1]];
@@ -1801,7 +1865,7 @@ function barres(titre, cats, series, opts) {
   if (!N) return '<div class="graphe"><div class="gt"><b>' + esc(titre) + '</b></div><p class="legende" style="margin:10px 0">Aucun mois importé sur la période choisie.</p></div>';
   var W = 520, H = 230, g = 46, d = 8, h = 18, b = 34, pas = (W - g - d) / N, empile = !!opts.empile;
   var vals = [0];
-  series.forEach(function (x) { x.valeurs.forEach(function (v) { vals.push(v); }); });
+  series.forEach(function (x) { x.valeurs.forEach(function (v) { if (v !== null && v !== undefined) vals.push(v); }); });
   if (empile) cats.forEach(function (c, i) { vals.push(series.reduce(function (s, x) { return s + Math.max(0, x.valeurs[i]); }, 0)); });
   var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals); if (max === min) max = min + 1; max += (max - min) * 0.1;
   var y = function (v) { return h + (H - h - b) * (1 - (v - min) / (max - min)); };
@@ -1815,6 +1879,7 @@ function barres(titre, cats, series, opts) {
     var cx = g + pas * i + pas / 2, base = 0;
     series.forEach(function (x, j) {
       var v = x.valeurs[i], couleur = (opts.couleurs && opts.couleurs[i]) || x.couleur, x0, y1, y2;
+      if (v === null || v === undefined) return; /* lot 15 : valeur non disponible (N-1 non importé), pas de barre */
       if (empile) { x0 = cx - lb / 2; if (v >= 0) { y1 = y(base + v); y2 = y(base); base += v; } else { y1 = y(0); y2 = y(v); } }
       else { x0 = cx - lb * ns / 2 + lb * j; y1 = y(Math.max(v, 0)); y2 = y(Math.min(v, 0)); }
       s += '<rect' + (opts.specs ? xs(opts.specs(i, j)) + ' style="cursor:pointer"' : "") + ' x="' + x0.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + lb.toFixed(1) + '" height="' + Math.max(0.5, y2 - y1).toFixed(1) + '" fill="' + couleur + '" fill-opacity="' + (opts.hors && opts.hors[i] ? "0.28" : "1") + '" rx="1.5"><title>' + esc(c) + " · " + esc(x.nom) + " : " + eur(v) + "</title></rect>";
@@ -1955,15 +2020,6 @@ PAGES.pennylane = function (p) {
     }); });
   el("contenu").innerHTML = h + t + '</tbody></table></div><p class="legende">Données budgétaires : à venir avec le module Budgets. Écritures comptées jusqu’au dernier mois importé (' + moisLong(D.meta.dernier_mois_importe) + ").</p></div>";
 };
-PAGES.externes = function (p) {
-  var h = enTete("Données externes", p, "Mesures d’exploitation hors comptabilité") +
-    '<div class="bloc"><div class="bloc-tete"><h2>Sources</h2></div><div class="defile"><table class="tab"><thead><tr><th>Source</th><th>Contenu</th><th>Fréquence</th><th>État</th></tr></thead><tbody>' +
-    '<tr><td><b>Mews</b> (PMS)</td><td>Logements-nuits disponibles et vendus, séjours, nuitées, couverts petit-déjeuner</td><td>Quotidienne (seuil 2 jours)</td><td><span class="pastille att">non connecté</span></td></tr>' +
-    '<tr><td><b>Fichier de mesures</b> (CSV)</td><td>' + D.meta.mesures.map(function (m) { return "<code>" + esc(m) + "</code>"; }).join(" ") + '</td><td>Mensuelle</td><td><span class="pastille ok">démonstration</span> ' + nb(D.meta.nb_mesures) + " valeurs</td></tr>" +
-    '<tr><td><b>Données sociales</b></td><td>Effectifs, heures travaillées</td><td>Mensuelle</td><td><span class="pastille att">à venir</span></td></tr>' +
-    "</tbody></table></div></div>";
-  el("contenu").innerHTML = h + '<div class="bloc"><div class="bloc-tete"><h2>Mesures d’exploitation reçues, ' + D.meta.annee + "</h2></div>" + grilleCouverture(p, false) + "</div>";
-};
 PAGES.plan = function () {
   var t = enTete("Plan comptable", perimetre(etat.perim), "Comptes présents dans les écritures et leur classement") +
     '<div class="bloc"><div class="defile"><table class="tab"><thead><tr><th>Compte</th><th>Classe</th><th>Rubrique</th><th>Agrégat de base</th><th>Ligne EBITDA</th><th>Ligne SIG</th><th class="num">Lignes d’écritures</th></tr></thead><tbody>';
@@ -2082,7 +2138,7 @@ EXPLIQUER.lig = function (s) {
     l.regle.termes.forEach(function (t) { var x = L.find(function (y) { return y.code === t[1]; });
       R.parts.push({ lib: (t[0] < 0 ? "− " : "+ ") + x.libelle, val: valCts(T.total[t[1]]), spec: { t: "lig", v: s.v, c: t[1], d: s.d, m: s.m, a: s.a } }); });
   } else {
-    R.formule = "Somme des comptes commençant par " + l.regle.prefixes.join(", ") + " (chaque compte va dans la ligne de son préfixe le plus long), en " + (l.sens === "produit" ? "crédit − débit" : "débit − crédit");
+    R.formule = "Somme des " + texteRegles(l.regle.prefixes) + " (priorité : compte exact, puis mot-clé, puis préfixe le plus long), en " + (l.sens === "produit" ? "crédit − débit" : "débit − crédit");
     R.partsTitre = "Comptes";
     var cpt = {};
     s.d.forEach(function (d) { var S = soldes(d, s.a); s.m.forEach(function (m) { Object.keys(S.v[m]).forEach(function (c) {
@@ -2095,10 +2151,10 @@ EXPLIQUER.lig = function (s) {
   return R;
 };
 EXPLIQUER.taux = function (s) {
-  var V = VUES_FIN[s.v], L = V.lignes(), T = tableauJS(L, s.d, s.m, s.a, V.ratio), r = V.ratio;
+  var V = VUES_FIN[s.v], L = V.lignes(), T = tableauJS(L, s.d, s.m, s.a, V.ratio), r = s.num ? ["", s.num, s.den] : V.ratio;
   var lib = function (c) { return L.find(function (x) { return x.code === c; }).libelle; };
-  var v = T.total[r[0]];
-  return { titre: V.libTaux, sous: libPerim(s.d) + ", " + libMois(s.m) + " (" + libVue(s.a) + ")",
+  var v = s.num ? ratioPct(T.total, s.num, s.den) : T.total[r[0]];
+  return { titre: s.lib || V.libTaux, sous: libPerim(s.d) + ", " + libMois(s.m) + " (" + libVue(s.a) + ")",
     valeur: v === NC ? "non calculable" : v === null || v === undefined ? "–" : v.toFixed(1).replace(".", ",") + " %",
     formule: lib(r[1]) + " ÷ " + lib(r[2]) + " × 100 (ratio des sommes de la période, jamais une moyenne de taux)", partsTitre: "Éléments",
     parts: [r[1], r[2]].map(function (c) { return { lib: lib(c), val: valCts(T.total[c]), spec: { t: "lig", v: s.v, c: c, d: s.d, m: s.m, a: s.a } }; }),
@@ -2240,22 +2296,29 @@ EXPLIQUER.pub = function (s) {
 };
 /* Trésorerie : position (comptes 51 et 53) */
 EXPLIQUER.tr = function (s) {
-  var A = s.A, finA = finMoisIso(A), rows = [], tot = 0, moteur = 0;
-  var lib = { solde: "Solde de trésorerie au " + dateFr(finA), enc: "Encaissements", dec: "Décaissements", flux: "Flux net" }[s.k];
-  s.d.forEach(function (d) { (D.ecritures[d] || []).forEach(function (r) {
-    if (!commencePar(r[4], DISPO)) return;
-    if (s.k === "solde") { if (r[1] <= finA) { rows.push([d].concat(r)); tot += -r[6]; } return; }
-    if (r[2] === "AN" || s.m.indexOf(r[1].slice(0, 7)) < 0) return;
-    var deb = r[6] < 0 ? -r[6] : 0, cre = r[6] > 0 ? r[6] : 0;
-    if (s.k === "enc" && deb) { rows.push([d].concat(r)); tot += deb; }
-    if (s.k === "dec" && cre) { rows.push([d].concat(r)); tot += cre; }
-    if (s.k === "flux") { rows.push([d].concat(r)); tot += deb - cre; }
+  var A = s.A, finA = finMoisIso(A), rows = [], tot = 0, moteur = 0, vin = 0, vout = 0, min = 0, mout = 0;
+  var garde = function (c) { return s.cpt ? c === s.cpt : commencePar(c, DISPO); };
+  var lib = { solde: "Solde au " + dateFr(finA), enc: "Encaissements", dec: "Décaissements", flux: "Flux net", vir: "Virements internes reçus / émis" }[s.k];
+  s.d.forEach(function (d) { var I = INTERNES[d] || {};
+    (D.ecritures[d] || []).forEach(function (r) {
+      if (!garde(r[4])) return;
+      if (s.k === "solde") { if (r[1] <= finA) { rows.push([d].concat(r)); tot += -r[6]; } return; }
+      if (r[2] === "AN" || s.m.indexOf(r[1].slice(0, 7)) < 0) return;
+      var interne = !!I[r[3]];
+      if ((s.k === "vir") !== interne) return;
+      var deb = r[6] < 0 ? -r[6] : 0, cre = r[6] > 0 ? r[6] : 0;
+      if (s.k === "enc" && deb) { rows.push([d].concat(r)); tot += deb; }
+      if (s.k === "dec" && cre) { rows.push([d].concat(r)); tot += cre; }
+      if (s.k === "flux" || s.k === "vir") { rows.push([d].concat(r)); tot += deb - cre; vin += deb; vout += cre; }
+    });
+    if (s.cpt) { var X = (((TR.dossiers[d] || {}).banques || {})[s.cpt]) || {};
+      if (s.k === "solde") moteur += X[A] ? X[A][0] : 0; else s.m.forEach(function (m) { var v = X[m] || [0, 0, 0, 0, 0]; min += v[3]; mout += v[4]; moteur += s.k === "enc" ? v[1] : s.k === "dec" ? v[2] : s.k === "vir" ? v[3] - v[4] : v[1] - v[2]; });
+    } else { var P = TR.dossiers[d].position;
+      if (s.k === "solde") moteur += P[A][0]; else s.m.forEach(function (m) { var v = P[m] || [0, 0, 0]; moteur += s.k === "enc" ? v[1] : s.k === "dec" ? v[2] : s.k === "vir" ? 0 : v[1] - v[2]; }); }
   });
-    var P = TR.dossiers[d].position;
-    if (s.k === "solde") moteur += P[A][0]; else s.m.forEach(function (m) { var v = P[m] || [0, 0, 0]; moteur += s.k === "enc" ? v[1] : s.k === "dec" ? v[2] : v[1] - v[2]; });
-  });
-  return { titre: lib, sous: libPerim(s.d) + (s.k === "solde" ? "" : ", " + libMois(s.m)), valeur: eurC(moteur),
-    formule: { solde: "Solde (débit − crédit) des comptes 51 et 53 au " + dateFr(finA) + ", à-nouveaux compris", enc: "Mouvements au débit des comptes 51 et 53, hors à-nouveaux", dec: "Mouvements au crédit des comptes 51 et 53, hors à-nouveaux", flux: "Encaissements − décaissements" }[s.k],
+  var cible = s.cpt ? "du compte " + s.cpt : "des comptes 51 et 53";
+  return { titre: lib + (s.cpt ? " · compte " + s.cpt : ""), sous: libPerim(s.d) + (s.k === "solde" ? "" : ", " + libMois(s.m)), valeur: s.k === "vir" ? eurC(min) + " / " + eurC(mout) : eurC(moteur),
+    formule: { solde: "Solde (débit − crédit) " + cible + " au " + dateFr(finA) + ", à-nouveaux compris", enc: "Mouvements au débit " + cible + ", hors à-nouveaux et hors virements internes", dec: "Mouvements au crédit " + cible + ", hors à-nouveaux et hors virements internes", flux: "Encaissements − décaissements, hors virements internes", vir: "Virements entre comptes de la résidence (pièce entièrement sur des comptes 51, 53 ou 58) : reçus − émis" }[s.k],
     parts: [], ecritures: rows, controle: tot === moteur ? { ok: true, texte: "Les écritures redonnent exactement le montant calculé par le moteur." } : { ok: false, texte: "Écart de " + eurC(tot - moteur) + " avec le moteur." } };
 };
 /* Trésorerie : créances et dettes, mêmes règles que zenitude/comptes/tresorerie.py */
@@ -2539,6 +2602,389 @@ function lisExecuter(local, base) {
   });
 }
 
+/* ======================================================================================
+   Lot 15 (décision 0009) : comptes bancaires, analyse du solde, équilibre financier (FRNG, BFR, TN),
+   import des KPI mensuels. Les montants viennent du moteur (zenitude/comptes/tresorerie.py) ; la page les
+   additionne sur le périmètre et les explique (détail des calculs).
+   ====================================================================================== */
+function estAdmin() { return roleEnLigne() === "administrateur"; }
+/* Virements internes : pièce hors à-nouveaux, équilibrée, sur au moins deux comptes, toutes lignes en 51, 53 ou 58
+   (même règle que tresorerie.pieces_internes). */
+var INTERNES = {};
+Object.keys(D.ecritures || {}).forEach(function (d) {
+  var info = {};
+  D.ecritures[d].forEach(function (r) { if (r[2] === "AN" || !r[3]) return; var x = info[r[3]] = info[r[3]] || { c: {}, s: 0, ext: false };
+    x.c[r[4]] = 1; x.s += r[6]; if (!commencePar(r[4], ["51", "53", "58"])) x.ext = true; });
+  INTERNES[d] = {};
+  Object.keys(info).forEach(function (p) { var x = info[p]; if (!x.ext && Object.keys(x.c).length >= 2 && x.s === 0) INTERNES[d][p] = true; });
+});
+function moisMoins12(m) { return (+m.slice(0, 4) - 1) + m.slice(4); }
+
+/* ---------- Paramètres des comptes bancaires (libellé, rôle, solde minimum) ---------- */
+var BQP = {};
+function bqpCharger() {
+  BQP = {};
+  if (enLigne()) (D.comptes_bancaires || []).forEach(function (x) { BQP[x.dossier + "|" + x.compte] = { libelle: x.libelle || "", role: x.role, solde_min: x.solde_min === null || x.solde_min === undefined ? null : +x.solde_min }; });
+  else try { BQP = JSON.parse(localStorage.getItem("zen-comptes-bancaires")) || {}; } catch (e) { BQP = {}; }
+}
+function banquesDe(d) { return Object.keys((TR.dossiers[d] || {}).banques || {}).sort(); }
+/* Rôle proposé quand il n'est pas paramétré : le compte qui a le plus de mouvements est le principal. */
+function paramBanque(d, c) {
+  var p = BQP[d + "|" + c];
+  if (p) return { libelle: p.libelle, role: p.role, solde_min: p.solde_min, propose: false };
+  var n = {}, max = null;
+  banquesDe(d).forEach(function (x) { n[x] = (D.ecritures[d] || []).filter(function (r) { return r[4] === x; }).length; if (max === null || n[x] > n[max]) max = x; });
+  return { libelle: "", role: c === max ? "principal" : "secondaire", solde_min: null, propose: true };
+}
+var ROLES_BQ = { principal: "Principal", secondaire: "Secondaire", autre: "Autre" };
+function libBanque(d, c) { var p = paramBanque(d, c); return p.libelle || (C.libelles_comptes[c.slice(0, 3)] || "Banque") + " " + c; }
+function bqpEnregistrer(d, c, val) {
+  if (!enLigne()) { BQP[d + "|" + c] = val; try { localStorage.setItem("zen-comptes-bancaires", JSON.stringify(BQP)); } catch (e) {} majContenu(); return Promise.resolve(); }
+  return sb(ZCLIENT.from("comptes_bancaires").upsert({ dossier: d, compte: c, libelle: val.libelle, role: val.role, solde_min: val.solde_min }, { onConflict: "dossier,compte" }).select("dossier"))
+    .then(verifierTouche).then(function () { return sb(ZCLIENT.from("comptes_bancaires").select("*")); })
+    .then(function (r) { D.comptes_bancaires = r || []; bqpCharger(); majContenu(); })
+    .catch(function (e) { alert(messageErreur(e)); });
+}
+
+/* ---------- Trésorerie : comptes bancaires de chaque résidence (vue du trésorier) ---------- */
+function soldeBq(d, c, m) { var x = ((TR.dossiers[d] || {}).banques || {})[c]; return x && x[m] ? x[m] : null; }
+PAGES.tr_banques = function (p) {
+  var A = arreteTreso(), A1 = moisMoins12(A), Mp = TR.mois[TR.mois.indexOf(A) - 1];
+  var h = enTete("Comptes bancaires", p, "Soldes comptables au " + dateFinMois(A) + ", compte par compte, pour équilibrer les comptes principaux et secondaires");
+  if (enLigne() && !estAdmin()) { el("contenu").innerHTML = h + blocNC("Vue réservée aux administrateurs."); return; }
+  var lignes = [], tot = { solde: 0, besoin: 0, excedent: 0, negatifs: 0, sous: 0, n1: 0, n1ok: true };
+  p.dossiers.forEach(function (d) {
+    var cs = banquesDe(d), L = { d: d, comptes: [], solde: 0, besoin: 0, excedent: 0, n1: 0, n1ok: true, prev: 0 };
+    cs.forEach(function (c) {
+      var v = soldeBq(d, c, A), pr = Mp ? soldeBq(d, c, Mp) : null, n1 = TR.mois.indexOf(A1) >= 0 ? soldeBq(d, c, A1) : null, P = paramBanque(d, c);
+      var s0 = v ? v[0] : 0, mini = P.solde_min === null ? 0 : P.solde_min, manque = s0 < mini ? mini - s0 : 0; /* sans minimum : un découvert est à combler */
+      var exc = P.role === "principal" ? Math.max(0, s0 - (mini || 0)) : 0;
+      L.comptes.push({ c: c, s: s0, var_: v && pr ? s0 - pr[0] : null, n1: n1 ? n1[0] : null, P: P, manque: manque, exc: exc, vir: v ? [v[3], v[4]] : [0, 0] });
+      L.solde += s0; L.besoin += manque; L.excedent += exc; if (n1) L.n1 += n1[0]; else L.n1ok = false;
+      if (s0 < 0) tot.negatifs++; if (manque) tot.sous++;
+    });
+    tot.solde += L.solde; tot.besoin += L.besoin; tot.excedent += L.excedent; if (L.n1ok) tot.n1 += L.n1; else tot.n1ok = false;
+    lignes.push(L);
+  });
+  var cartes = [carte("Trésorerie bancaire", eurC(tot.solde), "Somme des comptes 51 et 53 au " + dateFinMois(A), false, { t: "tr", k: "solde", d: p.dossiers, m: [], A: A }),
+    carte("Même date, année précédente", tot.n1ok ? eurC(tot.n1) : "n.d.", tot.n1ok ? "Solde au " + dateFinMois(A1) : "Historique non importé avant " + moisLong(TR.mois[0]) + " : non disponible, jamais zéro"),
+    carte("Comptes sous leur minimum", String(tot.sous), tot.negatifs + " compte(s) à découvert"),
+    carte("Besoin d’alimentation", eurC(tot.besoin), "Pour remonter les comptes sous leur minimum (0 € si aucun minimum n’est paramétré)"),
+    carte("Excédent des comptes principaux", eurC(tot.excedent), "Au-dessus de leur minimum, mobilisable")];
+  h += '<div class="ruban">' + cartes.join("") + "</div>";
+  var filtre = !!etat.bqAlerte;
+  h += '<div class="lis-barre"><label><input type="checkbox" id="bq-alerte"' + (filtre ? " checked" : "") + "> Seulement les résidences à rééquilibrer</label>" +
+    '<button class="btn btn-ligne" id="bq-csv">Exporter le tableau (CSV)</button><span class="legende">Rôle et minimum : ' + (estAdmin() ? "cliquez sur Paramétrer." : "définis par un administrateur.") + " Rôle « proposé » : le compte le plus mouvementé est pris comme principal tant qu’il n’est pas paramétré.</span></div>";
+  h += '<div class="bloc"><div class="defile"><table class="tab bq-tab"><thead><tr><th>Résidence</th><th>Compte</th><th>Libellé</th><th>Rôle</th><th class="num">Solde au ' + esc(dateFr(finMoisIso(A))) + '</th><th class="num">Variation du mois</th><th class="num">Virements internes (reçus / émis)</th><th class="num">Solde N-1</th><th class="num">Minimum</th><th class="num">À alimenter</th><th></th></tr></thead><tbody>';
+  var csv = [["residence", "compte", "libelle", "role", "solde", "variation_mois", "solde_n_1", "minimum", "a_alimenter"].join(";")];
+  lignes.forEach(function (L) {
+    if (filtre && !L.besoin) return;
+    var vir = L.besoin && L.excedent ? Math.min(L.besoin, L.excedent) : 0;
+    L.comptes.forEach(function (x, i) {
+      var sp = function (k, m, A2) { return xa({ t: "tr", k: k, d: [L.d], m: m || [], A: A2 || A, cpt: x.c }); };
+      h += '<tr class="' + (x.manque ? "bq-alerte" : "") + '">' + (i ? "<td></td>" : '<td rowspan="1"><b>' + esc(nomResidence(L.d)) + "</b></td>") + "<td><code>" + esc(x.c) + "</code></td><td>" + esc(libBanque(L.d, x.c)) + "</td><td>" + ROLES_BQ[x.P.role] + (x.P.propose ? ' <span class="mut">(proposé)</span>' : "") + "</td>" +
+        '<td class="num ' + (x.s < 0 ? "neg" : "") + '"' + sp("solde") + "><b>" + eurC(x.s) + '</b></td><td class="num">' + (x.var_ === null ? "–" : eurC(x.var_)) + '</td><td class="num"' + sp("vir", [A]) + ">" + eurC(x.vir[0]) + " / " + eurC(x.vir[1]) + "</td>" +
+        '<td class="num"' + (x.n1 === null ? ' title="Historique non importé"' : sp("solde", [], A1)) + ">" + (x.n1 === null ? "n.d." : eurC(x.n1)) + '</td><td class="num">' + (x.P.solde_min === null ? '<span class="mut">–</span>' : eurC(x.P.solde_min)) + '</td><td class="num">' + (x.manque ? '<b class="neg">' + eurC(x.manque) + "</b>" : "") + "</td>" +
+        "<td>" + (estAdmin() ? '<button class="btn-petit" data-bq="' + esc(L.d + "|" + x.c) + '">Paramétrer</button>' : "") + "</td></tr>";
+      csv.push([nomResidence(L.d), x.c, libBanque(L.d, x.c), x.P.role, (x.s / 100).toFixed(2), x.var_ === null ? "" : (x.var_ / 100).toFixed(2), x.n1 === null ? "" : (x.n1 / 100).toFixed(2), x.P.solde_min === null ? "" : (x.P.solde_min / 100).toFixed(2), (x.manque / 100).toFixed(2)].map(function (v) { return String(v).replace(".", ","); }).join(";"));
+    });
+    h += '<tr class="bq-total"><td colspan="4">Total ' + esc(nomResidence(L.d)) + (vir ? ' <span class="pastille att">Virement conseillé : ' + eurC(vir) + " du principal vers le(s) secondaire(s)</span>" : L.besoin ? ' <span class="pastille ko">Besoin ' + eurC(L.besoin) + " sans excédent sur le principal</span>" : "") + '</td><td class="num"' + xa({ t: "tr", k: "solde", d: [L.d], m: [], A: A }) + "><b>" + eurC(L.solde) + '</b></td><td></td><td></td><td class="num">' + (L.n1ok ? eurC(L.n1) : "n.d.") + '</td><td></td><td class="num">' + (L.besoin ? eurC(L.besoin) : "") + "</td><td></td></tr>";
+  });
+  if (p.dossiers.length > 1) h += '<tr class="bq-total bq-grand"><td colspan="4">Total ' + esc(p.libelle) + '</td><td class="num"' + xa({ t: "tr", k: "solde", d: p.dossiers, m: [], A: A }) + "><b>" + eurC(tot.solde) + '</b></td><td></td><td></td><td class="num">' + (tot.n1ok ? eurC(tot.n1) : "n.d.") + '</td><td></td><td class="num">' + eurC(tot.besoin) + "</td><td></td></tr>";
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Soldes comptables (débit − crédit), à-nouveaux compris, arrêtés au dernier jour du mois choisi avec la réglette (plafonné au dernier mois importé). Ce sont les soldes de la comptabilité, pas les soldes en banque : un écart vient des opérations non encore comptabilisées. Virement conseillé = le plus petit entre le besoin des comptes sous leur minimum et l’excédent du compte principal au-dessus du sien.</p></div>';
+  if (etat.bqEdition) {
+    var k = etat.bqEdition.split("|"), P = paramBanque(k[0], k[1]);
+    h += '<div class="modale" id="modale-bq"><div class="modale-boite" style="width:min(560px,96vw)"><div class="modale-tete"><div><h2>Compte ' + esc(k[1]) + "</h2><p>" + esc(nomResidence(k[0])) + '</p></div></div><div class="aj-grille">' +
+      '<label class="champ-aj large"><span>Libellé</span><input id="bq-lib" maxlength="80" value="' + esc(P.libelle) + '" placeholder="Banque principale"></label>' +
+      '<label class="champ-aj"><span>Rôle</span><select id="bq-role">' + Object.keys(ROLES_BQ).map(function (r) { return '<option value="' + r + '"' + (r === P.role ? " selected" : "") + ">" + ROLES_BQ[r] + "</option>"; }).join("") + "</select></label>" +
+      '<label class="champ-aj"><span>Solde minimum (€)</span><input id="bq-min" type="number" min="0" step="100" value="' + (P.solde_min === null ? "" : P.solde_min / 100) + '" placeholder="vide = 0 (pas de découvert)"></label></div>' +
+      '<div class="erreur-form" id="bq-err"></div><div class="modale-pied" style="gap:8px"><button class="btn btn-ligne" id="bq-annuler">Annuler</button><button class="btn btn-principal" id="bq-ok">Enregistrer</button></div></div></div>';
+  }
+  el("contenu").innerHTML = h;
+  el("bq-alerte").addEventListener("change", function () { etat.bqAlerte = this.checked; majContenu(); });
+  el("bq-csv").addEventListener("click", function () { telecharger("comptes-bancaires-" + A + ".csv", "\ufeff" + csv.join("\n"), "text/csv;charset=utf-8"); });
+  el("contenu").querySelectorAll("[data-bq]").forEach(function (b) { b.addEventListener("click", function () { etat.bqEdition = b.dataset.bq; majContenu(); }); });
+  if (etat.bqEdition) {
+    el("bq-annuler").addEventListener("click", function () { etat.bqEdition = null; majContenu(); });
+    el("bq-ok").addEventListener("click", function () {
+      var mn = el("bq-min").value.trim(), k2 = etat.bqEdition.split("|");
+      if (mn !== "" && (!isFinite(+mn) || +mn < 0)) { el("bq-err").textContent = "Solde minimum : un nombre positif ou nul, ou vide."; return; }
+      etat.bqEdition = null;
+      bqpEnregistrer(k2[0], k2[1], { libelle: el("bq-lib").value.trim(), role: el("bq-role").value, solde_min: mn === "" ? null : Math.round(+mn * 100) });
+    });
+  }
+};
+function telecharger(nom, contenu, type) {
+  var blob = new Blob([contenu], { type: type }), a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* ---------- Trésorerie : analyse du solde (N comparé à N-1) ---------- */
+function serieTreso(ds, cpt, m) {
+  var v = [0, 0, 0], ok = true;
+  ds.forEach(function (d) {
+    var x = cpt ? (((TR.dossiers[d] || {}).banques || {})[cpt] || {})[m] : ((TR.dossiers[d] || {}).position || {})[m];
+    if (!x) { if (!cpt) ok = false; return; } v[0] += x[0]; v[1] += x[1]; v[2] += x[2];
+  });
+  return ok && TR.mois.indexOf(m) >= 0 ? v : null;
+}
+PAGES.tr_analyse = function (p) {
+  // Saisonnalité : à la première ouverture, une période d'un ou deux mois est élargie aux 12 derniers mois.
+  if (!etat.anOuverte) { etat.anOuverte = true; if (etat.hi - etat.lo < 3) { etat.lo = Math.max(0, etat.hi - 12); majReglette(); } }
+  var A = arreteTreso(), ms = moisTreso(), ds = p.dossiers;
+  var comptes = {}; ds.forEach(function (d) { banquesDe(d).forEach(function (c) { comptes[c] = 1; }); });
+  var cpt = etat.anCompte && comptes[etat.anCompte] ? etat.anCompte : "";
+  var outils = '<label for="an-cpt">Compte <select id="an-cpt"><option value="">Tous les comptes</option>' + Object.keys(comptes).sort().map(function (c) { return '<option value="' + esc(c) + '"' + (c === cpt ? " selected" : "") + ">" + esc(c) + (ds.length === 1 ? " " + esc(libBanque(ds[0], c)) : "") + "</option>"; }).join("") + "</select></label>";
+  var h = enTete("Analyse du solde", p, "Soldes et flux de " + libMois(ms) + " comparés à l’année précédente (saisonnalité)", outils);
+  if (!ms.length) { el("contenu").innerHTML = h + blocNC("Aucun mois importé sur la période choisie."); return; }
+  var N = ms.map(function (m) { return serieTreso(ds, cpt, m); }), N1 = ms.map(function (m) { return serieTreso(ds, cpt, moisMoins12(m)); });
+  var nd = N1.filter(function (x) { return !x; }).length;
+  var val = function (S, i, k) { return S[i] ? S[i][k] / 100 : null; };
+  var serie = function (nom, couleur, S, k) { return { nom: nom, couleur: couleur, valeurs: ms.map(function (m, i) { return val(S, i, k); }) }; };
+  var cats = ms.map(moisCourt), specN = function (k) { return function (i, j) { var m = j ? moisMoins12(ms[i]) : ms[i]; return { t: "tr", k: k, d: ds, m: [m], A: m, cpt: cpt || undefined }; }; };
+  var soldesN = N.filter(Boolean).map(function (x) { return x[0]; }), moy = soldesN.length ? soldesN.reduce(function (a, b) { return a + b; }, 0) / soldesN.length : null;
+  var soldesN1 = N1.filter(Boolean).map(function (x) { return x[0]; }), moy1 = soldesN1.length === ms.length ? soldesN1.reduce(function (a, b) { return a + b; }, 0) / soldesN1.length : null;
+  var iMin = 0, iMax = 0; N.forEach(function (x, i) { if (x && x[0] < N[iMin][0]) iMin = i; if (x && x[0] > N[iMax][0]) iMax = i; });
+  h += '<div class="ruban">' + [carte("Solde moyen de fin de mois", eurC(Math.round(moy)), "Sur " + ms.length + " mois"),
+    carte("Même période, année précédente", moy1 === null ? "n.d." : eurC(Math.round(moy1)), moy1 === null ? "Historique incomplet : non disponible, jamais zéro" : "Écart " + eurC(Math.round(moy - moy1))),
+    carte("Point bas", eurC(N[iMin][0]), moisLong(ms[iMin]), false, { t: "tr", k: "solde", d: ds, m: [], A: ms[iMin], cpt: cpt || undefined }),
+    carte("Point haut", eurC(N[iMax][0]), moisLong(ms[iMax]), false, { t: "tr", k: "solde", d: ds, m: [], A: ms[iMax], cpt: cpt || undefined }),
+    (function () { var av = serieTreso(ds, cpt, TR.mois[TR.mois.indexOf(ms[0]) - 1]);
+      return carte("Variation sur la période", av ? eurC(N[N.length - 1][0] - av[0]) : "n.d.", av ? "Du " + dateFinMois(TR.mois[TR.mois.indexOf(ms[0]) - 1]) + " au " + dateFinMois(A) : "Solde de départ non disponible"); })()].join("") + "</div>";
+  h += '<div class="graphes" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+    barres("Solde de fin de mois : N et N-1", cats, [serie("N", BLEU, N, 0), serie("N-1", "#A9B4BD", N1, 0)], { specs: specN("solde"), legende: true }) +
+    barres("Flux net du mois : N et N-1", cats, [{ nom: "N", couleur: BLEU, valeurs: ms.map(function (m, i) { return N[i] ? (N[i][1] - N[i][2]) / 100 : null; }) }, { nom: "N-1", couleur: "#A9B4BD", valeurs: ms.map(function (m, i) { return N1[i] ? (N1[i][1] - N1[i][2]) / 100 : null; }) }], { specs: specN("flux"), legende: true }) +
+    barres("Encaissements : N et N-1", cats, [serie("N", BLEU, N, 1), serie("N-1", "#A9B4BD", N1, 1)], { specs: specN("enc"), legende: true }) +
+    barres("Décaissements : N et N-1", cats, [serie("N", ORANGE, N, 2), serie("N-1", "#E8B99A", N1, 2)], { specs: specN("dec"), legende: true }) + "</div>";
+  if (nd) h += '<p class="legende" style="margin:-16px 0 20px">N-1 absent pour ' + nd + " mois : les écritures antérieures à " + moisLong(TR.mois[0]) + " ne sont pas importées (non disponible, jamais zéro).</p>";
+  var f = function (v) { return v === null ? '<span class="mut">n.d.</span>' : eurC(v); }, pct = function (a, b) { return a === null || b === null || !b ? "–" : ((a - b) / Math.abs(b) * 100).toFixed(1).replace(".", ",") + " %"; };
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Mois par mois</h2><span class="legende">Virements internes exclus des encaissements et décaissements</span></div><div class="defile"><table class="tab"><thead><tr><th>Mois</th><th class="num">Solde N</th><th class="num">Solde N-1</th><th class="num">Écart</th><th class="num">Écart %</th><th class="num">Encaissements N</th><th class="num">N-1</th><th class="num">Décaissements N</th><th class="num">N-1</th></tr></thead><tbody>';
+  ms.forEach(function (m, i) { var a = N[i], b = N1[i], m1 = moisMoins12(m), sp = function (k, mm) { return xa({ t: "tr", k: k, d: ds, m: [mm], A: mm, cpt: cpt || undefined }); };
+    h += "<tr><td>" + esc(moisLong(m)) + '</td><td class="num"' + sp("solde", m) + "><b>" + f(a[0]) + '</b></td><td class="num"' + (b ? sp("solde", m1) : "") + ">" + f(b ? b[0] : null) + '</td><td class="num">' + (b ? eurC(a[0] - b[0]) : "–") + '</td><td class="num">' + pct(a[0], b ? b[0] : null) +
+      '</td><td class="num"' + sp("enc", m) + ">" + f(a[1]) + '</td><td class="num"' + (b ? sp("enc", m1) : "") + ">" + f(b ? b[1] : null) + '</td><td class="num"' + sp("dec", m) + ">" + f(a[2]) + '</td><td class="num"' + (b ? sp("dec", m1) : "") + ">" + f(b ? b[2] : null) + "</td></tr>"; });
+  h += "</tbody></table></div></div>";
+  el("contenu").innerHTML = h;
+  el("an-cpt").addEventListener("change", function () { etat.anCompte = this.value; majContenu(); });
+};
+
+/* ---------- Tableaux de bord : équilibre financier (FRNG, BFR, TN) ---------- */
+var BIL_LIB = { frng: "Fonds de roulement net global (FRNG)", bfr: "Besoin en fonds de roulement (BFR)", tn: "Trésorerie nette (TN)", ressources: "Ressources stables", emplois: "Emplois stables",
+  capitaux: "Capitaux propres et dettes à long terme (classe 1)", resultat: "Résultat non encore affecté (classes 6 et 7)", stocks: "Stocks (classe 3)", creances: "Créances (classe 4, soldes débiteurs)",
+  dettes: "Dettes (classe 4, soldes créditeurs)", disponibilites: "Disponibilités (classe 5, soldes débiteurs)", concours: "Concours bancaires (classe 5, soldes créditeurs)" };
+function bilanDe(ds, A) { var o = null; ds.forEach(function (d) { var b = (((TR.dossiers[d] || {}).bilan) || {})[A]; if (!b) return; o = o || {}; Object.keys(b).forEach(function (k) { o[k] = (o[k] || 0) + b[k]; }); }); return o; }
+PAGES.equilibre = function (p) {
+  var A = arreteTreso(), ms = moisTreso(), ds = p.dossiers, B = bilanDe(ds, A);
+  var h = enTete("Équilibre financier", p, "FRNG, BFR et trésorerie nette au " + dateFinMois(A));
+  if (!B) { el("contenu").innerHTML = h + blocNC("Aucune écriture jusqu’au " + dateFinMois(A) + "."); return; }
+  var s = function (k, d2) { return { t: "bil", k: k, d: d2 || ds, A: A }; };
+  h += '<div class="ruban">' + [carte(BIL_LIB.frng, eurC(B.frng), "Ressources stables − emplois stables", false, s("frng")),
+    carte(BIL_LIB.bfr, eurC(B.bfr), "Stocks + créances − dettes d’exploitation et diverses", false, s("bfr")),
+    carte(BIL_LIB.tn, eurC(B.tn), "Disponibilités − concours bancaires", false, s("tn")),
+    carte("Contrôle FRNG = BFR + TN", B.ecart === 0 ? "Équilibré" : eurC(B.ecart), B.ecart === 0 ? "Écritures équilibrées jusqu’à l’arrêté" : "Écart : écritures déséquilibrées")].join("") + "</div>";
+  // Évolution sur les 12 mois qui se terminent à l'arrêté (indépendamment de la longueur de la période).
+  var iA = TR.mois.indexOf(A), m12 = TR.mois.slice(Math.max(0, iA - 11), iA + 1);
+  var cats = m12.map(moisCourt), sr = function (k) { return m12.map(function (m) { var b = bilanDe(ds, m); return b ? b[k] / 100 : null; }); };
+  h += '<div class="graphes" style="grid-template-columns:repeat(2,minmax(0,1fr))">' + barres("FRNG, BFR et TN en fin de mois (12 mois jusqu’à l’arrêté)", cats, [{ nom: "FRNG", couleur: "#0F506C", valeurs: sr("frng") }, { nom: "BFR", couleur: ORANGE, valeurs: sr("bfr") }, { nom: "TN", couleur: BLEU, valeurs: sr("tn") }],
+    { legende: true, specs: function (i, j) { return { t: "bil", k: ["frng", "bfr", "tn"][j], d: ds, A: m12[i] }; } }) +
+    barres("Ressources et emplois stables", cats, [{ nom: "Ressources stables", couleur: "#0F506C", valeurs: sr("ressources") }, { nom: "Emplois stables", couleur: "#A9B4BD", valeurs: sr("emplois") }],
+    { legende: true, specs: function (i, j) { return { t: "bil", k: ["ressources", "emplois"][j], d: ds, A: m12[i] }; } }) + "</div>";
+  var L = function (k, niv) { return '<tr class="n' + niv + '"><td class="ind">' + esc(BIL_LIB[k]) + '</td><td class="' + (B[k] < 0 ? "neg" : "") + '"' + xa(s(k)) + ">" + eurC(B[k]) + "</td></tr>"; };
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Composition au ' + esc(dateFinMois(A)) + '</h2></div><div class="defile"><table class="fin" style="min-width:520px"><tbody>' +
+    L("capitaux", 3) + L("resultat", 3) + L("ressources", 2) + L("emplois", 2) + L("frng", 0) + L("stocks", 3) + L("creances", 3) + L("dettes", 3) + L("bfr", 0) + L("disponibilites", 3) + L("concours", 3) + L("tn", 0) +
+    '</tbody></table></div><p class="legende" style="margin:10px 0 0">Soldes cumulés de toutes les écritures jusqu’à l’arrêté, à-nouveaux compris. Emplois stables : classe 2 nette des amortissements et dépréciations. Ressources stables : classe 1 et résultat non encore affecté (classes 6 et 7). Lecture simplifiée de la balance (pas de retraitement des dettes à long terme ni des créances sur immobilisations) : à valider par le contrôle de gestion. Les ajustements ne s’appliquent pas.</p></div>';
+  if (ds.length > 1) {
+    h += '<div class="bloc"><div class="bloc-tete"><h2>Par résidence</h2></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">FRNG</th><th class="num">BFR</th><th class="num">TN</th></tr></thead><tbody>';
+    ds.forEach(function (d) { var b = bilanDe([d], A); if (!b) return; h += '<tr><td><b>' + esc(nomResidence(d)) + "</b></td>" + ["frng", "bfr", "tn"].map(function (k) { return '<td class="num ' + (b[k] < 0 ? "neg" : "") + '"' + xa(s(k, [d])) + ">" + eurC(b[k]) + "</td>"; }).join("") + "</tr>"; });
+    h += "</tbody></table></div></div>";
+  }
+  el("contenu").innerHTML = h;
+};
+/* Détail : comptes d'une composante, soldes à l'arrêté recalculés depuis les écritures et rapprochés du moteur */
+EXPLIQUER.bil = function (s) {
+  var fin = finMoisIso(s.A), B = bilanDe(s.d, s.A), soldes = {};
+  s.d.forEach(function (d) { (D.ecritures[d] || []).forEach(function (r) { if (r[1] <= fin) { var k = d + "|" + r[4]; soldes[k] = (soldes[k] || 0) - r[6]; } }); });
+  var compos = { frng: [["ressources", 1], ["emplois", -1]], bfr: [["stocks", 1], ["creances", 1], ["dettes", -1]], tn: [["disponibilites", 1], ["concours", -1]], ressources: [["capitaux", 1], ["resultat", 1]] };
+  var R = { titre: BIL_LIB[s.k], sous: libPerim(s.d) + ", au " + dateFr(fin), valeur: eurC(B ? B[s.k] : 0), parts: [] };
+  if (compos[s.k]) {
+    R.formule = compos[s.k].map(function (x, i) { return (x[1] < 0 ? "− " : i ? "+ " : "") + BIL_LIB[x[0]]; }).join(" ");
+    R.partsTitre = "Composantes";
+    compos[s.k].forEach(function (x) { R.parts.push({ lib: (x[1] < 0 ? "− " : "+ ") + BIL_LIB[x[0]], val: eurC(B[x[0]]), spec: { t: "bil", k: x[0], d: s.d, A: s.A } }); });
+    return R;
+  }
+  var garde = { capitaux: function (c) { return c.charAt(0) === "1"; }, resultat: function (c) { return c.charAt(0) === "6" || c.charAt(0) === "7"; }, emplois: function (c) { return c.charAt(0) === "2"; }, stocks: function (c) { return c.charAt(0) === "3"; },
+    creances: function (c, v) { return c.charAt(0) === "4" && v >= 0; }, dettes: function (c, v) { return c.charAt(0) === "4" && v < 0; }, disponibilites: function (c, v) { return c.charAt(0) === "5" && v >= 0; }, concours: function (c, v) { return c.charAt(0) === "5" && v < 0; } }[s.k];
+  var signe = { capitaux: -1, resultat: -1, dettes: -1, concours: -1 }[s.k] || 1, parC = {}, tot = 0;
+  Object.keys(soldes).forEach(function (k) { var c = k.split("|")[1], v = soldes[k]; if (!garde(c, v)) return; parC[c] = (parC[c] || 0) + signe * v; tot += signe * v; });
+  R.formule = "Solde (débit − crédit" + (signe < 0 ? ", pris en sens inverse" : "") + ") des comptes concernés jusqu’au " + dateFr(fin) + ", à-nouveaux compris" + (s.k === "creances" || s.k === "dettes" || s.k === "disponibilites" || s.k === "concours" ? " ; chaque compte classé selon le signe de son solde par résidence" : "");
+  R.partsTitre = "Comptes";
+  Object.keys(parC).sort().forEach(function (c) { R.parts.push({ lib: c + " " + (libelleCompte(c) || ""), val: eurC(parC[c]), spec: { t: "bilc", c: c, d: s.d, A: s.A } }); });
+  R.controle = B && tot === B[s.k] ? { ok: true, texte: "Les écritures redonnent exactement le montant calculé par le moteur." } : { ok: false, texte: "Écart de " + eurC(tot - (B ? B[s.k] : 0)) + " avec le moteur." };
+  return R;
+};
+EXPLIQUER.bilc = function (s) {
+  var fin = finMoisIso(s.A), rows = [], tot = 0;
+  s.d.forEach(function (d) { (D.ecritures[d] || []).forEach(function (r) { if (r[4] === s.c && r[1] <= fin) { rows.push([d].concat(r)); tot -= r[6]; } }); });
+  return { titre: "Compte " + s.c + " " + (libelleCompte(s.c) || ""), sous: libPerim(s.d) + ", jusqu’au " + dateFr(fin), valeur: eurC(tot) + " (débit − crédit)", formule: "Toutes les écritures du compte jusqu’à l’arrêté, à-nouveaux compris", parts: [], ecritures: rows };
+};
+
+/* ---------- Import des KPI mensuels (Données externes) ---------- */
+var MESURES_IMP = [];
+function mesuresImporteesCharger() {
+  if (enLigne()) MESURES_IMP = (D.mesures_importees || []).map(function (x) { return { dossier: x.dossier, mois: x.mois, mesure: x.mesure, valeur: +x.valeur, par: x.importe_par || "", le: x.importe_le || "" }; });
+  else try { MESURES_IMP = JSON.parse(localStorage.getItem("zen-mesures")) || []; } catch (e) { MESURES_IMP = []; }
+}
+/* Les valeurs importées remplacent, pour un mois et une mesure, la valeur publiée (EXPL), puis tout est recalculé. */
+function appliquerMesures() {
+  EXPL = {};
+  Object.keys(C.exploitation).forEach(function (d) { EXPL[d] = {}; Object.keys(C.exploitation[d]).forEach(function (m) { EXPL[d][m] = {};
+    Object.keys(C.exploitation[d][m]).forEach(function (k) { EXPL[d][m][k] = parseFloat(C.exploitation[d][m][k]); }); }); });
+  MESURES_IMP.forEach(function (x) { if (!residence(x.dossier)) return; ((EXPL[x.dossier] = EXPL[x.dossier] || {})[x.mois] = EXPL[x.dossier][x.mois] || {})[x.mesure] = x.valeur; });
+  (D.import_kpi || []).forEach(function (k) { if (!mesureExterne(k.code) && MESURES_IMP.some(function (x) { return x.mesure === k.code; })) C.mesures_externes.push({ code: k.code, libelle: k.entete }); });
+  Object.keys(D.couverture).forEach(function (d) { Object.keys(D.couverture[d]).forEach(function (m) { var e = (EXPL[d] || {})[m] || {};
+    D.couverture[d][m].exploitation = D.meta.mesures.filter(function (k) { return e[k] !== undefined; }).length; }); });
+  ajVider();
+}
+function normaliserMois(v) {
+  if (v === null || v === undefined || v === "") return null;
+  if (v instanceof Date && !isNaN(v)) return v.getFullYear() + "-" + String(v.getMonth() + 1).padStart(2, "0");
+  if (typeof v === "number" && v > 20000 && v < 80000) { var dt = new Date(Math.round((v - 25569) * 864e5)); return dt.getUTCFullYear() + "-" + String(dt.getUTCMonth() + 1).padStart(2, "0"); }
+  var t = String(v).trim(), m, a = null, mo = null;
+  if ((m = /^(\d{4})[-\/.](\d{1,2})(?:[-\/.]\d{1,2})?$/.exec(t))) { a = m[1]; mo = m[2]; }
+  else if ((m = /^(\d{1,2})[-\/.](\d{4})$/.exec(t))) { a = m[2]; mo = m[1]; }
+  else if ((m = /^\d{1,2}[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(t))) { a = m[2]; mo = m[1]; }
+  return a && +mo >= 1 && +mo <= 12 ? a + "-" + mo.padStart(2, "0") : null;
+}
+function normaliserEntete(x) { return String(x == null ? "" : x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+/* Contrôle d'un fichier importé (tableau de lignes, la première contenant les en-têtes). Tout ou rien : la moindre
+   erreur bloque l'import (invariant 7). Retourne { valeurs, erreurs, avertissements, colonnes }. */
+function validerImport(lignes) {
+  var R = { valeurs: [], erreurs: [], avertissements: [], colonnes: [] };
+  var iTete = lignes.findIndex(function (l) { return (l || []).some(function (x) { return /^mois/.test(normaliserEntete(x)); }); });
+  if (iTete < 0) { R.erreurs.push({ ligne: 1, colonne: "", motif: "en-tête « Mois (AAAA-MM) » introuvable : utilisez le modèle" }); return R; }
+  var tete = lignes[iTete].map(normaliserEntete), cRes = -1, cMois = -1, cols = [];
+  tete.forEach(function (h, i) {
+    if (cMois < 0 && /^mois/.test(h)) { cMois = i; return; }
+    if (cRes < 0 && (/^code residence/.test(h) || h === "dossier pennylane" || h === "dossier" || h === "residence" || h === "code")) { cRes = i; return; }
+    var k = (D.import_kpi || []).find(function (x) { return [x.entete, x.code].concat(x.alias || []).some(function (a) { return normaliserEntete(a) === h; }); });
+    if (k) { if (cols.some(function (c) { return c.code === k.code; })) R.erreurs.push({ ligne: iTete + 1, colonne: lignes[iTete][i], motif: "colonne en double pour " + k.code }); else cols.push({ i: i, code: k.code, entete: lignes[iTete][i] }); }
+    else if (h && !/^residence/.test(h)) R.avertissements.push({ ligne: iTete + 1, colonne: lignes[iTete][i], motif: "colonne non reconnue, ignorée" });
+  });
+  if (cRes < 0) R.erreurs.push({ ligne: iTete + 1, colonne: "", motif: "colonne « Code résidence » introuvable" });
+  if (!cols.length) R.erreurs.push({ ligne: iTete + 1, colonne: "", motif: "aucune colonne de KPI reconnue" });
+  R.colonnes = cols;
+  if (R.erreurs.length) return R;
+  var vus = {}, parCode = {};
+  D.residences.forEach(function (r) { [r.code, r.dossier, r.nom].forEach(function (x) { if (x) parCode[normaliserEntete(x)] = r.dossier; }); });
+  for (var n = iTete + 1; n < lignes.length; n++) {
+    var l = lignes[n] || [], num = n + 1;
+    if (!l.some(function (x) { return x !== null && x !== undefined && String(x).trim() !== ""; })) continue;
+    var code = String(l[cRes] == null ? "" : l[cRes]).trim(), d = parCode[normaliserEntete(code)], mo = normaliserMois(l[cMois]);
+    if (!code) { R.erreurs.push({ ligne: num, colonne: "Code résidence", motif: "vide" }); continue; }
+    if (!d) { R.erreurs.push({ ligne: num, colonne: "Code résidence", motif: "« " + code + " » inconnu ou hors de votre parc" }); continue; }
+    if (!mo) { R.erreurs.push({ ligne: num, colonne: "Mois", motif: "« " + (l[cMois] == null ? "" : l[cMois]) + " » : format attendu AAAA-MM" }); continue; }
+    if (idxMois(mo) < 0) R.avertissements.push({ ligne: num, colonne: "Mois", motif: moisLong(mo) + " hors de la frise du logiciel : enregistré, non affiché" });
+    var ligneVals = {};
+    cols.forEach(function (c) {
+      var v = l[c.i];
+      if (v === null || v === undefined || String(v).trim() === "") return;
+      var x = typeof v === "number" ? v : +String(v).replace(/\s|\u00a0|\u202f/g, "").replace(",", ".");
+      if (!isFinite(x) || x < 0) { R.erreurs.push({ ligne: num, colonne: c.entete, motif: "« " + v + " » : nombre positif ou nul attendu" }); return; }
+      var cle = d + "|" + mo + "|" + c.code;
+      if (vus[cle]) { R.erreurs.push({ ligne: num, colonne: c.entete, motif: "déjà fourni ligne " + vus[cle] + " pour " + nomResidence(d) + ", " + moisLong(mo) }); return; }
+      vus[cle] = num; ligneVals[c.code] = x;
+      R.valeurs.push({ dossier: d, mois: mo, mesure: c.code, valeur: x });
+    });
+    if (ligneVals.LN_VENDUES !== undefined && ligneVals.LN_DISPONIBLES !== undefined && ligneVals.LN_VENDUES > ligneVals.LN_DISPONIBLES)
+      R.avertissements.push({ ligne: num, colonne: "Chambres vendues", motif: "supérieur aux chambres disponibles (taux d’occupation au-dessus de 100 %)" });
+  }
+  if (!R.valeurs.length && !R.erreurs.length) R.erreurs.push({ ligne: iTete + 2, colonne: "", motif: "aucune valeur à importer" });
+  return R;
+}
+function lireCsv(texte) {
+  var sep = (texte.split("\n")[0].match(/;/g) || []).length >= (texte.split("\n")[0].match(/,/g) || []).length ? ";" : ",";
+  return texte.replace(/^\ufeff/, "").split(/\r?\n/).map(function (l) {
+    var out = [], cur = "", q = false;
+    for (var i = 0; i < l.length; i++) { var ch = l[i];
+      if (q) { if (ch === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch; }
+      else if (ch === '"') q = true; else if (ch === sep) { out.push(cur); cur = ""; } else cur += ch; }
+    out.push(cur); return out; });
+}
+function lireFichierImport(fichier) {
+  if (/\.csv$/i.test(fichier.name)) return fichier.text().then(lireCsv);
+  var charger = window.XLSX ? Promise.resolve() : new Promise(function (ok, ko) { var s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload = ok; s.onerror = function () { ko(new Error("lecteur Excel indisponible (réseau) : enregistrez le fichier en CSV et importez le CSV")); }; document.head.appendChild(s); });
+  return charger.then(function () { return fichier.arrayBuffer(); }).then(function (buf) {
+    var wb = XLSX.read(buf, { type: "array", cellDates: true }), nom = wb.SheetNames.indexOf("Saisie") >= 0 ? "Saisie" : wb.SheetNames[0];
+    return XLSX.utils.sheet_to_json(wb.Sheets[nom], { header: 1, raw: true, defval: null });
+  });
+}
+function enregistrerImport(valeurs) {
+  if (!enLigne()) {
+    var idx = {}; MESURES_IMP.forEach(function (x, i) { idx[x.dossier + "|" + x.mois + "|" + x.mesure] = i; });
+    valeurs.forEach(function (v) { var k = v.dossier + "|" + v.mois + "|" + v.mesure, x = { dossier: v.dossier, mois: v.mois, mesure: v.mesure, valeur: v.valeur, par: etat.utilisateur ? etat.utilisateur.mail : "", le: new Date().toISOString() };
+      if (k in idx) MESURES_IMP[idx[k]] = x; else MESURES_IMP.push(x); });
+    try { localStorage.setItem("zen-mesures", JSON.stringify(MESURES_IMP)); } catch (e) {}
+    return Promise.resolve();
+  }
+  var lots = []; for (var i = 0; i < valeurs.length; i += 500) lots.push(valeurs.slice(i, i + 500));
+  return lots.reduce(function (p, lot) { return p.then(function () { return sb(ZCLIENT.from("mesures_importees").upsert(lot, { onConflict: "dossier,mois,mesure" }).select("dossier")).then(verifierTouche); }); }, Promise.resolve())
+    .then(function () { return sb(ZCLIENT.from("mesures_importees").select("*")); }).then(function (r) { D.mesures_importees = r || []; mesuresImporteesCharger(); });
+}
+function supprimerImport(d) {
+  if (!enLigne()) { MESURES_IMP = MESURES_IMP.filter(function (x) { return x.dossier !== d; }); try { localStorage.setItem("zen-mesures", JSON.stringify(MESURES_IMP)); } catch (e) {} return Promise.resolve(); }
+  return sb(ZCLIENT.from("mesures_importees").delete().eq("dossier", d).select("dossier")).then(verifierTouche)
+    .then(function () { return sb(ZCLIENT.from("mesures_importees").select("*")); }).then(function (r) { D.mesures_importees = r || []; mesuresImporteesCharger(); });
+}
+function modeleCsv(p) {
+  var cols = ["Code résidence", "Résidence (facultatif)", "Mois (AAAA-MM)"].concat((D.import_kpi || []).map(function (k) { return k.entete; }));
+  var lignes = [cols.join(";")];
+  p.dossiers.forEach(function (d) { var r = residence(d); fenetre().forEach(function (m) { lignes.push([r.code || d, r.nom, m].concat((D.import_kpi || []).map(function () { return ""; })).join(";")); }); });
+  return "\ufeff" + lignes.join("\n");
+}
+PAGES.externes = function (p) {
+  var admin = estAdmin(), I = etat.import;
+  var h = enTete("Données externes", p, "KPI mensuels hors comptabilité : import par résidence et par mois");
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Importer les KPI mensuels</h2><span class="legende">Toutes les résidences en une fois, une ligne par résidence et par mois</span></div>' +
+    '<div class="imp-etapes"><div><b>1. Télécharger un modèle</b><p class="legende">Le modèle Excel vide, ou un modèle CSV déjà rempli avec les résidences du périmètre et les mois de la réglette.</p>' +
+    '<a class="btn btn-ligne" href="modeles/Zenitude_Import_KPI_modele.xlsx" download>Modèle Excel</a> <button class="btn btn-ligne" id="imp-csv">Modèle CSV pré-rempli</button></div>' +
+    "<div><b>2. Remplir</b><p class=\"legende\">Une colonne par KPI : " + (D.import_kpi || []).map(function (k) { return esc(k.entete); }).join(", ") + ". Cellule vide = non fourni (jamais zéro).</p></div>" +
+    '<div><b>3. Importer</b><p class="legende">' + (admin ? "Fichier Excel (.xlsx) ou CSV. Tout est vérifié avant d’enregistrer : à la moindre erreur, rien n’est importé." : "Réservé aux administrateurs.") + "</p>" +
+    (admin ? '<label class="btn btn-principal" for="imp-fichier" style="cursor:pointer">Choisir le fichier…</label><input type="file" id="imp-fichier" accept=".xlsx,.xls,.csv" style="display:none">' : "") + "</div></div>";
+  if (I) {
+    h += '<div class="imp-resultat"><h3>' + esc(I.nom) + " : " + I.R.valeurs.length + " valeur(s), " + I.R.erreurs.length + " erreur(s), " + I.R.avertissements.length + " avertissement(s)</h3>";
+    var tab = function (liste, cl) { return '<div class="defile" style="max-height:260px"><table class="tab ' + cl + '"><thead><tr><th>Ligne</th><th>Colonne</th><th>Motif</th></tr></thead><tbody>' + liste.slice(0, 200).map(function (x) { return "<tr><td>" + x.ligne + "</td><td>" + esc(x.colonne) + "</td><td>" + esc(x.motif) + "</td></tr>"; }).join("") + "</tbody></table></div>"; };
+    if (I.R.erreurs.length) h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Import refusé.</b> Corrigez ces lignes dans le fichier, puis importez-le de nouveau. Rien n’a été enregistré.</div></div>' + tab(I.R.erreurs, "imp-err");
+    if (I.R.avertissements.length) h += "<p class=\"legende\"><b>Avertissements</b> (n’empêchent pas l’import)</p>" + tab(I.R.avertissements, "");
+    if (!I.R.erreurs.length) {
+      var parRes = {}; I.R.valeurs.forEach(function (v) { parRes[v.dossier] = parRes[v.dossier] || { n: 0, mois: {} }; parRes[v.dossier].n++; parRes[v.dossier].mois[v.mois] = 1; });
+      h += '<table class="tab"><thead><tr><th>Résidence</th><th class="num">Valeurs</th><th>Mois</th></tr></thead><tbody>' + Object.keys(parRes).map(function (d) { var ms2 = Object.keys(parRes[d].mois).sort(); return "<tr><td>" + esc(nomResidence(d)) + '</td><td class="num">' + parRes[d].n + "</td><td>" + esc(libMois(ms2)) + "</td></tr>"; }).join("") + "</tbody></table>" +
+        '<div class="aj-actions"><button class="btn btn-principal" id="imp-ok">Importer ' + I.R.valeurs.length + ' valeur(s)</button><button class="btn btn-ligne" id="imp-annuler">Annuler</button></div>';
+    } else h += '<div class="aj-actions"><button class="btn btn-ligne" id="imp-annuler">Fermer</button></div>';
+    h += "</div>";
+  }
+  h += "</div>";
+  var parD = {}; MESURES_IMP.forEach(function (x) { if (p.dossiers.indexOf(x.dossier) < 0) return; var o = parD[x.dossier] = parD[x.dossier] || { n: 0, mois: {}, le: "" }; o.n++; o.mois[x.mois] = 1; if (x.le > o.le) o.le = x.le; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Valeurs importées</h2><span class="legende">Elles remplacent les valeurs publiées pour le même mois et le même KPI</span></div>';
+  if (!Object.keys(parD).length) h += '<p class="mut">Aucune valeur importée sur ce périmètre.</p>';
+  else h += '<div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">Valeurs</th><th>Mois</th><th>Dernier import</th><th></th></tr></thead><tbody>' + Object.keys(parD).map(function (d) { var o = parD[d], ms2 = Object.keys(o.mois).sort();
+    return "<tr><td><b>" + esc(nomResidence(d)) + '</b></td><td class="num">' + o.n + "</td><td>" + esc(libMois(ms2)) + "</td><td>" + (o.le ? esc(dateFr(o.le)) : "") + "</td><td>" + (admin ? '<button class="btn-petit" data-imp-sup="' + esc(d) + '">Supprimer</button>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+  h += "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Mesures d’exploitation disponibles, ' + D.meta.annee + "</h2></div>" + grilleCouverture(p, false) + "</div>";
+  el("contenu").innerHTML = h;
+  el("imp-csv").addEventListener("click", function () { telecharger("Zenitude_Import_KPI_" + p.id + ".csv", modeleCsv(p), "text/csv;charset=utf-8"); });
+  var f = el("imp-fichier");
+  if (f) f.addEventListener("change", function () { var fi = this.files[0]; this.value = ""; if (!fi) return;
+    lireFichierImport(fi).then(function (lignes) { etat.import = { nom: fi.name, R: validerImport(lignes) }; majContenu(); })
+      .catch(function (e) { etat.import = { nom: fi.name, R: { valeurs: [], erreurs: [{ ligne: "", colonne: "", motif: "fichier illisible : " + (e.message || e) }], avertissements: [] } }; majContenu(); }); });
+  if (el("imp-annuler")) el("imp-annuler").addEventListener("click", function () { etat.import = null; majContenu(); });
+  if (el("imp-ok")) el("imp-ok").addEventListener("click", function () { var b = this; b.disabled = true; b.textContent = "Import en cours…";
+    enregistrerImport(I.R.valeurs).then(function () { etat.import = null; appliquerMesures(); majContenu(); alert(I.R.valeurs.length + " valeur(s) importée(s). Les KPI de tous les tableaux de bord en tiennent compte."); })
+      .catch(function (e) { b.disabled = false; b.textContent = "Importer"; alert(messageErreur(e)); }); });
+  el("contenu").querySelectorAll("[data-imp-sup]").forEach(function (b) { b.addEventListener("click", function () {
+    if (!confirm("Supprimer toutes les valeurs importées pour " + nomResidence(b.dataset.impSup) + " ? Les valeurs publiées reprennent leur place.")) return;
+    supprimerImport(b.dataset.impSup).then(function () { appliquerMesures(); majContenu(); }).catch(function (e) { alert(messageErreur(e)); }); }); });
+};
+
 /* ---------- Thème d'affichage ---------- */
 function themeChoisi() { try { return localStorage.getItem("zen-theme") || "light"; } catch (e) { return "light"; } }
 var THEMES = { light: ["☀", "Thème clair (blanc). Cliquer pour passer au thème sombre."], dark: ["☾", "Thème sombre. Cliquer pour passer au réglage automatique."], auto: ["Auto", "Suit le réglage de l’ordinateur. Cliquer pour passer au thème clair."] };
@@ -2553,6 +2999,9 @@ document.querySelectorAll("[data-theme-cycle]").forEach(function (b) { b.addEven
 appliquerTheme(themeChoisi());
 ajCharger();
 lisCharger();
+bqpCharger();
+mesuresImporteesCharger();
+appliquerMesures();
 appliquerMenu(menuReduit());
 
 demarrer();
@@ -2644,8 +3093,10 @@ function chargerDonnees(client) {
     lireBase(client.from("residence_groupe").select("residence_id, groupe_id")),
     lireBase(client.from("ajustements").select("*").order("id")),
     lireBase(client.from("comptes_simules").select("numero, libelle, cree_par").order("numero")),
-    lireBase(client.from("lissages").select("*").order("id"))
-  ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [] }; });
+    lireBase(client.from("lissages").select("*").order("id")),
+    lireBase(client.from("mesures_importees").select("*")),
+    lireBase(client.from("comptes_bancaires").select("*"))
+  ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [] }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -2655,7 +3106,7 @@ function demarrerAvecClient(client, profil) {
     if (!x.commun) return ecranDemarrage("Données pas encore publiées", "Les chiffres sont calculés et publiés automatiquement par GitHub Actions (onglet Actions du dépôt, « Tests et publication »). Relancez la publication, puis rechargez cette page.", ["espace.html", "Mon espace"]);
     if (!x.lignes.length) return ecranDemarrage("Aucune résidence dans votre parc", "Aucune résidence n’est encore attribuée à votre compte, ou ses chiffres n’ont pas été publiés. Un administrateur peut vous attribuer des résidences ou un groupe dans Administration.", ["espace.html", "Mon espace"]);
     D = assemblerDonnees(x.commun, x.lignes, x.groupes, x.liens, profil);
-    D.ajustements = x.ajustements; D.comptes_simules = x.comptes; D.lissages = x.lissages;
+    D.ajustements = x.ajustements; D.comptes_simules = x.comptes; D.lissages = x.lissages; D.mesures_importees = x.mesures; D.comptes_bancaires = x.banques;
     lancerApplication();
     ZCLIENT = client;
     var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");

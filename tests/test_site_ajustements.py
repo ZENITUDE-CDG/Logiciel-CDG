@@ -21,7 +21,7 @@ PARITE = """
 () => {
   var diffs = [], n = 0;
   D.perimetres.forEach(function (p) {
-    [[D.lignes_ebitda, ["TAUX_EBITDA","EBITDA","CA_NET"], D.ebitda], [D.lignes_sig, ["TAUX_EBE","EBE","VENTES_PROD"], D.sig]].forEach(function (t) {
+    [[D.lignes_ebitda, ["TAUX_EBITDA","EBITDA","CA"], D.ebitda], [D.lignes_sig, ["TAUX_EBE","EBE","VENTES_PROD"], D.sig]].forEach(function (t) {
       var js = tableauJS(t[0], p.dossiers, D.mois, false, t[1]), py = t[2][p.id];
       function cmp(a, b, lab) {
         t[0].forEach(function (l) { n++;
@@ -63,7 +63,7 @@ PROVISION = """
     Object.keys(cs).forEach(function (c) { if (c.indexOf("706") === 0 || c.indexOf("708") === 0) base += cs[c]; }); }); });
   var r = tableauJS(V.lignes(), dos, mois, false, V.ratio), a = tableauJS(V.lignes(), dos, mois, true, V.ratio);
   var ao = tableauJS(V.lignes(), dos, ["2026-08"], true, V.ratio);
-  return { ecart: a.total.AUTRES - r.total.AUTRES, attendu: base * 0.05, ca_identique: a.total.CA_NET === r.total.CA_NET,
+  return { ecart: a.total.DIVERS - r.total.DIVERS, attendu: base * 0.05, ca_identique: a.total.CA === r.total.CA,
            ebitda_baisse: r.total.EBITDA - a.total.EBITDA, nc_aout: ao.total.TAXES === NC };
 }
 """

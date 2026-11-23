@@ -64,6 +64,7 @@ DERNIER_REGLEMENT = date(2026, 10, 31)
 CLIENTS_DEMO = [("CLI001", 30, (3, 55)), ("CLI002", 45, (25, 85)), ("CLI003", 30, (5, 40))]
 FOURNISSEURS_DEMO = [("FOU001", 45, (20, 70)), ("FOU002", 30, (15, 55)), ("FOU003", 30, (10, 50)),
                      ("FOU004", 60, (30, 90)), ("FOU005", 30, (15, 60)), ("FOU006", 45, (20, 75))]
+BANQUE_SECONDAIRE = "FOU003"  # lot 15 : fournisseur réglé sur le compte bancaire secondaire
 SANS_ECHEANCE = "DEMO-2008"  # échéance non exportée pour ce dossier : « échéance inconnue » en mode pièce
 AN_CREANCE = {"DEMO-2001", "DEMO-2004", "DEMO-2006"}
 AN_DETTE = {"DEMO-2002", "DEMO-2005"}
@@ -101,7 +102,9 @@ def ajouter_tresorerie(ecr, rng):
             nouvelles.append([dossier, l[1], pay.isoformat(), "BQ", num, compte_t, f"Encaissement {tiers} (fictif)", "", montant, tiers, code, ""])
         else:
             nouvelles.append([dossier, l[1], pay.isoformat(), "BQ", num, compte_t, f"Règlement {tiers} (fictif)", montant, "", tiers, code, ""])
-            nouvelles.append([dossier, l[1], pay.isoformat(), "BQ", num, "512", f"Règlement {tiers} (fictif)", "", montant, "", "", ""])
+            # Lot 15 : un fournisseur est payé depuis le compte bancaire secondaire (5122)
+            banque = "5122" if tiers == BANQUE_SECONDAIRE else "512"
+            nouvelles.append([dossier, l[1], pay.isoformat(), "BQ", num, banque, f"Règlement {tiers} (fictif)", "", montant, "", "", ""])
 
     for l in base:
         if l[3] not in ("VT", "HA"):
@@ -153,6 +156,35 @@ def ajouter_tresorerie(ecr, rng):
     nouvelles.append(["DEMO-2006", "2025-10-01/2026-09-30", "2026-09-10", "BQ", "BQ99001", "512", "Acompte reçu (fictif)", "5000.00", "", "", "", ""])
     nouvelles.append(["DEMO-2006", "2025-10-01/2026-09-30", "2026-09-10", "BQ", "BQ99001", "411", "Acompte reçu (fictif)", "", "5000.00", "CLI001", "", ""])
     return base + nouvelles
+
+
+def ajouter_virements_internes(ecr):
+    """Lot 15 : compte bancaire secondaire (5122), alimenté chaque début de mois par un virement interne depuis
+    le compte principal (512), d'un montant proche des règlements du mois payés sur le secondaire (85 % à 120 %,
+    arrondi à 500 euros), pour que des soldes soient à rééquilibrer (données fictives). Solde d'ouverture du secondaire : 2 000 euros pris sur le principal. Les
+    virements internes ne sont ni des encaissements ni des décaissements (docs/tresorerie.md)."""
+    out = list(ecr)
+    for dossier in sorted({l[0] for l in ecr}):
+        lignes = [l for l in ecr if l[0] == dossier]
+        exercice = next(l[1] for l in lignes if l[3] == "AN")
+        out.append([dossier, exercice, "2025-10-01", "AN", "AN00002", "5122", "Ouverture compte secondaire (fictif)", "2000.00", "", "", "", ""])
+        out.append([dossier, exercice, "2025-10-01", "AN", "AN00002", "512", "Ouverture compte secondaire (fictif)", "", "2000.00", "", "", ""])
+        payes = {}
+        for l in lignes:
+            if l[5] == "5122" and l[8]:
+                payes[l[2][:7]] = payes.get(l[2][:7], 0.0) + float(l[8])
+        n = 0
+        for i, m in enumerate(mois(date(2025, 10, 1), DERNIER_REGLEMENT)):
+            facteur = (1.15, 0.85, 1.05, 0.9, 1.2, 0.95)[i % 6]  # alimentation imparfaite : soldes à surveiller
+            montant = -(-payes.get(m.isoformat()[:7], 0.0) * facteur // 500) * 500
+            if not montant:
+                continue
+            n += 1
+            jour, piece = m.replace(day=3).isoformat(), f"VI{n:05d}"
+            ex = next((l[1] for l in lignes if l[2][:7] == jour[:7]), exercice)
+            out.append([dossier, ex, jour, "BQ", piece, "5122", "Virement interne depuis le compte principal (fictif)", f"{montant:.2f}", "", "", "", ""])
+            out.append([dossier, ex, jour, "BQ", piece, "512", "Virement interne vers le compte secondaire (fictif)", "", f"{montant:.2f}", "", "", ""])
+    return out
 
 
 def main(SORTIE=SORTIE):
@@ -214,6 +246,7 @@ def main(SORTIE=SORTIE):
             if (dossier, m.month, m.year) == ("DEMO-2001", 7, 2026):
                 op("HA", "671", "401", "Pénalité (fictif)", 380.00)
     ecr = ajouter_tresorerie(ecr, random.Random(GRAINE + 11))
+    ecr = ajouter_virements_internes(ecr)
     entete_e = ["dossier", "exercice", "date", "journal", "piece", "compte", "libelle", "debit", "credit",
                 "tiers", "lettrage", "echeance"]
     for nom, entete, lignes in (("ecritures.csv", entete_e, ecr),

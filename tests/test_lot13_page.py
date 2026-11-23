@@ -40,6 +40,12 @@ window.clientSimule = function (tables) {
       if (q.table === "ajustements") Object.assign(v, { id: prochain++, cree_par: "collab@exemple.invalid", modifie_par: "collab@exemple.invalid" });
       lignes.push(v); return { data: [v], error: null };
     }
+    if (q.op === "upsert") {
+      var cles = (q.conflit || "").split(","), liste = Array.isArray(q.valeurs) ? q.valeurs : [q.valeurs], sortie = [];
+      liste.forEach(function (v) { var ex = lignes.find(function (l) { return cles.every(function (k) { return l[k] === v[k]; }); });
+        if (ex) Object.assign(ex, v); else lignes.push(Object.assign({}, v)); sortie.push(v); });
+      return { data: sortie, error: null };
+    }
     if (q.op === "update") { var u = lignes.filter(garde); u.forEach(function (l) { Object.assign(l, q.valeurs); }); return { data: u, error: null }; }
     if (q.op === "delete") { var d = lignes.filter(garde); tables[q.table] = lignes.filter(function (l) { return !garde(l); }); return { data: d, error: null }; }
   }
@@ -50,6 +56,7 @@ window.clientSimule = function (tables) {
       eq: function (k, v) { q.filtres.push([k, v]); return api; },
       maybeSingle: function () { q.unique = true; return api; },
       insert: function (v) { q.op = "insert"; q.valeurs = v; return api; },
+      upsert: function (v, o) { q.op = "upsert"; q.valeurs = v; q.conflit = o && o.onConflict; return api; },
       update: function (v) { q.op = "update"; q.valeurs = v; return api; },
       delete: function () { q.op = "delete"; return api; },
       then: function (ok, ko) { return Promise.resolve().then(function () { return executer(q); }).then(ok, ko); }

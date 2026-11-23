@@ -58,3 +58,16 @@ l'arrêté.
 - Pas de prévision : un échéancier d'encaissements et de décaissements attendus relèverait du module Budgets.
 - Les autres dettes (sociales, fiscales, emprunts) et les créances hors clients ne sont pas analysées.
 - Données de démonstration fictives : les règlements, les impayés et les à-nouveaux sont générés.
+
+## Lot 15 : virements internes, comptes bancaires, équilibre financier
+
+- **Virement interne** : pièce hors à-nouveaux, équilibrée, sur au moins deux comptes, dont toutes les lignes sont sur
+  des comptes 51, 53 ou 58. Ni encaissement ni décaissement ; suivi à part par compte (reçus, émis).
+- **Comptes bancaires** : pour chaque compte de disponibilités, solde à l'arrêté, encaissements et décaissements hors
+  virements internes, virements internes reçus et émis. La somme des comptes redonne la position de trésorerie.
+- **Équilibre financier** à l'arrêté, soldes cumulés (débit − crédit) de toutes les écritures, à-nouveaux compris :
+  ressources stables = −(classe 1) − (classes 6 et 7, résultat non encore affecté) ; emplois stables = classe 2 (nette
+  des 28 et 29) ; FRNG = ressources − emplois ; BFR = classe 3 + classe 4 (comptes débiteurs = créances, créditeurs =
+  dettes, par résidence) ; TN = classe 5 (débiteurs = disponibilités, créditeurs = concours bancaires).
+  FRNG = BFR + TN dès que les écritures sont équilibrées. Lecture simplifiée, à valider par le contrôle de gestion.
+

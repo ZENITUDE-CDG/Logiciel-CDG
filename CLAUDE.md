@@ -45,7 +45,7 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (315 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14 ; les tests de page des lots 9, 11, 13 et 14 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 14 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
+- Tests : `python -m pytest` (336 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15 ; les tests de page des lots 9, 11, 13 à 15 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
 - Tests et publication automatiques : `.github/workflows/tests-et-publication.yml`. À chaque dépôt, toute la suite tourne sur GitHub (onglet Actions) avec une base PostgreSQL temporaire créée depuis `migrations/` (aucun secret, Supabase jamais touché). Puis, sur main seulement et si les tests passent, `python interface/publier_supabase.py` publie les chiffres dans la base de test avec le secret GitHub `SUPABASE_SECRET_KEY` (décision 0007). Essai sans envoi : `python interface/publier_supabase.py --essai <dossier>`.
 - Installation de la base de test : `python scripts/assembler_installation.py` régénère `scripts/installation_supabase.sql` (remise à zéro + migrations + données de départ) ; un test vérifie qu'il est à jour.
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
@@ -58,6 +58,7 @@
 - Configuration de test avec les six KPI (lot 6) : `python tests/generer_config_kpi.py tests/fixtures/config_complete_v1.xlsx tests/fixtures/config_kpi_lot6.xlsx`.
 - KPI d'un dossier : `python -m zenitude.kpi calcul <store> <dossier> <ecritures.csv> <exercices.csv> <mesures.csv> [--du AAAA-MM --au AAAA-MM] [--json]`.
 - Site (lot 7) : `python interface/generer_demo.py` puis `python interface/generer_site.py` (écrit `index.html` à la racine, affiché par GitHub Pages ; depuis le lot 13, sans aucune donnée). Démonstration complète à ouvrir en local : `python interface/generer_site.py demo.html`.
+- Modèle d'import des KPI (lot 15) : `python interface/generer_modele_import.py` (écrit `modeles/Zenitude_Import_KPI_modele.xlsx`) ; un test vérifie qu'il est à jour.
 - Lot 8 (site) : soldes intermédiaires de gestion (`LIGNES_SIG` dans `interface/generer_site.py`, préfixe de compte le plus long, calculés en Python comme le tableau EBITDA) affichés dans la Synthèse d'activité avec un sélecteur EBITDA / SIG ; charte allégée dans `interface/gabarit.html`. Découpage SIG provisoire, à valider par le contrôle de gestion.
 - Vue groupe : `python -m zenitude.kpi groupe <store> <ecritures.csv> <mesures.csv> --du AAAA-MM --au AAAA-MM (--dossiers A,B | --activite Seniors) [--json]`.
 
@@ -202,4 +203,16 @@ Décision : `docs/decisions/0008-detail-des-calculs-et-lissage-de-postes.md`. Mi
 - Compte : clic sur le nom et l'adresse en bas à gauche (`#lien-compte`) ; bouton flottant supprimé de `app/garde.js` ; « Mon compte ». Logo de Mon compte et d'Administration : `index.html#choix` ouvre le choix des résidences.
 - Tests : `tests/test_lot14_page.py` (12 : toutes les pages de trois périmètres, valeur du détail = valeur affichée et rapprochements exacts ; écritures = soldes du moteur ; compte de résultat publié poste par poste ; trésorerie, créances et dettes sur trois modes d'échéance ; parcours jusqu'aux écritures ; lissage sur l'exercice suivant ; écriture modifiée ; lissage par l'écran ; enregistrement dans la base simulée ; compte et logo), `tests/lot14/test_lot14_droits.py` (6, base PostgreSQL).
 - Limites : nombres de lignes (contrôle, imports) non détaillés ; calcul des lissages dans la page (décision 0002).
+
+
+## Lot 15 - STATUT : réalisé (comptes bancaires, équilibre financier, EBITDA du groupe, import des KPI)
+Décision : `docs/decisions/0009-tresorerie-equilibre-ebitda-import-kpi.md`. Mise en route : `docs/lot15_mise_en_route.md`.
+- Moteur (`zenitude/comptes/tresorerie.py`) : virements internes (`pieces_internes`) exclus des encaissements et décaissements ; `banques` par compte de disponibilités et par mois (solde, encaissements, décaissements, virements internes reçus et émis) ; `bilan` par arrêté (capitaux, résultat non affecté, ressources et emplois stables, FRNG, stocks, créances, dettes, BFR, disponibilités, concours, TN, écart de contrôle). Publiés avec la trésorerie de chaque résidence. Définitions : `docs/tresorerie.md`.
+- Démonstration : compte secondaire 5122 (fournisseur FOU003 payé dessus), virements internes mensuels depuis le 512.
+- Pages : Trésorerie, « Comptes bancaires » (administrateurs en ligne ; paramètres libellé, rôle, minimum dans `comptes_bancaires` ; virement conseillé ; export CSV) et « Analyse du solde » (N et N-1, par compte) ; Tableaux de bord, « FRNG, BFR et TN » ; graphiques de la synthèse sur la période de la réglette. Tout montant reste cliquable (types `tr` avec `cpt` et `vir`, `bil`, `bilc`).
+- Tableau EBITDA : `LIGNES_EBITDA` et `RATIOS_EBITDA` de `generer_site.py`, modèle de gestion du groupe (règles : `=compte` exact, `préfixe:MOT` sur le libellé du compte, préfixe le plus long ; même règle en Python et dans la page) ; KPI en tête ; éléments hors CR et résultat net (un test vérifie que le résultat net du tableau est le résultat comptable).
+- Import des KPI (Données externes) : catalogue `IMPORT_KPI` (`generer_site.py`), modèle Excel et CSV pré-rempli, contrôle complet tout ou rien (`validerImport`), Excel lu par SheetJS chargé à la demande, CSV lu sans bibliothèque ; table `mesures_importees` (administrateurs) ; valeurs appliquées aux KPI de la page (`appliquerMesures`).
+- Base : `migrations/006_kpi_et_comptes_bancaires.sql` (règles par ligne, traces d'auteur posées par la base).
+- Tests : `tests/test_lot15.py` (8), `tests/lot15/test_lot15_droits.py` (4), `tests/test_lot15_page.py` (9).
+- Limites : moteur Python sans les KPI importés ; colonnes du dossier KPI non reprises tant que les KPI ne sont pas validés ; ratios par chambre du modèle CR non repris ; mots-clés inactifs sans libellé de compte ; N-1 non disponible sans historique.
 

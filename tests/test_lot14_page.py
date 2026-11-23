@@ -127,11 +127,10 @@ def test_tresorerie_creances_dettes_rapprochees(site):
 def test_detail_d_une_ligne_ebitda_jusqu_aux_ecritures(site):
     pg, _ = ouvrir(site, site["complet"])
     pg.evaluate("choisir('DEMO-2001'); allerA('tableaux', 'synthese')")
-    pg.click("table.fin tr.n0 td[data-x]")
+    pg.click("xpath=//table[contains(@class,'fin')]//tr[td[1][normalize-space()='EBITDA']]/td[@data-x][1]")
     pg.wait_for_selector("#panneau.ouvert")
     assert "EBITDA" in pg.inner_text("#pan-titre")
-    pg.click(".pan-parts tr.cliquable")          # première ligne du calcul (GOP)
-    pg.click(".pan-parts tr.cliquable")          # puis CA net, etc., jusqu'à un compte
+    pg.click(".pan-parts tr.cliquable")          # première ligne du calcul (EBITDAR), puis marge, CA... jusqu'à un compte
     while not pg.query_selector(".pan-ecr"):
         pg.click(".pan-parts tr.cliquable")
     assert pg.inner_text("#pan-titre").startswith("Compte ")

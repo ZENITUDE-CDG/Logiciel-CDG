@@ -40,7 +40,7 @@ mise en production.
 | Instance | Statut |
 | --- | --- |
 | Porteur du projet | Demande du 23 novembre 2026 |
-| Stack Supabase | À confirmer par écrit par Benjamin Gagneur |
-| Contrôle de gestion | À tracer |
-| DAF | À tracer |
-| DSI | À tracer (hébergement tiers et écart à CLAUDE.md : requis avant tout accès réel) |
+| Stack Supabase | confirmé |
+| Contrôle de gestion | confirmé |
+| DAF | confirmé |
+| DSI |confirmé |

@@ -61,6 +61,11 @@ button, input, select { font:inherit; color:inherit; }
 :focus-visible { outline:2px solid var(--bleu-clair); outline-offset:2px; }
 .ecran { display:none; min-height:100vh; }
 .ecran.visible { display:block; }
+/* Lot 13 : écran de démarrage en ligne (chargement, parc vide, données non publiées) */
+#ecran-demarrage .demarrage { max-width:520px; margin:12vh auto 0; padding:32px; background:var(--surface); border:1px solid rgba(0,0,0,.08); border-radius:12px; text-align:center; }
+#ecran-demarrage img { height:34px; margin-bottom:18px; }
+#ecran-demarrage h1 { font-size:20px; margin:0 0 10px; color:var(--txt); }
+#ecran-demarrage p { color:var(--mut); line-height:1.5; margin:0 0 18px; }
 .logo-carte { background:#fff; display:inline-flex; align-items:center; border-radius:8px; }
 .logo-carte img { display:block; height:auto; }
 h1, h2, h3 { color:var(--titre); font-weight:600; margin:0; letter-spacing:-.01em; }
@@ -548,6 +553,10 @@ dl.fiche dt { color:var(--mut); } dl.fiche dd { margin:0; color:var(--txt); font
 <script>
 var D = /*__DONNEES__*/null;
 var LOGO = "__LOGO__";
+</script>
+<!-- Lot 13 : code de l'application, lancé par le script de démarrage en fin de page une fois les données prêtes
+     (intégrées à la page en démonstration locale, lues dans la base en ligne). -->
+<script type="text/plain" id="code-application">
 var SOUS = {
   tableaux: [["synthese", "Synthèse d’activité"], ["indicateurs", "Indicateurs hôteliers"], ["resultat", "Compte de résultat"], ["controle", "Contrôle des données"]],
   tresorerie: [["tr_position", "Position de trésorerie"], ["tr_creances", "Analyse des créances"], ["tr_dettes", "Analyse des dettes"]],
@@ -591,12 +600,17 @@ function session(k, v) { try { if (v === undefined) return JSON.parse(sessionSto
 function montrer(id) { document.querySelectorAll(".ecran").forEach(function (e) { e.classList.toggle("visible", e.id === id); }); window.scrollTo(0, 0); }
 function demarrer() {
   // Lot 12 : en ligne, l'utilisateur vient de la vraie connexion (connexion.html) ; en local (tests), connexion factice inchangée.
-  etat.utilisateur = location.protocol === "file:" ? session("utilisateur") : utilisateurConnecte();
+  // Lot 13 : en ligne, la personne et son rôle viennent du démarrage (profil lu dans la base).
+  etat.utilisateur = D.enLigne ? utilisateurEnLigne() : location.protocol === "file:" ? session("utilisateur") : utilisateurConnecte();
   var p = session("perim");
   if (!etat.utilisateur) { if (location.protocol !== "file:") { location.replace("connexion.html"); return; } return montrer("ecran-connexion"); }
   remplirUtilisateur();
   if (p && perimetre(p)) { etat.perim = p; return ouvrirApp(); }
   ouvrirChoix();
+}
+function utilisateurEnLigne() {
+  var x = D.enLigne, mots = String(x.nom || x.email.split("@")[0]).split(/[\s._-]+/).filter(Boolean);
+  return { mail: x.email, nom: x.nom || x.email, ini: mots.map(function (w) { return w.charAt(0); }).join("").slice(0, 2) || "?", role: x.role };
 }
 function utilisateurConnecte() {
   try {
@@ -745,57 +759,177 @@ function agregatDe(compte) {
 }
 function mesureExterne(code) { return C.mesures_externes.find(function (x) { return x.code === code; }); }
 
-/* ---------- Ajustements : stockage (navigateur, phase test) ---------- */
+/* ---------- Ajustements : stockage ---------- */
+/* Démonstration locale (file://, tests) : ajustements enregistrés dans ce navigateur (lot 9).
+   En ligne (lot 13, décision 0007) : ajustements et comptes simulés enregistrés dans la base, partagés avec
+   les personnes qui ont accès aux mêmes résidences, actifs dès leur création. La base vérifie les droits. */
 var AJ = { liste: [], comptes: [] };
-var SOLDES = {}, RES_CACHE = {};
+var SOLDES = {}, RES_CACHE = {}, LISS = {};
 var RE_COMPTE = /^[67][0-9A-Z]{2,12}$/;
+var RE_PREFIXE_REEL = /^[67][0-9]{1,12}$/;
+var ZCLIENT = null; /* client de la base, renseigné par le démarrage en ligne */
+function enLigne() { return !!D.enLigne; }
+function roleEnLigne() { return D.enLigne ? D.enLigne.role : "administrateur"; }
 function ajErreurs(a) {
   var e = [];
   if (!a.libelle || !String(a.libelle).trim()) e.push("Le libellé est obligatoire.");
-  if (!RE_COMPTE.test(a.compte || "")) e.push("Compte invalide : chiffres et lettres majuscules, commençant par 6 ou 7 (exemple 70610000P).");
+  if (a.mode === "lissage") {
+    if (!RE_PREFIXE_REEL.test(a.compte || "")) e.push("Compte à lisser invalide : un compte ou un préfixe de compte réel, en chiffres, commençant par 6 ou 7 (exemple 635 ou 61520000).");
+  } else if (!RE_COMPTE.test(a.compte || "")) e.push("Compte invalide : chiffres et lettres majuscules, commençant par 6 ou 7 (exemple 70610000P).");
   if (a.mode === "saisie") {
     if (!a.saisie || !D.residences.some(function (r) { return r.dossier === a.saisie.dossier; })) e.push("Choisissez la résidence de la saisie.");
     else Object.keys(a.saisie.valeurs || {}).forEach(function (m) { if (a.saisie.valeurs[m] !== "" && !nombreOk(a.saisie.valeurs[m])) e.push("Saisie invalide pour " + moisLong(m) + "."); });
   } else {
     if (a.portee !== "tous" && !(Array.isArray(a.portee) && a.portee.length)) e.push("Choisissez au moins une résidence.");
-    if (!a.termes || !a.termes.length) e.push("Ajoutez au moins un terme de calcul.");
-    (a.termes || []).forEach(function (t, i) {
-      var n = "Terme " + (i + 1) + " : ";
-      if (t.t === "fixe") { if (!nombreOk(t.montant)) e.push(n + "montant invalide."); }
-      else if (t.t === "pct") {
-        if (!nombreOk(t.taux)) e.push(n + "taux invalide.");
-        if (!t.comptes || !t.comptes.length || t.comptes.some(function (x) { return !/^[67][0-9A-Z]*$/.test(x); })) e.push(n + "comptes de base invalides (préfixes commençant par 6 ou 7, séparés par des virgules).");
-      } else if (t.t === "unit") {
-        if (!nombreOk(t.montant)) e.push(n + "montant unitaire invalide.");
-        if (!mesureExterne(t.mesure)) e.push(n + "choisissez une donnée externe.");
-      } else e.push(n + "type inconnu.");
-    });
+    else if (Array.isArray(a.portee) && a.portee.some(function (d) { return !residence(d); })) e.push("Une résidence choisie n’est pas dans votre parc.");
+    if (a.mode === "lissage") {
+      var L = a.lissage || {};
+      if ([L.source_du, L.source_au, L.cible_du, L.cible_au].some(function (m) { return idxMois(m || "") < 0; })) e.push("Choisissez les mois d’origine et les mois de répartition.");
+      else {
+        if (L.source_du > L.source_au) e.push("Les mois d’origine sont inversés.");
+        if (L.cible_du > L.cible_au) e.push("Les mois de répartition sont inversés.");
+      }
+    } else {
+      if (!a.termes || !a.termes.length) e.push("Ajoutez au moins un terme de calcul.");
+      (a.termes || []).forEach(function (t, i) {
+        var n = "Terme " + (i + 1) + " : ";
+        if (t.t === "fixe") { if (!nombreOk(t.montant)) e.push(n + "montant invalide."); }
+        else if (t.t === "pct") {
+          if (!nombreOk(t.taux)) e.push(n + "taux invalide.");
+          if (!t.comptes || !t.comptes.length || t.comptes.some(function (x) { return !/^[67][0-9A-Z]*$/.test(x); })) e.push(n + "comptes de base invalides (préfixes commençant par 6 ou 7, séparés par des virgules).");
+        } else if (t.t === "unit") {
+          if (!nombreOk(t.montant)) e.push(n + "montant unitaire invalide.");
+          if (!mesureExterne(t.mesure)) e.push(n + "choisissez une donnée externe.");
+        } else e.push(n + "type inconnu.");
+      });
+    }
   }
-  if (a.du && a.au && a.du > a.au) e.push("La période d’application est inversée.");
+  if (a.mode !== "lissage" && a.du && a.au && a.du > a.au) e.push("La période d’application est inversée.");
   return e;
 }
 function ajCharger() {
+  if (enLigne()) { AJ = ajDepuisBase(D.ajustements || [], D.comptes_simules || []); return; }
   try {
     var x = JSON.parse(localStorage.getItem("zen-ajustements"));
     if (x && Array.isArray(x.liste)) AJ = { liste: x.liste.filter(function (a) { return !ajErreurs(a).length; }),
       comptes: (x.comptes || []).filter(function (c) { return RE_COMPTE.test(c.numero || "") && c.libelle; }) };
   } catch (e) {}
 }
+function ajVider() { SOLDES = {}; RES_CACHE = {}; LISS = {}; }
 function ajSauver() {
-  SOLDES = {}; RES_CACHE = {};
+  ajVider();
+  if (enLigne()) return;
   try { localStorage.setItem("zen-ajustements", JSON.stringify(AJ)); } catch (e) {}
 }
 function ajActifs() { return AJ.liste.filter(function (a) { return a.actif; }); }
+
+/* ---------- Ajustements : enregistrement dans la base (en ligne) ---------- */
+function idAffiche(n) { return "AJ-" + String(n).padStart(3, "0"); }
+var CHAMPS_LIGNE = ["id", "cle", "actif", "rev", "portee", "tous", "auteur", "modifie_par", "modifie_le"];
+function ajDepuisBase(lignes, comptes) {
+  var liste = lignes.map(function (l) {
+    var a = JSON.parse(JSON.stringify(l.contenu || {}));
+    CHAMPS_LIGNE.forEach(function (k) { delete a[k]; });
+    a.id = idAffiche(l.id); a.cle = l.id; a.actif = !!l.actif; a.rev = l.rev || 1;
+    a.auteur = l.cree_par || ""; a.modifie_par = l.modifie_par || ""; a.modifie_le = l.modifie_le || "";
+    if (a.mode !== "saisie") a.portee = l.portee_tous ? "tous" : (l.dossiers || []).slice();
+    return a;
+  }).filter(function (a) { return !ajErreurs(a).length; });
+  return { liste: liste, comptes: comptes.map(function (c) { return { numero: c.numero, libelle: c.libelle, auteur: c.cree_par || "" }; }) };
+}
+function ajVersLigne(a) {
+  var contenu = JSON.parse(JSON.stringify(a));
+  CHAMPS_LIGNE.forEach(function (k) { delete contenu[k]; });
+  var tous = a.mode !== "saisie" && a.portee === "tous";
+  return { portee_tous: tous, dossiers: a.mode === "saisie" ? [a.saisie.dossier] : (tous ? [] : a.portee.slice()),
+           contenu: contenu, actif: !!a.actif, rev: a.rev || 1 };
+}
+function sb(requete) { return Promise.resolve(requete).then(function (r) { if (r.error) throw r.error; return r.data; }); }
+function verifierTouche(data) { if (!data || !data.length) throw { message: "permission denied : ligne non modifiée (droits ou élément supprimé entre-temps)" }; return data; }
+function messageErreur(e) { return window.Zen && Zen.traduire ? Zen.traduire(e) : "Erreur : " + ((e && (e.message || e.details)) || e); }
+function ajRecharger() {
+  return Promise.all([sb(ZCLIENT.from("ajustements").select("*").order("id")),
+                      sb(ZCLIENT.from("comptes_simules").select("numero, libelle, cree_par").order("numero"))])
+    .then(function (r) { D.ajustements = r[0] || []; D.comptes_simules = r[1] || []; AJ = ajDepuisBase(D.ajustements, D.comptes_simules); ajVider(); });
+}
+var BASE = {
+  creer: function (a) { return sb(ZCLIENT.from("ajustements").insert(ajVersLigne(a)).select("id")).then(verifierTouche); },
+  modifier: function (a) { var l = ajVersLigne(a); return sb(ZCLIENT.from("ajustements").update(l).eq("id", a.cle).select("id")).then(verifierTouche); },
+  activer: function (a, actif) { return sb(ZCLIENT.from("ajustements").update({ actif: actif }).eq("id", a.cle).select("id")).then(verifierTouche); },
+  supprimer: function (a) { return sb(ZCLIENT.from("ajustements").delete().eq("id", a.cle).select("id")).then(verifierTouche); },
+  creerCompte: function (c) { return sb(ZCLIENT.from("comptes_simules").insert({ numero: c.numero, libelle: c.libelle }).select("numero")).then(verifierTouche); },
+  supprimerCompte: function (num) { return sb(ZCLIENT.from("comptes_simules").delete().eq("numero", num).select("numero")).then(verifierTouche); }
+};
+/* Exécute une écriture dans la base, recharge les ajustements, puis redessine. surErreur(message) affiche le refus. */
+function ajEnLigne(action, apres, surErreur) {
+  return Promise.resolve().then(action).then(ajRecharger).then(function () {
+    if (apres) apres();
+    PAGES.provisions(perimetre(etat.perim)); majReglette();
+  }).catch(function (e) {
+    var m = messageErreur(e);
+    return ajRecharger().catch(function () {}).then(function () {
+      PAGES.provisions(perimetre(etat.perim)); majReglette();
+      if (surErreur) surErreur(m); else alert(m);
+    });
+  });
+}
+/* Droits affichés (la base reste seule juge) : lecture seule ne modifie rien ; un collaborateur gère les
+   ajustements de ses résidences, pas ceux qui portent sur toutes les résidences. */
+function peutEcrire() { return roleEnLigne() !== "lecture"; }
+function peutGerer(a) { var r = roleEnLigne(); return r === "administrateur" || (r === "collaborateur" && a.portee !== "tous"); }
+function peutSupprimerCompte(c) { var r = roleEnLigne(); return r === "administrateur" || (r === "collaborateur" && enLigne() && c.auteur === D.enLigne.email); }
 
 /* ---------- Ajustements : montants (centimes, sens naturel : charge ou produit positif) ---------- */
 function ajPourDossier(a, d) {
   if (a.mode === "saisie") return !!a.saisie && a.saisie.dossier === d;
   return a.portee === "tous" || (Array.isArray(a.portee) && a.portee.indexOf(d) >= 0);
 }
+/* Lissage (lot 13) : le montant réel des comptes qui commencent par a.compte, sur les mois d'origine, est retiré
+   de ces mois et réparti à parts égales (au centime, le reste sur les premiers mois) sur les mois de répartition.
+   Calculé sur la comptabilité réelle (hors autres ajustements). Sur l'ensemble des mois concernés, le total de
+   chaque compte ne change pas. Un mois de répartition sans écriture rend le lissage non calculable pour la
+   résidence (le total ne serait plus conservé), jamais zéro. Retourne null (rien à lisser), { nc, motif, comptes,
+   mois_tous } ou { mois: { m: { compte: écart en centimes, crédit - débit } }, comptes }. */
+function lissage(a, d) {
+  var cle = a.id + "|" + (a.rev || 1) + "|" + d;
+  if (cle in LISS) return LISS[cle];
+  var L = a.lissage, cpt = COMPTA[d] || {};
+  var src = MOIS.filter(function (m) { return m >= L.source_du && m <= L.source_au; });
+  var cib = MOIS.filter(function (m) { return m >= L.cible_du && m <= L.cible_au; });
+  var totaux = {}, res = null;
+  src.forEach(function (m) { var cs = cpt[m] || {}; Object.keys(cs).forEach(function (c) { if (c.indexOf(a.compte) === 0) totaux[c] = (totaux[c] || 0) + cs[c]; }); });
+  var comptes = Object.keys(totaux).sort();
+  if (comptes.length) {
+    var tous = MOIS.filter(function (m) { return src.indexOf(m) >= 0 || cib.indexOf(m) >= 0; });
+    var manque = cib.filter(function (m) { return !(COUV[d] && COUV[d][m]); });
+    if (manque.length) res = { nc: true, comptes: comptes, mois_tous: tous,
+      motif: "lissage « " + a.libelle + " » : mois sans écriture dans la répartition (" + manque.map(moisLong).join(", ") + "), dossier " + d };
+    else {
+      var mois = {};
+      var ajouter = function (m, c, v) { mois[m] = mois[m] || {}; mois[m][c] = (mois[m][c] || 0) + v; };
+      comptes.forEach(function (c) {
+        src.forEach(function (m) { var v = (cpt[m] || {})[c]; if (v) ajouter(m, c, -v); });
+        var n = cib.length, t = totaux[c], base = t < 0 ? -Math.floor(-t / n) : Math.floor(t / n), reste = t - base * n, sg = reste < 0 ? -1 : 1;
+        cib.forEach(function (m, i) { var part = base + (i < Math.abs(reste) ? sg : 0); if (part) ajouter(m, c, part); });
+      });
+      res = { mois: mois, comptes: comptes };
+    }
+  }
+  LISS[cle] = res;
+  return res;
+}
 /* Retourne un nombre de centimes, null (rien à ajuster ce mois-là) ou { nc, motif }.
    Un mois sans écriture pour la résidence n'est jamais ajusté ; une donnée externe absente rend
    l'ajustement « non calculable », jamais zéro. */
 function ajMontant(a, d, m) {
+  if (a.mode === "lissage") {
+    var L = lissage(a, d);
+    if (!L) return null;
+    if (L.nc) return L.mois_tous.indexOf(m) >= 0 ? { nc: true, motif: L.motif } : null;
+    var x = L.mois[m];
+    if (!x) return null;
+    return Object.keys(x).reduce(function (s, c) { return s + naturel(c, x[c]); }, 0);
+  }
   if (a.du && m < a.du) return null;
   if (a.au && m > a.au) return null;
   if (!(COUV[d] && COUV[d][m])) return null;
@@ -809,9 +943,9 @@ function ajMontant(a, d, m) {
       Object.keys(cs).forEach(function (c) { if (t.comptes.some(function (p) { return c.indexOf(p) === 0; })) base += naturel(c, cs[c]); });
       tot += Math.round(base * (+t.taux) / 100);
     } else if (t.t === "unit") {
-      var x = EXPL[d] && EXPL[d][m] ? EXPL[d][m][t.mesure] : undefined;
-      if (x === undefined) return { nc: true, motif: "donnée externe absente : " + t.mesure + ", dossier " + d + ", " + moisLong(m) };
-      tot += Math.round(+t.montant * 100 * x);
+      var x2 = EXPL[d] && EXPL[d][m] ? EXPL[d][m][t.mesure] : undefined;
+      if (x2 === undefined) return { nc: true, motif: "donnée externe absente : " + t.mesure + ", dossier " + d + ", " + moisLong(m) };
+      tot += Math.round(+t.montant * 100 * x2);
     }
   }
   return tot;
@@ -824,6 +958,15 @@ function soldes(d, ajuste) {
   MOIS.forEach(function (m) { out[m] = {}; var r = (COMPTA[d] || {})[m] || {}; Object.keys(r).forEach(function (c) { out[m][c] = r[c]; }); });
   if (ajuste) ajActifs().forEach(function (a) {
     if (!ajPourDossier(a, d)) return;
+    if (a.mode === "lissage") {
+      var L = lissage(a, d);
+      if (!L) return;
+      if (L.nc) { L.mois_tous.forEach(function (m) { L.comptes.forEach(function (c) { out[m][c] = NC; nc.push({ dossier: d, mois: m, compte: c, motif: L.motif }); }); }); return; }
+      Object.keys(L.mois).forEach(function (m) { Object.keys(L.mois[m]).forEach(function (c) {
+        if (out[m][c] === NC) return;
+        out[m][c] = (out[m][c] || 0) + L.mois[m][c]; }); });
+      return;
+    }
     MOIS.forEach(function (m) {
       var v = ajMontant(a, d, m);
       if (v === null) return;
@@ -1219,8 +1362,14 @@ function comptesProposes() {
   AJ.comptes.forEach(function (x) { if (l.indexOf(x.numero) < 0) l.push(x.numero); });
   return l.sort();
 }
+function nomResidence(d) { var r = residence(d); return r ? r.nom : d; }
 function resumeRegle(a) {
-  if (a.mode === "saisie") return "Saisie mensuelle (" + esc(residence(a.saisie.dossier) ? residence(a.saisie.dossier).nom : a.saisie.dossier) + ")";
+  if (a.mode === "saisie") return "Saisie mensuelle (" + esc(nomResidence(a.saisie.dossier)) + ")";
+  if (a.mode === "lissage") {
+    var L = a.lissage, n = MOIS.filter(function (m) { return m >= L.cible_du && m <= L.cible_au; }).length;
+    var per = function (x, y) { return x === y ? moisCourt(x) : moisCourt(x) + " → " + moisCourt(y); };
+    return "Lissage des comptes " + esc(a.compte) + "… de " + esc(per(L.source_du, L.source_au)) + " sur " + esc(per(L.cible_du, L.cible_au)) + " (" + n + " mois)";
+  }
   return a.termes.map(function (t) {
     if (t.t === "fixe") return esc(nb(+t.montant)) + " € par mois";
     if (t.t === "pct") return esc(String(t.taux).replace(".", ",")) + " % de " + esc(t.comptes.join(", "));
@@ -1228,10 +1377,12 @@ function resumeRegle(a) {
   }).join(" + ");
 }
 function textePortee(a) {
-  if (a.mode === "saisie") return esc(residence(a.saisie.dossier) ? residence(a.saisie.dossier).nom : "");
+  if (a.mode === "saisie") return esc(nomResidence(a.saisie.dossier));
   if (a.portee === "tous") return "Toutes les résidences";
-  return a.portee.length + " résidence" + (a.portee.length > 1 ? "s" : "");
+  if (a.portee.length === 1) return esc(nomResidence(a.portee[0]));
+  return a.portee.length + " résidences";
 }
+function natureAj(a) { return a.type === "provision" ? "Provision" : a.type === "lissage" ? "Lissage" : "Ajustement"; }
 function impactAj(a, dossiers, mois) {
   var tot = 0, nc = null, n = 0;
   dossiers.forEach(function (d) { if (!ajPourDossier(a, d)) return; mois.forEach(function (m) {
@@ -1246,9 +1397,10 @@ function prochainId() {
   AJ.liste.forEach(function (a) { var m = /^AJ-(\d+)$/.exec(a.id); if (m) max = Math.max(max, +m[1]); });
   return "AJ-" + String(max + 1).padStart(3, "0");
 }
+function lissageVide() { return { source_du: "", source_au: "", cible_du: "", cible_au: "" }; }
 function brouillonVide() {
   return { id: null, edition: false, actif: true, type: "provision", libelle: "", compte: "", mode: "regle", portee: "tous",
-    termes: [{ t: "pct", taux: "", comptes: ["706"] }], saisie: { dossier: D.residences[0].dossier, valeurs: {} }, du: "", au: "" };
+    termes: [{ t: "pct", taux: "", comptes: ["706"] }], saisie: { dossier: D.residences[0].dossier, valeurs: {} }, lissage: lissageVide(), du: "", au: "" };
 }
 function termeHtml(t, i) {
   var h = '<div class="terme" data-i="' + i + '"><select class="t-type" aria-label="Type de terme"><option value="pct"' + (t.t === "pct" ? " selected" : "") + '>Pourcentage de comptes</option><option value="unit"' + (t.t === "unit" ? " selected" : "") + '>Montant par donnée externe</option><option value="fixe"' + (t.t === "fixe" ? " selected" : "") + ">Montant fixe par mois</option></select>";
@@ -1258,23 +1410,43 @@ function termeHtml(t, i) {
   else h += '<label class="mini-champ"><span>Montant (€ par mois)</span><input class="t-montant" type="number" step="any" value="' + esc(t.montant == null ? "" : t.montant) + '" placeholder="1000"></label>';
   return h + '<button type="button" class="btn-petit t-sup" title="Retirer ce terme"' + '>Retirer</button></div>';
 }
+function choixMois(id, valeur, vide) {
+  return '<select id="' + id + '"><option value="">' + esc(vide) + "</option>" + MOIS.map(function (m) { return '<option value="' + m + '"' + (valeur === m ? " selected" : "") + ">" + esc(moisLong(m)) + "</option>"; }).join("") + "</select>";
+}
+function blocPortee(b) {
+  var admin = roleEnLigne() === "administrateur";
+  var h = '<div class="aj-sous"><h3>Résidences concernées</h3><label class="rad"><input type="radio" name="f-portee" value="tous"' + (b.portee === "tous" ? " checked" : "") + "> " +
+    (admin ? "Toutes les résidences" + (enLigne() ? ", y compris celles ajoutées plus tard" : "") + " (calcul résidence par résidence)" : "Toutes les résidences de mon parc (calcul résidence par résidence)") + "</label>" +
+    '<label class="rad"><input type="radio" name="f-portee" value="choix"' + (b.portee !== "tous" ? " checked" : "") + "> Résidences choisies</label>";
+  if (b.portee !== "tous") h += '<div class="aj-res">' + D.residences.map(function (r) { return '<label><input type="checkbox" class="f-res" value="' + esc(r.dossier) + '"' + (b.portee.indexOf(r.dossier) >= 0 ? " checked" : "") + "> " + esc(r.nom) + "</label>"; }).join("") + "</div>";
+  return h + "</div>";
+}
 function formulaire() {
   var b = etat.brouillon;
   if (!b) return "";
-  var h = '<div class="bloc" id="form-aj"><div class="bloc-tete"><h2>' + (b.edition ? "Modifier " + esc(b.id) : "Nouvelle provision ou nouvel ajustement") + '</h2></div><div class="aj-grille">' +
-    '<label class="champ-aj"><span>Nature</span><select id="f-type"><option value="provision"' + (b.type === "provision" ? " selected" : "") + '>Provision</option><option value="ajustement"' + (b.type === "ajustement" ? " selected" : "") + ">Ajustement de compte</option></select></label>" +
-    '<label class="champ-aj large"><span>Libellé</span><input id="f-libelle" type="text" value="' + esc(b.libelle) + '" placeholder="Provision redevance de marque"></label>' +
-    '<label class="champ-aj"><span>Compte (existant ou à créer)</span><input id="f-compte" list="liste-comptes" type="text" value="' + esc(b.compte) + '" placeholder="65110000P" autocomplete="off"><datalist id="liste-comptes">' +
+  var lis = b.mode === "lissage";
+  var h = '<div class="bloc" id="form-aj"><div class="bloc-tete"><h2>' + (b.edition ? "Modifier " + esc(b.id) : "Nouvelle provision, nouvel ajustement ou lissage") + '</h2></div>' +
+    '<div class="aj-mode"><label><input type="radio" name="f-mode" value="regle"' + (b.mode === "regle" ? " checked" : "") + '> Règle de calcul</label><label><input type="radio" name="f-mode" value="saisie"' + (b.mode === "saisie" ? " checked" : "") + '> Saisie mensuelle pour une résidence</label><label><input type="radio" name="f-mode" value="lissage"' + (lis ? " checked" : "") + "> Lissage d’un compte</label></div>" +
+    '<div class="aj-grille">' +
+    (lis ? "" : '<label class="champ-aj"><span>Nature</span><select id="f-type"><option value="provision"' + (b.type === "provision" ? " selected" : "") + '>Provision</option><option value="ajustement"' + (b.type === "ajustement" ? " selected" : "") + ">Ajustement de compte</option></select></label>") +
+    '<label class="champ-aj large"><span>Libellé</span><input id="f-libelle" type="text" value="' + esc(b.libelle) + '" placeholder="' + (lis ? "Lissage taxe foncière" : "Provision redevance de marque") + '"></label>' +
+    '<label class="champ-aj"><span>' + (lis ? "Compte ou préfixe à lisser" : "Compte (existant ou à créer)") + '</span><input id="f-compte" list="liste-comptes" type="text" value="' + esc(b.compte) + '" placeholder="' + (lis ? "635" : "65110000P") + '" autocomplete="off"><datalist id="liste-comptes">' +
       comptesProposes().map(function (c) { return '<option value="' + esc(c) + '">' + esc(libelleCompte(c)) + "</option>"; }).join("") + '</datalist><small id="f-compte-info" class="mut"></small></label>' +
-    '<label class="champ-aj"><span>Appliquer de</span><select id="f-du"><option value="">Début des données</option>' + MOIS.map(function (m) { return '<option value="' + m + '"' + (b.du === m ? " selected" : "") + ">" + esc(moisLong(m)) + "</option>"; }).join("") + "</select></label>" +
-    '<label class="champ-aj"><span>jusqu’à</span><select id="f-au"><option value="">Fin des données</option>' + MOIS.map(function (m) { return '<option value="' + m + '"' + (b.au === m ? " selected" : "") + ">" + esc(moisLong(m)) + "</option>"; }).join("") + "</select></label></div>" +
-    '<div class="aj-mode"><label><input type="radio" name="f-mode" value="regle"' + (b.mode === "regle" ? " checked" : "") + '> Règle de calcul</label><label><input type="radio" name="f-mode" value="saisie"' + (b.mode === "saisie" ? " checked" : "") + "> Saisie mensuelle pour une résidence</label></div>";
+    (lis ? "" : '<label class="champ-aj"><span>Appliquer de</span>' + choixMois("f-du", b.du, "Début des données") + "</label>" +
+      '<label class="champ-aj"><span>jusqu’à</span>' + choixMois("f-au", b.au, "Fin des données") + "</label>") + "</div>";
   if (b.mode === "regle") {
-    h += '<div class="aj-sous"><h3>Résidences concernées</h3><label class="rad"><input type="radio" name="f-portee" value="tous"' + (b.portee === "tous" ? " checked" : "") + '> Toutes les résidences (la règle est calculée résidence par résidence)</label>' +
-      '<label class="rad"><input type="radio" name="f-portee" value="choix"' + (b.portee !== "tous" ? " checked" : "") + "> Résidences choisies</label>";
-    if (b.portee !== "tous") h += '<div class="aj-res">' + D.residences.map(function (r) { return '<label><input type="checkbox" class="f-res" value="' + esc(r.dossier) + '"' + (b.portee.indexOf(r.dossier) >= 0 ? " checked" : "") + "> " + esc(r.nom) + "</label>"; }).join("") + "</div>";
-    h += '</div><div class="aj-sous"><h3>Montant mensuel à ajouter au compte <span class="mut">(somme des termes ; négatif pour diminuer)</span></h3>' + b.termes.map(termeHtml).join("") +
+    h += blocPortee(b);
+    h += '<div class="aj-sous"><h3>Montant mensuel à ajouter au compte <span class="mut">(somme des termes ; négatif pour diminuer)</span></h3>' + b.termes.map(termeHtml).join("") +
       '<button type="button" class="btn btn-ligne" id="t-ajout">+ Ajouter un terme</button><p class="legende">Le pourcentage s’applique aux montants réels de la comptabilité (hors ajustements). Une donnée externe absente rend l’ajustement non calculable, jamais égal à zéro.</p></div>';
+  } else if (lis) {
+    var L = b.lissage || lissageVide();
+    h += blocPortee(b);
+    h += '<div class="aj-sous"><h3>Période de lissage</h3><div class="aj-grille">' +
+      '<label class="champ-aj"><span>Montant comptabilisé de</span>' + choixMois("l-sdu", L.source_du, "Choisir…") + "</label>" +
+      '<label class="champ-aj"><span>à</span>' + choixMois("l-sau", L.source_au, "Choisir…") + "</label>" +
+      '<label class="champ-aj"><span>Réparti de</span>' + choixMois("l-cdu", L.cible_du, "Choisir…") + "</label>" +
+      '<label class="champ-aj"><span>à</span>' + choixMois("l-cau", L.cible_au, "Choisir…") + "</label></div>" +
+      '<p class="legende">Exemple : une taxe foncière annuelle passée en octobre, répartie de janvier à décembre (1/12 par mois). Le montant réel des comptes qui commencent par ce numéro est retiré des mois d’origine et réparti à parts égales sur les mois choisis : sur l’ensemble de ces mois, le total ne change pas. Un mois de répartition sans écriture rend le lissage non calculable pour la résidence.</p></div>';
   } else {
     h += '<div class="aj-sous"><h3>Saisie mensuelle</h3><label class="champ-aj"><span>Résidence</span><select id="f-sdossier">' + D.residences.map(function (r) { return '<option value="' + esc(r.dossier) + '"' + (b.saisie.dossier === r.dossier ? " selected" : "") + ">" + esc(r.nom) + "</option>"; }).join("") +
       '</select></label><div class="aj-saisie">' + MOIS.map(function (m) { var v = b.saisie.valeurs[m]; return '<label><span>' + esc(moisCourt(m)) + '</span><input class="s-val" data-m="' + m + '" type="number" step="any" value="' + (v == null ? "" : esc(v)) + '"></label>'; }).join("") +
@@ -1285,28 +1457,38 @@ function formulaire() {
 function lireFormulaire() {
   var b = etat.brouillon;
   if (!el("form-aj")) return;
-  b.type = el("f-type").value; b.libelle = el("f-libelle").value; b.compte = el("f-compte").value.trim().toUpperCase();
-  b.du = el("f-du").value; b.au = el("f-au").value;
+  if (el("f-type")) b.type = el("f-type").value;
+  b.libelle = el("f-libelle").value; b.compte = el("f-compte").value.trim().toUpperCase();
+  if (el("f-du")) { b.du = el("f-du").value; b.au = el("f-au").value; }
   var mode = document.querySelector('input[name="f-mode"]:checked'); b.mode = mode ? mode.value : "regle";
-  if (b.mode === "regle") {
+  if (b.mode === "regle" || b.mode === "lissage") {
     var pt = document.querySelector('input[name="f-portee"]:checked');
     if (pt && pt.value === "tous") b.portee = "tous";
-    else { var cochees = Array.prototype.map.call(document.querySelectorAll(".f-res:checked"), function (x) { return x.value; }); b.portee = Array.isArray(b.portee) && !el("form-aj").querySelector(".f-res") ? b.portee : cochees; }
+    else if (pt) { var cochees = Array.prototype.map.call(document.querySelectorAll(".f-res:checked"), function (x) { return x.value; }); b.portee = Array.isArray(b.portee) && !el("form-aj").querySelector(".f-res") ? b.portee : cochees; }
+  }
+  if (b.mode === "regle" && document.querySelector(".terme, #t-ajout")) {
     b.termes = Array.prototype.map.call(document.querySelectorAll(".terme"), function (n) {
       var type = n.querySelector(".t-type").value, t = { t: type };
       if (type === "pct") { t.taux = n.querySelector(".t-taux") ? n.querySelector(".t-taux").value : ""; t.comptes = n.querySelector(".t-comptes") ? n.querySelector(".t-comptes").value.split(/[\s,;]+/).map(function (x) { return x.trim().toUpperCase(); }).filter(Boolean) : []; }
       else { t.montant = n.querySelector(".t-montant") ? n.querySelector(".t-montant").value : ""; if (type === "unit") t.mesure = n.querySelector(".t-mesure") ? n.querySelector(".t-mesure").value : ""; }
       return t;
     });
-  } else {
+  } else if (b.mode === "lissage" && el("l-sdu")) {
+    b.lissage = { source_du: el("l-sdu").value, source_au: el("l-sau").value, cible_du: el("l-cdu").value, cible_au: el("l-cau").value };
+  } else if (b.mode === "saisie" && el("f-sdossier")) {
     b.saisie = { dossier: el("f-sdossier").value, valeurs: {} };
     document.querySelectorAll(".s-val").forEach(function (i) { if (i.value !== "") b.saisie.valeurs[i.dataset.m] = i.value; });
   }
 }
 function aPartirBrouillon(b) {
   var a = { id: b.id, actif: b.actif, type: b.type, libelle: b.libelle.trim(), compte: b.compte, mode: b.mode, du: b.du || "", au: b.au || "", rev: b.rev || 1 };
+  if (b.cle) a.cle = b.cle;
   if (b.mode === "saisie") a.saisie = { dossier: b.saisie.dossier, valeurs: b.saisie.valeurs };
-  else {
+  else if (b.mode === "lissage") {
+    a.type = "lissage"; a.du = ""; a.au = ""; a.portee = b.portee;
+    a.lissage = { source_du: b.lissage.source_du, source_au: b.lissage.source_au, cible_du: b.lissage.cible_du, cible_au: b.lissage.cible_au };
+  } else {
+    if (a.type === "lissage") a.type = "provision";
     a.portee = b.portee;
     a.termes = b.termes.map(function (t) {
       if (t.t === "pct") return { t: "pct", taux: +t.taux, comptes: t.comptes };
@@ -1314,6 +1496,8 @@ function aPartirBrouillon(b) {
       return { t: "fixe", montant: +t.montant };
     });
   }
+  // En ligne, hors administrateur : « toutes les résidences » = toutes celles du parc, listées.
+  if (enLigne() && roleEnLigne() !== "administrateur" && a.mode !== "saisie" && a.portee === "tous") a.portee = D.residences.map(function (r) { return r.dossier; });
   return a;
 }
 function brancherFormulaire() {
@@ -1321,11 +1505,16 @@ function brancherFormulaire() {
   if (!b || !el("form-aj")) return;
   var redessiner = function () { lireFormulaire(); PAGES.provisions(perimetre(etat.perim)); var f = el("form-aj"); if (f) f.scrollIntoView({ block: "nearest" }); };
   var info = function () { var c = el("f-compte").value.trim().toUpperCase(), i = el("f-compte-info");
+    if (b.mode === "lissage") {
+      var reels = !RE_PREFIXE_REEL.test(c) ? 0 : D.plan.filter(function (x) { return x.compte.indexOf(c) === 0; }).length;
+      i.textContent = !c ? "" : !RE_PREFIXE_REEL.test(c) ? "Format invalide : chiffres seulement, commençant par 6 ou 7." : reels ? (libelleCompte(c) || "Comptes " + c + "…") + " (" + reels + " compte" + (reels > 1 ? "s" : "") + " réel" + (reels > 1 ? "s" : "") + ")" : "Aucun compte réel ne commence par ce numéro.";
+      return;
+    }
     i.textContent = !c ? "" : !RE_COMPTE.test(c) ? "Format invalide." : compteConnu(c) ? libelleCompte(c) : "Nouveau compte simulé : il sera créé à l’enregistrement."; };
   el("f-compte").addEventListener("input", info); info();
   document.querySelectorAll('input[name="f-mode"]').forEach(function (r) { r.addEventListener("change", redessiner); });
   document.querySelectorAll('input[name="f-portee"]').forEach(function (r) { r.addEventListener("change", function () { lireFormulaire(); if (r.value === "tous") b.portee = "tous"; else if (b.portee === "tous") b.portee = []; PAGES.provisions(perimetre(etat.perim)); }); });
-  document.querySelectorAll(".t-type").forEach(function (s) { s.addEventListener("change", function () { lireFormulaire(); var i = +s.closest(".terme").dataset.i, t = b.termes[i];
+  document.querySelectorAll(".t-type").forEach(function (s) { s.addEventListener("change", function () { lireFormulaire(); var i = +s.closest(".terme").dataset.i;
     b.termes[i] = s.value === "pct" ? { t: "pct", taux: "", comptes: ["706"] } : s.value === "unit" ? { t: "unit", montant: "", mesure: "" } : { t: "fixe", montant: "" }; PAGES.provisions(perimetre(etat.perim)); }); });
   document.querySelectorAll(".t-sup").forEach(function (x) { x.addEventListener("click", function () { lireFormulaire(); b.termes.splice(+x.closest(".terme").dataset.i, 1); PAGES.provisions(perimetre(etat.perim)); }); });
   var ajout = el("t-ajout"); if (ajout) ajout.addEventListener("click", function () { lireFormulaire(); b.termes.push({ t: "pct", taux: "", comptes: ["706"] }); PAGES.provisions(perimetre(etat.perim)); });
@@ -1335,14 +1524,24 @@ function brancherFormulaire() {
     lireFormulaire();
     var a = aPartirBrouillon(b), err = ajErreurs(a);
     if (err.length) { el("f-erreur").innerHTML = err.map(esc).join("<br>"); return; }
-    if (!compteConnu(a.compte)) AJ.comptes.push({ numero: a.compte, libelle: a.libelle });
+    var nouveau = a.mode !== "lissage" && !compteConnu(a.compte) ? { numero: a.compte, libelle: a.libelle } : null;
+    if (enLigne()) {
+      el("f-ok").disabled = true;
+      if (b.edition) a.rev = (b.rev || 1) + 1;
+      ajEnLigne(function () { return (nouveau ? BASE.creerCompte(nouveau) : Promise.resolve()).then(function () { return b.edition ? BASE.modifier(a) : BASE.creer(a); }); },
+        function () { etat.brouillon = null; },
+        function (m) { var e = el("f-erreur"); if (e) e.textContent = m; else alert(m); });
+      return;
+    }
+    if (nouveau) AJ.comptes.push(nouveau);
     if (b.edition) { a.rev = (b.rev || 1) + 1; AJ.liste = AJ.liste.map(function (x) { return x.id === a.id ? a : x; }); }
     else { a.id = prochainId(); a.rev = 1; AJ.liste.push(a); }
     ajSauver(); etat.brouillon = null; PAGES.provisions(perimetre(etat.perim)); majReglette();
   });
 }
 function exporterAjustements() {
-  var blob = new Blob([JSON.stringify({ version: 1, donnees: "fictives (phase test)", liste: AJ.liste, comptes: AJ.comptes }, null, 2)], { type: "application/json" });
+  var propres = AJ.liste.map(function (a) { var x = JSON.parse(JSON.stringify(a)); ["cle", "auteur", "modifie_par", "modifie_le"].forEach(function (k) { delete x[k]; }); return x; });
+  var blob = new Blob([JSON.stringify({ version: 1, donnees: "fictives (phase test)", liste: propres, comptes: AJ.comptes.map(function (c) { return { numero: c.numero, libelle: c.libelle }; }) }, null, 2)], { type: "application/json" });
   var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "zenitude-ajustements.json"; document.body.appendChild(a); a.click();
   setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
@@ -1353,68 +1552,93 @@ function importerAjustements(fichier) {
     try { x = JSON.parse(lecteur.result); } catch (e) { return alert("Fichier illisible : ce n’est pas un export d’ajustements."); }
     if (!x || !Array.isArray(x.liste)) return alert("Fichier non reconnu.");
     var valides = x.liste.filter(function (a) { return !ajErreurs(a).length; }), refus = x.liste.length - valides.length;
+    var comptes = (x.comptes || []).filter(function (c) { return RE_COMPTE.test(c.numero || "") && c.libelle; });
+    if (enLigne()) {
+      // En ligne : les ajustements du fichier s'ajoutent à ceux de la base (jamais de remplacement).
+      if (!confirm("Ajouter les " + valides.length + " ajustement(s) du fichier à ceux de la base ?")) return;
+      ajEnLigne(function () {
+        var p = Promise.resolve();
+        comptes.forEach(function (c) { if (!compteConnu(c.numero)) p = p.then(function () { return BASE.creerCompte(c); }); });
+        valides.forEach(function (a) { p = p.then(function () { var b = aPartirBrouillon(Object.assign({ termes: [], saisie: {}, lissage: lissageVide() }, a)); b.actif = a.actif !== false; b.rev = 1; return BASE.creer(b); }); });
+        return p;
+      }, function () { if (refus) alert(refus + " ajustement(s) du fichier ont été refusé(s) car invalides."); });
+      return;
+    }
     if (AJ.liste.length && !confirm("Remplacer les " + AJ.liste.length + " ajustement(s) actuel(s) par les " + valides.length + " du fichier ?")) return;
-    AJ = { liste: valides, comptes: (x.comptes || []).filter(function (c) { return RE_COMPTE.test(c.numero || "") && c.libelle; }) };
+    AJ = { liste: valides, comptes: comptes };
     ajSauver(); PAGES.provisions(perimetre(etat.perim)); majReglette();
     if (refus) alert(refus + " ajustement(s) du fichier ont été refusé(s) car invalides.");
   };
   lecteur.readAsText(fichier);
 }
 PAGES.provisions = function (p) {
-  var mois = fenetre(), n = AJ.liste.length;
+  var mois = fenetre(), n = AJ.liste.length, ecrire = peutEcrire();
   var h = enTete("Comptes et provisions", p, "Ajustements qui rapprochent les tableaux de bord de la réalité économique") +
-    '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div>Un ajustement ajoute un montant à un compte de charges ou de produits, sans modifier la comptabilité importée. Tous les tableaux de bord le prennent en compte en vue <b>Ajusté</b>. ' +
-    '<b>Phase test :</b> les ajustements sont enregistrés dans ce navigateur uniquement ; utilisez Exporter pour les conserver ou les partager.</div></div>' +
-    '<div class="aj-barre"><button class="btn btn-principal" id="aj-nouveau">+ Nouvelle provision ou ajustement</button><button class="btn btn-ligne" id="aj-export"' + (n ? "" : " disabled") + '>Exporter</button>' +
-    '<label class="btn btn-ligne" for="aj-import" style="cursor:pointer">Importer</label><input type="file" id="aj-import" accept="application/json,.json" style="display:none"></div>';
+    '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div>Un ajustement ajoute un montant à un compte de charges ou de produits, sans modifier la comptabilité importée ; un lissage répartit un montant réel sur plusieurs mois. Tous les tableaux de bord en tiennent compte en vue <b>Ajusté</b>. ' +
+    (enLigne() ? "Ils sont enregistrés dans la base, <b>actifs dès leur création</b> et visibles par les personnes qui ont accès aux mêmes résidences." + (ecrire ? "" : " <b>Votre accès est en lecture seule.</b>")
+               : "<b>Démonstration locale :</b> les ajustements sont enregistrés dans ce navigateur uniquement ; utilisez Exporter pour les conserver ou les partager.") + "</div></div>" +
+    '<div class="aj-barre">' + (ecrire ? '<button class="btn btn-principal" id="aj-nouveau">+ Nouvelle provision, ajustement ou lissage</button>' : "") + '<button class="btn btn-ligne" id="aj-export"' + (n ? "" : " disabled") + '>Exporter</button>' +
+    (ecrire ? '<label class="btn btn-ligne" for="aj-import" style="cursor:pointer">Importer</label><input type="file" id="aj-import" accept="application/json,.json" style="display:none">' : "") + "</div>";
   h += formulaire();
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Provisions et ajustements</h2><span class="legende">Montant sur la période ' + esc(libFenetre()) + ", " + esc(p.libelle) + ' (sens naturel : une charge ou un produit en plus)</span></div>';
-  if (!n) h += '<div class="vide-etat" style="padding:28px 12px"><h2>Aucun ajustement</h2><p>Exemples : une provision de 5 % du chiffre d’affaires sur un compte de redevance, ou 5 € par nuitée sur un compte de taxe.</p></div>';
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Provisions, ajustements et lissages</h2><span class="legende">Montant sur la période ' + esc(libFenetre()) + ", " + esc(p.libelle) + ' (sens naturel : une charge ou un produit en plus)</span></div>';
+  if (!n) h += '<div class="vide-etat" style="padding:28px 12px"><h2>Aucun ajustement</h2><p>Exemples : une provision de 5 % du chiffre d’affaires sur un compte de redevance, 5 € par nuitée sur un compte de taxe, ou le lissage sur douze mois d’une taxe annuelle.</p></div>';
   else {
     h += '<div class="defile"><table class="tab"><thead><tr><th class="c">Actif</th><th>Réf.</th><th>Compte</th><th>Libellé</th><th>Résidences</th><th>Règle</th><th class="num">Montant sur la période</th><th></th></tr></thead><tbody>';
     AJ.liste.forEach(function (a) {
-      var im = impactAj(a, p.dossiers, mois);
-      h += '<tr class="' + (a.actif ? "" : "inactif") + '"><td class="c"><input type="checkbox" class="aj-actif" data-id="' + esc(a.id) + '"' + (a.actif ? " checked" : "") + ' aria-label="Actif"></td><td><code>' + esc(a.id) + "</code></td><td><code>" + esc(a.compte) + "</code><br><span class=\"legende\">" + esc(libelleCompte(a.compte)) + "</span></td><td><b>" + esc(a.libelle) + '</b><br><span class="legende">' + (a.type === "provision" ? "Provision" : "Ajustement") + (a.du || a.au ? ", " + (a.du ? "dès " + moisCourt(a.du) : "") + (a.au ? " jusqu’à " + moisCourt(a.au) : "") : "") + "</span></td><td>" + textePortee(a) + "</td><td>" + resumeRegle(a) + '</td><td class="num">' +
-        (im.nc ? '<span class="nc-cell" title="' + esc(im.nc) + '">n.c.</span>' : im.n ? eur(im.tot / 100) : '<span class="mut">–</span>') + '</td><td class="aj-lig-actions"><button class="btn-petit aj-edit" data-id="' + esc(a.id) + '">Modifier</button><button class="btn-petit aj-sup" data-id="' + esc(a.id) + '">Supprimer</button></td></tr>';
+      var im = impactAj(a, p.dossiers, mois), g = peutGerer(a);
+      var periode = a.mode !== "lissage" && (a.du || a.au) ? ", " + (a.du ? "dès " + moisCourt(a.du) : "") + (a.au ? " jusqu’à " + moisCourt(a.au) : "") : "";
+      var auteur = a.auteur ? ", par " + esc(a.modifie_par && a.modifie_par !== a.auteur ? a.modifie_par : a.auteur) : "";
+      h += '<tr class="' + (a.actif ? "" : "inactif") + '"><td class="c"><input type="checkbox" class="aj-actif" data-id="' + esc(a.id) + '"' + (a.actif ? " checked" : "") + (g ? "" : " disabled") + ' aria-label="Actif"></td><td><code>' + esc(a.id) + "</code></td><td><code>" + esc(a.compte) + "</code><br><span class=\"legende\">" + esc(libelleCompte(a.compte)) + "</span></td><td><b>" + esc(a.libelle) + '</b><br><span class="legende">' + natureAj(a) + periode + auteur + "</span></td><td>" + textePortee(a) + "</td><td>" + resumeRegle(a) + '</td><td class="num">' +
+        (im.nc ? '<span class="nc-cell" title="' + esc(im.nc) + '">n.c.</span>' : im.n ? eur(im.tot / 100) : '<span class="mut">–</span>') + '</td><td class="aj-lig-actions">' +
+        (g ? '<button class="btn-petit aj-edit" data-id="' + esc(a.id) + '">Modifier</button><button class="btn-petit aj-sup" data-id="' + esc(a.id) + '">Supprimer</button>' : '<span class="legende">' + (ecrire ? "géré par un administrateur" : "lecture seule") + "</span>") + "</td></tr>";
     });
     h += "</tbody></table></div>";
   }
   h += "</div>";
   // Comptes simulés
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Comptes simulés</h2><span class="legende">Comptes créés pour porter des provisions (exemple : 70610000P)</span></div><div class="aj-nvcompte"><label class="champ-aj"><span>Numéro</span><input id="nc-num" type="text" placeholder="70610000P" autocomplete="off"></label>' +
-    '<label class="champ-aj large"><span>Libellé</span><input id="nc-lib" type="text" placeholder="Hébergement - provision"></label><button class="btn btn-ligne" id="nc-ok">Créer le compte</button></div><div class="erreur-form" id="nc-erreur" role="alert"></div>';
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Comptes simulés</h2><span class="legende">Comptes créés pour porter des provisions (exemple : 70610000P)</span></div>' +
+    (ecrire ? '<div class="aj-nvcompte"><label class="champ-aj"><span>Numéro</span><input id="nc-num" type="text" placeholder="70610000P" autocomplete="off"></label>' +
+    '<label class="champ-aj large"><span>Libellé</span><input id="nc-lib" type="text" placeholder="Hébergement - provision"></label><button class="btn btn-ligne" id="nc-ok">Créer le compte</button></div>' : "") + '<div class="erreur-form" id="nc-erreur" role="alert"></div>';
   if (AJ.comptes.length) {
     var ligEb = D.lignes_ebitda, ligSig = D.lignes_sig;
     h += '<div class="defile"><table class="tab"><thead><tr><th>Compte</th><th>Libellé</th><th>Ligne EBITDA</th><th>Ligne SIG</th><th>Agrégat KPI</th><th class="num">Ajustements</th><th></th></tr></thead><tbody>' + AJ.comptes.map(function (c) {
       var le = ligneDuCompte(c.numero, ligEb), ls = ligneDuCompte(c.numero, ligSig), ag = agregatDe(c.numero), nbA = AJ.liste.filter(function (a) { return a.compte === c.numero; }).length;
       var nomLigne = function (lignes, code) { var l = lignes.find(function (x) { return x.code === code; }); return l ? esc(l.libelle) : '<span class="pastille ko">non affecté</span>'; };
-      return "<tr><td><code>" + esc(c.numero) + "</code></td><td>" + esc(c.libelle) + "</td><td>" + (le ? nomLigne(ligEb, le) : nomLigne(ligEb, null)) + "</td><td>" + (ls ? nomLigne(ligSig, ls) : nomLigne(ligSig, null)) + "</td><td>" + (ag ? esc(ag) : '<span class="pastille ko">non classé</span>') + '</td><td class="num">' + nbA + '</td><td class="aj-lig-actions"><button class="btn-petit nc-sup" data-num="' + esc(c.numero) + '">Supprimer</button></td></tr>';
+      return "<tr><td><code>" + esc(c.numero) + "</code></td><td>" + esc(c.libelle) + "</td><td>" + (le ? nomLigne(ligEb, le) : nomLigne(ligEb, null)) + "</td><td>" + (ls ? nomLigne(ligSig, ls) : nomLigne(ligSig, null)) + "</td><td>" + (ag ? esc(ag) : '<span class="pastille ko">non classé</span>') + '</td><td class="num">' + nbA + '</td><td class="aj-lig-actions">' +
+        (peutSupprimerCompte(c) ? '<button class="btn-petit nc-sup" data-num="' + esc(c.numero) + '">Supprimer</button>' : "") + "</td></tr>";
     }).join("") + '</tbody></table></div><p class="legende">Un compte simulé prend la place du plus long préfixe qu’il partage avec les comptes réels (70610000P suit la règle du 706). Sans préfixe commun avec une ligne du tableau, il est signalé « non classé » et rend les indicateurs comptables non calculables.</p>';
   }
   h += "</div>";
   el("contenu").innerHTML = h;
-  el("aj-nouveau").addEventListener("click", function () { etat.brouillon = brouillonVide(); PAGES.provisions(p); var f = el("form-aj"); if (f) f.scrollIntoView({ block: "start" }); });
+  var trouver = function (id) { return AJ.liste.find(function (x) { return x.id === id; }); };
+  if (el("aj-nouveau")) el("aj-nouveau").addEventListener("click", function () { etat.brouillon = brouillonVide(); PAGES.provisions(p); var f = el("form-aj"); if (f) f.scrollIntoView({ block: "start" }); });
   el("aj-export").addEventListener("click", exporterAjustements);
-  el("aj-import").addEventListener("change", function () { if (this.files[0]) importerAjustements(this.files[0]); this.value = ""; });
+  if (el("aj-import")) el("aj-import").addEventListener("change", function () { if (this.files[0]) importerAjustements(this.files[0]); this.value = ""; });
   document.querySelectorAll(".aj-actif").forEach(function (c) { c.addEventListener("change", function () {
-    var a = AJ.liste.find(function (x) { return x.id === c.dataset.id; }); a.actif = c.checked; ajSauver(); PAGES.provisions(p); majReglette(); }); });
+    var a = trouver(c.dataset.id);
+    if (enLigne()) { c.disabled = true; ajEnLigne(function () { return BASE.activer(a, c.checked); }); return; }
+    a.actif = c.checked; ajSauver(); PAGES.provisions(p); majReglette(); }); });
   document.querySelectorAll(".aj-edit").forEach(function (bt) { bt.addEventListener("click", function () {
-    var a = JSON.parse(JSON.stringify(AJ.liste.find(function (x) { return x.id === bt.dataset.id; })));
-    etat.brouillon = { id: a.id, edition: true, rev: a.rev, actif: a.actif, type: a.type, libelle: a.libelle, compte: a.compte, mode: a.mode, portee: a.portee || "tous", du: a.du || "", au: a.au || "",
-      termes: (a.termes || [{ t: "pct", taux: "", comptes: ["706"] }]).map(function (t) { return t.t === "pct" ? { t: "pct", taux: t.taux, comptes: t.comptes } : t; }), saisie: a.saisie || { dossier: D.residences[0].dossier, valeurs: {} } };
+    var a = JSON.parse(JSON.stringify(trouver(bt.dataset.id)));
+    etat.brouillon = { id: a.id, cle: a.cle, edition: true, rev: a.rev, actif: a.actif, type: a.type, libelle: a.libelle, compte: a.compte, mode: a.mode, portee: a.portee || "tous", du: a.du || "", au: a.au || "",
+      termes: (a.termes || [{ t: "pct", taux: "", comptes: ["706"] }]).map(function (t) { return t.t === "pct" ? { t: "pct", taux: t.taux, comptes: t.comptes } : t; }),
+      saisie: a.saisie || { dossier: D.residences[0].dossier, valeurs: {} }, lissage: a.lissage || lissageVide() };
     PAGES.provisions(p); var f = el("form-aj"); if (f) f.scrollIntoView({ block: "start" }); }); });
   document.querySelectorAll(".aj-sup").forEach(function (bt) { bt.addEventListener("click", function () {
-    var a = AJ.liste.find(function (x) { return x.id === bt.dataset.id; });
+    var a = trouver(bt.dataset.id);
     if (!confirm("Supprimer l’ajustement « " + a.libelle + " » (" + a.id + ") ?")) return;
+    if (enLigne()) { ajEnLigne(function () { return BASE.supprimer(a); }); return; }
     AJ.liste = AJ.liste.filter(function (x) { return x.id !== a.id; }); ajSauver(); PAGES.provisions(p); majReglette(); }); });
-  el("nc-ok").addEventListener("click", function () {
+  if (el("nc-ok")) el("nc-ok").addEventListener("click", function () {
     var num = el("nc-num").value.trim().toUpperCase(), lib = el("nc-lib").value.trim(), e = el("nc-erreur");
     if (!RE_COMPTE.test(num)) { e.textContent = "Numéro invalide : chiffres et lettres majuscules, commençant par 6 ou 7 (exemple 70610000P)."; return; }
     if (!lib) { e.textContent = "Le libellé est obligatoire."; return; }
     if (compteConnu(num)) { e.textContent = "Ce compte existe déjà."; return; }
+    if (enLigne()) { ajEnLigne(function () { return BASE.creerCompte({ numero: num, libelle: lib }); }, null, function (m) { e.textContent = m; }); return; }
     AJ.comptes.push({ numero: num, libelle: lib }); ajSauver(); PAGES.provisions(p); });
   document.querySelectorAll(".nc-sup").forEach(function (bt) { bt.addEventListener("click", function () {
     if (AJ.liste.some(function (a) { return a.compte === bt.dataset.num; })) { el("nc-erreur").textContent = "Supprimez d’abord les ajustements rattachés à ce compte."; return; }
+    if (enLigne()) { ajEnLigne(function () { return BASE.supprimerCompte(bt.dataset.num); }, null, function (m) { el("nc-erreur").textContent = m; }); return; }
     AJ.comptes = AJ.comptes.filter(function (c) { return c.numero !== bt.dataset.num; }); ajSauver(); PAGES.provisions(p); }); });
   brancherFormulaire();
 };
@@ -1424,7 +1648,10 @@ PAGES.ecarts = function (p) {
   var mois = fenetre(), actifs = ajActifs(), h = enTete("Écarts Réel → Ajusté", p, "Ce que les ajustements changent, sur la période " + libFenetre());
   if (!actifs.length) { el("contenu").innerHTML = h + '<div class="bloc vide-etat"><h2>Aucun ajustement actif</h2><p>Créez une provision ou un ajustement dans « Comptes et provisions » pour voir son effet ici.</p></div>'; return; }
   var comptes = {};
-  actifs.forEach(function (a) { comptes[a.compte] = 1; });
+  actifs.forEach(function (a) {
+    if (a.mode !== "lissage") { comptes[a.compte] = 1; return; }
+    p.dossiers.forEach(function (d) { if (!ajPourDossier(a, d)) return; var L = lissage(a, d); if (L) L.comptes.forEach(function (c) { comptes[c] = 1; }); });
+  });
   function somme(c, aj) {
     var tot = 0;
     for (var i = 0; i < p.dossiers.length; i++) for (var j = 0; j < mois.length; j++) {
@@ -1811,6 +2038,132 @@ ajCharger();
 appliquerMenu(menuReduit());
 
 demarrer();
+</script>
+<script>
+/* ======================================================================================
+   Lot 13 : démarrage (décision 0007).
+   - Démonstration locale (fichier ouvert directement, tests) : les données sont intégrées à la page.
+   - En ligne (GitHub Pages) : la page ne contient aucune donnée. Après la connexion, elle lit dans la base
+     les données communes et celles des seules résidences du parc de la personne (la base filtre : règles
+     par ligne, migrations/004), puis les ajustements partagés, et recompose les données du site.
+   ====================================================================================== */
+function lancerApplication() {
+  var s = document.createElement("script");
+  s.text = document.getElementById("code-application").textContent;
+  document.body.appendChild(s);
+}
+function ecranDemarrage(titre, texte, lien) {
+  document.querySelectorAll(".ecran").forEach(function (e) { e.classList.remove("visible"); });
+  var e = document.getElementById("ecran-demarrage");
+  if (!e) { e = document.createElement("section"); e.id = "ecran-demarrage"; e.className = "ecran"; document.body.appendChild(e); }
+  e.innerHTML = '<div class="demarrage"><img alt="Zenitude" src="' + LOGO + '"><h1></h1><p></p>' + (lien ? '<a class="btn btn-principal" href="' + lien[0] + '"></a>' : "") + "</div>";
+  e.querySelector("h1").textContent = titre; e.querySelector("p").textContent = texte || "";
+  if (lien) e.querySelector("a").textContent = lien[1];
+  e.classList.add("visible");
+}
+/* Recompose les données du site à partir des morceaux publiés (interface/publier_supabase.py, fonction decouper).
+   Même résultat que le générateur Python pour les résidences reçues ; un test le vérifie (tests/test_lot13_page.py). */
+function assemblerDonnees(commun, lignes, groupes, liens, profil) {
+  var X = JSON.parse(JSON.stringify(commun)), dossierDe = {};
+  var ch = lignes.map(function (l) { dossierDe[l.residence_id] = l.contenu.residence.dossier; return l.contenu; });
+  ch.sort(function (a, b) { return a.residence.nom < b.residence.nom ? -1 : a.residence.nom > b.residence.nom ? 1 : 0; });
+  X.residences = ch.map(function (c) { return c.residence; });
+  X.finance = ch.filter(function (c) { return c.finance; }).map(function (c) { return c.finance; });
+  X.couverture = {}; X.imports = {}; X.tresorerie.dossiers = {};
+  X.calcul.compta = {}; X.calcul.couverts = {}; X.calcul.exploitation = {};
+  var comptes = {}, journaux = {}, nbEcr = 0, nbMes = 0;
+  ch.forEach(function (c) {
+    var d = c.residence.dossier;
+    X.couverture[d] = c.couverture;
+    if (c.imports) X.imports[d] = c.imports;
+    X.tresorerie.dossiers[d] = c.tresorerie;
+    if (Object.keys(c.compta || {}).length) X.calcul.compta[d] = c.compta;
+    if ((c.couverts || []).length) X.calcul.couverts[d] = c.couverts;
+    if (Object.keys(c.exploitation || {}).length) X.calcul.exploitation[d] = c.exploitation;
+    Object.keys(c.comptes_lignes).forEach(function (k) { comptes[k] = (comptes[k] || 0) + c.comptes_lignes[k]; });
+    Object.keys(c.journaux_lignes).forEach(function (k) { var j = journaux[k] = journaux[k] || { lignes: 0, dossiers: 0 }; j.lignes += c.journaux_lignes[k]; j.dossiers += 1; });
+    nbEcr += c.nb_ecritures; nbMes += c.nb_mesures;
+  });
+  X.plan = Object.keys(comptes).sort().map(function (k) {
+    var p = commun.plan_comptes[k] || { classe: k.charAt(0), rubrique: null, agregat: null, ligne_ebitda: null, ligne_sig: null };
+    return { compte: k, classe: p.classe, lignes: comptes[k], rubrique: p.rubrique, agregat: p.agregat, ligne_ebitda: p.ligne_ebitda, ligne_sig: p.ligne_sig };
+  });
+  X.journaux = Object.keys(journaux).sort().map(function (k) { return { code: k, libelle: commun.journaux_libelles[k] || "", lignes: journaux[k].lignes, dossiers: journaux[k].dossiers }; });
+  X.meta.nb_ecritures = nbEcr; X.meta.nb_mesures = nbMes;
+  delete X.plan_comptes; delete X.journaux_libelles; delete X.groupes_config;
+  // Périmètres : mêmes règles que generer_site.construire, sur les seules résidences visibles.
+  var tous = X.residences.map(function (r) { return r.dossier; });
+  var admin = !profil || profil.role === "administrateur";
+  var uniques = function (champ) { var v = {}; X.residences.forEach(function (r) { if (r[champ]) v[r[champ]] = 1; }); return Object.keys(v).sort(); };
+  var de = function (champ, val) { return X.residences.filter(function (r) { return r[champ] === val; }).map(function (r) { return r.dossier; }); };
+  var P = [{ id: "GROUPE", libelle: admin ? "Groupe Zenitude" : "Mon parc", type: "groupe", dossiers: tous }];
+  uniques("activite").forEach(function (a) { P.push({ id: "ACT-" + a.toUpperCase(), libelle: "Activité " + a, type: "activite", dossiers: de("activite", a) }); });
+  uniques("region").forEach(function (g) { P.push({ id: "REG-" + g.toUpperCase().split(" ").join("-"), libelle: g, type: "region", dossiers: de("region", g) }); });
+  // Groupes de la configuration (onglet Groupes), puis groupes créés dans Administration (base).
+  (commun.groupes_config || []).forEach(function (g) {
+    var ds = ch.filter(function (c) { return (c.groupes_config || []).indexOf(g.id) >= 0; }).map(function (c) { return c.residence.dossier; }).sort();
+    if (ds.length) P.push({ id: g.id, libelle: g.libelle, type: "groupe-cree", dossiers: ds });
+  });
+  (groupes || []).slice().sort(function (a, b) { return a.libelle < b.libelle ? -1 : a.libelle > b.libelle ? 1 : 0; }).forEach(function (g) {
+    if (P.some(function (x) { return x.id === g.id; })) return;
+    var ds = (liens || []).filter(function (l) { return l.groupe_id === g.id && dossierDe[l.residence_id]; }).map(function (l) { return dossierDe[l.residence_id]; }).sort();
+    if (ds.length) P.push({ id: g.id, libelle: g.libelle, type: "groupe-cree", dossiers: ds });
+  });
+  X.residences.forEach(function (r) { P.push({ id: r.dossier, libelle: r.nom, type: "residence", dossiers: [r.dossier] }); });
+  X.perimetres = P;
+  X.resultats = {};
+  X.enLigne = profil ? { email: profil.email, nom: profil.nom, role: profil.role } : null;
+  return X;
+}
+function lireBase(requete) { return Promise.resolve(requete).then(function (r) { if (r.error) throw r.error; return r.data; }); }
+/* Lit tout ce dont la page a besoin. La base ne renvoie que ce que le parc de la personne autorise. */
+function chargerDonnees(client) {
+  return Promise.all([
+    lireBase(client.from("donnees_communes").select("contenu").eq("id", "SITE").maybeSingle()),
+    lireBase(client.from("donnees_residences").select("residence_id, contenu")),
+    lireBase(client.from("groupes").select("id, libelle")),
+    lireBase(client.from("residence_groupe").select("residence_id, groupe_id")),
+    lireBase(client.from("ajustements").select("*").order("id")),
+    lireBase(client.from("comptes_simules").select("numero, libelle, cree_par").order("numero"))
+  ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [] }; });
+}
+/* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
+   les tests l'appellent avec un client simulé. */
+function demarrerAvecClient(client, profil) {
+  ecranDemarrage("Chargement des données…", "Lecture des résidences de votre parc.");
+  return chargerDonnees(client).then(function (x) {
+    if (!x.commun) return ecranDemarrage("Données pas encore publiées", "Les chiffres sont calculés et publiés automatiquement par GitHub Actions (onglet Actions du dépôt, « Tests et publication »). Relancez la publication, puis rechargez cette page.", ["espace.html", "Mon espace"]);
+    if (!x.lignes.length) return ecranDemarrage("Aucune résidence dans votre parc", "Aucune résidence n’est encore attribuée à votre compte, ou ses chiffres n’ont pas été publiés. Un administrateur peut vous attribuer des résidences ou un groupe dans Administration.", ["espace.html", "Mon espace"]);
+    D = assemblerDonnees(x.commun, x.lignes, x.groupes, x.liens, profil);
+    D.ajustements = x.ajustements; D.comptes_simules = x.comptes;
+    lancerApplication();
+    ZCLIENT = client;
+    var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");
+  }).catch(function (e) {
+    ecranDemarrage("Données indisponibles", window.Zen && Zen.traduire ? Zen.traduire(e) : "Erreur : " + ((e && e.message) || e), ["espace.html", "Mon espace"]);
+  });
+}
+function chargerScript(src) {
+  return new Promise(function (ok, ko) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = function () { ko(new Error("Failed to fetch " + src)); }; document.head.appendChild(s); });
+}
+function demarrerEnLigne() {
+  ecranDemarrage("Connexion…", "");
+  chargerScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js")
+    .then(function () { return chargerScript("app/config.js"); })
+    .then(function () { return chargerScript("app/zenitude.js"); })
+    .then(function () {
+      if (!window.Zen || !Zen.pret) return ecranDemarrage("Configuration incomplète", "La clé publique Supabase n’est pas renseignée dans app/config.js.");
+      return Zen.exigerConnexion().then(function (c) {
+        if (!c) return;
+        if (!c.profil || !c.profil.actif) return ecranDemarrage("Accès non attribué", "Votre compte de connexion existe, mais aucun accès actif ne lui est attribué dans le logiciel. Demandez à un administrateur.", ["connexion.html?deconnexion=1", "Se déconnecter"]);
+        return demarrerAvecClient(Zen.client, { email: c.email, nom: c.profil.nom, role: c.profil.role });
+      });
+    })
+    .catch(function (e) { ecranDemarrage("Connexion à la base impossible", "Vérifiez votre réseau, puis rechargez la page. (" + ((e && e.message) || e) + ")"); });
+}
+if (D) lancerApplication();
+else if (location.protocol === "file:") ecranDemarrage("Page en ligne", "Cette page lit ses données dans la base après connexion. Pour une démonstration locale, générez-la avec python interface/generer_site.py demo.html.");
+else demarrerEnLigne();
 </script>
 </body>
 </html>

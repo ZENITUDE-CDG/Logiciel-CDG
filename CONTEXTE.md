@@ -5,7 +5,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 
 ## Où en est-on (23 novembre 2026)
 
-- Phase : **test uniquement**. Données fictives. Pas de Pennylane, pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004 et 0006) ; rien en local.
+- Phase : **test uniquement**. Données fictives. Pas de Pennylane, pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004, 0006, 0007) ; rien en local. Les chiffres sont calculés par GitHub Actions et publiés dans la base ; la page en ligne ne contient aucune donnée.
 - Cadrage : ZENITUDE v0.8 approuvé pour la phase test (`docs/decisions/0001-approbation-cadrage-test.md`).
   Approbations DAF, contrôle de gestion et DSI : **non tracées**.
 - Équipe : deux personnes (porteur du projet et Benjamin), développement avec Claude Code.
@@ -26,6 +26,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 10 | Menu latéral réductible (remplace les barres du haut), page Résidence (fiche complète) | - |
 | 12 | Utilisateurs, rôles (administrateur, collaborateur, lecture seule), parcs (résidences et groupes), droits vérifiés dans la base, vraie connexion, écran d'administration | 20 (base PostgreSQL, GitHub Actions) |
 | 11 | Compte de résultat PCG (système de base, ANC 2022-06) figé dans la publication ; section Trésorerie (position, créances, dettes) ; colonnes tiers, lettrage, échéance | 110 |
+| 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
 Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). Depuis le lot 12, on y entre par `connexion.html` (vraie connexion, base de test Supabase).
 
@@ -39,6 +40,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Une règle datée est une version : changer une date d'effet crée un retrait et un ajout.
 - Lot 12 : Supabase comme base de test, droits par règles par ligne dans PostgreSQL, SQL standard migrable (`docs/decisions/0004`, `0005`, `0006`). Identité par l'adresse e-mail du jeton ; comptes créés dans Supabase par un administrateur ; clé publique visible dans `app/config.js`.
 - Phase test : le calcul des ajustements se fait dans la page (`docs/decisions/0002-calcul-ajustements-navigateur.md`), le moteur Python reste la référence et un test compare les deux.
+- Lot 13 (`docs/decisions/0007`) : publication par GitHub Actions avec la clé secrète dans les secrets GitHub ; ajustements partagés, actifs dès leur création, sans validation à deux personnes ; lissage ; base de test = huit résidences de démonstration (Benjamin : groupe GRP-SENIORS).
 
 ## Points ouverts
 
@@ -50,7 +52,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 6. Concurrence : un seul rédacteur à la fois, pas de verrou entre processus.
 7. Authentification : connexion provisoire par e-mail en place (lot 12). Reste : Microsoft 365, rattacher les dépôts et approbations de configuration à la personne connectée, mot de passe oublié. Requis par la DSI avant tout usage réel.
 8. Hébergement définitif, plateforme Git, dépôt public, accès : décisions DSI. Phase test : GitHub Pages et Supabase (décision 0006).
-15. Lot 12 : filtrer le tableau de bord par parc (prochain lot) ; aujourd'hui il affiche toujours les huit résidences de démonstration intégrées à la page.
+15. Lot 12 : filtrage du tableau de bord par parc, réalisé au lot 13.
 9. Lot 5 limité : pas de PDF/PPTX, une publication par dossier et exercice.
 11. Lot 6 : définitions des six KPI à valider par le contrôle de gestion (notamment RevPAC : CA hébergement + services / nuitées clients ; captage PDJ : couverts / nuitées clients). Source réelle des mesures d'exploitation (Mews, saisie) à décider. Groupes de l'onglet Groupes non encore utilisés par la vue groupe. Pas de publication figée des KPI.
 12. Calculateur d'ajustements de la page (lot 9) : à remplacer par le backend en production, avec la même structure d'ajustement. Validation à deux personnes des ajustements et droits non définis.
@@ -62,10 +64,11 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 258 tests (les tests de page demandent Playwright, ceux du lot 12 une base PostgreSQL)
+python -m pytest            # 297 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
                             # sur GitHub : onglet Actions, lancé automatiquement à chaque dépôt
 sh demo.sh                  # démonstration complète
-python interface/generer_site.py   # régénère index.html
+python interface/generer_site.py   # régénère index.html (en ligne, sans données)
+python interface/generer_site.py demo.html   # démonstration complète à ouvrir en local
 ```
 
 ## Fichiers à ne jamais committer

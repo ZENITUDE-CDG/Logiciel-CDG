@@ -35,7 +35,7 @@
 11. Les identifiants sont en `[A-Z0-9_-]`. Le caractère `&` est interdit (utiliser `PL_`).
 
 ## Architecture (proposition à valider avec la DSI)
-- Phase test, lot 12 (décisions 0004 et 0006) : écart accepté. Site GitHub Pages + base de test Supabase, droits vérifiés dans PostgreSQL par des règles par ligne (`migrations/003_droits.sql`), sans serveur applicatif. Pour l'invariant 9, la base tient lieu de serveur pendant la phase test ; à réexaminer avant toute mise en production.
+- Phase test, lots 12 et 13 (décisions 0004, 0006 et 0007) : écart accepté. Site GitHub Pages + base de test Supabase, droits vérifiés dans PostgreSQL par des règles par ligne (`migrations/003_droits.sql`), sans serveur applicatif. Pour l'invariant 9, la base tient lieu de serveur pendant la phase test ; à réexaminer avant toute mise en production. Les chiffres sont calculés par le moteur Python dans GitHub Actions et publiés dans la base (lot 13) ; la page en ligne ne contient aucune donnée.
 - Backend Python / Django, PostgreSQL, traitements d'import et de calcul en arrière-plan.
 - Frontend React / TypeScript. Metabase possible pour les tableaux de bord (à décider).
 - Modules : données certifiées, connecteur Pennylane, configuration, moteur de KPI, clôture, budgets, rapports, administration.
@@ -45,8 +45,9 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (258 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12 ; les tests de page des lots 9 et 11 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux du lot 12 demandent une base PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`), sinon ils sont ignorés).
-- Tests automatiques : `.github/workflows/tests.yml` lance toute la suite sur GitHub (onglet Actions) à chaque dépôt, avec une base PostgreSQL temporaire créée depuis `migrations/`. Aucun secret, Supabase n'est jamais touché.
+- Tests : `python -m pytest` (297 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13 ; les tests de page des lots 9, 11 et 13 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 et 13 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
+- Tests et publication automatiques : `.github/workflows/tests-et-publication.yml`. À chaque dépôt, toute la suite tourne sur GitHub (onglet Actions) avec une base PostgreSQL temporaire créée depuis `migrations/` (aucun secret, Supabase jamais touché). Puis, sur main seulement et si les tests passent, `python interface/publier_supabase.py` publie les chiffres dans la base de test avec le secret GitHub `SUPABASE_SECRET_KEY` (décision 0007). Essai sans envoi : `python interface/publier_supabase.py --essai <dossier>`.
+- Installation de la base de test : `python scripts/assembler_installation.py` régénère `scripts/installation_supabase.sql` (remise à zéro + migrations + données de départ) ; un test vérifie qu'il est à jour.
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
 - Configuration de test complète : `python tests/generer_config_complete.py config_modele/Zenitude_Configuration_modele.xlsx tests/fixtures tests/fixtures/ecritures_synthetiques.csv`.
 - Écritures synthétiques : `python tests/generer_ecritures.py tests/fixtures`.
@@ -56,7 +57,7 @@
 - Mesures d'exploitation synthétiques (lot 6) : `python tests/generer_mesures.py tests/fixtures`.
 - Configuration de test avec les six KPI (lot 6) : `python tests/generer_config_kpi.py tests/fixtures/config_complete_v1.xlsx tests/fixtures/config_kpi_lot6.xlsx`.
 - KPI d'un dossier : `python -m zenitude.kpi calcul <store> <dossier> <ecritures.csv> <exercices.csv> <mesures.csv> [--du AAAA-MM --au AAAA-MM] [--json]`.
-- Site (lot 7) : `python interface/generer_demo.py` puis `python interface/generer_site.py` (écrit `index.html` à la racine, affiché par GitHub Pages).
+- Site (lot 7) : `python interface/generer_demo.py` puis `python interface/generer_site.py` (écrit `index.html` à la racine, affiché par GitHub Pages ; depuis le lot 13, sans aucune donnée). Démonstration complète à ouvrir en local : `python interface/generer_site.py demo.html`.
 - Lot 8 (site) : soldes intermédiaires de gestion (`LIGNES_SIG` dans `interface/generer_site.py`, préfixe de compte le plus long, calculés en Python comme le tableau EBITDA) affichés dans la Synthèse d'activité avec un sélecteur EBITDA / SIG ; charte allégée dans `interface/gabarit.html`. Découpage SIG provisoire, à valider par le contrôle de gestion.
 - Vue groupe : `python -m zenitude.kpi groupe <store> <ecritures.csv> <mesures.csv> --du AAAA-MM --au AAAA-MM (--dossiers A,B | --activite Seniors) [--json]`.
 
@@ -83,8 +84,8 @@ Critère de fin du lot : `pytest` passe, aucun cas d'un autre lot n'est touché,
 ## Limites d'accès
 - Ne pas lire ni écrire hors du dépôt.
 - Ne pas installer de dépendance non listée sans l'indiquer dans `docs/decisions/`.
-- Ne pas déployer. Ne pas configurer de connexion réelle à Pennylane. Seule exception : le site GitHub Pages et la base de test Supabase (décisions 0004 et 0006).
-- Aucune clé secrète Supabase (« secret » / « service_role »), aucun mot de passe de base dans le dépôt. Seule la clé publique figure dans `app/config.js` (décision 0006).
+- Ne pas déployer. Ne pas configurer de connexion réelle à Pennylane. Seule exception : le site GitHub Pages, la base de test Supabase et la publication des chiffres fictifs par GitHub Actions (décisions 0004, 0006 et 0007).
+- Aucune clé secrète Supabase (« secret » / « service_role »), aucun mot de passe de base dans le dépôt. Seule la clé publique figure dans `app/config.js` (décision 0006). La clé secrète n'existe que dans les secrets GitHub (`SUPABASE_SECRET_KEY`, décision 0007) ; un test vérifie qu'aucune clé secrète n'est versionnée.
 
 
 ## Lot 2 - STATUT : réalisé
@@ -173,8 +174,22 @@ Décisions : `docs/decisions/0004`, `0005` (dépendances), `0006` (site GitHub P
 - Droits : administrateur voit et gère tout ; collaborateur lit et modifie les résidences de son parc ; lecture seule lit son parc. Donner un groupe donne les résidences ajoutées plus tard. Un compte sans profil actif et une personne non connectée ne voient rien. Création d'utilisateurs, groupes, résidences et parcs : administrateur seulement.
 - Site : `connexion.html` (connexion par e-mail et mot de passe), `espace.html` (mon parc, changement de mot de passe), `administration.html` (utilisateurs, rôles, état actif, parcs, résidences, groupes, affectations). Code commun dans `app/` (`config.js`, `zenitude.js`, `style.css`) ; `app/garde.js` renvoie le tableau de bord vers la connexion (confort, ignoré en `file://`).
 - Tableau de bord (`interface/gabarit.html`, donc `index.html`) : en ligne, l'utilisateur affiché est celui de la vraie connexion (session `zenitude-session`) et « Se déconnecter » ferme la session (`connexion.html?deconnexion=1`). En `file://` (tests de page des lots 9 et 11), la connexion factice du lot 8 est conservée.
-- Données de départ : `scripts/donnees_test.sql` (Raphael administrateur, Benjamin collaborateur avec le groupe pilote, résidences fictives RES-901 dans le groupe et RES-902 hors groupe). Installation Supabase en un collage : `scripts/installation_supabase.sql` (remise à zéro + migrations + données), assemblé à partir des fichiers ci-dessus : le régénérer si l'un d'eux change.
+- Données de départ : `scripts/donnees_test.sql` (depuis le lot 13 : Raphael administrateur, Benjamin collaborateur avec le groupe GRP-SENIORS, les huit résidences de démonstration RES-001 à RES-008 ; RES-901 et RES-902 supprimées). Installation Supabase en un collage : `scripts/installation_supabase.sql` (remise à zéro + migrations + données), assemblé à partir des fichiers ci-dessus : le régénérer si l'un d'eux change.
 - Tests : `tests/lot12/test_lot12_droits.py` (20 tests : trois profils, lecture, modification, administration, intégrité, démonstration des deux parcs).
 - Règle : toute nouvelle table reçoit ses règles par ligne et ses tests de droits dans le même commit. Les calculs restent dans le moteur Python, jamais dans la base.
 - Nettoyage (23 novembre 2026) : supprimés `maquette/` (remplacée par le site, lot 7), l'archive `zenitude-pilotage-depot-git.zip`, l'ancienne migration `001_utilisateurs.sql`, l'ancien test `tests/lot12/test_droits.py` et un doublon de la décision 0004 ; ajoutés `.gitignore` et `.github/workflows/tests.yml`.
 - Limites : le tableau de bord n'est pas encore filtré par parc (données fictives intégrées à la page) ; pas de mot de passe oublié ; comptes de connexion créés dans Supabase par un administrateur.
+
+
+## Lot 13 - STATUT : réalisé (chiffres depuis la base, ajustements partagés, lissage)
+Décision : `docs/decisions/0007-publication-et-ajustements-partages.md`. Mise en route : `docs/lot13_mise_en_route.md`.
+- Publication : `interface/publier_supabase.py` calcule tout avec le moteur (`generer_site.construire`), découpe le résultat en une partie commune (paramètres, KPI, lignes EBITDA et SIG, modèle PCG, classement des comptes, libellés des groupes de configuration : aucune donnée de résidence) et une partie par résidence (référentiel, compte de résultat figé, trésorerie, couverture, exercices, montants mensuels par compte, exploitation, volumes), puis les écrit dans `donnees_communes` et `donnees_residences`. Lancée par GitHub Actions sur main après les tests. Refuse une résidence marquée réelle ; ne publie que pour les résidences créées dans la base.
+- Base : `migrations/004_donnees_ajustements.sql` : `donnees_communes`, `donnees_residences` (lecture selon le parc, écriture par le rôle de service seulement, `CHECK (fictif)`), `comptes_simules`, `ajustements` (portée « toutes les résidences » ou liste de dossiers, contenu structuré, actif, révision, auteur et dernier modificateur tracés par la base). Fonctions `voit_dossier`, `modifie_dossier`, `voit_ajustement`, `gere_ajustement`.
+- Droits des ajustements : lecture si toutes leurs résidences sont dans le parc (ou portée « toutes ») ; collaborateur : création, modification, suppression sur ses résidences ; « toutes les résidences » : administrateur seulement ; lecture seule : rien. Comptes simulés : création par administrateur et collaborateur, suppression par l'administrateur ou l'auteur.
+- Page en ligne (`index.html`) : aucune donnée intégrée. Script de démarrage en fin de `gabarit.html` : connexion, lecture de la base, `assemblerDonnees` (recompose les données du site pour les seules résidences visibles, même résultat que le générateur), puis lancement du code de l'application (`<script type="text/plain" id="code-application">`). Périmètre « Groupe Zenitude » pour l'administrateur, « Mon parc » sinon ; groupes de configuration et groupes créés dans Administration. En `file://` avec données intégrées (tests, démonstration locale), fonctionnement inchangé (ajustements dans le navigateur).
+- Ajustements en ligne : enregistrés dans la base, actifs dès leur création, rechargés après chaque écriture ; boutons masqués selon les droits (la base reste seule juge). Import en ligne : ajoute, ne remplace jamais.
+- Lissage : nouveau mode d'ajustement (compte ou préfixe réel, mois d'origine, mois de répartition). Retire le montant réel des mois d'origine et le répartit à parts égales au centime (reste sur les premiers mois) ; total conservé ; mois de répartition sans écriture = non calculable. Calculé sur la comptabilité réelle.
+- Tests : `tests/test_lot13_publication.py` (15 : découpage sans fuite, garde-fous, requêtes, installation à jour, aucune clé secrète versionnée, page en ligne sans données), `tests/lot13/test_lot13_droits.py` (19, base PostgreSQL), `tests/test_lot13_page.py` (5, navigateur : assemblage identique au générateur, assemblage restreint au parc, démarrage en ligne avec base simulée, lissage).
+- Nettoyage : `.gitignore` et le workflow (supprimés ou jamais versionnés par le dépôt par glisser-déposer) recréés ; `requirements.txt` complété (`psycopg[binary]`).
+- Limites : calculateur d'ajustements dans la page (décision 0002) ; publications figées sans ajustements ; pas d'historique des publications dans la base ; pas de validation à deux personnes (choix du porteur du projet).
+

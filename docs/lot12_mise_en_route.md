@@ -10,9 +10,9 @@ Tout se fait dans le navigateur. La clé publique Supabase est déjà dans `app/
    Résultat attendu : « Success. No rows returned ». Le script remet la base de test à zéro : il peut être relancé.
 
 ## 2. Vérifier
-- GitHub, onglet **Actions** : la ligne « Tests » doit avoir une coche verte (2 à 3 minutes après un dépôt).
+- GitHub, onglet **Actions** : la ligne « Tests et publication » doit avoir des coches vertes (2 à 3 minutes après un dépôt).
 - Site : `https://zenitude-cdg.github.io/Logiciel-CDG/connexion.html` (1 à 2 minutes après le dépôt).
-- Démonstration : Raphael voit RES-901 et RES-902 et le menu Administration ; Benjamin ne voit que RES-901.
+- Démonstration : depuis le lot 13, voir `docs/lot13_mise_en_route.md` (huit résidences de démonstration ; Benjamin voit les trois résidences seniors).
 - Tableau de bord : depuis « Mon espace », lien « Tableau de bord » ; le nom affiché est celui de la personne
   connectée ; « Se déconnecter » ramène à l'écran de connexion.
 

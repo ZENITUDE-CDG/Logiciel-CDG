@@ -5,7 +5,8 @@ Le navigateur n'exécute aucune formule : tous les chiffres sont calculés ici p
 intégrés à la page sous forme de résultats.
 Le gabarit visuel est dans interface/gabarit.html.
 
-Usage : python interface/generer_site.py [sortie.html]   (par défaut : index.html à la racine)
+Usage : python interface/generer_site.py               index.html en ligne (sans données, lot 13)
+        python interface/generer_site.py demo.html     démonstration complète (données intégrées)
 """
 import json
 from decimal import Decimal
@@ -518,21 +519,38 @@ def construire(demo=DEMO):
     }
 
 
-def main(sortie, demo=DEMO):
-    if not os.path.exists(os.path.join(demo, "configuration.xlsx")):
-        sys.path.insert(0, os.path.join(RACINE, "interface"))
-        import generer_demo
-        generer_demo.main(demo)
-    donnees = construire(demo)
+def main(sortie, demo=DEMO, en_ligne=False):
+    """Écrit la page. en_ligne=False (tests, démonstration locale en file://) : toutes les données de
+    démonstration sont intégrées à la page. en_ligne=True (index.html publié par GitHub Pages, lot 13) :
+    la page ne contient aucune donnée ; elle les lit dans la base, filtrées par le parc de la personne
+    connectée (voir publier_supabase.py et docs/decisions/0007)."""
+    donnees = None
+    if not en_ligne:
+        if not os.path.exists(os.path.join(demo, "configuration.xlsx")):
+            sys.path.insert(0, os.path.join(RACINE, "interface"))
+            import generer_demo
+            generer_demo.main(demo)
+        donnees = construire(demo)
+    ecrire(sortie, donnees)
+    print("site écrit :", sortie, "(en ligne, sans données)" if en_ligne else "(démonstration complète)")
+
+
+def ecrire(sortie, donnees):
+    """Écrit la page avec ces données intégrées (None : page en ligne, sans données)."""
+    texte = "null" if donnees is None else \
+        json.dumps(donnees, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     gabarit = open(GABARIT, encoding="utf-8").read()
-    texte = json.dumps(donnees, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     import base64
     with open(LOGO, "rb") as fh:
         logo = "data:image/png;base64," + base64.b64encode(fh.read()).decode()
     with open(sortie, "w", encoding="utf-8") as fh:
         fh.write(gabarit.replace("__LOGO__", logo).replace("/*__DONNEES__*/null", texte))
-    print("site écrit :", sortie)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else os.path.join(RACINE, "index.html"))
+    # Sans argument : index.html à la racine, version en ligne (aucune donnée dans la page).
+    # Avec un chemin : démonstration complète, à ouvrir directement dans un navigateur.
+    if len(sys.argv) > 1:
+        main(sys.argv[1])
+    else:
+        main(os.path.join(RACINE, "index.html"), en_ligne=True)

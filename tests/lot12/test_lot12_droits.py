@@ -237,5 +237,6 @@ def test_demonstration_deux_parcs_differents(db):
     db.cursor().execute((RACINE / "scripts" / "donnees_test.sql").read_text(encoding="utf-8"))
     admin = liste(connecte(db, "raphael.bracq@zenitude-groupe.com"), "SELECT id FROM residences")
     collab = liste(connecte(db, "benjamin.gagneur@zenitude-groupe.com"), "SELECT id FROM residences")
-    assert admin == ["RES-901", "RES-902"]
-    assert collab == ["RES-901"]
+    # Depuis le lot 13 (nettoyage) : les huit résidences de démonstration ; Benjamin a le groupe seniors.
+    assert admin == [f"RES-00{i}" for i in range(1, 9)]
+    assert collab == ["RES-003", "RES-004", "RES-005"]

@@ -27,6 +27,10 @@ de données multi-utilisateurs et une connexion. Il faut donc une décision spé
 7. Exécution : moteur Python et interface sur poste de travail ; base de test Supabase.
    Aucun hébergement Zenitude.
 
+8. Les comptes de test des profils « collaborateur à parc restreint » et « lecture seule »
+   sont fictifs, créés dans Supabase uniquement pour les tests, avec des adresses fictives.
+   Ils ne reçoivent aucune connexion réelle.
+
 ## Hors périmètre
 Pennylane, EBITDA, budgets, import des KPI, provisions, hébergement définitif, Microsoft 365,
 mise en production.

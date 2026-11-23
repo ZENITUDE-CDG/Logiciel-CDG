@@ -154,3 +154,13 @@ def test_page_en_ligne_sans_donnees():
     texte = (RACINE / "index.html").read_text(encoding="utf-8")
     assert "var D = null;" in texte
     assert "DEMO-200" not in texte
+
+
+def test_index_html_a_jour(tmp_path):
+    """La page publiée (index.html à la racine) doit être celle que produit le gabarit actuel : sinon le site
+    affiche une ancienne version alors que le reste du dépôt est à jour (oubli de déposer index.html)."""
+    import generer_site
+    attendu = tmp_path / "index.html"
+    generer_site.ecrire(str(attendu), None)
+    assert (RACINE / "index.html").read_text(encoding="utf-8") == attendu.read_text(encoding="utf-8"), \
+        "index.html n'est pas à jour : déposer le index.html livré avec interface/gabarit.html"

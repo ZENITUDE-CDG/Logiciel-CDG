@@ -26,6 +26,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 10 | Menu latéral réductible (remplace les barres du haut), page Résidence (fiche complète) | - |
 | 12 | Utilisateurs, rôles (administrateur, collaborateur, lecture seule), parcs (résidences et groupes), droits vérifiés dans la base, vraie connexion, écran d'administration | 20 (base PostgreSQL, GitHub Actions) |
 | 11 | Compte de résultat PCG (système de base, ANC 2022-06) figé dans la publication ; section Trésorerie (position, créances, dettes) ; colonnes tiers, lettrage, échéance | 110 |
+| 14 | Clic sur tout montant : formule, éléments et écritures d’origine (rapprochés avec le moteur) ; lissage de postes écriture par écriture comme Waibi (exercice suivant compris) ; compte ouvert par l’adresse en bas à gauche ; logo vers le choix des résidences depuis toute page | 18 |
 | 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
 Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). Depuis le lot 12, on y entre par `connexion.html` (vraie connexion, base de test Supabase).
@@ -40,6 +41,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Une règle datée est une version : changer une date d'effet crée un retrait et un ajout.
 - Lot 12 : Supabase comme base de test, droits par règles par ligne dans PostgreSQL, SQL standard migrable (`docs/decisions/0004`, `0005`, `0006`). Identité par l'adresse e-mail du jeton ; comptes créés dans Supabase par un administrateur ; clé publique visible dans `app/config.js`.
 - Phase test : le calcul des ajustements se fait dans la page (`docs/decisions/0002-calcul-ajustements-navigateur.md`), le moteur Python reste la référence et un test compare les deux.
+- Lot 14 (`docs/decisions/0008`) : détail des écritures publié par résidence ; lissage comme Waibi (répartition possible sur l'exercice suivant, mois sans écriture compris).
 - Lot 13 (`docs/decisions/0007`) : publication par GitHub Actions avec la clé secrète dans les secrets GitHub ; ajustements partagés, actifs dès leur création, sans validation à deux personnes ; lissage ; base de test = huit résidences de démonstration (Benjamin : groupe GRP-SENIORS).
 
 ## Points ouverts
@@ -64,7 +66,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 297 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
+python -m pytest            # 315 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
                             # sur GitHub : onglet Actions, lancé automatiquement à chaque dépôt
 sh demo.sh                  # démonstration complète
 python interface/generer_site.py   # régénère index.html (en ligne, sans données)

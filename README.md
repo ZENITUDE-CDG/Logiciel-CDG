@@ -3,7 +3,8 @@
 Logiciel de contrôle de gestion des résidences Zenitude. **Données entièrement fictives.**
 
 - Site : `connexion.html` (entrée), `espace.html` (mon parc), `administration.html`, `index.html` (tableau de bord).
-- Base de test : Supabase, créée par `scripts/installation_supabase.sql` (voir `docs/lot13_mise_en_route.md`).
+- Base de test : Supabase, créée par `scripts/installation_supabase.sql` (voir `docs/lot13_mise_en_route.md` et `docs/lot14_mise_en_route.md`).
+- Tout montant est cliquable : formule, éléments du calcul et écritures d'origine.
 - Chiffres : calculés par le moteur Python (dossier `zenitude/`) dans GitHub Actions et publiés dans la base
   (`interface/publier_supabase.py`). La page en ligne ne contient aucune donnée : chacun ne voit que son parc.
 - Règles de travail et invariants : `CLAUDE.md`. État du projet : `CONTEXTE.md`. Décisions : `docs/decisions/`.

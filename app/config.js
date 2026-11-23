@@ -4,5 +4,5 @@
 // NE JAMAIS mettre ici la clé « secret » / « service_role » ni le mot de passe de la base.
 window.ZENITUDE_CONFIG = {
   supabaseUrl: "https://jukuciixzrixmaqunpbu.supabase.co",
-  supabaseCle: "COLLER_ICI_LA_CLE_PUBLIQUE"
+  supabaseCle: "sb_publishable_PCphhYtk7XA3zxN5QFoz8g_jvDoKvNb"
 };

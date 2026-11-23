@@ -80,14 +80,16 @@
   // Barre du haut commune aux pages connectées.
   function barre(page, profil) {
     var liens = [el("a", { href: "index.html", texte: "Tableau de bord" }),
-                 el("a", { href: "espace.html", texte: "Mon espace", "aria-current": page === "espace" ? "page" : null })];
+                 el("a", { href: "espace.html", texte: "Mon compte", "aria-current": page === "espace" ? "page" : null })];
     if (profil && profil.role === "administrateur") {
       liens.push(el("a", { href: "administration.html", texte: "Administration",
                            "aria-current": page === "administration" ? "page" : null }));
     }
     liens.push(el("button", { type: "button", texte: "Se déconnecter", onclick: deconnexion }));
-    var logo = el("img", { src: "interface/logo_zenitude.png", alt: "Zenitude" });
-    logo.addEventListener("error", function () { logo.remove(); });
+    // Lot 14 : le logo ramène à l'accueil du tableau de bord (choix des résidences), depuis toute page.
+    var img = el("img", { src: "interface/logo_zenitude.png", alt: "Zenitude : retour au choix des résidences" });
+    img.addEventListener("error", function () { img.remove(); });
+    var logo = el("a", { href: "index.html#choix", class: "lien-logo", title: "Retour au choix des résidences" }, [img]);
     return el("header", { class: "barre" }, [logo, el("span", { class: "nom-app", texte: "Pilotage" }),
                                              el("nav", { "aria-label": "Navigation" }, liens)]);
   }

@@ -4,8 +4,7 @@
    avec une partie des résidences seulement, elle ne contient rien des autres.
 2. Démarrage en ligne avec un client de base simulé : parc d'un collaborateur, droits affichés,
    ajustement enregistré dans la base (et non dans le navigateur).
-3. Lissage : total conservé, parts égales au centime, non calculable si un mois de répartition n'a pas
-   d'écriture.
+(Le lissage par compte du lot 13 est remplacé par le lissage d'écritures du lot 14 : tests/test_lot14_page.py.)
 Ignorés si Playwright n'est pas installé (pip install playwright && playwright install chromium).
 """
 import json
@@ -24,7 +23,7 @@ import publier_supabase as pub  # noqa: E402
 from zenitude.config import couverture  # noqa: E402
 from zenitude.kpi.mesures import charger_exploitation  # noqa: E402
 
-COMPARES = ("residences", "finance", "couverture", "imports", "tresorerie", "calcul", "plan", "journaux",
+COMPARES = ("residences", "finance", "ecritures", "couverture", "imports", "tresorerie", "calcul", "plan", "journaux",
             "perimetres", "kpi", "lignes_ebitda", "lignes_sig", "cr_lignes", "mois", "periodes")
 
 CLIENT_SIMULE = """
@@ -176,53 +175,5 @@ def test_demarrage_en_ligne_simule(site):
     pg.wait_for_function("AJ.liste.some(a => !a.actif)")
     maj = pg.evaluate("journalBase.filter(q => q.op === 'update')")
     assert maj and maj[-1]["valeurs"] == {"actif": False} and maj[-1]["filtres"] == [["id", 100]]
-    assert erreurs == []
-    pg.close()
-
-
-LISSAGE = """
-() => {
-  var d = "DEMO-2001", src = "2026-01", cib = ["2026-01", "2026-12"];
-  AJ = { liste: [{ id: "AJ-900", actif: true, type: "lissage", libelle: "Lissage taxe", compte: "635", mode: "lissage", portee: "tous",
-                   lissage: { source_du: src, source_au: src, cible_du: cib[0], cible_au: cib[1] }, du: "", au: "", rev: 1 }], comptes: [] };
-  SOLDES = {}; RES_CACHE = {}; LISS = {};
-  var r = soldes(d, false).v, a = soldes(d, true).v, mois = MOIS.filter(m => m >= cib[0] && m <= cib[1]);
-  var res = {};
-  Object.keys(r[src]).filter(c => c.indexOf("635") === 0).forEach(c => {
-    var totR = 0, totA = 0, ajouts = [];
-    mois.forEach(m => { totR += r[m][c] || 0; totA += a[m][c] || 0; });
-    mois.forEach(m => { ajouts.push((a[m][c] || 0) - (r[m][c] || 0) + (m === src ? r[src][c] : 0)); });
-    res[c] = { totR: totR, totA: totA, source: r[src][c], ajouts: ajouts };
-  });
-  var V = VUES_FIN.ebitda, ebR = tableauJS(V.lignes(), [d], mois, false, V.ratio).total.EBITDA, ebA = tableauJS(V.lignes(), [d], mois, true, V.ratio).total.EBITDA;
-  var ebJanR = tableauJS(V.lignes(), [d], [src], false, V.ratio).total.EBITDA, ebJanA = tableauJS(V.lignes(), [d], [src], true, V.ratio).total.EBITDA;
-  // Mois de répartition sans écriture (retiré pour le test) : non calculable, jamais zéro.
-  delete COUV["DEMO-2002"]["2026-02"];
-  AJ.liste.push({ id: "AJ-901", actif: true, type: "lissage", libelle: "Lissage impossible", compte: "615", mode: "lissage", portee: ["DEMO-2002"],
-                  lissage: { source_du: "2026-01", source_au: "2026-01", cible_du: "2026-01", cible_au: "2026-03" }, du: "", au: "", rev: 1 });
-  SOLDES = {}; RES_CACHE = {}; LISS = {};
-  var nc = tableauJS(V.lignes(), ["DEMO-2002"], ["2026-03"], true, V.ratio).total.MAINT === NC;
-  var impact = impactAj(AJ.liste[1], ["DEMO-2002"], ["2026-01"]).nc;
-  COUV["DEMO-2002"]["2026-02"] = true; SOLDES = {}; RES_CACHE = {}; LISS = {};
-  var erreurs = ajErreurs({ libelle: "x", compte: "635", mode: "lissage", portee: "tous", lissage: { source_du: "2026-03", source_au: "2026-01", cible_du: "2026-01", cible_au: "2026-12" } });
-  var erreurs2 = ajErreurs({ libelle: "x", compte: "65800000P", mode: "lissage", portee: "tous", lissage: { source_du: "2026-01", source_au: "2026-01", cible_du: "2026-01", cible_au: "2026-12" } });
-  return { res: res, ebR: ebR, ebA: ebA, ebJanR: ebJanR, ebJanA: ebJanA, nc: nc, impact: impact, erreurs: erreurs, erreurs2: erreurs2 };
-}
-"""
-
-
-def test_lissage(site):
-    pg, erreurs = ouvrir(site, site["complet"])
-    r = pg.evaluate(LISSAGE)
-    assert r["res"], "aucun compte 635 en janvier 2026 pour DEMO-2001"
-    for c, x in r["res"].items():
-        assert x["totA"] == x["totR"], c                         # total de l'année conservé
-        assert sum(x["ajouts"]) == x["source"], c                 # le montant de janvier est réparti en entier
-        assert max(x["ajouts"]) - min(x["ajouts"]) <= 1, c        # douze parts égales au centime près
-    assert r["ebA"] == r["ebR"]                                   # EBITDA de l'année inchangé
-    assert r["ebJanA"] != r["ebJanR"]                             # janvier allégé
-    assert r["nc"] is True and "sans écriture" in r["impact"]
-    assert any("inversés" in e for e in r["erreurs"])
-    assert any("Compte à lisser invalide" in e for e in r["erreurs2"])
     assert erreurs == []
     pg.close()

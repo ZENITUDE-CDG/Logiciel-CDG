@@ -135,8 +135,15 @@ def ligne_du_compte(compte):
 
 
 def lignes_exportees():
-    """Structure du modèle pour l'affichage (ordre, libellés, niveaux)."""
-    return [{"code": c, "libelle": lib, "sens": s, "niveau": n} for c, lib, _, s, n in LIGNES_CR]
+    """Structure du modèle pour l'affichage (ordre, libellés, niveaux) et règle de chaque ligne (préfixes de
+    comptes d'un poste, ou termes d'un total), pour que la page explique un montant (lot 14)."""
+    def regle(r, s):
+        if s in ("produit", "charge", "memo"):
+            return {"prefixes": list(r)}
+        if s == "total":
+            return {"termes": [[sg, c] for sg, c in r]}
+        return {}
+    return [{"code": c, "libelle": lib, "sens": s, "niveau": n, "regle": regle(r, s)} for c, lib, r, s, n in LIGNES_CR]
 
 
 def _arrondi(v):

@@ -38,7 +38,7 @@ from zenitude.kpi.mesures import charger_exploitation  # noqa: E402
 # Clés des données du site propres à une résidence ou calculées sur un périmètre de résidences :
 # elles ne vont jamais dans la partie commune.
 PAR_RESIDENCE = ("residences", "perimetres", "resultats", "ebitda", "sig", "finance", "couverture",
-                 "imports", "plan", "journaux")
+                 "imports", "plan", "journaux", "ecritures")
 
 
 class PublicationRefusee(Exception):
@@ -91,6 +91,7 @@ def decouper(donnees, ecritures, exploitation):
             "couverts": calcul["couverts"].get(d, []),
             "exploitation": calcul["exploitation"].get(d, {}),
             "groupes_config": [p["id"] for p in crees if d in p["dossiers"]],
+            "ecritures": donnees["ecritures"].get(d, []),
             "comptes_lignes": comptes,
             "journaux_lignes": journaux,
             "nb_ecritures": len(lignes),

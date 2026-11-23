@@ -278,7 +278,9 @@ def _donnees_calcul(ecritures, exploitation, rubriques, residences):
     mêmes règles que le moteur Python ; un test compare les deux (tests/test_site_ajustements.py).
     """
     mois_ecr = sorted({e["date"][:7] for e in ecritures})
-    mois_tous = liste_mois(mois_ecr[0], mois_ecr[-1])
+    # Lot 14 : la frise va jusqu'à la fin de l'année suivante, pour les lissages répartis sur l'exercice
+    # suivant (E+1). Les mois sans écriture restent sans donnée : jamais zéro.
+    mois_tous = liste_mois(mois_ecr[0], max(mois_ecr[-1], f"{ANNEE + 1}-12"))
     compta, couverts = {}, {}
     for e in ecritures:
         d, m = e["dossier"], e["date"][:7]
@@ -310,6 +312,7 @@ def _donnees_calcul(ecritures, exploitation, rubriques, residences):
     pcg = _libelles_pcg()
     return {
         "mois": mois_tous,
+        "fin_donnees": mois_ecr[-1],
         "compta": compta,
         "couverts": {d: sorted(ms) for d, ms in couverts.items()},
         "exploitation": expl,
@@ -350,6 +353,27 @@ def _groupes_crees(feuille, residences):
         if membres:
             out.append({"id": "GRP-" + str(g["Code groupe"]).strip(), "libelle": str(g["Nom"]).strip(),
                         "type": "groupe-cree", "dossiers": sorted(par_code[c]["dossier"] for c in membres)})
+    return out
+
+
+def _ecritures_detail(ecritures, residences):
+    """Détail des écritures par dossier (lot 14), pour expliquer un montant et lisser écriture par écriture.
+
+    Ligne : [identifiant, date, journal, pièce, compte, libellé, montant en centimes (crédit - débit),
+    tiers, lettrage, échéance]. Identifiant stable : pièce + rang de la ligne dans la pièce.
+    """
+    dossiers = {r["dossier"] for r in residences}
+    out, rangs = {}, {}
+    for e in ecritures:
+        d = e["dossier"]
+        if d not in dossiers:
+            continue
+        cle = (d, e["piece"])
+        rangs[cle] = rangs.get(cle, 0) + 1
+        montant = Decimal(e["credit"] or 0) - Decimal(e["debit"] or 0)
+        out.setdefault(d, []).append([f"{e['piece']}-{rangs[cle]}", e["date"], e["journal"], e["piece"], e["compte"],
+                                      e.get("libelle") or "", int((montant * 100).quantize(Decimal("1"))),
+                                      e.get("tiers") or "", e.get("lettrage") or "", e.get("echeance") or ""])
     return out
 
 
@@ -515,6 +539,7 @@ def construire(demo=DEMO):
         "lignes_sig": _lignes_exportees(LIGNES_SIG),
         "sig": sig, "imports": imports, "journaux": journaux, "plan": plan,
         "calcul": _donnees_calcul(ecritures, exploitation, f.get("Rubriques", []), residences),
+        "ecritures": _ecritures_detail(ecritures, residences),
         "versions": statut["versions"], "journal": statut["journal"],
     }
 

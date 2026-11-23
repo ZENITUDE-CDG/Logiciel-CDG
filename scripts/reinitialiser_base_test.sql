@@ -1,8 +1,8 @@
 -- Remise à zéro de la BASE DE TEST Supabase (données fictives uniquement).
--- Supprime les tableaux et fonctions des lots 12 et 13, y compris ceux d'une version précédente.
+-- Supprime les tableaux et fonctions des lots 12 à 14, y compris ceux d'une version précédente.
 -- Ne jamais exécuter sur une base contenant des données réelles.
 
-DROP TABLE IF EXISTS ajustements, comptes_simules, donnees_residences, donnees_communes,
+DROP TABLE IF EXISTS lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
   parcs, residence_groupe, groupes, residences, profils CASCADE;
 
 DROP FUNCTION IF EXISTS gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),

@@ -27,7 +27,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 12 | Utilisateurs, rôles (administrateur, collaborateur, lecture seule), parcs (résidences et groupes), droits vérifiés dans la base, vraie connexion, écran d'administration | 20 (base PostgreSQL, GitHub Actions) |
 | 11 | Compte de résultat PCG (système de base, ANC 2022-06) figé dans la publication ; section Trésorerie (position, créances, dettes) ; colonnes tiers, lettrage, échéance | 110 |
 
-Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). L'ancienne maquette (`maquette/`) est remplacée.
+Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). Depuis le lot 12, on y entre par `connexion.html` (vraie connexion, base de test Supabase).
 
 ## Décisions prises
 
@@ -50,7 +50,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 6. Concurrence : un seul rédacteur à la fois, pas de verrou entre processus.
 7. Authentification : connexion provisoire par e-mail en place (lot 12). Reste : Microsoft 365, rattacher les dépôts et approbations de configuration à la personne connectée, mot de passe oublié. Requis par la DSI avant tout usage réel.
 8. Hébergement définitif, plateforme Git, dépôt public, accès : décisions DSI. Phase test : GitHub Pages et Supabase (décision 0006).
-15. Lot 12 : retirer l'écran de connexion factice de `interface/gabarit.html` et filtrer le tableau de bord par parc (prochain lot).
+15. Lot 12 : filtrer le tableau de bord par parc (prochain lot) ; aujourd'hui il affiche toujours les huit résidences de démonstration intégrées à la page.
 9. Lot 5 limité : pas de PDF/PPTX, une publication par dossier et exercice.
 11. Lot 6 : définitions des six KPI à valider par le contrôle de gestion (notamment RevPAC : CA hébergement + services / nuitées clients ; captage PDJ : couverts / nuitées clients). Source réelle des mesures d'exploitation (Mews, saisie) à décider. Groupes de l'onglet Groupes non encore utilisés par la vue groupe. Pas de publication figée des KPI.
 12. Calculateur d'ajustements de la page (lot 9) : à remplacer par le backend en production, avec la même structure d'ajustement. Validation à deux personnes des ajustements et droits non définis.

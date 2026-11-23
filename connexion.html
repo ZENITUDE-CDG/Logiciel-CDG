@@ -39,7 +39,11 @@
 <script>
 (async function () {
   if (!Zen.pret) return;
-  if (await Zen.session()) { location.replace("espace.html"); return; }
+  // Retour du tableau de bord par « Se déconnecter » : on ferme la session puis on affiche le formulaire.
+  if (new URLSearchParams(location.search).has("deconnexion")) {
+    await Zen.client.auth.signOut();
+    history.replaceState(null, "", "connexion.html");
+  } else if (await Zen.session()) { location.replace("espace.html"); return; }
   var form = document.getElementById("form"), msg = document.getElementById("msg"), btn = document.getElementById("valider");
   form.addEventListener("submit", async function (e) {
     e.preventDefault();

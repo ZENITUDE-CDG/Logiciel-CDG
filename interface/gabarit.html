@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Zenitude – Pilotage</title>
+<script src="app/garde.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -589,12 +590,21 @@ function session(k, v) { try { if (v === undefined) return JSON.parse(sessionSto
 /* ---------- Écrans ---------- */
 function montrer(id) { document.querySelectorAll(".ecran").forEach(function (e) { e.classList.toggle("visible", e.id === id); }); window.scrollTo(0, 0); }
 function demarrer() {
-  etat.utilisateur = session("utilisateur");
+  // Lot 12 : en ligne, l'utilisateur vient de la vraie connexion (connexion.html) ; en local (tests), connexion factice inchangée.
+  etat.utilisateur = location.protocol === "file:" ? session("utilisateur") : utilisateurConnecte();
   var p = session("perim");
-  if (!etat.utilisateur) return montrer("ecran-connexion");
+  if (!etat.utilisateur) { if (location.protocol !== "file:") { location.replace("connexion.html"); return; } return montrer("ecran-connexion"); }
   remplirUtilisateur();
   if (p && perimetre(p)) { etat.perim = p; return ouvrirApp(); }
   ouvrirChoix();
+}
+function utilisateurConnecte() {
+  try {
+    var s = JSON.parse(localStorage.getItem("zenitude-session") || "null"), mail = s && s.user && s.user.email;
+    if (!mail) return null;
+    var local = mail.split("@")[0].split(/[._-]/).filter(Boolean).map(function (x) { return x.charAt(0).toUpperCase() + x.slice(1); });
+    return { mail: mail, nom: local.join(" ") || mail, ini: local.map(function (x) { return x.charAt(0); }).join("").slice(0, 2) || "?" };
+  } catch (e) { return null; }
 }
 el("form-connexion").addEventListener("submit", function (ev) {
   ev.preventDefault();
@@ -608,7 +618,9 @@ el("form-connexion").addEventListener("submit", function (ev) {
   remplirUtilisateur(); ouvrirChoix();
 });
 document.querySelectorAll("[data-deconnexion]").forEach(function (b) { b.addEventListener("click", function () {
-  session("utilisateur", null); session("perim", null); etat.utilisateur = null; etat.perim = null; montrer("ecran-connexion"); }); });
+  session("perim", null); etat.perim = null;
+  if (location.protocol !== "file:") { location.href = "connexion.html?deconnexion=1"; return; }
+  session("utilisateur", null); etat.utilisateur = null; montrer("ecran-connexion"); }); });
 function remplirUtilisateur() {
   document.querySelectorAll(".u-nom").forEach(function (x) { x.textContent = etat.utilisateur.nom; });
   document.querySelectorAll(".u-mail").forEach(function (x) { x.textContent = etat.utilisateur.mail; });

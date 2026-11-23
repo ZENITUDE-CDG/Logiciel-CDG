@@ -33,8 +33,8 @@ préfère ne rien installer en local pendant la phase test : GitHub, Supabase et
    et n'utilisent aucun secret.
 
 ## Limites connues
-- L'écran de connexion factice du lot 8 reste dans `index.html` tant que `interface/gabarit.html`
-  n'est pas repris (prochain lot) : après la vraie connexion, il suffit de le passer.
+- Le tableau de bord n'est pas filtré par parc (prochain lot). La connexion factice du lot 8 ne
+  sert plus qu'aux tests de page en local (`file://`) ; en ligne, la vraie connexion la remplace.
 - Les tests de page des lots 9 et 11 ouvrent la page en local (`file://`) : la garde ne s'y applique pas.
 - Pas de mot de passe oublié (envoi de mail hors périmètre) : un administrateur réinitialise le mot de
   passe dans Supabase.

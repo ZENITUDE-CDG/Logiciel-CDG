@@ -35,6 +35,7 @@
 11. Les identifiants sont en `[A-Z0-9_-]`. Le caractère `&` est interdit (utiliser `PL_`).
 
 ## Architecture (proposition à valider avec la DSI)
+- Phase test, lot 12 (décisions 0004 et 0006) : écart accepté. Site GitHub Pages + base de test Supabase, droits vérifiés dans PostgreSQL par des règles par ligne (`migrations/003_droits.sql`), sans serveur applicatif. Pour l'invariant 9, la base tient lieu de serveur pendant la phase test ; à réexaminer avant toute mise en production.
 - Backend Python / Django, PostgreSQL, traitements d'import et de calcul en arrière-plan.
 - Frontend React / TypeScript. Metabase possible pour les tableaux de bord (à décider).
 - Modules : données certifiées, connecteur Pennylane, configuration, moteur de KPI, clôture, budgets, rapports, administration.
@@ -44,7 +45,8 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (238 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11 ; les tests de page des lots 9 et 11 demandent Playwright et Chromium, sinon ils sont ignorés).
+- Tests : `python -m pytest` (258 tests : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12 ; les tests de page des lots 9 et 11 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux du lot 12 demandent une base PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`), sinon ils sont ignorés).
+- Tests automatiques : `.github/workflows/tests.yml` lance toute la suite sur GitHub (onglet Actions) à chaque dépôt, avec une base PostgreSQL temporaire créée depuis `migrations/`. Aucun secret, Supabase n'est jamais touché.
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
 - Configuration de test complète : `python tests/generer_config_complete.py config_modele/Zenitude_Configuration_modele.xlsx tests/fixtures tests/fixtures/ecritures_synthetiques.csv`.
 - Écritures synthétiques : `python tests/generer_ecritures.py tests/fixtures`.
@@ -81,7 +83,8 @@ Critère de fin du lot : `pytest` passe, aucun cas d'un autre lot n'est touché,
 ## Limites d'accès
 - Ne pas lire ni écrire hors du dépôt.
 - Ne pas installer de dépendance non listée sans l'indiquer dans `docs/decisions/`.
-- Ne pas déployer. Ne pas configurer de connexion réelle à Pennylane.
+- Ne pas déployer. Ne pas configurer de connexion réelle à Pennylane. Seule exception : le site GitHub Pages et la base de test Supabase (décisions 0004 et 0006).
+- Aucune clé secrète Supabase (« secret » / « service_role »), aucun mot de passe de base dans le dépôt. Seule la clé publique figure dans `app/config.js` (décision 0006).
 
 
 ## Lot 2 - STATUT : réalisé
@@ -161,3 +164,15 @@ Limites : stub de publication (lot 5) ; un seul rédacteur à la fois, sans verr
 - Section « Trésorerie » du site (position, créances, dettes) : la page additionne les agrégats par dossier fournis par le moteur (décision `docs/decisions/0003-tresorerie-et-compte-de-resultat-pcg.md`), taux = ratio de sommes. Les ajustements du lot 9 ne s'appliquent pas à la trésorerie.
 - Écritures : trois colonnes facultatives `tiers`, `lettrage`, `echeance` (changement de contrat, voir `docs/tresorerie.md`). Jeu de démonstration étendu (règlements fictifs jusqu'à octobre 2026, à-nouveaux, un acompte non affecté, un dossier sans échéance) ; les écritures de classes 6 et 7, les mesures et la configuration sont inchangées.
 - Limites : N-1 non importé ; lettrage partiel traité comme pièce ouverte ; pas de prévision de trésorerie (module Budgets) ; colonnes tiers, lettrage, échéance à confirmer dans l'extraction Pennylane réelle ; règlement ANC 2026-03 non analysé ; rattachements 708, 709, 608, 648, 649 provisoires.
+
+
+## Lot 12 - STATUT : réalisé (utilisateurs, rôles, parcs, connexion provisoire)
+Décisions : `docs/decisions/0004`, `0005` (dépendances), `0006` (site GitHub Pages et Supabase).
+- Base : `migrations/001_profils.sql` (profils : adresse, nom, rôle administrateur / collaborateur / lecture, actif), `002_residences_groupes_parcs.sql` (résidences = dossiers Pennylane, groupes, appartenance, parcs : une résidence ou un groupe par ligne), `003_droits.sql` (règles par ligne). SQL standard PostgreSQL ; rejouables.
+- Identité : adresse e-mail du jeton de connexion (`request.jwt.claims`), fonction `email_courant()`. Le passage à Microsoft 365 ne change que les pages de connexion.
+- Droits : administrateur voit et gère tout ; collaborateur lit et modifie les résidences de son parc ; lecture seule lit son parc. Donner un groupe donne les résidences ajoutées plus tard. Un compte sans profil actif et une personne non connectée ne voient rien. Création d'utilisateurs, groupes, résidences et parcs : administrateur seulement.
+- Site : `connexion.html` (connexion par e-mail et mot de passe), `espace.html` (mon parc, changement de mot de passe), `administration.html` (utilisateurs, rôles, état actif, parcs, résidences, groupes, affectations). Code commun dans `app/` (`config.js`, `zenitude.js`, `style.css`) ; `app/garde.js` renvoie le tableau de bord vers la connexion (confort, ignoré en `file://`).
+- Données de départ : `scripts/donnees_test.sql` (Raphael administrateur, Benjamin collaborateur avec le groupe pilote, résidences fictives RES-901 dans le groupe et RES-902 hors groupe). Installation Supabase en un collage : `scripts/installation_supabase.sql` (remise à zéro + migrations + données), assemblé à partir des fichiers ci-dessus : le régénérer si l'un d'eux change.
+- Tests : `tests/lot12/test_lot12_droits.py` (20 tests : trois profils, lecture, modification, administration, intégrité, démonstration des deux parcs).
+- Règle : toute nouvelle table reçoit ses règles par ligne et ses tests de droits dans le même commit. Les calculs restent dans le moteur Python, jamais dans la base.
+- Limites : l'écran de connexion factice du lot 8 reste dans `interface/gabarit.html` (à retirer au prochain lot) ; le tableau de bord n'est pas encore filtré par parc (données fictives intégrées à la page) ; pas de mot de passe oublié ; comptes de connexion créés dans Supabase par un administrateur.

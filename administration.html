@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<title>Administration – Pilotage Zenitude</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="app/config.js"></script>
+<script src="app/zenitude.js"></script>
+</head>
+<body>
+<div id="haut"></div>
+<main id="contenu" aria-live="polite"><p class="doux">Chargement…</p></main>
+<script>
+(async function () {
+  if (!Zen.pret) return;
+  var el = Zen.el, db = Zen.client;
+  var c = await Zen.exigerConnexion();
+  if (!c) return;
+  document.getElementById("haut").appendChild(Zen.barre("administration", c.profil));
+  var main = document.getElementById("contenu");
+
+  if (!c.profil || !c.profil.actif || c.profil.role !== "administrateur") {
+    main.innerHTML = "";
+    main.appendChild(el("section", { class: "bloc" }, [el("h1", { texte: "Accès réservé" }),
+      el("p", { texte: "Cette page est réservée aux administrateurs." })]));
+    return;
+  }
+
+  var CODE = /^[A-Z0-9_-]+$/;
+  var etat = { onglet: "utilisateurs", d: null };
+  var zoneMsg = el("div", { class: "message", role: "status" });
+
+  async function charger() {
+    var r = await Promise.all([
+      db.from("profils").select("*").order("email"),
+      db.from("residences").select("*").order("id"),
+      db.from("groupes").select("*").order("id"),
+      db.from("residence_groupe").select("*"),
+      db.from("parcs").select("*").order("id")
+    ]);
+    var err = r.find(function (x) { return x.error; });
+    if (err) { Zen.message(zoneMsg, Zen.traduire(err.error)); return false; }
+    etat.d = { profils: r[0].data, residences: r[1].data, groupes: r[2].data, rg: r[3].data, parcs: r[4].data };
+    return true;
+  }
+
+  // Exécute une modification, affiche le résultat, recharge et redessine.
+  async function agir(promesse, ok) {
+    Zen.message(zoneMsg, "");
+    var r = await promesse;
+    if (r && r.error) { Zen.message(zoneMsg, Zen.traduire(r.error)); return false; }
+    if (await charger()) Zen.message(zoneMsg, ok, "ok");
+    dessiner();
+    return true;
+  }
+
+  function libelleResidence(id) {
+    var r = etat.d.residences.find(function (x) { return x.id === id; });
+    return r ? r.id + " " + r.libelle : id;
+  }
+  function libelleGroupe(id) {
+    var g = etat.d.groupes.find(function (x) { return x.id === id; });
+    return g ? g.id + " " + g.libelle : id;
+  }
+
+  function puce(texte, titreRetrait, auClic, classe) {
+    return el("span", { class: "puce" + (classe ? " " + classe : "") }, [texte,
+      el("button", { type: "button", title: titreRetrait, "aria-label": titreRetrait, texte: "×", onclick: auClic })]);
+  }
+
+  function selectAjout(options, libelleVide, auChoix, texteBouton) {
+    var s = el("select", { "aria-label": libelleVide }, [el("option", { value: "", texte: libelleVide })]);
+    options.forEach(function (o) {
+      if (o.groupe) {
+        var og = el("optgroup", { label: o.groupe });
+        o.options.forEach(function (x) { og.appendChild(el("option", { value: x.value, texte: x.texte })); });
+        if (o.options.length) s.appendChild(og);
+      } else s.appendChild(el("option", { value: o.value, texte: o.texte }));
+    });
+    return el("div", { class: "ajout" }, [s, el("button", { type: "button", class: "secondaire petit", texte: texteBouton,
+      onclick: function () { if (s.value) auChoix(s.value); } })]);
+  }
+
+  function champ(id, libelle, attrs) {
+    var i = el("input", Object.assign({ id: id }, attrs || {}));
+    return { input: i, bloc: el("div", {}, [el("label", { for: id, texte: libelle }), i]) };
+  }
+
+  // --- Onglet Utilisateurs -------------------------------------------------
+  function ongletUtilisateurs() {
+    var d = etat.d, f = [];
+    var email = champ("u-email", "Adresse e-mail", { type: "email", placeholder: "prenom.nom@zenitude-groupe.com" });
+    var nom = champ("u-nom", "Nom affiché", { type: "text" });
+    var role = el("select", { id: "u-role" }, Object.keys(Zen.ROLES).map(function (k) {
+      return el("option", { value: k, texte: Zen.ROLES[k], selected: k === "lecture" ? "selected" : null });
+    }));
+    var form = el("form", { class: "ligne", novalidate: true }, [email.bloc, nom.bloc,
+      el("div", {}, [el("label", { for: "u-role", texte: "Rôle" }), role]),
+      el("div", {}, [el("button", { type: "submit", texte: "Ajouter l’utilisateur" })])]);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var m = email.input.value.trim().toLowerCase(), n = nom.input.value.trim();
+      if (!/^[^@\s]+@[^@\s]+$/.test(m) || !n) return Zen.message(zoneMsg, "Renseignez une adresse valide et un nom.");
+      agir(db.from("profils").insert({ email: m, nom: n, role: role.value, fictif: false }), "Utilisateur ajouté : " + m);
+    });
+
+    var lignes = d.profils.map(function (p) {
+      var moi = p.email === c.email;
+      var selRole = el("select", { "aria-label": "Rôle de " + p.email }, Object.keys(Zen.ROLES).map(function (k) {
+        return el("option", { value: k, texte: Zen.ROLES[k], selected: k === p.role ? "selected" : null });
+      }));
+      selRole.addEventListener("change", function () {
+        if (moi && selRole.value !== "administrateur") { selRole.value = p.role;
+          return Zen.message(zoneMsg, "Vous ne pouvez pas retirer votre propre rôle d’administrateur."); }
+        agir(db.from("profils").update({ role: selRole.value }).eq("email", p.email), "Rôle modifié : " + p.email);
+      });
+      var actif = el("input", { type: "checkbox", "aria-label": "Compte actif", checked: p.actif ? "checked" : null });
+      actif.style.width = "auto";
+      actif.addEventListener("change", function () {
+        if (moi) { actif.checked = true; return Zen.message(zoneMsg, "Vous ne pouvez pas désactiver votre propre accès."); }
+        agir(db.from("profils").update({ actif: actif.checked }).eq("email", p.email),
+             (actif.checked ? "Accès réactivé : " : "Accès désactivé : ") + p.email);
+      });
+
+      var parc = d.parcs.filter(function (x) { return x.utilisateur_email === p.email; });
+      var puces = el("div", { class: "puces" }, parc.map(function (x) {
+        var t = x.groupe_id ? "Groupe " + libelleGroupe(x.groupe_id) : libelleResidence(x.residence_id);
+        return puce(t, "Retirer du parc", function () {
+          agir(db.from("parcs").delete().eq("id", x.id), "Parc modifié : " + p.email);
+        }, x.groupe_id ? "groupe" : "");
+      }));
+      var celluleParc;
+      if (p.role === "administrateur") {
+        celluleParc = el("span", { class: "doux", texte: "Voit tout (administrateur)" });
+      } else {
+        var dejaG = parc.map(function (x) { return x.groupe_id; }), dejaR = parc.map(function (x) { return x.residence_id; });
+        var ajout = selectAjout([
+          { groupe: "Groupes", options: d.groupes.filter(function (g) { return dejaG.indexOf(g.id) < 0; })
+              .map(function (g) { return { value: "G:" + g.id, texte: g.id + " " + g.libelle }; }) },
+          { groupe: "Résidences", options: d.residences.filter(function (r) { return dejaR.indexOf(r.id) < 0; })
+              .map(function (r) { return { value: "R:" + r.id, texte: r.id + " " + r.libelle }; }) }
+        ], "Ajouter au parc…", function (v) {
+          var ligne = { utilisateur_email: p.email };
+          if (v.indexOf("G:") === 0) ligne.groupe_id = v.slice(2); else ligne.residence_id = v.slice(2);
+          agir(db.from("parcs").insert(ligne), "Parc modifié : " + p.email);
+        }, "Ajouter");
+        celluleParc = el("div", {}, [parc.length ? puces : el("p", { class: "vide", texte: "Parc vide : ne voit rien." }), ajout]);
+      }
+      return el("tr", {}, [
+        el("td", {}, [el("strong", { texte: p.nom }), el("br"), el("span", { class: "doux", texte: p.email })]),
+        el("td", {}, [selRole]), el("td", {}, [actif]), el("td", {}, [celluleParc])]);
+    });
+
+    f.push(el("section", { class: "bloc" }, [el("h2", { texte: "Ajouter un utilisateur" }),
+      el("p", { class: "note", texte: "Ajouter quelqu’un ici lui donne un rôle et un parc. Son compte de connexion se crée séparément " +
+        "dans Supabase (Authentication, Users, Add user) avec la même adresse. Phase de test : seules les deux adresses " +
+        "prévues par la décision 0004 peuvent recevoir un compte de connexion." }),
+      form]));
+    f.push(el("section", { class: "bloc" }, [el("h2", { texte: "Utilisateurs (" + d.profils.length + ")" }),
+      el("div", { class: "tableau-defile" }, [el("table", {}, [
+        el("thead", {}, [el("tr", {}, [el("th", { texte: "Utilisateur" }), el("th", { texte: "Rôle" }),
+          el("th", { texte: "Actif" }), el("th", { texte: "Parc (résidences et groupes)" })])]),
+        el("tbody", {}, lignes)])])]));
+    return f;
+  }
+
+  // --- Onglet Résidences ---------------------------------------------------
+  function ongletResidences() {
+    var d = etat.d;
+    var code = champ("r-code", "Code", { placeholder: "RES-001" });
+    var lib = champ("r-lib", "Nom de la résidence", {});
+    var dos = champ("r-dos", "Dossier Pennylane", { placeholder: "PENNY-1001" });
+    var form = el("form", { class: "ligne", novalidate: true }, [code.bloc, lib.bloc, dos.bloc,
+      el("div", {}, [el("button", { type: "submit", texte: "Créer la résidence" })])]);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var id = code.input.value.trim().toUpperCase(), l = lib.input.value.trim(), p = dos.input.value.trim().toUpperCase();
+      if (!CODE.test(id) || !l) return Zen.message(zoneMsg, "Code en majuscules, chiffres et tirets (exemple : RES-001), et nom obligatoires.");
+      if (p && !CODE.test(p)) return Zen.message(zoneMsg, "Dossier Pennylane : majuscules, chiffres et tirets.");
+      agir(db.from("residences").insert({ id: id, libelle: l, dossier_pennylane: p || null, fictif: true }), "Résidence créée : " + id);
+    });
+    var lignes = d.residences.map(function (r) {
+      var sesGroupes = d.rg.filter(function (x) { return x.residence_id === r.id; }).map(function (x) { return x.groupe_id; });
+      return el("tr", {}, [
+        el("td", {}, [el("span", { class: "code", texte: r.id })]),
+        el("td", { texte: r.libelle }),
+        el("td", { texte: r.dossier_pennylane || "" }),
+        el("td", {}, [
+          el("div", { class: "puces" }, sesGroupes.map(function (g) {
+            return puce(libelleGroupe(g), "Retirer du groupe", function () {
+              agir(db.from("residence_groupe").delete().eq("residence_id", r.id).eq("groupe_id", g), "Groupe modifié : " + g);
+            }, "groupe");
+          })),
+          selectAjout(d.groupes.filter(function (g) { return sesGroupes.indexOf(g.id) < 0; })
+            .map(function (g) { return { value: g.id, texte: g.id + " " + g.libelle }; }), "Affecter à un groupe…",
+            function (g) { agir(db.from("residence_groupe").insert({ residence_id: r.id, groupe_id: g }), "Résidence " + r.id + " affectée à " + g); },
+            "Affecter")]),
+        el("td", {}, [el("button", { type: "button", class: "secondaire petit", texte: "Supprimer", onclick: function () {
+          if (confirm("Supprimer la résidence " + r.id + " ? Elle sera retirée de tous les groupes et parcs."))
+            agir(db.from("residences").delete().eq("id", r.id), "Résidence supprimée : " + r.id);
+        } })])]);
+    });
+    return [
+      el("section", { class: "bloc" }, [el("h2", { texte: "Créer une résidence" }),
+        el("p", { class: "note", texte: "Phase de test : uniquement des résidences fictives." }), form]),
+      el("section", { class: "bloc" }, [el("h2", { texte: "Résidences (" + d.residences.length + ")" }),
+        el("div", { class: "tableau-defile" }, [el("table", {}, [
+          el("thead", {}, [el("tr", {}, ["Code", "Nom", "Dossier Pennylane", "Groupes", ""].map(function (t) { return el("th", { texte: t }); }))]),
+          el("tbody", {}, lignes)])])])];
+  }
+
+  // --- Onglet Groupes ------------------------------------------------------
+  function ongletGroupes() {
+    var d = etat.d;
+    var code = champ("g-code", "Code", { placeholder: "GRP-SENIORS" });
+    var lib = champ("g-lib", "Nom du groupe", {});
+    var form = el("form", { class: "ligne", novalidate: true }, [code.bloc, lib.bloc,
+      el("div", {}, [el("button", { type: "submit", texte: "Créer le groupe" })])]);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var id = code.input.value.trim().toUpperCase(), l = lib.input.value.trim();
+      if (!CODE.test(id) || !l) return Zen.message(zoneMsg, "Code en majuscules, chiffres et tirets, et nom obligatoires.");
+      agir(db.from("groupes").insert({ id: id, libelle: l, fictif: true }), "Groupe créé : " + id);
+    });
+    var lignes = d.groupes.map(function (g) {
+      var membres = d.rg.filter(function (x) { return x.groupe_id === g.id; }).map(function (x) { return x.residence_id; });
+      return el("tr", {}, [
+        el("td", {}, [el("span", { class: "code", texte: g.id })]),
+        el("td", { texte: g.libelle }),
+        el("td", {}, [
+          el("div", { class: "puces" }, membres.map(function (r) {
+            return puce(libelleResidence(r), "Retirer du groupe", function () {
+              agir(db.from("residence_groupe").delete().eq("residence_id", r).eq("groupe_id", g.id), "Groupe modifié : " + g.id);
+            });
+          })),
+          selectAjout(d.residences.filter(function (r) { return membres.indexOf(r.id) < 0; })
+            .map(function (r) { return { value: r.id, texte: r.id + " " + r.libelle }; }), "Ajouter une résidence…",
+            function (r) { agir(db.from("residence_groupe").insert({ residence_id: r, groupe_id: g.id }), "Résidence " + r + " ajoutée à " + g.id); },
+            "Ajouter")]),
+        el("td", {}, [el("button", { type: "button", class: "secondaire petit", texte: "Supprimer", onclick: function () {
+          if (confirm("Supprimer le groupe " + g.id + " ? Les utilisateurs qui l’avaient dans leur parc perdront ces résidences."))
+            agir(db.from("groupes").delete().eq("id", g.id), "Groupe supprimé : " + g.id);
+        } })])]);
+    });
+    return [
+      el("section", { class: "bloc" }, [el("h2", { texte: "Créer un groupe" }),
+        el("p", { class: "note", texte: "Donner un groupe dans un parc donne aussi les résidences ajoutées plus tard à ce groupe." }), form]),
+      el("section", { class: "bloc" }, [el("h2", { texte: "Groupes (" + d.groupes.length + ")" }),
+        el("div", { class: "tableau-defile" }, [el("table", {}, [
+          el("thead", {}, [el("tr", {}, ["Code", "Nom", "Résidences", ""].map(function (t) { return el("th", { texte: t }); }))]),
+          el("tbody", {}, lignes)])])])];
+  }
+
+  var ONGLETS = [["utilisateurs", "Utilisateurs et parcs", ongletUtilisateurs],
+                 ["residences", "Résidences", ongletResidences],
+                 ["groupes", "Groupes", ongletGroupes]];
+
+  function dessiner() {
+    main.innerHTML = "";
+    main.appendChild(el("div", { class: "entete" }, [el("h1", { texte: "Administration" }),
+      el("p", { class: "doux", texte: "Utilisateurs, rôles, parcs, résidences et groupes. Données de test fictives." })]));
+    main.appendChild(el("div", { class: "onglets", role: "tablist" }, ONGLETS.map(function (o) {
+      return el("button", { type: "button", role: "tab", "aria-selected": String(etat.onglet === o[0]), texte: o[1],
+        onclick: function () { etat.onglet = o[0]; Zen.message(zoneMsg, ""); dessiner(); } });
+    })));
+    main.appendChild(zoneMsg);
+    if (!etat.d) return;
+    ONGLETS.find(function (o) { return o[0] === etat.onglet; })[2]().forEach(function (b) { main.appendChild(b); });
+  }
+
+  await charger();
+  dessiner();
+})();
+</script>
+</body>
+</html>

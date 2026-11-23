@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<title>Mon espace – Pilotage Zenitude</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="app/config.js"></script>
+<script src="app/zenitude.js"></script>
+</head>
+<body>
+<div id="haut"></div>
+<main id="contenu" aria-live="polite"><p class="doux">Chargement…</p></main>
+<script>
+(async function () {
+  if (!Zen.pret) return;
+  var el = Zen.el, c = await Zen.exigerConnexion();
+  if (!c) return;
+  var main = document.getElementById("contenu");
+  document.getElementById("haut").appendChild(Zen.barre("espace", c.profil));
+  main.innerHTML = "";
+
+  if (!c.profil || !c.profil.actif) {
+    main.appendChild(el("section", { class: "bloc" }, [
+      el("h1", { texte: "Accès non attribué" }),
+      el("p", { texte: "Vous êtes connecté avec " + c.email + ", mais aucun accès actif ne vous est attribué dans le logiciel." }),
+      el("p", { class: "doux", texte: "Un administrateur doit vous ajouter dans Administration, puis vous attribuer un rôle et un parc." })
+    ]));
+    return;
+  }
+
+  var p = c.profil;
+  var res = await Zen.client.from("residences").select("id, libelle, dossier_pennylane").order("id");
+  var grp = await Zen.client.from("groupes").select("id, libelle").order("id");
+  var erreur = res.error || grp.error;
+
+  main.appendChild(el("div", { class: "entete" }, [
+    el("h1", { texte: "Bonjour " + p.nom }),
+    el("p", {}, [el("span", { class: "badge " + p.role, texte: Zen.ROLES[p.role] || p.role }),
+                 " ", el("span", { class: "doux", texte: c.email })])
+  ]));
+
+  function liste(lignes, vide, rendu) {
+    if (!lignes.length) return el("p", { class: "vide", texte: vide });
+    return el("ul", { class: "simple" }, lignes.map(rendu));
+  }
+
+  var parc = el("section", { class: "bloc" }, [el("h2", { texte: p.role === "administrateur" ? "Toutes les résidences (administrateur)" : "Mon parc" })]);
+  if (erreur) {
+    parc.appendChild(el("div", { class: "message erreur", texte: Zen.traduire(erreur) }));
+  } else {
+    parc.appendChild(el("div", { class: "colonnes" }, [
+      el("div", {}, [el("h2", { texte: "Résidences (" + res.data.length + ")" }),
+        liste(res.data, "Aucune résidence dans votre parc pour l’instant.", function (r) {
+          return el("li", {}, [el("span", {}, [el("span", { class: "code", texte: r.id }), " ", r.libelle]),
+                               el("span", { class: "doux", texte: r.dossier_pennylane || "" })]);
+        })]),
+      el("div", {}, [el("h2", { texte: "Groupes (" + grp.data.length + ")" }),
+        liste(grp.data, "Aucun groupe dans votre parc.", function (g) {
+          return el("li", {}, [el("span", {}, [el("span", { class: "code", texte: g.id }), " ", g.libelle])]);
+        })])
+    ]));
+  }
+  main.appendChild(parc);
+
+  var zone = el("div", { class: "message", role: "status" });
+  var mdp1 = el("input", { type: "password", id: "mdp1", autocomplete: "new-password" });
+  var mdp2 = el("input", { type: "password", id: "mdp2", autocomplete: "new-password" });
+  var form = el("form", { class: "ligne", novalidate: true }, [
+    el("div", {}, [el("label", { for: "mdp1", texte: "Nouveau mot de passe" }), mdp1]),
+    el("div", {}, [el("label", { for: "mdp2", texte: "Confirmation" }), mdp2]),
+    el("div", {}, [el("button", { type: "submit", texte: "Changer le mot de passe" })])
+  ]);
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if (mdp1.value.length < 10) return Zen.message(zone, "Choisissez au moins 10 caractères.");
+    if (mdp1.value !== mdp2.value) return Zen.message(zone, "Les deux saisies sont différentes.");
+    var r = await Zen.client.auth.updateUser({ password: mdp1.value });
+    if (r.error) return Zen.message(zone, Zen.traduire(r.error));
+    mdp1.value = mdp2.value = "";
+    Zen.message(zone, "Mot de passe changé.", "ok");
+  });
+  main.appendChild(el("section", { class: "bloc" }, [el("h2", { texte: "Mon compte" }), form, zone]));
+})();
+</script>
+</body>
+</html>

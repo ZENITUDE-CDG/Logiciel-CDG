@@ -1,11 +1,17 @@
 # 0005 - Dépendances du lot 12
 
 Date : 23 novembre 2026
-Statut : à tracer avec la décision 0004 (mêmes instances)
+Statut : approuvé par le porteur du projet (23 novembre 2026) ; à tracer avec la décision 0006
 
-Dépendances ajoutées à `requirements.txt` :
-- `psycopg[binary]>=3.1` : connexion à PostgreSQL (base de test Supabase, puis tout autre PostgreSQL).
-- `python-dotenv>=1.0` : lecture du fichier `.env` local (jamais versionné).
+Dépendances ajoutées (CLAUDE.md : « Ne pas installer de dépendance non listée sans l'indiquer ») :
 
-Aucune autre dépendance. Sans ces paquets ou sans base de test, les tests du lot 12 sont ignorés
-et le reste de la suite (238 tests) n'est pas affecté.
+| Dépendance | Où | Rôle |
+| --- | --- | --- |
+| `psycopg[binary]==3.2.3` | Tests GitHub Actions uniquement (installé par `.github/workflows/tests.yml`) | Connexion des tests à PostgreSQL |
+| `@supabase/supabase-js@2.45.4` | Pages `connexion.html`, `espace.html`, `administration.html` (chargé depuis cdn.jsdelivr.net) | Connexion du site à la base de test |
+| Image `postgres:16` | Tests GitHub Actions | Base temporaire, jetée après les tests |
+| `actions/checkout@v4`, `actions/setup-python@v5` | Tests GitHub Actions | Récupération du dépôt et de Python |
+| Police Montserrat (Google Fonts) | Pages du lot 12 | Charte Zenitude ; police de secours Arial |
+
+`requirements.txt` n'est pas modifié : le moteur Python n'utilise aucune de ces dépendances.
+Versions figées : une mise à jour se fait par une nouvelle décision.

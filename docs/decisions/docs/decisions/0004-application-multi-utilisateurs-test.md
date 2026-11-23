@@ -43,7 +43,7 @@ mise en production.
 | Instance | Statut |
 | --- | --- |
 | Porteur du projet | Approuvé le 23/11/2026 |
-| Stack Supabase | Confirmée par Benjamin Gagneur, [date à préciser], [moyen à préciser] |
+| Stack Supabase | Confirmée par Benjamin Gagneur, 23/11/2026, presentiel|
 | Contrôle de gestion | Accord en présentiel le 23/11/2026 |
 | DAF | Accord en présentiel le 23/11/2026 |
 | DSI | Accord en présentiel le 23/11/2026 (hébergement tiers et écart à CLAUDE.md) |

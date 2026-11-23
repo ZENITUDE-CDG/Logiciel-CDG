@@ -1,7 +1,7 @@
 # 0004 - Application multi-utilisateurs en phase de test (lot 12)
 
 Date : 23 novembre 2026
-Statut : proposé, en attente d'approbation
+Statut : approuvé pour la phase de test (23 novembre 2026)
 
 ## Contexte
 La décision 0001 exclut l'hébergement et la sécurité d'accès. Le lot 12 introduit une base
@@ -26,7 +26,6 @@ de données multi-utilisateurs et une connexion. Il faut donc une décision spé
    ajoutée plus tard à un groupe lui est visible automatiquement. Les administrateurs voient tout.
 7. Exécution : moteur Python et interface sur poste de travail ; base de test Supabase.
    Aucun hébergement Zenitude.
-
 8. Les comptes de test des profils « collaborateur à parc restreint » et « lecture seule »
    sont fictifs, créés dans Supabase uniquement pour les tests, avec des adresses fictives.
    Ils ne reçoivent aucune connexion réelle.
@@ -36,15 +35,15 @@ Pennylane, EBITDA, budgets, import des KPI, provisions, hébergement définitif,
 mise en production.
 
 ## Conditions
-- Aucune clé ni fichier `.env` dans le dépôt (`.gitignore` en place).
+- Aucune clé ni fichier `.env` dans le dépôt (`.gitignore` contenant `.env`).
 - Si un `.env` a déjà été versionné, les clés Supabase sont régénérées.
 - Le dépôt est public : décision DSI à prendre (point ouvert).
 
 ## Approbations
 | Instance | Statut |
 | --- | --- |
-| Porteur du projet | Demande du 23 novembre 2026 |
-| Stack Supabase | confirmé |
-| Contrôle de gestion | confirmé |
-| DAF | confirmé |
-| DSI |confirmé |
+| Porteur du projet | Approuvé le 23/11/2026 |
+| Stack Supabase | Confirmée par Benjamin Gagneur, [date à préciser], [moyen à préciser] |
+| Contrôle de gestion | Accord en présentiel le 23/11/2026 |
+| DAF | Accord en présentiel le 23/11/2026 |
+| DSI | Accord en présentiel le 23/11/2026 (hébergement tiers et écart à CLAUDE.md) |

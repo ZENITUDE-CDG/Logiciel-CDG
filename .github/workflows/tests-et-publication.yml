@@ -1,0 +1,72 @@
+# Tests et publication (lots 12 et 13, décisions 0006 et 0007).
+# 1. Tests : toute la suite, avec une base PostgreSQL temporaire construite depuis migrations/
+#    (aucun secret, Supabase n'est jamais touché) et un navigateur pour les tests de page.
+# 2. Publication : seulement sur main et si les tests passent. Le moteur calcule les chiffres de
+#    démonstration (fictifs) et les écrit dans la base de test Supabase avec la clé secrète, gardée
+#    dans les secrets GitHub (Settings, Secrets and variables, Actions : SUPABASE_SECRET_KEY).
+# Relancer à la main : onglet Actions, « Tests et publication », « Run workflow ».
+name: Tests et publication
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-et-publication-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: zenitude_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ZENITUDE_ENV: test
+      DATABASE_URL: postgresql://test:test@localhost:5432/zenitude_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dépendances
+        run: |
+          pip install -r requirements.txt
+          pip install playwright==1.63.0
+          python -m playwright install --with-deps chromium
+      - name: Base de test construite depuis migrations/
+        run: |
+          for f in migrations/*.sql; do
+            echo "== $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+      - name: Tests
+        run: python -m pytest -q
+
+  publication:
+    needs: tests
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dépendances
+        run: pip install -r requirements.txt
+      - name: Calculer et publier dans la base de test
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python interface/publier_supabase.py

@@ -27,8 +27,9 @@ Le journal de l'étape « Lire Pennylane, calculer et publier » affiche : statu
 lignes, lignes reprises et écartées, comptes, comptes de tiers, groupes de lettrage, équilibre, comptes
 classés provisoirement, puis « publié : ... RES-TEST ». Aucun montant.
 
-Si un statut est signalé « inconnu, traité comme non validé », noter son nom : il faudra l'ajouter à la
-liste des statuts validés ou brouillard du connecteur.
+Statuts Pennylane : `complete` = validée ; `validation_needed`, `accounting_needed` = à traiter
+(brouillard) ; « sans statut » = écriture sans pièce à traiter (banque, opérations diverses...), reprise
+comme validée et détaillée par type de journal. Un statut signalé « inconnu » est à ajouter au connecteur.
 
 ## 4. Vérifier sur le site
 Se connecter en administrateur, choisir « Dossier Pennylane de test ». Le nombre de comptes doit

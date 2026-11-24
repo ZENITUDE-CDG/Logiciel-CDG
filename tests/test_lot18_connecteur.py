@@ -86,6 +86,7 @@ class FauxPennylane:
 
     def __call__(self, url, entetes):
         assert entetes["Authorization"] == "Bearer jeton-fictif"
+        assert entetes["X-Use-2026-API-Changes"] == "true"
         self.appels.append(url)
         parts = urllib.parse.urlsplit(url)
         chemin = parts.path.replace("/api/external/v2", "")
@@ -293,3 +294,67 @@ def test_installation_contient_la_residence_de_test():
     texte = (RACINE / "scripts" / "installation_supabase.sql").read_text(encoding="utf-8")
     assert "'RES-TEST', 'Dossier Pennylane de test', 'PENNY-TEST', true" in texte
     assert "RES-TEST" not in (RACINE / "scripts" / "donnees_test.sql").read_text(encoding="utf-8")
+
+
+
+def test_statuts_reels_de_pennylane():
+    entrees = [dict(e) for e in ENTREES]
+    entrees[0]["status"] = "complete"
+    entrees[1]["status"] = "validation_needed"
+    entrees[2]["status"] = "accounting_needed"
+    entrees[3]["status"] = None          # sans statut : reprise comme validée
+    entrees[5]["status"] = "complete"
+    lignes = LIGNES + [_ligne(71, 999, "2026-05-01", 3, "5120000", debit="1.00")]  # écriture introuvable
+    lignes_ok, _, r = extraire("valides", serveur=FauxPennylane(entrees=entrees, lignes=lignes))
+    assert r["statuts"]["(sans statut)"]["traitement"].startswith("sans pièce")
+    assert r["statuts"]["(sans statut)"]["par_type_de_journal"] == {"sale": 2}
+    assert r["statuts"]["validation_needed"]["traitement"] == "à traiter (brouillard)"
+    assert r["lignes_ecartees"] == {"(écriture introuvable)": 1, "accounting_needed": 2, "validation_needed": 2}
+    assert r["statuts_inconnus"] == ["(écriture introuvable)"]
+    assert {l["piece"] for l in lignes_ok} == {"F001", "PL4", "R001"}
+    assert "par type de journal : sale 2" in pl.texte_rapport(r)
+
+
+def test_prefixes_provisoires_sans_recouvrement():
+    # Cas réel du 24 novembre 2026 : 613 recouvrait la rubrique CH-6132 (contrôle B13)
+    nouvelles = source_pennylane.classement_provisoire(
+        {"613500000", "613200000", "613000000", "622600000", "622700000"}, ["6132", "606"])
+    prefixes = [r["Préfixe ou plage de comptes"] for r in nouvelles]
+    assert prefixes == ["6130", "6135", "622"]
+    tous = prefixes + ["6132", "606"]
+    assert not any(a != b and (a.startswith(b) or b.startswith(a)) for a in tous for b in tous)
+
+
+def test_plan_de_comptes_realiste_accepte(demo, tmp_path):
+    """Environ 190 comptes à 9-12 chiffres, comme le dossier de test : la configuration assemblée est valide."""
+    import random
+    from zenitude.config import controles
+    hasard = random.Random(18)
+    racines = ["601", "602", "6061", "6063", "6064", "6068", "607", "611", "6122", "6132", "6135", "614", "6152",
+               "6155", "6156", "616", "618", "6211", "6226", "6227", "6231", "6251", "6256", "626", "6278", "628",
+               "6311", "6333", "635", "6411", "6413", "6451", "6453", "6475", "6512", "658", "661", "668", "671",
+               "678", "6811", "6815", "695", "7061", "7062", "7063", "707", "7083", "7088", "709", "740", "758",
+               "764", "771", "778", "7811", "791"]
+    comptes = sorted({r + "".join(str(hasard.randint(0, 9)) for _ in range(hasard.choice([5, 6, 7, 8])))
+                      for r in racines for _ in range(3)})
+    lignes = []
+    for i, c in enumerate(comptes):
+        montant = f"{10 + i}.00"
+        lignes.append({"dossier": "PENNY-TEST", "exercice": "2025-10-01/2026-09-30", "date": "2026-02-15",
+                       "journal": "OD", "piece": f"P{i}", "compte": c, "libelle": "Ligne fictive",
+                       "debit": montant if c[0] == "6" else "", "credit": montant if c[0] == "7" else "",
+                       "tiers": "", "lettrage": "", "echeance": ""})
+        lignes.append({"dossier": "PENNY-TEST", "exercice": "2025-10-01/2026-09-30", "date": "2026-02-15",
+                       "journal": "OD", "piece": f"P{i}", "compte": "471000000", "libelle": "Ligne fictive",
+                       "debit": montant if c[0] == "7" else "", "credit": montant if c[0] == "6" else "",
+                       "tiers": "", "lettrage": "", "echeance": ""})
+    exercice = {"dossier": "PENNY-TEST", "debut": "2025-10-01", "fin": "2026-09-30", "duree_mois": "12"}
+    dest = str(tmp_path / "s")
+    provisoires = source_pennylane.assembler(demo, dest, lignes, exercice)
+    assert provisoires
+    rapport = controles.verifier(str(tmp_path / "s" / "configuration.xlsx"))
+    assert not rapport.erreurs, [str(e) for e in rapport.erreurs][:5]
+    import generer_site
+    donnees = generer_site.construire(dest)
+    fin = next(f for f in donnees["finance"] if f["dossier"] == "PENNY-TEST")
+    assert fin["statut"] == "publié"

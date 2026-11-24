@@ -99,26 +99,40 @@ def _prefixes_existants(ws, ligne_entete, col):
     return out
 
 
+def _recouvre(a, b):
+    return a.startswith(b) or b.startswith(a)
+
+
 def classement_provisoire(comptes, prefixes_existants):
     """Rubriques provisoires pour les comptes de classe 6 ou 7 qu'aucun préfixe existant ne couvre.
 
-    Préfixe retenu : le plus long compte du PCG de référence qui commence le numéro (au moins 3 chiffres),
-    sinon les 3 premiers chiffres. Agrégat : classe 6 -> PL_CHARGES ; 706 -> CA_HEBERGEMENT ; autre classe 7
-    -> CA_SERVICES (provisoire, à valider par le contrôle de gestion).
+    Préfixe retenu : à partir du plus long compte du PCG de référence qui commence le numéro (au moins
+    3 chiffres, sinon les 3 premiers chiffres), allongé chiffre par chiffre tant qu'il recouvre un préfixe
+    déjà utilisé (contrôle B13 : deux rubriques du même agrégat ne doivent pas se recouvrir). Les comptes
+    de démonstration ne changent donc jamais de rubrique.
+    Agrégat : classe 6 -> PL_CHARGES ; 706 -> CA_HEBERGEMENT ; autre classe 7 -> CA_SERVICES (provisoire,
+    à valider par le contrôle de gestion).
     """
     pcg = _pcg()
     nouvelles = {}
     for compte in sorted(comptes):
         if compte[:1] not in ("6", "7"):
             continue
-        if any(compte.startswith(p) for p in prefixes_existants + list(nouvelles)):
+        utilises = list(prefixes_existants) + list(nouvelles)
+        if any(compte.startswith(p) for p in utilises):
             continue
-        candidats = [k for k in pcg if len(k) >= 3 and k.isdigit() and compte.startswith(k)]
-        prefixe = max(candidats, key=len) if candidats else compte[:3]
-        if not prefixe.isdigit():
-            prefixe = "".join(ch for ch in compte if ch.isdigit())[:3]
-        if not prefixe or prefixe in nouvelles:
-            continue
+        chiffres = "".join(ch for ch in compte if ch.isdigit())
+        candidats = [k for k in pcg if len(k) >= 3 and k.isdigit() and chiffres.startswith(k)]
+        longueur = len(max(candidats, key=len)) if candidats else 3
+        prefixe = None
+        for n in range(longueur, len(chiffres) + 1):
+            essai = chiffres[:n]
+            if not any(_recouvre(essai, p) for p in utilises):
+                prefixe = essai
+                break
+        if prefixe is None:
+            continue  # impossible sans recouvrement : le compte reste non classé (P1), jamais forcé
+        racine = max((k for k in pcg if k.isdigit() and prefixe.startswith(k)), key=len, default=None)
         if compte[:1] == "6":
             agregat = "PL_CHARGES"
         elif prefixe.startswith("706"):
@@ -126,7 +140,7 @@ def classement_provisoire(comptes, prefixes_existants):
         else:
             agregat = "CA_SERVICES"
         nouvelles[prefixe] = {"Code rubrique": f"PROV-{prefixe}",
-                              "Libellé": f"Provisoire lot 18 : {pcg.get(prefixe, 'compte ' + prefixe)}",
+                              "Libellé": f"Provisoire lot 18 : {pcg.get(racine, 'compte ' + prefixe)}",
                               "Type": "charge" if compte[:1] == "6" else "produit",
                               "Dossier Pennylane (ou * pour tous)": "*",
                               "Préfixe ou plage de comptes": prefixe,

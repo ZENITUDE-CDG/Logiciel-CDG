@@ -43,9 +43,19 @@ COLONNES_EXERCICES = ["dossier", "debut", "fin", "duree_mois"]
 # Liste blanche (décision 0011) : seul le dossier de test peut être lu.
 DOSSIERS_AUTORISES = ("PENNY-TEST",)
 
-# Statuts d'écriture. Un statut absent de ces deux listes est traité comme non validé et signalé.
-STATUTS_VALIDES = ("validated", "complete", "completed", "posted", "locked", "closed")
-STATUTS_BROUILLARD = ("draft", "pending", "incomplete", "to_validate", "in_progress")
+# Statuts d'écriture (ledger_entries.status). Relevés sur le dossier de test le 24 novembre 2026 :
+# complete, validation_needed, accounting_needed, et des écritures sans statut. Ce sont les états de
+# traitement comptable de la pièce liée (mêmes valeurs que accounting_status des factures : draft, entry,
+# validation_needed, complete, archived). Depuis les changements 2026 de l'API, la liste renvoie toutes les
+# écritures, brouillons compris.
+STATUTS_VALIDES = ("complete", "archived", "validated", "completed", "posted", "locked", "closed")
+STATUTS_BROUILLARD = ("draft", "entry", "validation_needed", "accounting_needed", "pending", "incomplete",
+                      "to_validate", "in_progress")
+# Écriture sans statut : aucune pièce en attente de traitement (opérations diverses, banque, à-nouveaux...).
+# Reprise comme validée ; comptée à part dans le rapport, par type de journal, pour contrôle.
+SANS_STATUT = "(sans statut)"
+SANS_STATUT_VALIDE = True
+INTROUVABLE = "(écriture introuvable)"
 MODES = ("valides", "tous")
 LIBELLES_MODES = {"valides": "Écritures validées seulement", "tous": "Écritures validées et brouillard"}
 
@@ -96,7 +106,9 @@ class Client:
         # Seules les adresses de l'API Pennylane sont suivies (un lien reçu ne peut pas emmener le jeton ailleurs).
         if not url.startswith(self.base + "/"):
             raise ErreurPennylane("adresse hors de l'API Pennylane refusée")
-        entetes = {"Authorization": "Bearer " + self._jeton, "Accept": "application/json"}
+        entetes = {"Authorization": "Bearer " + self._jeton, "Accept": "application/json",
+                   # Comportement 2026 de l'API (seul disponible depuis le 1er juillet 2026), rendu explicite.
+                   "X-Use-2026-API-Changes": "true"}
         for essai in range(6):
             self._attendre_tour()
             self.requetes += 1
@@ -221,7 +233,9 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
     exercices.sort()
     rapport["exercices"] = len(exercices)
 
-    journaux = {j.get("id"): str(j.get("code") or "").strip() for j in client.lister("/journals")}
+    liste_journaux = list(client.lister("/journals"))
+    journaux = {j.get("id"): str(j.get("code") or "").strip() for j in liste_journaux}
+    types_journaux = {j.get("id"): str(j.get("type") or "(vide)") for j in liste_journaux}
     comptes_types = Counter(str(a.get("type") or "(vide)") for a in client.lister("/ledger_accounts"))
     rapport["types_de_comptes"] = dict(sorted(comptes_types.items()))
 
@@ -231,13 +245,20 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
     rapport["ecritures_pennylane"] = len(entetes)
 
     statuts = Counter()
+    statuts_par_type = Counter()
     lignes, ecartees, hors_exercice, anterieures = [], Counter(), 0, 0
     a_lettrer = []
     for l in client.lister("/ledger_entry_lines"):
-        ent = entetes.get((l.get("ledger_entry") or {}).get("id"), {})
-        statut = str(ent.get("status") or "(absent)")
+        id_entree = (l.get("ledger_entry") or {}).get("id")
+        ent = entetes.get(id_entree)
+        if ent is None:
+            ent, statut = {}, INTROUVABLE
+        else:
+            statut = str(ent.get("status") or "").strip() or SANS_STATUT
         statuts[statut] += 1
-        valide = statut in STATUTS_VALIDES
+        journal_ligne = (l.get("journal") or {}).get("id") or ent.get("journal_id")
+        statuts_par_type[(statut, types_journaux.get(journal_ligne, "(inconnu)"))] += 1
+        valide = statut in STATUTS_VALIDES or (statut == SANS_STATUT and SANS_STATUT_VALIDE)
         if mode == "valides" and not valide:
             ecartees[statut] += 1
             continue
@@ -310,9 +331,8 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
     debit = sum((_montant(x["debit"]) for x in lignes), Decimal("0"))
     credit = sum((_montant(x["credit"]) for x in lignes), Decimal("0"))
     rapport.update({
-        "statuts": {s: {"lignes": n, "traitement": ("validé" if s in STATUTS_VALIDES else
-                                                     "brouillard" if s in STATUTS_BROUILLARD else
-                                                     "inconnu, traité comme non validé")}
+        "statuts": {s: {"lignes": n, "traitement": _traitement(s),
+                        "par_type_de_journal": {tj: k for (st, tj), k in sorted(statuts_par_type.items()) if st == s}}
                     for s, n in sorted(statuts.items())},
         "lignes_lues": sum(statuts.values()),
         "lignes_reprises": len(lignes),
@@ -327,9 +347,20 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
         "exercice_retenu": f"{exo[0].isoformat()} au {exo[1].isoformat()}",
         "requetes": client.requetes,
     })
-    statuts_inconnus = [s for s in statuts if s not in STATUTS_VALIDES and s not in STATUTS_BROUILLARD]
+    statuts_inconnus = [s for s in statuts if s not in STATUTS_VALIDES and s not in STATUTS_BROUILLARD
+                        and s != SANS_STATUT]
     rapport["statuts_inconnus"] = sorted(statuts_inconnus)
     return lignes, exercice_csv, rapport
+
+
+def _traitement(statut):
+    if statut in STATUTS_VALIDES:
+        return "validé"
+    if statut == SANS_STATUT:
+        return "sans pièce à traiter, repris comme validé" if SANS_STATUT_VALIDE else "non validé"
+    if statut in STATUTS_BROUILLARD:
+        return "à traiter (brouillard)"
+    return "inconnu, traité comme non validé"
 
 
 def texte_rapport(rapport):
@@ -341,7 +372,8 @@ def texte_rapport(rapport):
            f"lignes reprises : {r['lignes_reprises']}",
            "Statuts des écritures (nombre de lignes) :"]
     for s, v in r["statuts"].items():
-        out.append(f"  - {s} : {v['lignes']} ({v['traitement']})")
+        detail = ", ".join(f"{tj} {k}" for tj, k in v.get("par_type_de_journal", {}).items())
+        out.append(f"  - {s} : {v['lignes']} ({v['traitement']})" + (f" - par type de journal : {detail}" if detail else ""))
     if r["statuts_inconnus"]:
         out.append("ATTENTION : statut(s) inconnu(s), traité(s) comme non validé(s) : " + ", ".join(r["statuts_inconnus"]))
     for motif, n in r["lignes_ecartees"].items():

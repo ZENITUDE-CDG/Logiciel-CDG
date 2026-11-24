@@ -19,10 +19,16 @@ Lot 18 (décision 0011) : si le secret PENNYLANE_TOKEN_PILOTE est présent, le d
 écritures : variable PENNYLANE_MODE (« valides » par défaut, ou « tous »). Sans --pennylane, une erreur de
 lecture Pennylane n'empêche pas la publication de la démonstration (avertissement).
 
+Lot 18b (décision 0012) : période d'import et masquage du brouillard lus dans la table parametres_import ;
+--demande ID traite une demande de la table synchronisations (lancée depuis la page par la fonction serveur
+lancer-synchro) : statut « en cours », puis « terminée » ou « échec », avec un résultat sans montant par
+résidence (sauf les sommes du brouillard, affichées dans la page).
+
 Usage :
-  python interface/publier_supabase.py              publie (SUPABASE_SECRET_KEY obligatoire)
-  python interface/publier_supabase.py --pennylane  publie ; lecture du dossier de test obligatoire
-  python interface/publier_supabase.py --essai DIR  écrit les lignes dans DIR, sans rien envoyer
+  python interface/publier_supabase.py                 publie (SUPABASE_SECRET_KEY obligatoire)
+  python interface/publier_supabase.py --pennylane     publie ; lecture du dossier de test obligatoire
+  python interface/publier_supabase.py --demande ID    traite la demande de synchronisation ID
+  python interface/publier_supabase.py --essai DIR     écrit les lignes dans DIR, sans rien envoyer
 """
 import hashlib
 import json
@@ -217,8 +223,11 @@ def calculer(demo=generer_site.DEMO, pennylane=None):
     return commun, par
 
 
-def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None):
-    """Lit le dossier de test par le connecteur (lot 18). Renvoie (lignes, exercice, rapport)."""
+def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None, periode=None):
+    """Lit le dossier de test par le connecteur (lot 18). Renvoie (lignes, exercice, rapport).
+
+    periode : (premier jour, dernier jour) choisis dans la page (lot 18b), ou None.
+    """
     from datetime import datetime
     import source_pennylane
     from zenitude.connecteurs import pennylane as pl
@@ -227,44 +236,73 @@ def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=No
         generer_demo.main(demo)
     client = client or pl.Client(jeton)
     lignes, exercice, rapport = pl.extraire(client, source_pennylane.DOSSIER_TEST, mode,
-                                            depuis=source_pennylane.debut_frise(demo))
+                                            depuis=source_pennylane.debut_frise(demo), periode=periode)
     rapport["synchronise_le"] = datetime.now().replace(microsecond=0).isoformat()
     return lignes, exercice, rapport
 
 
-def _avec_pennylane(argv):
-    """Lit le dossier de test si le jeton est présent (lot 18). Renvoie (données, code d'erreur)."""
-    jeton = os.environ.get("PENNYLANE_TOKEN_PILOTE", "").strip()
-    obligatoire = "--pennylane" in argv
-    if not jeton:
-        if obligatoire:
-            print("ERREUR : secret PENNYLANE_TOKEN_PILOTE absent.", file=sys.stderr)
-            return None, 1
-        return None, 0
-    mode = (os.environ.get("PENNYLANE_MODE") or "valides").strip() or "valides"
-    from zenitude.connecteurs import pennylane as pl
+# ---------------------------------------------------------- paramètres et demandes (lot 18b, décision 0012)
+
+def periode_de(param):
+    """(premier jour, dernier jour) d'après mois_debut / mois_fin d'une ligne de parametres_import, ou None."""
+    import calendar
+    from datetime import date
+    if not param:
+        return None
+    md, mf = param.get("mois_debut"), param.get("mois_fin")
+    if not md and not mf:
+        return None
+    d = date(int(md[:4]), int(md[5:7]), 1) if md else date(1900, 1, 1)
+    f = date(int(mf[:4]), int(mf[5:7]), calendar.monthrange(int(mf[:4]), int(mf[5:7]))[1]) if mf else date(9999, 12, 31)
+    return d, f
+
+
+def lire_facultatif(base, cle, chemin, envoyer=None):
+    """Lecture d'une table du lot 18b ; None si la migration 007 n'est pas encore appliquée."""
+    envoyer = envoyer or requete
     try:
-        donnees = lire_pennylane(jeton=jeton, mode=mode)
-    except pl.ErreurPennylane as e:
-        if obligatoire:
-            print("ERREUR Pennylane : " + str(e), file=sys.stderr)
-            return None, 1
-        print("avertissement : dossier Pennylane de test non lu (" + str(e) + ") ; publication sans lui")
-        return None, 0
-    print(pl.texte_rapport(donnees[2]))
-    return donnees, 0
+        return envoyer("GET", base + "/rest/v1/" + chemin, cle) or []
+    except PublicationRefusee as e:
+        if "PGRST205" in str(e) or "(code 404)" in str(e) or "does not exist" in str(e):
+            print("avertissement : migration 007 non appliquée (paramètres d'import et synchronisations ignorés)")
+            return None
+        raise
+
+
+def maj_demande(base, cle, ident, valeurs, envoyer=None):
+    envoyer = envoyer or requete
+    envoyer("PATCH", base + f"/rest/v1/synchronisations?id=eq.{int(ident)}", cle, valeurs, "return=minimal")
+
+
+def _maintenant():
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _execution():
+    s, r, i = (os.environ.get(k, "") for k in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID"))
+    return f"{s}/{r}/actions/runs/{i}" if s and r and i else None
+
+
+def _resultat_demande(demande, par, pennylane):
+    """Résultat par dossier demandé, sans montant (sauf le brouillard, destiné à la page)."""
+    import source_pennylane
+    out = {}
+    for d in demande.get("dossiers") or []:
+        if d == source_pennylane.DOSSIER_TEST and pennylane is not None and d in par:
+            r = pennylane[2]
+            out[d] = {"statut": "synchronisée", "lignes_reprises": r["lignes_reprises"], "lignes_lues": r["lignes_lues"],
+                      "brouillard": r.get("brouillard"), "periode": r.get("periode"), "mode": r["mode"]}
+        elif d == source_pennylane.DOSSIER_TEST:
+            out[d] = {"statut": "échec", "motif": "lecture Pennylane impossible"}
+        else:
+            out[d] = {"statut": "non connectée", "motif": "aucun jeton Pennylane pour ce dossier"}
+    return out
 
 
 def main(argv):
-    pennylane, code = (None, 0) if "--essai" in argv else _avec_pennylane(argv)
-    if code:
-        return code
-    commun, par = calculer() if pennylane is None else calculer(pennylane=pennylane)
-    if pennylane is not None:
-        src = par.get("PENNY-TEST", {}).get("source", {})
-        if src.get("comptes_provisoires"):
-            print("Comptes classés provisoirement (préfixes) : " + ", ".join(src["comptes_provisoires"]))
     if "--essai" in argv:
+        commun, par = calculer()
         dossier = argv[argv.index("--essai") + 1]
         os.makedirs(dossier, exist_ok=True)
         base = [{"id": r["residence"]["code"], "dossier_pennylane": d, "fictif": True} for d, r in par.items()]
@@ -285,17 +323,86 @@ def main(argv):
               file=sys.stderr)
         return 1
     base = url_supabase()
+    ident = argv[argv.index("--demande") + 1].strip() if "--demande" in argv and argv.index("--demande") + 1 < len(argv) else ""
+    ident = ident if ident.isdigit() else ""
+    demande = None
+    try:
+        if ident:
+            rep = requete("GET", base + f"/rest/v1/synchronisations?id=eq.{ident}&select=*", cle) or []
+            if not rep:
+                print(f"ERREUR : demande de synchronisation {ident} introuvable.", file=sys.stderr)
+                return 1
+            demande = rep[0]
+            maj_demande(base, cle, ident, {"statut": "en cours", "debut": _maintenant(), "execution": _execution()})
+            print(f"Demande {ident} : {demande.get('perimetre') or ''} ({len(demande.get('dossiers') or [])} résidence(s))")
+        code = _publier_tout(argv, base, cle, demande)
+    except Exception as e:  # la demande ne doit jamais rester « en cours »
+        if demande is not None:
+            try:
+                maj_demande(base, cle, ident, {"statut": "échec", "fin": _maintenant(), "message": str(e)[:300]})
+            except Exception:
+                pass
+        raise
+    return code
+
+
+def _publier_tout(argv, base, cle, demande):
+    import source_pennylane
+    from zenitude.connecteurs import pennylane as pl
+    params = lire_facultatif(base, cle, "parametres_import?select=*") or []
+    param = next((p for p in params if p.get("dossier") == source_pennylane.DOSSIER_TEST), None)
+    jeton = os.environ.get("PENNYLANE_TOKEN_PILOTE", "").strip()
+    obligatoire = "--pennylane" in argv or demande is not None
+    pennylane, erreur = None, None
+    if jeton:
+        if demande is not None:
+            mode = "valides" if demande.get("masquer_brouillard", True) else "tous"
+        elif os.environ.get("PENNYLANE_MODE", "").strip() in pl.MODES:
+            mode = os.environ["PENNYLANE_MODE"].strip()  # choix au lancement manuel du workflow
+        else:
+            mode = "valides" if (param or {}).get("masquer_brouillard", True) else "tous"
+        periode = periode_de(demande) if demande is not None else periode_de(param)
+        try:
+            pennylane = lire_pennylane(jeton=jeton, mode=mode, periode=periode)
+            print(pl.texte_rapport(pennylane[2]))
+        except pl.ErreurPennylane as e:
+            erreur = str(e)
+            if obligatoire:
+                print("ERREUR Pennylane : " + erreur, file=sys.stderr)
+            else:
+                print("avertissement : dossier Pennylane de test non lu (" + erreur + ") ; publication sans lui")
+    elif obligatoire:
+        erreur = "secret PENNYLANE_TOKEN_PILOTE absent"
+        print("ERREUR : " + erreur + ".", file=sys.stderr)
+    if obligatoire and pennylane is None and (demande is None or source_pennylane.DOSSIER_TEST in (demande.get("dossiers") or [])):
+        if demande is not None:
+            maj_demande(base, cle, demande["id"], {"statut": "échec", "fin": _maintenant(), "message": erreur})
+        return 1
+
+    commun, par = calculer() if pennylane is None else calculer(pennylane=pennylane)
+    if pennylane is not None:
+        src = par.get(source_pennylane.DOSSIER_TEST, {}).get("source")
+        if src is not None:
+            r = pennylane[2]
+            src.update({"periode": r.get("periode"), "brouillard": r.get("brouillard")})
+            if src.get("comptes_provisoires"):
+                print("Comptes classés provisoirement (préfixes) : " + ", ".join(src["comptes_provisoires"]))
     try:
         residences = requete("GET", base + "/rest/v1/residences?select=id,dossier_pennylane,fictif", cle) or []
         commune, lignes, avert = lignes_a_publier(commun, par, residences)
-        publier(base, cle, commune, lignes)
+        publier(base, cle, commune, lignes, envoyer=requete)
     except PublicationRefusee as e:
         print("ERREUR : " + str(e), file=sys.stderr)
+        if demande is not None:
+            maj_demande(base, cle, demande["id"], {"statut": "échec", "fin": _maintenant(), "message": str(e)[:300]})
         return 1
     for a in avert:
         print("avertissement : " + a)
     print(f"publié : données communes et {len(lignes)} résidence(s) : "
           + ", ".join(l["residence_id"] for l in lignes))
+    if demande is not None:
+        maj_demande(base, cle, demande["id"], {"statut": "terminée", "fin": _maintenant(),
+                                               "resultat": _resultat_demande(demande, par, pennylane)})
     return 0
 
 

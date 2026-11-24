@@ -29,6 +29,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 15 | Comptes bancaires par résidence (trésorier) et analyse du solde N / N-1 ; FRNG, BFR, TN ; graphiques liés à la réglette ; tableau EBITDA du modèle de gestion du groupe ; import des KPI mensuels (modèle Excel, tout ou rien) | 21 |
 | 14 | Clic sur tout montant : formule, éléments et écritures d’origine (rapprochés avec le moteur) ; lissage de postes écriture par écriture comme Waibi (exercice suivant compris) ; compte ouvert par l’adresse en bas à gauche ; logo vers le choix des résidences depuis toute page | 18 |
 | 18a | Connecteur Pennylane (lecture seule) sur le dossier de test : écritures publiées comme résidence RES-TEST, visible des administrateurs ; synchronisation manuelle avec choix du mode (validées / validées et brouillard) | 17 |
+| 18b | Synchronisation lancée depuis la page Import comptable (résidence ou groupe), période d'import, masquage du brouillard, historique | 17 |
 | 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
 Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). Depuis le lot 12, on y entre par `connexion.html` (vraie connexion, base de test Supabase).
@@ -47,6 +48,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Lot 17 (`docs/decisions/0010`) : menu latéral réordonné (Résidence en haut) ; export Excel de chaque page de données : tableaux, données des graphiques, détail des calculs et écritures comptables.
 - Lot 16 : ruban bleu en haut de chaque page (exercice de référence + résidence ou groupe) ; l'exercice fixe la période de la réglette, le périmètre quitte le menu latéral.
 - Lot 14 (`docs/decisions/0008`) : détail des écritures publié par résidence ; lissage comme Waibi (répartition possible sur l'exercice suivant, mois sans écriture compris).
+- Lot 18b (`docs/decisions/0012`) : fonction serveur Supabase `lancer-synchro` (jeton GitHub limité aux Actions du dépôt, dans les secrets Supabase) ; tables `parametres_import` et `synchronisations`.
 - Lot 18 (`docs/decisions/0011`) : connexion Pennylane autorisée pour le seul dossier de test, lecture seule, liste blanche ; classement provisoire des comptes non classés du dossier de test ; aucune valeur dans les journaux.
 - Lot 13 (`docs/decisions/0007`) : publication par GitHub Actions avec la clé secrète dans les secrets GitHub ; ajustements partagés, actifs dès leur création, sans validation à deux personnes ; lissage ; base de test = huit résidences de démonstration (Benjamin : groupe GRP-SENIORS).
 

@@ -209,11 +209,14 @@ def choisir_exercice(exercices, aujourdhui):
     return max(commences or exercices, key=lambda e: e[0])
 
 
-def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
-    """Lit le dossier et renvoie (lignes ecritures.csv, ligne exercices.csv, rapport sans montant).
+def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, periode=None):
+    """Lit le dossier et renvoie (lignes ecritures.csv, ligne exercices.csv, rapport).
 
     mode : "valides" (écritures validées seulement) ou "tous" (validées et brouillard).
-    depuis : date minimale des écritures reprises (None : toutes) ; les écritures antérieures sont comptées.
+    depuis : date minimale imposée par le site (frise) ; les écritures antérieures sont comptées.
+    periode : (premier jour, dernier jour) de la période d'import choisie dans la page (lot 18b), ou None.
+    Le rapport ne contient aucun montant, sauf rapport["brouillard"] (sommes des écritures en brouillard),
+    destiné à la base et jamais affiché dans les journaux.
     """
     if dossier not in DOSSIERS_AUTORISES:
         raise ErreurPennylane(f"dossier {dossier} hors de la liste blanche (décision 0011)")
@@ -246,7 +249,8 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
 
     statuts = Counter()
     statuts_par_type = Counter()
-    lignes, ecartees, hors_exercice, anterieures = [], Counter(), 0, 0
+    lignes, ecartees, hors_exercice, anterieures, hors_periode = [], Counter(), 0, 0, 0
+    brouillard = {"lignes": 0, "charges": Decimal("0"), "produits": Decimal("0")}
     a_lettrer = []
     for l in client.lister("/ledger_entry_lines"):
         id_entree = (l.get("ledger_entry") or {}).get("id")
@@ -259,15 +263,15 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
         journal_ligne = (l.get("journal") or {}).get("id") or ent.get("journal_id")
         statuts_par_type[(statut, types_journaux.get(journal_ligne, "(inconnu)"))] += 1
         valide = statut in STATUTS_VALIDES or (statut == SANS_STATUT and SANS_STATUT_VALIDE)
-        if mode == "valides" and not valide:
-            ecartees[statut] += 1
-            continue
         jour = _date(l.get("date") or ent.get("date"))
         if jour is None:
             ecartees["(date absente)"] += 1
             continue
         if depuis and jour < depuis:
             anterieures += 1
+            continue
+        if periode and not (periode[0] <= jour <= periode[1]):
+            hors_periode += 1
             continue
         exo = next((e for e in exercices if e[0] <= jour <= e[1]), None)
         if exo is None:
@@ -276,6 +280,16 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
         compte = str((l.get("ledger_account") or {}).get("number") or "").strip()
         if not compte:
             ecartees["(compte absent)"] += 1
+            continue
+        if statut in STATUTS_BROUILLARD:
+            brouillard["lignes"] += 1
+            solde = _montant(l.get("debit")) - _montant(l.get("credit"))
+            if compte.startswith("6"):
+                brouillard["charges"] += solde
+            elif compte.startswith("7"):
+                brouillard["produits"] -= solde
+        if mode == "valides" and not valide:
+            ecartees[statut] += 1
             continue
         piece = str(ent.get("piece_number") or ent.get("invoice_number") or "").strip()
         if not piece:
@@ -339,6 +353,11 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None):
         "lignes_ecartees": dict(sorted(ecartees.items())),
         "lignes_hors_exercice": hors_exercice,
         "lignes_anterieures": anterieures,
+        "lignes_hors_periode": hors_periode,
+        "periode": [periode[0].isoformat(), periode[1].isoformat()] if periode else None,
+        "brouillard": {"lignes": brouillard["lignes"], "masque": mode == "valides",
+                       "charges": str(brouillard["charges"].quantize(Decimal("0.01"))),
+                       "produits": str(brouillard["produits"].quantize(Decimal("0.01")))},
         "comptes": len({x["compte"] for x in lignes}),
         "comptes_tiers": len({x["compte"] for x in lignes if x["tiers"]}),
         "longueurs_comptes_tiers": dict(sorted(Counter(len(x["compte"]) for x in lignes if x["tiers"]).items())),
@@ -380,6 +399,12 @@ def texte_rapport(rapport):
         out.append(f"Lignes écartées - {motif} : {n}")
     if r["lignes_anterieures"]:
         out.append(f"Lignes antérieures à la frise du site, non reprises : {r['lignes_anterieures']}")
+    if r.get("lignes_hors_periode"):
+        out.append(f"Lignes hors de la période d'import ({r['periode'][0]} au {r['periode'][1]}), non reprises : "
+                   f"{r['lignes_hors_periode']}")
+    b = r.get("brouillard") or {}
+    if b:
+        out.append(f"Lignes en brouillard dans la période : {b['lignes']} ({'masquées' if b['masque'] else 'reprises'})")
     if r["lignes_hors_exercice"]:
         out.append(f"Lignes hors de tout exercice, non reprises : {r['lignes_hors_exercice']}")
     out.append(f"Comptes mouvementés : {r['comptes']} ; comptes de tiers (40, 41) : {r['comptes_tiers']}"

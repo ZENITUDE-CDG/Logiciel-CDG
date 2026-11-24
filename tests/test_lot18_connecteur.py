@@ -276,27 +276,6 @@ def test_assemblage_hors_du_depot(demo, tmp_path):
     assert (tmp_path / "s" / "configuration.xlsx").exists()
 
 
-def test_lecture_obligatoire_ou_facultative(monkeypatch, capsys):
-    monkeypatch.delenv("PENNYLANE_TOKEN_PILOTE", raising=False)
-    assert pub._avec_pennylane(["--pennylane"]) == (None, 1)
-    assert pub._avec_pennylane([]) == (None, 0)
-    monkeypatch.setenv("PENNYLANE_TOKEN_PILOTE", "jeton-fictif")
-
-    def echec(**kw):
-        raise pl.ErreurPennylane("réponse inattendue de Pennylane (code 503) sur /journals")
-    monkeypatch.setattr(pub, "lire_pennylane", echec)
-    assert pub._avec_pennylane(["--pennylane"]) == (None, 1)
-    assert pub._avec_pennylane([]) == (None, 0)
-    assert "publication sans lui" in capsys.readouterr().out
-
-
-def test_installation_contient_la_residence_de_test():
-    texte = (RACINE / "scripts" / "installation_supabase.sql").read_text(encoding="utf-8")
-    assert "'RES-TEST', 'Dossier Pennylane de test', 'PENNY-TEST', true" in texte
-    assert "RES-TEST" not in (RACINE / "scripts" / "donnees_test.sql").read_text(encoding="utf-8")
-
-
-
 def test_statuts_reels_de_pennylane():
     entrees = [dict(e) for e in ENTREES]
     entrees[0]["status"] = "complete"

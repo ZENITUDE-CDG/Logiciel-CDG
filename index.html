@@ -2098,19 +2098,119 @@ PAGES.controle = function (p) {
 
 /* ---------- Import et paramètres ---------- */
 function bascule(on, titre) { return '<button class="bascule' + (on ? " on" : "") + '" disabled aria-pressed="' + on + '" title="' + esc(titre || "Non modifiable en phase test") + '"></button>'; }
+/* Import comptable (lots 18 et 18b, décisions 0011 et 0012) : période d'import, masquage du brouillard et
+   synchronisation lancée depuis la page (fonction serveur « lancer-synchro », administrateurs). */
+var SYNC_SUIVI = null, SYNC_DELAI = 8000;
+function moisEntre(a, b) { var out = [], y = +a.slice(0, 4), m = +a.slice(5); while (true) { var x = y + "-" + (m < 10 ? "0" : "") + m; if (x > b) break; out.push(x); m++; if (m > 12) { m = 1; y++; } } return out; }
+function moisCourant() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1); }
+function moisMaj(m) { var s = moisLong(m); return s.charAt(0).toUpperCase() + s.slice(1); }
+function sourceDe(d) { return (D.sources || {})[d] || null; }
+function paramDe(d) { return (D.parametres_import || []).find(function (x) { return x.dossier === d; }) || null; }
+function dateHeure(iso) { if (!iso) return ""; var s = String(iso); return dateFr(s) + (s.length > 10 ? " " + s.slice(11, 16) : ""); }
+function peutSynchroniser() { return enLigne() && estAdmin() && !!(ZCLIENT && ZCLIENT.functions); }
+function libStatutSync(s) { var c = { "demandée": "att", "en cours": "att", "terminée": "ok", "échec": "ko" }[s] || "att"; return '<span class="pastille ' + c + '">' + esc(s) + "</span>"; }
+function detailSync(x) {
+  if (x.statut === "échec") return esc(x.message || "");
+  var r = x.resultat || {}, ds = Object.keys(r);
+  if (!ds.length) return x.statut === "terminée" ? "" : '<span class="mut">' + (x.statut === "en cours" ? "lecture de Pennylane et calcul…" : "en attente de GitHub…") + "</span>";
+  return ds.map(function (d) { var y = r[d]; return "<code>" + esc(d) + "</code> " + esc(y.statut) + (y.lignes_reprises != null ? " (" + nb(y.lignes_reprises) + " lignes)" : ""); }).join("<br>");
+}
+function blocHistorique() {
+  if (!enLigne() || !estAdmin()) return "";
+  var L = (D.synchronisations || []).slice().sort(function (a, b) { return b.id - a.id; }).slice(0, 15);
+  var h = '<div class="bloc" id="imp-historique"><div class="bloc-tete"><h2>Historique des synchronisations</h2>' +
+    (L.some(function (x) { return x.statut === "demandée" || x.statut === "en cours"; }) ? '<span class="legende">Mise à jour automatique toutes les 8 secondes.</span>' : "") + "</div>";
+  if (!L.length) return h + '<p class="legende">Aucune synchronisation lancée depuis la page.</p></div>';
+  h += '<div class="defile"><table class="tab"><thead><tr><th>N°</th><th>Demandée le</th><th>Par</th><th>Périmètre</th><th>Période</th><th>Brouillard</th><th class="c">Statut</th><th>Détail</th></tr></thead><tbody>';
+  L.forEach(function (x) {
+    h += "<tr><td>" + x.id + "</td><td>" + dateHeure(x.demandee_le) + "</td><td>" + esc(x.demandee_par || "") + "</td><td>" + esc(x.perimetre || "") + " (" + (x.dossiers || []).length + ")</td><td>" +
+      (x.mois_debut ? moisMaj(x.mois_debut) : "début") + " → " + (x.mois_fin ? moisMaj(x.mois_fin) : "fin") + "</td><td>" + (x.masquer_brouillard ? "masqué" : "repris") + '</td><td class="c">' + libStatutSync(x.statut) +
+      "</td><td>" + detailSync(x) + (x.execution ? ' <a href="' + esc(x.execution) + '" target="_blank" rel="noopener">exécution</a>' : "") + "</td></tr>";
+  });
+  return h + "</tbody></table></div></div>";
+}
+function suivreSynchro() {
+  if (SYNC_SUIVI) clearTimeout(SYNC_SUIVI);
+  SYNC_SUIVI = setTimeout(function () {
+    SYNC_SUIVI = null;
+    sb(ZCLIENT.from("synchronisations").select("*").order("id")).then(function (r) {
+      var avant = (D.synchronisations || []).filter(function (x) { return x.statut === "demandée" || x.statut === "en cours"; }).map(function (x) { return x.id; });
+      D.synchronisations = r || [];
+      var z = el("imp-historique"); if (z) z.outerHTML = blocHistorique();
+      var finies = D.synchronisations.filter(function (x) { return avant.indexOf(x.id) >= 0 && (x.statut === "terminée" || x.statut === "échec"); });
+      if (finies.length) messageImport(finies[0].statut === "terminée" ?
+        "Synchronisation n° " + finies[0].id + " terminée. <button class=\"btn btn-ligne\" id=\"imp-recharger\">Recharger les chiffres</button>" :
+        "Synchronisation n° " + finies[0].id + " en échec : " + esc(finies[0].message || ""), finies[0].statut === "terminée" ? "info" : "");
+      if (D.synchronisations.some(function (x) { return x.statut === "demandée" || x.statut === "en cours"; })) suivreSynchro();
+    }).catch(function () { suivreSynchro(); });
+  }, SYNC_DELAI);
+}
+function messageImport(html, classe) {
+  var z = el("imp-message"); if (!z) return;
+  z.innerHTML = html ? '<div class="connexion-etat ' + (classe || "") + '" style="margin:0 0 16px">' + html + "</div>" : "";
+  var b = el("imp-recharger"); if (b) b.onclick = function () { location.reload(); };
+}
+function lancerSynchro(p) {
+  var md = el("imp-debut").value, mf = el("imp-fin").value, masquer = el("imp-brouillard").classList.contains("on");
+  if (md > mf) { messageImport("Le mois de début est après le mois de fin.", ""); return; }
+  var connectees = p.dossiers.filter(sourceDe).length;
+  if (!confirm("Synchroniser " + p.dossiers.length + " résidence(s), dont " + connectees + " connectée(s) à Pennylane, de " + moisLong(md) + " à " + moisLong(mf) +
+      ", écritures en brouillard " + (masquer ? "masquées" : "reprises") + " ?")) return;
+  var b = el("imp-synchro"); b.disabled = true; b.textContent = "Lancement…";
+  ZCLIENT.functions.invoke("lancer-synchro", { body: { dossiers: p.dossiers.slice(), perimetre: p.libelle, mois_debut: md, mois_fin: mf, masquer_brouillard: masquer } })
+    .then(function (r) {
+      if (!r.error) return r.data;
+      var ctx = r.error.context;
+      return Promise.resolve(ctx && typeof ctx.json === "function" ? ctx.json().catch(function () { return {}; }) : {})
+        .then(function (j) { throw { message: (j && j.erreur) || r.error.message || "lancement impossible" }; });
+    })
+    .then(function (data) {
+      (D.parametres_import = D.parametres_import || []);
+      p.dossiers.forEach(function (d) { var x = paramDe(d); if (!x) D.parametres_import.push(x = { dossier: d }); x.mois_debut = md; x.mois_fin = mf; x.masquer_brouillard = masquer; });
+      D.synchronisations = (D.synchronisations || []).concat([{ id: data.id, statut: "demandée", demandee_le: new Date().toISOString(), demandee_par: D.enLigne.email,
+        perimetre: p.libelle, dossiers: p.dossiers.slice(), mois_debut: md, mois_fin: mf, masquer_brouillard: masquer, resultat: {} }]);
+      majContenu();
+      messageImport("Synchronisation n° " + data.id + " lancée : GitHub lit Pennylane, recalcule et publie (quelques minutes). Le suivi s’affiche ci-dessous.", "info");
+      suivreSynchro();
+    })
+    .catch(function (e) { b.disabled = false; b.textContent = "Synchroniser"; messageImport("<b>Synchronisation non lancée.</b> " + esc((e && e.message) || String(e)), ""); });
+}
 PAGES.pennylane = function (p) {
-  var h = enTete("Import comptable", p, "") +
-    '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Connexion Pennylane non activée.</b> Phase test : les écritures affichées sont fictives. Le branchement de l’API Pennylane (jeton par dossier, droits d’accès) reste à décider avec la DSI.</div></div>' +
+  var connectees = p.dossiers.filter(sourceDe), seul = p.dossiers.length === 1, admin = peutSynchroniser();
+  var src0 = sourceDe(p.dossiers[0]), par0 = paramDe(p.dossiers[0]);
+  var etatCx;
+  if (seul && src0) etatCx = '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">✓</span><div><b>Connexion Pennylane active (lecture seule).</b> Dernière synchronisation le ' + dateHeure(src0.synchronise_le) +
+    " · " + esc(src0.libelle_mode) + (src0.periode ? " · période du " + dateFr(src0.periode[0]) + " au " + (src0.periode[1] > "9999" ? "…" : dateFr(src0.periode[1])) : "") + " · exercice retenu du " + esc(String(src0.exercice_retenu || "").split(" au ").map(function (x) { return /^\d{4}-\d{2}-\d{2}$/.test(x) ? dateFr(x) : x; }).join(" au ")) + ".</div></div>";
+  else if (connectees.length) etatCx = '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">✓</span><div><b>' + connectees.length + " résidence(s) sur " + p.dossiers.length + " connectée(s) à Pennylane.</b> Les autres seront signalées « non connectée » lors d’une synchronisation.</div></div>";
+  else etatCx = '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>' + (seul ? "Résidence non connectée à Pennylane." : "Aucune résidence du périmètre n’est connectée à Pennylane.") + "</b> Phase test : seul le dossier Pennylane de test est connecté (lecture seule, décision 0011). Les écritures affichées sont fictives.</div></div>";
+  var fin = moisCourant(), m0 = (D.calcul && D.calcul.mois && D.calcul.mois[0]) || D.mois[0], debut0 = m0 < fin ? m0 : fin, liste = moisEntre(debut0, fin);
+  var md = (par0 && par0.mois_debut) || (src0 && src0.periode ? src0.periode[0].slice(0, 7) : debut0), mf = (par0 && par0.mois_fin) || fin;
+  if (liste.indexOf(md) < 0) md = liste[0]; if (liste.indexOf(mf) < 0) mf = liste[liste.length - 1];
+  var masquer = par0 ? par0.masquer_brouillard !== false : !(src0 && src0.mode === "tous");
+  var options = function (choisi) { return liste.map(function (m) { return '<option value="' + m + '"' + (m === choisi ? " selected" : "") + ">" + moisMaj(m) + "</option>"; }).join(""); };
+  var br = { lignes: 0, charges: 0, produits: 0, n: 0 };
+  connectees.forEach(function (d) { var b = sourceDe(d).brouillard; if (b) { br.n++; br.lignes += b.lignes; br.charges += +b.charges; br.produits += +b.produits; } });
+  var infoBr = br.n ? nb(br.lignes) + " ligne(s) en brouillard dans la période à la dernière synchronisation : charges " + eur(br.charges) + ", produits " + eur(br.produits) +
+      (connectees.every(function (d) { return (sourceDe(d).brouillard || {}).masque; }) ? " (masquées dans les chiffres)." : " (reprises dans les chiffres).")
+    : "Information disponible après une synchronisation.";
+  var libBouton = seul ? "Synchroniser" : "Synchroniser les " + p.dossiers.length + " résidences";
+  var h = enTete("Import comptable", p, "") + etatCx + '<div id="imp-message"></div>' +
     '<h2 style="margin-bottom:12px">Import des données par l’API Pennylane</h2><div class="import-grille">' +
-    '<div class="cadre"><h3>Dates d’import</h3><div class="corps duo"><div><span class="mini">Import manuel de</span><select disabled><option>Janvier ' + D.meta.annee + '</option></select></div><div><span class="mini">à</span><select disabled><option>' + MOIS_LONG[+D.meta.dernier_mois_importe.slice(5) - 1].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + D.meta.annee + "</option></select></div></div></div>" +
-    '<div class="cadre"><h3>Options</h3><div class="corps"><div class="options">' +
-      "<span>Analytique</span>" + bascule(false) + '<span class="mini">Préfixes de regroupement <span class="info-ronde" title="Regrouper des sous-comptes Pennylane sous un même compte">i</span></span>' +
-      '<span>À-nouveaux gérés par Pennylane <span class="info-ronde" title="Les écritures d’ouverture viennent du logiciel comptable">i</span></span>' + bascule(true) + '<span class="mini">Import automatique <span class="info-ronde" title="Fréquence à fixer (point ouvert)">i</span> : aucun</span>' +
-      "<span>Balances mensuelles</span>" + bascule(false) + "<span></span>" +
-      '<span>Forcer la longueur des comptes <span class="info-ronde" title="Compléter les numéros de compte par des zéros">i</span></span>' + bascule(false) + "<span></span>" +
-    "</div></div></div>" +
-    '<div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-accent" disabled title="Disponible quand la connexion Pennylane sera activée">Importer</button><button class="btn btn-ligne" disabled>Historique d’import</button></div></div>' +
-    '<div class="phrase"><button class="btn btn-ligne" disabled>Éditer les exercices</button><em>L’exercice N correspond au premier exercice non clôturé en comptabilité.</em></div>';
+    '<div class="cadre"><h3>Dates d’import</h3><div class="corps duo"><div><span class="mini">Importer de</span><select id="imp-debut"' + (admin ? "" : " disabled") + ">" + options(md) + '</select></div><div><span class="mini">à</span><select id="imp-fin"' + (admin ? "" : " disabled") + ">" + options(mf) + "</select></div></div></div>" +
+    '<div class="cadre"><h3>Options</h3><div class="corps"><div class="options"><span>Masquer les écritures en brouillard <span class="info-ronde" title="Écritures dont la pièce est encore à valider ou à comptabiliser dans Pennylane">i</span></span>' +
+      '<button class="bascule' + (masquer ? " on" : "") + '" id="imp-brouillard" aria-pressed="' + masquer + '"' + (admin ? ' title="Cliquer pour changer"' : ' disabled title="Réservé aux administrateurs"') + "></button><span></span></div>" +
+      '<p class="legende" style="margin-top:10px">' + infoBr + "</p></div></div>" +
+    '<div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-accent" id="imp-synchro"' + (admin ? "" : ' disabled title="' + (enLigne() ? "Réservé aux administrateurs" : "Disponible dans le logiciel en ligne") + '"') + ">" + libBouton + "</button>" +
+      '<button class="btn btn-ligne" id="imp-histo-btn"' + (enLigne() && estAdmin() ? "" : " disabled") + ">Historique d’import</button></div></div>" +
+    '<p class="legende" style="margin:-8px 0 16px">La synchronisation relit Pennylane pour les résidences connectées du périmètre (' + (seul ? esc(p.libelle) : esc(p.libelle) + ", " + p.dossiers.length + " résidences") + "), recalcule et publie les chiffres. Les écritures hors période ne sont pas reprises.</p>";
+  if (!seul) {
+    h += '<div class="bloc"><div class="bloc-tete"><h2>Résidences du périmètre</h2></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Dossier Pennylane</th><th>Connexion</th><th>Dernière synchronisation</th><th>Période importée</th><th>Brouillard</th></tr></thead><tbody>';
+    p.dossiers.forEach(function (d) { var s = sourceDe(d);
+      h += "<tr><td><b>" + esc(residence(d).nom) + "</b></td><td><code>" + esc(d) + "</code></td><td>" + (s ? '<span class="pastille ok">connectée</span>' : '<span class="mut">non connectée</span>') + "</td><td>" + (s ? dateHeure(s.synchronise_le) : "") +
+        "</td><td>" + (s && s.periode ? dateFr(s.periode[0]) + " → " + (s.periode[1] > "9999" ? "…" : dateFr(s.periode[1])) : s ? "toutes" : "") + "</td><td>" + (s && s.brouillard ? nb(s.brouillard.lignes) + " ligne(s), " + (s.brouillard.masque ? "masquées" : "reprises") : "") + "</td></tr>"; });
+    h += "</tbody></table></div></div>";
+  }
+  h += '<div class="phrase"><button class="btn btn-ligne" disabled>Éditer les exercices</button><em>L’exercice N correspond au premier exercice non clôturé en comptabilité.</em></div>';
   var t = '<div class="bloc"><div class="defile"><table class="tab"><thead><tr>' + (p.dossiers.length > 1 ? "<th>Résidence</th>" : "") +
     '<th>Rang</th><th>Exercice</th><th>Dossier Pennylane</th><th>Période importée</th><th class="num">Écritures (lignes)</th><th class="num">Données budgétaires</th><th class="c">Statut</th></tr></thead><tbody>';
   p.dossiers.forEach(function (d) { var r = residence(d), rangs = D.imports[d] || [];
@@ -2119,7 +2219,13 @@ PAGES.pennylane = function (p) {
         "</td><td><code>" + esc(d) + "</code></td><td>" + (x.periode_importee ? "Du " + dateFr(x.periode_importee[0]) + " au " + dateFr(x.periode_importee[1]) : '<span class="mut">aucune écriture</span>') +
         '</td><td class="num">' + nb(x.ecritures) + '</td><td class="num mut">0</td><td class="c">' + (x.ecritures ? '<span class="coche" title="Données présentes">✓</span>' : '<span class="pastille att">à importer</span>') + "</td></tr>";
     }); });
-  el("contenu").innerHTML = h + t + '</tbody></table></div><p class="legende">Données budgétaires : à venir avec le module Budgets. Écritures comptées jusqu’au dernier mois importé (' + moisLong(D.meta.dernier_mois_importe) + ").</p></div>";
+  el("contenu").innerHTML = h + t + '</tbody></table></div><p class="legende">Données budgétaires : à venir avec le module Budgets. Écritures comptées jusqu’au dernier mois importé du site (' + moisLong(D.meta.dernier_mois_importe) + ").</p></div>" + blocHistorique();
+  if (admin) {
+    el("imp-brouillard").onclick = function () { var on = !this.classList.contains("on"); this.classList.toggle("on", on); this.setAttribute("aria-pressed", on); };
+    el("imp-synchro").onclick = function () { lancerSynchro(p); };
+  }
+  var hb = el("imp-histo-btn"); if (hb && !hb.disabled) hb.onclick = function () { var z = el("imp-historique"); if (z) z.scrollIntoView({ behavior: "smooth" }); };
+  if (enLigne() && estAdmin() && ZCLIENT && (D.synchronisations || []).some(function (x) { return x.statut === "demandée" || x.statut === "en cours"; }) && !SYNC_SUIVI) suivreSynchro();
 };
 PAGES.plan = function () {
   var t = enTete("Plan comptable", perimetre(etat.perim), "Comptes présents dans les écritures et leur classement") +
@@ -3425,13 +3531,14 @@ function assemblerDonnees(commun, lignes, groupes, liens, profil) {
   ch.sort(function (a, b) { return a.residence.nom < b.residence.nom ? -1 : a.residence.nom > b.residence.nom ? 1 : 0; });
   X.residences = ch.map(function (c) { return c.residence; });
   X.finance = ch.filter(function (c) { return c.finance; }).map(function (c) { return c.finance; });
-  X.couverture = {}; X.imports = {}; X.tresorerie.dossiers = {};
+  X.couverture = {}; X.imports = {}; X.sources = {}; X.tresorerie.dossiers = {};
   X.calcul.compta = {}; X.calcul.couverts = {}; X.calcul.exploitation = {}; X.ecritures = {};
   var comptes = {}, journaux = {}, nbEcr = 0, nbMes = 0;
   ch.forEach(function (c) {
     var d = c.residence.dossier;
     X.couverture[d] = c.couverture;
     if (c.imports) X.imports[d] = c.imports;
+    if (c.source) X.sources[d] = c.source;
     X.tresorerie.dossiers[d] = c.tresorerie;
     X.ecritures[d] = c.ecritures || [];
     if (Object.keys(c.compta || {}).length) X.calcul.compta[d] = c.compta;
@@ -3473,6 +3580,8 @@ function assemblerDonnees(commun, lignes, groupes, liens, profil) {
   return X;
 }
 function lireBase(requete) { return Promise.resolve(requete).then(function (r) { if (r.error) throw r.error; return r.data; }); }
+/* Tables du lot 18b : la page fonctionne avant l'application de la migration 007 (liste vide). */
+function lireFacultatif(requete) { return Promise.resolve(requete).then(function (r) { return r && !r.error ? r.data || [] : []; }, function () { return []; }); }
 /* Lit tout ce dont la page a besoin. La base ne renvoie que ce que le parc de la personne autorise. */
 function chargerDonnees(client) {
   return Promise.all([
@@ -3484,8 +3593,10 @@ function chargerDonnees(client) {
     lireBase(client.from("comptes_simules").select("numero, libelle, cree_par").order("numero")),
     lireBase(client.from("lissages").select("*").order("id")),
     lireBase(client.from("mesures_importees").select("*")),
-    lireBase(client.from("comptes_bancaires").select("*"))
-  ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [] }; });
+    lireBase(client.from("comptes_bancaires").select("*")),
+    lireFacultatif(client.from("parametres_import").select("*")),
+    lireFacultatif(client.from("synchronisations").select("*").order("id"))
+  ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10] }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -3496,6 +3607,7 @@ function demarrerAvecClient(client, profil) {
     if (!x.lignes.length) return ecranDemarrage("Aucune résidence dans votre parc", "Aucune résidence n’est encore attribuée à votre compte, ou ses chiffres n’ont pas été publiés. Un administrateur peut vous attribuer des résidences ou un groupe dans Administration.", ["espace.html", "Mon espace"]);
     D = assemblerDonnees(x.commun, x.lignes, x.groupes, x.liens, profil);
     D.ajustements = x.ajustements; D.comptes_simules = x.comptes; D.lissages = x.lissages; D.mesures_importees = x.mesures; D.comptes_bancaires = x.banques;
+    D.parametres_import = x.parametres || []; D.synchronisations = x.synchros || [];
     lancerApplication();
     ZCLIENT = client;
     var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");

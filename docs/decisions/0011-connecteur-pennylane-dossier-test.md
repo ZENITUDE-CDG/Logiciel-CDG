@@ -27,8 +27,8 @@ la structure des données, sans afficher aucune valeur.
    rubriques : préfixe du PCG de référence, marqué « Provisoire lot 18 », ajouté à une copie temporaire de
    la configuration (jamais au classeur du dépôt). À valider par le contrôle de gestion.
 6. **Écritures reprises** : « valides » (validées seulement, par défaut) ou « tous » (validées et
-   brouillard), choisi au lancement de « Synchro Pennylane test ». Le paramètre dans la page (Import et
-   paramètres) arrive au lot 18b. Le mode est conservé avec les données publiées.
+   brouillard), choisi au lancement de « Synchro Pennylane test ». Depuis le lot 18b, réglé dans la page
+   (Import et paramètres, décision 0012). Le mode est conservé avec les données publiées.
 7. **Garde-fous inchangés** : toute résidence marquée réelle reste refusée par la publication. Le dépôt
    étant public, le branchement d'une résidence réelle exige une nouvelle décision (dépôt privé ou autre
    hébergement, validé par la DSI).

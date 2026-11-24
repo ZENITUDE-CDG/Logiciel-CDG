@@ -1,4 +1,4 @@
--- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 15). À coller en une fois dans SQL Editor.
+-- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 18). À coller en une fois dans SQL Editor.
 -- Fichier assemblé par scripts/assembler_installation.py : remise à zéro + migrations + données de départ.
 -- Remet la base de test à zéro : données fictives uniquement. Ne jamais exécuter sur une base réelle.
 -- Après l'avoir lancé, relancer la publication des données (GitHub, Actions, « Run workflow »).
@@ -512,6 +512,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON mesures_importees, comptes_bancaires TO 
 --
 -- Démonstration : Raphael est administrateur et voit tout ; Benjamin est collaborateur, son parc
 -- est le groupe des résidences seniors : il ne voit que RES-003, RES-004 et RES-005.
+--
+-- Lot 18 (décision 0011) : RES-TEST = dossier Pennylane de test (PENNY-TEST), sans donnée confidentielle,
+-- marqué fictif ; hors de tout groupe, donc visible des seuls administrateurs.
 
 INSERT INTO profils (email, nom, role, fictif) VALUES
   ('raphael.bracq@zenitude-groupe.com',  'Raphael Bracq',    'administrateur', false),
@@ -529,7 +532,8 @@ INSERT INTO residences (id, libelle, dossier_pennylane, fictif) VALUES
   ('RES-005', 'Les Marronniers (fictif)',        'DEMO-2005', true),
   ('RES-006', 'Campus Rive Gauche (fictif)',     'DEMO-2006', true),
   ('RES-007', 'Le Jardin des Sciences (fictif)', 'DEMO-2007', true),
-  ('RES-008', 'Les Hauts de Loire (fictif)',     'DEMO-2008', true)
+  ('RES-008', 'Les Hauts de Loire (fictif)',     'DEMO-2008', true),
+  ('RES-TEST', 'Dossier Pennylane de test',      'PENNY-TEST', true)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO groupes (id, libelle, fictif) VALUES

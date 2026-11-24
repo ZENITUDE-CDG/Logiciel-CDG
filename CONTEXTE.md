@@ -5,7 +5,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 
 ## Où en est-on (23 novembre 2026)
 
-- Phase : **test uniquement**. Données fictives. Pas de Pennylane, pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004, 0006, 0007) ; rien en local. Les chiffres sont calculés par GitHub Actions et publiés dans la base ; la page en ligne ne contient aucune donnée.
+- Phase : **test uniquement**. Données fictives. Pennylane : seul le dossier de test `PENNY-TEST` est lu, en lecture seule (lot 18, décision 0011). Pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004, 0006, 0007) ; rien en local. Les chiffres sont calculés par GitHub Actions et publiés dans la base ; la page en ligne ne contient aucune donnée.
 - Cadrage : ZENITUDE v0.8 approuvé pour la phase test (`docs/decisions/0001-approbation-cadrage-test.md`).
   Approbations DAF, contrôle de gestion et DSI : **non tracées**.
 - Équipe : deux personnes (porteur du projet et Benjamin), développement avec Claude Code.
@@ -28,6 +28,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 11 | Compte de résultat PCG (système de base, ANC 2022-06) figé dans la publication ; section Trésorerie (position, créances, dettes) ; colonnes tiers, lettrage, échéance | 110 |
 | 15 | Comptes bancaires par résidence (trésorier) et analyse du solde N / N-1 ; FRNG, BFR, TN ; graphiques liés à la réglette ; tableau EBITDA du modèle de gestion du groupe ; import des KPI mensuels (modèle Excel, tout ou rien) | 21 |
 | 14 | Clic sur tout montant : formule, éléments et écritures d’origine (rapprochés avec le moteur) ; lissage de postes écriture par écriture comme Waibi (exercice suivant compris) ; compte ouvert par l’adresse en bas à gauche ; logo vers le choix des résidences depuis toute page | 18 |
+| 18a | Connecteur Pennylane (lecture seule) sur le dossier de test : écritures publiées comme résidence RES-TEST, visible des administrateurs ; synchronisation manuelle avec choix du mode (validées / validées et brouillard) | 17 |
 | 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
 Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). Depuis le lot 12, on y entre par `connexion.html` (vraie connexion, base de test Supabase).
@@ -46,6 +47,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Lot 17 (`docs/decisions/0010`) : menu latéral réordonné (Résidence en haut) ; export Excel de chaque page de données : tableaux, données des graphiques, détail des calculs et écritures comptables.
 - Lot 16 : ruban bleu en haut de chaque page (exercice de référence + résidence ou groupe) ; l'exercice fixe la période de la réglette, le périmètre quitte le menu latéral.
 - Lot 14 (`docs/decisions/0008`) : détail des écritures publié par résidence ; lissage comme Waibi (répartition possible sur l'exercice suivant, mois sans écriture compris).
+- Lot 18 (`docs/decisions/0011`) : connexion Pennylane autorisée pour le seul dossier de test, lecture seule, liste blanche ; classement provisoire des comptes non classés du dossier de test ; aucune valeur dans les journaux.
 - Lot 13 (`docs/decisions/0007`) : publication par GitHub Actions avec la clé secrète dans les secrets GitHub ; ajustements partagés, actifs dès leur création, sans validation à deux personnes ; lissage ; base de test = huit résidences de démonstration (Benjamin : groupe GRP-SENIORS).
 
 ## Points ouverts

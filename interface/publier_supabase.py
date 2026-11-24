@@ -14,8 +14,14 @@ Lancé par GitHub Actions après les tests, à chaque dépôt sur main (ou à la
 Garde-fous : seules les résidences déjà créées dans la base et marquées « fictif » reçoivent des
 données ; la publication s'arrête si l'une d'elles est marquée réelle (invariant 8).
 
+Lot 18 (décision 0011) : si le secret PENNYLANE_TOKEN_PILOTE est présent, le dossier Pennylane de test
+(PENNY-TEST, résidence RES-TEST) est lu par le connecteur et publié avec la démonstration. Mode des
+écritures : variable PENNYLANE_MODE (« valides » par défaut, ou « tous »). Sans --pennylane, une erreur de
+lecture Pennylane n'empêche pas la publication de la démonstration (avertissement).
+
 Usage :
-  python interface/publier_supabase.py             publie (SUPABASE_SECRET_KEY obligatoire)
+  python interface/publier_supabase.py              publie (SUPABASE_SECRET_KEY obligatoire)
+  python interface/publier_supabase.py --pennylane  publie ; lecture du dossier de test obligatoire
   python interface/publier_supabase.py --essai DIR  écrit les lignes dans DIR, sans rien envoyer
 """
 import hashlib
@@ -180,20 +186,86 @@ def publier(base, cle, commune, lignes, envoyer=requete):
                 "resolution=merge-duplicates,return=minimal")
 
 
-def calculer(demo=generer_site.DEMO):
+def calculer(demo=generer_site.DEMO, pennylane=None):
+    """Calcule et découpe. pennylane = (lignes, exercice, rapport) du dossier de test (lot 18) ou None.
+
+    Avec le dossier de test, le moteur tourne sur une copie temporaire : démonstration inchangée +
+    dossier de test (interface/source_pennylane.py). Rien n'est écrit dans le dépôt.
+    """
     if not os.path.exists(os.path.join(demo, "configuration.xlsx")):
         import generer_demo
         generer_demo.main(demo)
-    donnees = generer_site.construire(demo)
-    ecritures = couverture.charger_ecritures(os.path.join(demo, "ecritures.csv"))
-    exploitation = charger_exploitation(os.path.join(demo, "mesures.csv"))
-    return decouper(donnees, ecritures, exploitation)
+    source, provisoires = demo, []
+    if pennylane is not None:
+        import tempfile
+        import source_pennylane
+        lignes, exercice, rapport = pennylane
+        source = os.path.join(tempfile.mkdtemp(prefix="zen-l18-"), "source")
+        provisoires = source_pennylane.assembler(demo, source, lignes, exercice)
+    donnees = generer_site.construire(source)
+    ecritures = couverture.charger_ecritures(os.path.join(source, "ecritures.csv"))
+    exploitation = charger_exploitation(os.path.join(source, "mesures.csv"))
+    commun, par = decouper(donnees, ecritures, exploitation)
+    if pennylane is not None:
+        import source_pennylane
+        d = source_pennylane.DOSSIER_TEST
+        if d in par:
+            par[d]["source"] = {"type": "pennylane", "mode": rapport["mode"], "libelle_mode": rapport["libelle_mode"],
+                                "synchronise_le": rapport.get("synchronise_le"),
+                                "exercice_retenu": rapport["exercice_retenu"],
+                                "comptes_provisoires": provisoires}
+    return commun, par
+
+
+def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None):
+    """Lit le dossier de test par le connecteur (lot 18). Renvoie (lignes, exercice, rapport)."""
+    from datetime import datetime
+    import source_pennylane
+    from zenitude.connecteurs import pennylane as pl
+    if not os.path.exists(os.path.join(demo, "configuration.xlsx")):
+        import generer_demo
+        generer_demo.main(demo)
+    client = client or pl.Client(jeton)
+    lignes, exercice, rapport = pl.extraire(client, source_pennylane.DOSSIER_TEST, mode,
+                                            depuis=source_pennylane.debut_frise(demo))
+    rapport["synchronise_le"] = datetime.now().replace(microsecond=0).isoformat()
+    return lignes, exercice, rapport
+
+
+def _avec_pennylane(argv):
+    """Lit le dossier de test si le jeton est présent (lot 18). Renvoie (données, code d'erreur)."""
+    jeton = os.environ.get("PENNYLANE_TOKEN_PILOTE", "").strip()
+    obligatoire = "--pennylane" in argv
+    if not jeton:
+        if obligatoire:
+            print("ERREUR : secret PENNYLANE_TOKEN_PILOTE absent.", file=sys.stderr)
+            return None, 1
+        return None, 0
+    mode = (os.environ.get("PENNYLANE_MODE") or "valides").strip() or "valides"
+    from zenitude.connecteurs import pennylane as pl
+    try:
+        donnees = lire_pennylane(jeton=jeton, mode=mode)
+    except pl.ErreurPennylane as e:
+        if obligatoire:
+            print("ERREUR Pennylane : " + str(e), file=sys.stderr)
+            return None, 1
+        print("avertissement : dossier Pennylane de test non lu (" + str(e) + ") ; publication sans lui")
+        return None, 0
+    print(pl.texte_rapport(donnees[2]))
+    return donnees, 0
 
 
 def main(argv):
-    commun, par = calculer()
-    if len(argv) >= 2 and argv[0] == "--essai":
-        dossier = argv[1]
+    pennylane, code = (None, 0) if "--essai" in argv else _avec_pennylane(argv)
+    if code:
+        return code
+    commun, par = calculer() if pennylane is None else calculer(pennylane=pennylane)
+    if pennylane is not None:
+        src = par.get("PENNY-TEST", {}).get("source", {})
+        if src.get("comptes_provisoires"):
+            print("Comptes classés provisoirement (préfixes) : " + ", ".join(src["comptes_provisoires"]))
+    if "--essai" in argv:
+        dossier = argv[argv.index("--essai") + 1]
         os.makedirs(dossier, exist_ok=True)
         base = [{"id": r["residence"]["code"], "dossier_pennylane": d, "fictif": True} for d, r in par.items()]
         commune, lignes, avert = lignes_a_publier(commun, par, base)

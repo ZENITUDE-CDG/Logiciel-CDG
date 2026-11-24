@@ -1,0 +1,57 @@
+name: Test connexion Pennylane
+
+# Lancement manuel uniquement (onglet Actions > Run workflow)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-pennylane:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier la présence du secret
+        env:
+          PENNYLANE_TOKEN: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
+        run: |
+          if [ -z "$PENNYLANE_TOKEN" ]; then
+            echo "::error::Le secret PENNYLANE_TOKEN_PILOTE est introuvable. Vérifie son nom dans Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "Secret trouvé."
+
+      - name: Appeler Pennylane
+        env:
+          PENNYLANE_TOKEN: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
+        run: |
+          code=$(curl -s -o reponse.json -w "%{http_code}" \
+            -H "Authorization: Bearer $PENNYLANE_TOKEN" \
+            -H "Accept: application/json" \
+            https://app.pennylane.com/api/external/v2/me)
+          echo "Code de réponse : $code"
+
+          if [ "$code" != "200" ]; then
+            case "$code" in
+              401) echo "::error::Jeton refusé (401) : jeton mal copié, expiré ou supprimé dans Pennylane." ;;
+              403) echo "::error::Accès interdit (403) : droits du jeton insuffisants." ;;
+              429) echo "::error::Trop de requêtes (429) : relance dans une minute." ;;
+              *)   echo "::error::Réponse inattendue de Pennylane." ;;
+            esac
+            rm -f reponse.json
+            exit 1
+          fi
+
+          echo "Connexion à Pennylane réussie."
+          # Seules des informations non sensibles sont affichées : les journaux d'un dépôt public sont visibles de tous.
+          echo "Société : $(jq -r '.company.name // "non renseignée"' reponse.json)"
+          echo "Droits du jeton :"
+          jq -r '.scopes[]?' reponse.json | sed 's/^/  - /'
+
+          if jq -e '[.scopes[]?] | length > 0 and all(.[]; endswith(":readonly"))' reponse.json > /dev/null; then
+            echo "Jeton bien en lecture seule."
+          else
+            echo "::warning::Le jeton ne semble pas être en lecture seule. Supprime-le dans Pennylane et recrée-le en choisissant Lecture seule."
+          fi
+
+          rm -f reponse.json

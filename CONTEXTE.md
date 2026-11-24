@@ -43,6 +43,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Lot 12 : Supabase comme base de test, droits par règles par ligne dans PostgreSQL, SQL standard migrable (`docs/decisions/0004`, `0005`, `0006`). Identité par l'adresse e-mail du jeton ; comptes créés dans Supabase par un administrateur ; clé publique visible dans `app/config.js`.
 - Phase test : le calcul des ajustements se fait dans la page (`docs/decisions/0002-calcul-ajustements-navigateur.md`), le moteur Python reste la référence et un test compare les deux.
 - Lot 15 (`docs/decisions/0009`) : virements internes exclus des flux ; vue bancaire réservée aux administrateurs ; import des KPI réservé aux administrateurs, tout ou rien ; EBITDA au format du groupe (structure seulement du fichier réel fourni, aucun montant).
+- Lot 16 : ruban bleu en haut de chaque page (exercice de référence + résidence ou groupe) ; l'exercice fixe la période de la réglette, le périmètre quitte le menu latéral.
 - Lot 14 (`docs/decisions/0008`) : détail des écritures publié par résidence ; lissage comme Waibi (répartition possible sur l'exercice suivant, mois sans écriture compris).
 - Lot 13 (`docs/decisions/0007`) : publication par GitHub Actions avec la clé secrète dans les secrets GitHub ; ajustements partagés, actifs dès leur création, sans validation à deux personnes ; lissage ; base de test = huit résidences de démonstration (Benjamin : groupe GRP-SENIORS).
 

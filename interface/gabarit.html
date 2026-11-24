@@ -26,7 +26,7 @@
   --cle:#EEF4F7; --accent-txt:#B5541B;
   --ok:#0F7A5A; --ok-fond:#E7F4EF; --attente:#B5541B; --attente-fond:#FBF0E7; --erreur:#B4232C; --erreur-fond:#FBEBEC;
   --ombre-pop:0 10px 30px rgba(20,35,45,.12), 0 1px 3px rgba(20,35,45,.08);
-  --rayon:10px;
+  --rayon:10px; --h-ruban:52px;
   color-scheme: light; box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -400,7 +400,7 @@ tr.cliquable { cursor:pointer; }
 .btn-theme { border:1px solid var(--bord); background:var(--surface); color:var(--txt); border-radius:8px; height:30px; min-width:30px; padding:0 8px; cursor:pointer; font-size:13px; font-weight:600; line-height:1; white-space:nowrap; }
 .btn-theme:hover { background:var(--survol); border-color:var(--bord-fort); }
 /* ---------- Lot 9 : réglette de période, ajustements ---------- */
-.zone-periode { max-width:1640px; margin:0 auto; padding:16px 24px 10px; position:sticky; top:env(safe-area-inset-top,0px); z-index:18; background:var(--fond); }
+.zone-periode { max-width:1640px; margin:0 auto; padding:16px 24px 10px; position:sticky; top:calc(env(safe-area-inset-top,0px) + var(--h-ruban)); z-index:18; background:var(--fond); }
 .reglette { background:var(--surface); border:1px solid var(--bord); border-radius:var(--rayon); padding:12px 16px 10px; }
 .reg-haut { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
 .reg-lib { font-size:13px; } .reg-lib b { color:var(--titre); font-size:14px; margin:0 4px; }
@@ -479,7 +479,6 @@ tr.cliquable { cursor:pointer; }
 .lat-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .lat-deco { display:flex; align-items:center; gap:7px; }
 .lat-deco:hover { text-decoration:none; }
-.barre-mobile { display:none; }
 .lat-voile { display:none; }
 .deroulant { position:fixed; top:auto; }
 /* Menu réduit : icônes seules */
@@ -506,10 +505,30 @@ tr.cliquable { cursor:pointer; }
   .app.reduit .lat-item { justify-content:flex-start; padding:9px 10px; }
   .app.reduit .lat-actions { flex-direction:row; }
   .lat-reduire { display:none; }
-  .barre-mobile { display:flex; align-items:center; gap:12px; position:sticky; top:env(safe-area-inset-top,0px); z-index:20; background:var(--surface); border-bottom:1px solid var(--bord); padding:8px 14px; }
-  .barre-mobile b { color:var(--titre); font-size:14px; }
-  .zone-periode { top:calc(env(safe-area-inset-top,0px) + 50px); }
 }
+/* ---------- Lot 16 : ruban supérieur (exercice de référence et périmètre) ---------- */
+.rub-haut { position:sticky; top:env(safe-area-inset-top,0px); z-index:20; height:var(--h-ruban); background:var(--bleu-fonce); color:#fff; box-shadow:0 1px 0 rgba(0,0,0,.12); }
+.rub-in { max-width:1640px; margin:0 auto; height:100%; padding:0 24px; display:flex; align-items:center; gap:12px; }
+.rub-btn { display:flex; align-items:center; gap:10px; height:38px; min-width:190px; max-width:360px; padding:0 12px 0 8px; border:1px solid rgba(255,255,255,.30); background:rgba(255,255,255,.10); color:#fff; border-radius:8px; cursor:pointer; text-align:left; }
+.rub-btn:hover, .rub-btn[aria-expanded="true"] { background:rgba(255,255,255,.20); border-color:rgba(255,255,255,.50); }
+.rub-btn:focus-visible, .rub-burger:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+.rub-btn .ico { width:26px; height:26px; flex-shrink:0; border-radius:6px; background:rgba(255,255,255,.20); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; }
+.rub-txt { min-width:0; flex:1; display:block; padding-left:4px; }
+.rub-btn .ico + .rub-txt { padding-left:0; }
+.rub-btn .t1 { display:block; font-size:10.5px; line-height:1.15; color:rgba(255,255,255,.78); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rub-btn .t2 { display:block; font-size:13px; line-height:1.25; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+.rub-btn svg { flex-shrink:0; margin-left:auto; opacity:.85; }
+.rub-burger { display:none; width:34px; height:34px; flex-shrink:0; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.30); background:rgba(255,255,255,.10); color:#fff; border-radius:8px; cursor:pointer; }
+.deroulant-ex { width:360px; }
+.deroulant-ex .opt .aff { display:flex; flex-direction:column; gap:1px; }
+.deroulant-ex .opt small { text-align:right; }
+@media (max-width:900px) {
+  .rub-burger { display:flex; }
+  .rub-in { padding:0 12px; gap:8px; }
+  .rub-btn { min-width:0; flex:1; }
+  .rub-btn .t2 { max-width:none; }
+}
+@media (max-width:560px) { .rub-btn .ico { display:none; } .rub-btn { padding-left:10px; } }
 /* Page Résidence */
 .fiche-grille { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; align-items:start; }
 .fiche-grille .bloc { margin-bottom:0; }
@@ -581,11 +600,6 @@ dl.fiche dt { color:var(--mut); } dl.fiche dd { margin:0; color:var(--txt); font
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
-      <button class="perim-btn" id="btn-perim" aria-haspopup="true" aria-expanded="false" title="Changer de périmètre">
-        <span class="ico" id="perim-ico"></span>
-        <span class="lat-txt perim-txt"><span class="t1">Périmètre</span><span class="t2" id="perim-nom"></span></span>
-        <svg class="lat-txt" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-      </button>
       <nav class="lat-nav" id="lat-nav" aria-label="Sections"></nav>
       <div class="lat-pied">
         <span class="pill-test lat-txt" title="Données fictives calculées par le moteur du logiciel">Phase test, données fictives</span>
@@ -604,12 +618,27 @@ dl.fiche dt { color:var(--mut); } dl.fiche dd { margin:0; color:var(--txt); font
       <div class="liste" id="der-liste"></div>
       <div class="pied"><button class="lien" id="der-tous">Voir la liste complète</button></div>
     </div>
+    <div class="deroulant deroulant-ex" id="deroulant-ex" role="dialog" aria-label="Choisir l’exercice">
+      <div class="liste" id="der-ex-liste"></div>
+      <div class="pied"><small class="mut">L’exercice fixe la période de chaque page. La réglette permet ensuite de l’affiner.</small></div>
+    </div>
     <div class="lat-voile" id="lat-voile"></div>
     <div class="principal">
-      <div class="barre-mobile">
-        <button class="lat-burger" id="btn-burger" aria-label="Ouvrir le menu"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-        <b id="titre-mobile"></b>
-      </div>
+      <header class="rub-haut" id="rub-haut" aria-label="Exercice et périmètre">
+        <div class="rub-in">
+          <button class="rub-burger" id="btn-burger" aria-label="Ouvrir le menu"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <button class="rub-btn" id="btn-exercice" aria-haspopup="true" aria-expanded="false" title="Exercice de référence : il fixe la période de chaque page">
+            <span class="rub-txt"><span class="t1" id="exercice-dates">Exercice</span><span class="t2" id="exercice-nom"></span></span>
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          </button>
+          <button class="rub-btn" id="btn-perim" aria-haspopup="true" aria-expanded="false" title="Changer de résidence ou de groupe">
+            <span class="ico" id="perim-ico"></span>
+            <span class="rub-txt"><span class="t1" id="perim-type">Résidence</span><span class="t2" id="perim-nom"></span></span>
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          </button>
+          <b id="titre-mobile" hidden></b>
+        </div>
+      </header>
       <div id="zone-periode" class="zone-periode" style="display:none"></div>
       <main class="contenu" id="contenu"></main>
     </div>
@@ -642,7 +671,7 @@ var MENU = [
   ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6", true]
 ];
 var iDefaut = D.calcul.mois.indexOf(D.meta.periode_defaut);
-var etat = { utilisateur: null, perim: null, section: "tableaux", page: "synthese", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null, delai: "30", crSel: null, crPerim: null, crTous: false };
+var etat = { utilisateur: null, perim: null, exercice: "N", section: "tableaux", page: "synthese", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null, delai: "30", crSel: null, crPerim: null, crTous: false };
 var principaux = D.kpi.filter(function (k) { return k.principal; });
 var MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 var MOIS_COURT = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
@@ -673,7 +702,7 @@ function demarrer() {
   remplirUtilisateur();
   // Lot 14 : index.html#choix (logo des autres pages) ouvre directement le choix des résidences.
   if (location.hash === "#choix") { p = null; try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
-  if (p && perimetre(p)) { etat.perim = p; return ouvrirApp(); }
+  if (p && perimetre(p)) { etat.perim = p; appliquerExercice(); return ouvrirApp(); }
   ouvrirChoix();
 }
 function utilisateurEnLigne() {
@@ -732,7 +761,13 @@ function dessinerChoix() {
   document.querySelectorAll("#ecran-choix [data-p]").forEach(function (b) { b.addEventListener("click", function () { choisir(b.dataset.p); }); });
 }
 el("choix-rech").addEventListener("input", dessinerChoix);
-function choisir(id) { etat.perim = id; session("perim", id); fermerDeroulant(); fermerTiroir(); if (!el("ecran-app").classList.contains("visible")) ouvrirApp(); else rendre(); }
+function choisir(id) {
+  /* Lot 16 : la période suit l'exercice de référence, sauf si la réglette a été réglée à la main (elle est alors conservée). */
+  var premiere = !el("ecran-app").classList.contains("visible"), suivre = suitExercice(etat.perim);
+  etat.perim = id; session("perim", id);
+  if (suivre) appliquerExercice();
+  fermerDeroulant(); fermerTiroir(); if (premiere) ouvrirApp(); else rendre();
+}
 
 /* ---------- Application ---------- */
 function ouvrirApp() { montrer("ecran-app"); rendre(); }
@@ -767,12 +802,21 @@ function dessinerMenu() {
   el("lat-nav").querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () { allerA(b.dataset.section, b.dataset.page); }); });
 }
 
-function ouvrirDeroulant() { el("deroulant").classList.add("ouvert"); el("btn-perim").setAttribute("aria-expanded", "true");
-  var r = el("btn-perim").getBoundingClientRect(), reduit = el("app").classList.contains("reduit") && window.innerWidth > 900;
-  el("deroulant").style.left = Math.max(12, reduit ? r.right + 14 : r.left) + "px";
-  el("deroulant").style.top = Math.max(12, reduit ? r.top : r.bottom + 6) + "px"; el("der-rech").value = ""; dessinerDeroulant(); el("der-rech").focus(); }
-function fermerDeroulant() { el("deroulant").classList.remove("ouvert"); el("btn-perim").setAttribute("aria-expanded", "false"); }
-el("btn-perim").addEventListener("click", function (e) { e.stopPropagation(); el("deroulant").classList.contains("ouvert") ? fermerDeroulant() : ouvrirDeroulant(); });
+function placerDeroulant(id, btn) {
+  var r = el(btn).getBoundingClientRect(), d = el(id), w = d.offsetWidth || 400;
+  d.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + "px";
+  d.style.top = Math.max(12, r.bottom + 6) + "px";
+}
+function ouvrirDeroulant() { fermerDeroulant(); el("deroulant").classList.add("ouvert"); el("btn-perim").setAttribute("aria-expanded", "true");
+  placerDeroulant("deroulant", "btn-perim"); el("der-rech").value = ""; dessinerDeroulant(); el("der-rech").focus(); }
+function fermerDeroulant() {
+  el("deroulant").classList.remove("ouvert"); el("btn-perim").setAttribute("aria-expanded", "false");
+  el("deroulant-ex").classList.remove("ouvert"); el("btn-exercice").setAttribute("aria-expanded", "false");
+}
+el("btn-perim").addEventListener("click", function (e) { e.stopPropagation(); var o = el("deroulant").classList.contains("ouvert"); fermerDeroulant(); if (!o) ouvrirDeroulant(); });
+function ouvrirDeroulantEx() { fermerDeroulant(); dessinerDeroulantEx(); el("deroulant-ex").classList.add("ouvert"); el("btn-exercice").setAttribute("aria-expanded", "true"); placerDeroulant("deroulant-ex", "btn-exercice"); }
+el("btn-exercice").addEventListener("click", function (e) { e.stopPropagation(); var o = el("deroulant-ex").classList.contains("ouvert"); fermerDeroulant(); if (!o) ouvrirDeroulantEx(); });
+el("deroulant-ex").addEventListener("click", function (e) { e.stopPropagation(); });
 el("deroulant").addEventListener("click", function (e) { e.stopPropagation(); });
 document.addEventListener("click", fermerDeroulant);
 document.addEventListener("keydown", function (e) { if (e.key === "Escape") { fermerDeroulant(); fermerTiroir(); } });
@@ -795,7 +839,8 @@ function dessinerDeroulant() {
 
 function rendre() {
   var p = perimetre(etat.perim);
-  el("perim-nom").textContent = p.libelle; el("perim-ico").textContent = initiales(p);
+  if (!exerciceActif(p)) appliquerExercice();
+  majRuban();
   dessinerMenu();
   var cur = SOUS[etat.section].find(function (x) { return x[0] === etat.page; });
   el("titre-mobile").textContent = (cur ? cur[1] : "") + " · " + p.libelle;
@@ -1215,6 +1260,68 @@ function resultatFen(dossiers, mois, ajuste) {
   return res;
 }
 
+/* ======================================================================================
+   Lot 16 : ruban supérieur. L'exercice de référence fixe la période de chaque page (la réglette
+   permet ensuite de l'affiner) ; le périmètre (résidence ou groupe) se choisit au même endroit.
+   Exercices lus dans D.imports (rang N-1, N, N+1) : jamais supposés janvier-décembre ni de douze mois.
+   Pour un groupe, la période couvre du premier au dernier mois des exercices de même rang
+   (exercices décalés compris).
+   ====================================================================================== */
+var RANGS = ["N-3", "N-2", "N-1", "N", "N+1", "N+2"];
+function exercicesPerim(p) {
+  var par = {};
+  p.dossiers.forEach(function (d) {
+    exercicesDe(d).forEach(function (x) {
+      var m = moisExercice(x); if (!m.length) return;
+      var a = par[x.rang] = par[x.rang] || { rang: x.rang, lo: 1e9, hi: -1, debuts: {}, fins: {} };
+      a.lo = Math.min(a.lo, idxMois(m[0])); a.hi = Math.max(a.hi, idxMois(m[m.length - 1]) + 1);
+      a.debuts[x.debut] = 1; a.fins[x.fin] = 1;
+    });
+  });
+  return Object.keys(par).sort(function (a, b) { return RANGS.indexOf(a) - RANGS.indexOf(b); }).map(function (k) { return par[k]; });
+}
+function exerciceActif(p) {
+  var ex = exercicesPerim(p);
+  return ex.find(function (x) { return x.rang === etat.exercice; }) || null;
+}
+function appliquerExercice() {
+  var p = perimetre(etat.perim); if (!p) return false;
+  var ex = exercicesPerim(p), x = ex.find(function (y) { return y.rang === etat.exercice; }) || ex.find(function (y) { return y.rang === "N"; });
+  if (!x) return false;
+  etat.exercice = x.rang; etat.lisEx = x.rang; etat.lo = x.lo; etat.hi = x.hi;
+  return true;
+}
+function suitExercice(perimId) {
+  var p = perimId && perimetre(perimId); if (!p) return true;
+  var x = exerciceActif(p);
+  return !x || (x.lo === etat.lo && x.hi === etat.hi);
+}
+function nomExercice(rang) { return rang === "N" ? "N, en cours" : rang; }
+function libExercice(x) {
+  var dec = Object.keys(x.debuts).length > 1 || Object.keys(x.fins).length > 1;
+  return moisCourt(MOIS[x.lo]) + " → " + moisCourt(MOIS[x.hi - 1]) + (dec ? " (exercices décalés)" : "");
+}
+function majRuban() {
+  var p = perimetre(etat.perim); if (!p) return;
+  el("perim-nom").textContent = p.libelle; el("perim-ico").textContent = initiales(p); el("perim-type").textContent = TYPES[p.type] || "Périmètre";
+  var x = exerciceActif(p), perso = x && (x.lo !== etat.lo || x.hi !== etat.hi);
+  if (!x) { el("exercice-dates").textContent = "Exercice"; el("exercice-nom").textContent = "Non disponible"; return; }
+  el("exercice-nom").textContent = "Exercice " + nomExercice(x.rang);
+  el("exercice-dates").textContent = perso ? "Période modifiée avec la réglette" : libExercice(x);
+  el("btn-exercice").title = perso ? "La période a été modifiée avec la réglette. Choisissez un exercice pour revenir à ses dates." : "Exercice de référence : il fixe la période de chaque page";
+}
+function dessinerDeroulantEx() {
+  var p = perimetre(etat.perim), ex = exercicesPerim(p);
+  el("der-ex-liste").innerHTML = ex.map(function (x) {
+    return '<button class="opt' + (x.rang === etat.exercice ? " actif" : "") + '" data-ex="' + esc(x.rang) + '"><span>Exercice ' + esc(nomExercice(x.rang)) + "</span><small>" + esc(libExercice(x)) + "</small></button>";
+  }).join("") || '<div class="vide">Aucun exercice connu pour ce périmètre.</div>';
+  el("der-ex-liste").querySelectorAll("[data-ex]").forEach(function (b) { b.addEventListener("click", function () { choisirExercice(b.dataset.ex); }); });
+}
+function choisirExercice(rang) {
+  etat.exercice = rang; appliquerExercice(); fermerDeroulant();
+  majRuban(); majReglette(); majContenu();
+}
+
 /* ---------- Période libre : fenêtre de mois et vue Réel / Ajusté ---------- */
 function fenetre() { return MOIS.slice(etat.lo, etat.hi); }
 function ajuste() { return etat.vue === "ajuste"; }
@@ -1229,14 +1336,6 @@ function raccourcis(p) {
   var r = [["Dernier mois importé", iD, iD + 1], ["12 derniers mois", Math.max(0, iD - 11), iD + 1]];
   var ia = MOIS.findIndex(function (m) { return m.slice(0, 4) === an; }), ib = n - 1 - MOIS.slice().reverse().findIndex(function (m) { return m.slice(0, 4) === an; });
   if (ia >= 0) r.push(["Année " + an, ia, ib + 1]);
-  if (p.type === "residence") {
-    var rs = residence(p.id);
-    if (rs && rs.exercice) {
-      var d0 = rs.exercice[0].slice(0, 7), d1 = rs.exercice[1].slice(0, 7), i0 = MOIS.findIndex(function (m) { return m >= d0; }), i1 = -1;
-      MOIS.forEach(function (m, i) { if (m <= d1) i1 = i; });
-      if (i0 >= 0 && i1 >= i0) r.push(["Exercice de la résidence", i0, i1 + 1]);
-    }
-  }
   r.push(["Toute la période", 0, n]);
   return r;
 }
@@ -1292,7 +1391,7 @@ function majReglette() {
   el("reg-badge").textContent = actifs ? actifs + " ajustement" + (actifs > 1 ? "s" : "") + " actif" + (actifs > 1 ? "s" : "") : "Aucun ajustement";
   el("reg-badge").className = "reg-badge" + (actifs && etat.vue === "ajuste" ? " on" : "");
 }
-function reglerFenetre(lo, hi) { etat.lo = lo; etat.hi = hi; majReglette(); planifierContenu(); }
+function reglerFenetre(lo, hi) { etat.lo = lo; etat.hi = hi; majReglette(); majRuban(); planifierContenu(); }
 var contenuPlanifie = false;
 function planifierContenu() { if (contenuPlanifie) return; contenuPlanifie = true; requestAnimationFrame(function () { contenuPlanifie = false; majContenu(); }); }
 function majContenu() { var x = window.scrollY; PAGES[etat.page](perimetre(etat.perim)); window.scrollTo(0, x); }
@@ -2512,7 +2611,7 @@ PAGES.lissage = function (p) {
   if (!liste.length) h += '<tr><td colspan="9" class="mut">Aucun compte de charges ou de produits sur ces exercices.</td></tr>';
   h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Montants en sens naturel (une charge ou un produit en positif). Lissage = réalisé + effet des écritures lissées actives. Les lissages s’appliquent à tous les tableaux de bord en vue <b>Ajusté</b>. Cliquez sur un montant pour son détail.</p></div>';
   el("contenu").innerHTML = h;
-  el("lis-ex").addEventListener("change", function () { etat.lisEx = this.value; majContenu(); });
+  el("lis-ex").addEventListener("change", function () { choisirExercice(this.value); });
   el("lis-rech").addEventListener("input", function () { etat.lisRech = this.value; var pos = this.selectionStart; majContenu(); var r = el("lis-rech"); r.focus(); r.setSelectionRange(pos, pos); });
   el("contenu").querySelectorAll("[data-lis-ouvrir]").forEach(function (b) { b.addEventListener("click", function () { etat.lisCompte = b.dataset.lisOuvrir; etat.lisSaisie = null; dessinerModaleLissage(); }); });
   el("contenu").querySelectorAll("[data-lis-actif]").forEach(function (b) { b.addEventListener("click", function () {
@@ -2731,7 +2830,7 @@ function serieTreso(ds, cpt, m) {
 }
 PAGES.tr_analyse = function (p) {
   // Saisonnalité : à la première ouverture, une période d'un ou deux mois est élargie aux 12 derniers mois.
-  if (!etat.anOuverte) { etat.anOuverte = true; if (etat.hi - etat.lo < 3) { etat.lo = Math.max(0, etat.hi - 12); majReglette(); } }
+  if (!etat.anOuverte) { etat.anOuverte = true; if (etat.hi - etat.lo < 3) { etat.lo = Math.max(0, etat.hi - 12); majReglette(); majRuban(); } }
   var A = arreteTreso(), ms = moisTreso(), ds = p.dossiers;
   var comptes = {}; ds.forEach(function (d) { banquesDe(d).forEach(function (c) { comptes[c] = 1; }); });
   var cpt = etat.anCompte && comptes[etat.anCompte] ? etat.anCompte : "";

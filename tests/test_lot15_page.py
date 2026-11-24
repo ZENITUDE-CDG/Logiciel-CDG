@@ -95,7 +95,7 @@ def test_comptes_bancaires_parametres_et_virement_conseille(site):
 def test_analyse_du_solde_n_moins_1(site):
     pg, erreurs = ouvrir(site)
     pg.evaluate("choisir('GROUPE'); allerA('tresorerie', 'tr_analyse')")
-    assert pg.evaluate("etat.hi - etat.lo") == 12                      # élargie aux 12 derniers mois
+    assert pg.evaluate("etat.hi - etat.lo") >= 12                      # lot 16 : la période est celle de l'exercice (12 mois ou plus)
     texte = pg.inner_text("#contenu")
     assert "N-1 absent pour" in texte and "n.d." in texte               # historique non importé : jamais zéro
     pg.select_option("#an-cpt", "5122")

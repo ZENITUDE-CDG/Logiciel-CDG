@@ -1,0 +1,40 @@
+# Synchronisation du dossier Pennylane de test (lot 18, décision 0011).
+# Lecture seule (secret PENNYLANE_TOKEN_PILOTE), calcul par le moteur, publication dans la base de test
+# avec la démonstration (secret SUPABASE_SECRET_KEY). Journaux : nombres et contrôles, aucun montant.
+# Lancement : onglet Actions, « Synchro Pennylane test », « Run workflow ».
+name: Synchro Pennylane test
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Écritures reprises"
+        type: choice
+        options:
+          - valides
+          - tous
+        default: valides
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publication-supabase
+  cancel-in-progress: false
+
+jobs:
+  synchro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dépendances
+        run: pip install -r requirements.txt
+      - name: Lire Pennylane, calculer et publier
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          PENNYLANE_TOKEN_PILOTE: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
+          PENNYLANE_MODE: ${{ inputs.mode }}
+        run: python interface/publier_supabase.py --pennylane

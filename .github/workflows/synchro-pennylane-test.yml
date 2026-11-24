@@ -1,19 +1,26 @@
-# Synchronisation du dossier Pennylane de test (lot 18, décision 0011).
+# Synchronisation Pennylane (lots 18 et 18b, décisions 0011 et 0012).
+# Lancée depuis la page Import comptable (fonction serveur Supabase « lancer-synchro », qui transmet le
+# numéro de la demande), ou à la main : onglet Actions, « Synchro Pennylane », « Run workflow ».
 # Lecture seule (secret PENNYLANE_TOKEN_PILOTE), calcul par le moteur, publication dans la base de test
 # avec la démonstration (secret SUPABASE_SECRET_KEY). Journaux : nombres et contrôles, aucun montant.
-# Lancement : onglet Actions, « Synchro Pennylane test », « Run workflow ».
-name: Synchro Pennylane test
+name: Synchro Pennylane
+run-name: ${{ inputs.demande && format('Synchro Pennylane - demande {0}', inputs.demande) || 'Synchro Pennylane - lancement manuel' }}
 
 on:
   workflow_dispatch:
     inputs:
+      demande:
+        description: "Numéro de la demande (renseigné par la page ; laisser vide en lancement manuel)"
+        required: false
+        default: ""
       mode:
-        description: "Écritures reprises"
+        description: "Lancement manuel : écritures reprises (sinon le réglage de la page)"
         type: choice
         options:
+          - reglage-de-la-page
           - valides
           - tous
-        default: valides
+        default: reglage-de-la-page
 
 permissions:
   contents: read
@@ -36,5 +43,11 @@ jobs:
         env:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           PENNYLANE_TOKEN_PILOTE: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
-          PENNYLANE_MODE: ${{ inputs.mode }}
-        run: python interface/publier_supabase.py --pennylane
+          PENNYLANE_MODE: ${{ inputs.mode != 'reglage-de-la-page' && inputs.mode || '' }}
+          DEMANDE: ${{ inputs.demande }}
+        run: |
+          if [ -n "$DEMANDE" ]; then
+            python interface/publier_supabase.py --demande "$DEMANDE"
+          else
+            python interface/publier_supabase.py --pennylane
+          fi

@@ -512,9 +512,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON mesures_importees, comptes_bancaires TO 
 --
 -- Démonstration : Raphael est administrateur et voit tout ; Benjamin est collaborateur, son parc
 -- est le groupe des résidences seniors : il ne voit que RES-003, RES-004 et RES-005.
---
--- Lot 18 (décision 0011) : RES-TEST = dossier Pennylane de test (PENNY-TEST), sans donnée confidentielle,
--- marqué fictif ; hors de tout groupe, donc visible des seuls administrateurs.
 
 INSERT INTO profils (email, nom, role, fictif) VALUES
   ('raphael.bracq@zenitude-groupe.com',  'Raphael Bracq',    'administrateur', false),
@@ -532,8 +529,7 @@ INSERT INTO residences (id, libelle, dossier_pennylane, fictif) VALUES
   ('RES-005', 'Les Marronniers (fictif)',        'DEMO-2005', true),
   ('RES-006', 'Campus Rive Gauche (fictif)',     'DEMO-2006', true),
   ('RES-007', 'Le Jardin des Sciences (fictif)', 'DEMO-2007', true),
-  ('RES-008', 'Les Hauts de Loire (fictif)',     'DEMO-2008', true),
-  ('RES-TEST', 'Dossier Pennylane de test',      'PENNY-TEST', true)
+  ('RES-008', 'Les Hauts de Loire (fictif)',     'DEMO-2008', true)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO groupes (id, libelle, fictif) VALUES
@@ -549,3 +545,13 @@ SELECT 'benjamin.gagneur@zenitude-groupe.com', 'GRP-SENIORS'
 WHERE NOT EXISTS (SELECT 1 FROM parcs
                   WHERE utilisateur_email = 'benjamin.gagneur@zenitude-groupe.com'
                     AND groupe_id = 'GRP-SENIORS');
+
+-- ===================== scripts/lot18_residence_test.sql =====================
+-- Lot 18 (décision 0011) : résidence du dossier Pennylane de test (PENNY-TEST).
+-- Sur une base déjà installée : coller ce fichier dans Supabase, SQL Editor (ne supprime rien, peut être
+-- relancé sans créer de doublon). Il est aussi inclus à la fin de scripts/installation_supabase.sql.
+-- Gardé à part de donnees_test.sql : les huit résidences de démonstration restent la référence des tests.
+-- Marquée fictive (aucune donnée confidentielle) ; hors de tout groupe : visible des seuls administrateurs.
+INSERT INTO residences (id, libelle, dossier_pennylane, fictif) VALUES
+  ('RES-TEST', 'Dossier Pennylane de test', 'PENNY-TEST', true)
+ON CONFLICT (id) DO NOTHING;

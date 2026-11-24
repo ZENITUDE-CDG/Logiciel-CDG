@@ -14,7 +14,8 @@ Vérifier : onglet **Actions**, « Tests et publication » avec deux coches vert
 
 ## 2. Supabase : ajouter la résidence de test
 **SQL Editor, New query** : coller tout `scripts/lot18_residence_test.sql`, cliquer **Run**.
-Résultat attendu : une ligne `RES-TEST | Dossier Pennylane de test | PENNY-TEST | true`.
+Résultat attendu : « Success. No rows returned ». Vérification facultative : **Table Editor**, table
+`residences`, une ligne `RES-TEST` (Dossier Pennylane de test, PENNY-TEST, fictif = true).
 Ne pas utiliser `installation_supabase.sql` (il remet la base à zéro).
 
 ## 3. GitHub : synchroniser

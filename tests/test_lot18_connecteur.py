@@ -287,3 +287,9 @@ def test_lecture_obligatoire_ou_facultative(monkeypatch, capsys):
     assert pub._avec_pennylane(["--pennylane"]) == (None, 1)
     assert pub._avec_pennylane([]) == (None, 0)
     assert "publication sans lui" in capsys.readouterr().out
+
+
+def test_installation_contient_la_residence_de_test():
+    texte = (RACINE / "scripts" / "installation_supabase.sql").read_text(encoding="utf-8")
+    assert "'RES-TEST', 'Dossier Pennylane de test', 'PENNY-TEST', true" in texte
+    assert "RES-TEST" not in (RACINE / "scripts" / "donnees_test.sql").read_text(encoding="utf-8")

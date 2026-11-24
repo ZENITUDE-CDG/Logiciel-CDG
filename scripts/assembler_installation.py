@@ -1,6 +1,7 @@
 """Assemble scripts/installation_supabase.sql (installation complète de la base de test en un collage).
 
-Ordre : remise à zéro, migrations (dans l'ordre des numéros), données de départ.
+Ordre : remise à zéro, migrations (dans l'ordre des numéros), données de départ, puis la résidence du
+dossier Pennylane de test (lot 18, scripts/lot18_residence_test.sql).
 Usage : python scripts/assembler_installation.py
 Un test (tests/test_lot13_publication.py) vérifie que le fichier du dépôt est à jour.
 """
@@ -19,7 +20,7 @@ ENTETE = """-- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 18
 def morceaux():
     fichiers = [RACINE / "scripts" / "reinitialiser_base_test.sql"]
     fichiers += sorted((RACINE / "migrations").glob("*.sql"))
-    fichiers += [RACINE / "scripts" / "donnees_test.sql"]
+    fichiers += [RACINE / "scripts" / "donnees_test.sql", RACINE / "scripts" / "lot18_residence_test.sql"]
     return fichiers
 
 

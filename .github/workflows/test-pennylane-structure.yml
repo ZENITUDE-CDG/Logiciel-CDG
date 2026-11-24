@@ -1,0 +1,63 @@
+name: Test structure Pennylane
+
+# Affiche uniquement les NOMS des champs renvoyés par Pennylane (jamais les valeurs),
+# pour préparer le connecteur (lot 18). Lancement manuel : Actions > Run workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lire la structure des données
+        env:
+          PENNYLANE_TOKEN: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
+        run: |
+          if [ -z "$PENNYLANE_TOKEN" ]; then
+            echo "::error::Secret PENNYLANE_TOKEN_PILOTE introuvable."
+            exit 1
+          fi
+          BASE="https://app.pennylane.com/api/external/v2"
+
+          sonder () {
+            titre="$1"; chemin="$2"
+            echo ""
+            echo "=============================="
+            echo "$titre  ($chemin)"
+            echo "=============================="
+            code=$(curl -s -G "$BASE$chemin" \
+              -H "Authorization: Bearer $PENNYLANE_TOKEN" \
+              -H "Accept: application/json" \
+              -o rep.json -w "%{http_code}")
+            echo "Code de réponse : $code"
+            if [ "$code" != "200" ]; then
+              rm -f rep.json
+              return 0
+            fi
+            echo "Clés de premier niveau :"
+            jq -r 'if type == "object" then keys[] else "(liste directe)" end' rep.json | sed 's/^/  - /'
+            echo "Nombre d'éléments dans la première page :"
+            jq -r 'if type == "array" then length else ((.items // .data // []) | length) end' rep.json | sed 's/^/  /'
+            echo "Champs d'un élément (noms seulement, aucune valeur) :"
+            jq -r '
+              (if type == "array" then .[0] else ((.items // .data // [])[0]) end) as $e
+              | if $e == null then "  (aucun élément)"
+                else ($e | [paths(scalars)]
+                      | map(map(if type == "number" then "[]" else tostring end) | join("."))
+                      | unique[] | "  - " + .)
+                end' rep.json
+            rm -f rep.json
+            sleep 0.5
+          }
+
+          sonder "Exercices"            "/fiscal_years"
+          sonder "Journaux"             "/journals?limit=1"
+          sonder "Comptes"              "/ledger_accounts?limit=1"
+          sonder "Écritures"            "/ledger_entries?limit=1"
+          sonder "Lignes d'écritures"   "/ledger_entry_lines?limit=1"
+
+          echo ""
+          echo "Terminé. Aucune valeur n'a été affichée ni conservée."

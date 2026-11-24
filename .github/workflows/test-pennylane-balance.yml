@@ -1,0 +1,106 @@
+name: Test balance Pennylane
+
+# Lancement manuel : Actions > Test balance Pennylane > Run workflow
+on:
+  workflow_dispatch:
+    inputs:
+      debut:
+        description: "Début de période (AAAA-MM-JJ)"
+        required: true
+        default: "2026-10-01"
+      fin:
+        description: "Fin de période (AAAA-MM-JJ)"
+        required: true
+        default: "2026-10-31"
+
+permissions:
+  contents: read
+
+jobs:
+  balance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer et vérifier la balance
+        env:
+          PENNYLANE_TOKEN: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
+          DEBUT: ${{ inputs.debut }}
+          FIN: ${{ inputs.fin }}
+        run: |
+          # 1. Vérifications de départ
+          if [ -z "$PENNYLANE_TOKEN" ]; then
+            echo "::error::Secret PENNYLANE_TOKEN_PILOTE introuvable."
+            exit 1
+          fi
+          for d in "$DEBUT" "$FIN"; do
+            if ! [[ "$d" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "::error::Date invalide : $d (format attendu AAAA-MM-JJ)."
+              exit 1
+            fi
+          done
+          echo "Période demandée : du $DEBUT au $FIN"
+
+          # 2. Récupération page par page
+          : > lignes.jsonl
+          cursor=""
+          page=0
+          while :; do
+            page=$((page + 1))
+            args=(-s -G "https://app.pennylane.com/api/external/v2/trial_balance"
+                  --data-urlencode "period_start=$DEBUT"
+                  --data-urlencode "period_end=$FIN"
+                  --data-urlencode "limit=1000"
+                  -H "Authorization: Bearer $PENNYLANE_TOKEN"
+                  -H "Accept: application/json"
+                  -o page.json -w "%{http_code}")
+            if [ -n "$cursor" ]; then
+              args+=(--data-urlencode "cursor=$cursor")
+            fi
+            code=$(curl "${args[@]}")
+            if [ "$code" != "200" ]; then
+              case "$code" in
+                401) echo "::error::Jeton refusé (401)." ;;
+                403) echo "::error::Accès interdit (403) : le jeton n'a pas le droit de lire la balance." ;;
+                429) echo "::error::Trop de requêtes (429) : relance dans une minute." ;;
+                *)   echo "::error::Réponse inattendue de Pennylane (code $code)." ;;
+              esac
+              rm -f page.json lignes.jsonl
+              exit 1
+            fi
+            jq -c '(.items // .data // [])[]' page.json >> lignes.jsonl
+            more=$(jq -r '.has_more // false' page.json)
+            cursor=$(jq -r '.next_cursor // empty' page.json)
+            if [ "$more" != "true" ] || [ -z "$cursor" ] || [ "$page" -ge 50 ]; then
+              break
+            fi
+            sleep 0.5
+          done
+          echo "Pages lues : $page"
+
+          # 3. Contrôles, sans afficher aucun montant (les journaux d'un dépôt public sont visibles de tous)
+          nb=$(wc -l < lignes.jsonl | tr -d ' ')
+          if [ "$nb" = "0" ]; then
+            echo "::warning::Aucune ligne de balance reçue. Vérifie la période. Structure reçue :"
+            jq -r 'keys | join(", ")' page.json
+            rm -f page.json lignes.jsonl
+            exit 1
+          fi
+
+          jq -s -r '
+            def n: if type == "number" then .
+                   elif type == "string" then (tonumber? // 0)
+                   elif type == "object" then ((.amount // .value // 0) | n)
+                   else 0 end;
+            def classe(c): map(select(((.number // .formatted_number // "") | tostring) | startswith(c))) | length;
+            (map(.debits | n) | add // 0) as $d
+            | (map(.credits | n) | add // 0) as $c
+            | "Comptes dans la balance : \(length)",
+              "  dont classe 6 (charges) : \(classe("6"))",
+              "  dont classe 7 (produits) : \(classe("7"))",
+              (if ($d == 0 and $c == 0) then "ATTENTION : aucun montant lu, format à vérifier."
+               elif ((($d - $c) | fabs) < 0.01) then "Balance équilibrée : oui (total débits = total crédits)."
+               else "Balance équilibrée : NON, un écart existe entre débits et crédits."
+               end)
+          ' lignes.jsonl
+
+          echo "Récupération terminée. Aucune donnée n'est conservée par ce test."
+          rm -f page.json lignes.jsonl

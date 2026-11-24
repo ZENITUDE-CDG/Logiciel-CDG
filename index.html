@@ -660,13 +660,13 @@ var SOUS = {
   residence: [["residence", "Résidence"]],
   budgets: [["budgets", "Budgets"]], rapports: [["rapports", "Rapports"]]
 };
-/* Menu latéral : ordre, libellés et icônes (lot 10) */
+/* Menu latéral : ordre, libellés et icônes (lot 10 ; ordre du lot 17 : Résidence, Import et paramètres, Tableaux de bord, Ajustements, Trésorerie, Budgets, Rapports) */
 var MENU = [
-  ["tableaux", "Tableaux de bord", "M3 3v14h14M7 13V9m4 4V6m4 7v-4"],
-  ["tresorerie", "Trésorerie", "M2.5 8L10 3.5 17.5 8M4.5 8.5v6M8 8.5v6M12 8.5v6M15.5 8.5v6M2.5 16.5h15"],
   ["residence", "Résidence", "M4 17V4.5L10 3l6 1.5V17M2.5 17h15M8 7.5h1.5M11 7.5h1.5M8 11h1.5M11 11h1.5M9 17v-3h2v3"],
-  ["ajustements", "Ajustements", "M4 5h7M15 5h1M4 10h2M10 10h6M4 15h9M17 15h-1M11 3.5v3M7 8.5v3M14 13.5v3"],
   ["import", "Import et paramètres", "M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M3.5 13.5v2A1.5 1.5 0 005 17h10a1.5 1.5 0 001.5-1.5v-2"],
+  ["tableaux", "Tableaux de bord", "M3 3v14h14M7 13V9m4 4V6m4 7v-4"],
+  ["ajustements", "Ajustements", "M4 5h7M15 5h1M4 10h2M10 10h6M4 15h9M17 15h-1M11 3.5v3M7 8.5v3M14 13.5v3"],
+  ["tresorerie", "Trésorerie", "M2.5 8L10 3.5 17.5 8M4.5 8.5v6M8 8.5v6M12 8.5v6M15.5 8.5v6M2.5 16.5h15"],
   ["budgets", "Budgets", "M3 6.5A1.5 1.5 0 014.5 5h11A1.5 1.5 0 0117 6.5v7a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 13.5zM3 8.5h14M6.5 12h2", true],
   ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6", true]
 ];
@@ -845,7 +845,7 @@ function rendre() {
   var cur = SOUS[etat.section].find(function (x) { return x[0] === etat.page; });
   el("titre-mobile").textContent = (cur ? cur[1] : "") + " · " + p.libelle;
   dessinerReglette(p);
-  var f = PAGES[etat.page]; el("contenu").innerHTML = ""; f(p);
+  var f = PAGES[etat.page]; el("contenu").innerHTML = ""; EXPORT_GR = []; f(p);
 }
 
 /* ======================================================================================
@@ -1394,12 +1394,12 @@ function majReglette() {
 function reglerFenetre(lo, hi) { etat.lo = lo; etat.hi = hi; majReglette(); majRuban(); planifierContenu(); }
 var contenuPlanifie = false;
 function planifierContenu() { if (contenuPlanifie) return; contenuPlanifie = true; requestAnimationFrame(function () { contenuPlanifie = false; majContenu(); }); }
-function majContenu() { var x = window.scrollY; PAGES[etat.page](perimetre(etat.perim)); window.scrollTo(0, x); }
+function majContenu() { var x = window.scrollY; EXPORT_GR = []; PAGES[etat.page](perimetre(etat.perim)); window.scrollTo(0, x); }
 
 function enTete(titre, p, sousTitre, outils) {
   var n = p.dossiers.length;
   return '<div class="titre-page"><div><h1>' + esc(titre) + "</h1><p>" + esc(p.libelle) + (p.type === "residence" ? ", " + esc(residence(p.id).activite) + ", " + esc(residence(p.id).region) :
-    ", " + n + " résidence" + (n > 1 ? "s" : "")) + (sousTitre ? ". " + sousTitre : "") + '</p></div><div class="outils">' + (outils || "") + "</div></div>";
+    ", " + n + " résidence" + (n > 1 ? "s" : "")) + (sousTitre ? ". " + sousTitre : "") + '</p></div><div class="outils">' + (outils || "") + boutonExport() + "</div></div>";
 }
 function bandeauAjuste() {
   var actifs = nbActifs();
@@ -1423,6 +1423,7 @@ function ruban(p) {
 function graphe(p, k) {
   var pct = k.unite === "%", MS = fenetre(), N = MS.length, aj = ajuste(), fin = C.fin_donnees || MOIS[MOIS.length - 1];
   var pts = MS.map(function (m) { var v = resultatFen(p.dossiers, [m], aj)[k.code]; return { m: m, v: v && v.statut === "calculé" ? +v.valeur * (pct ? 100 : 1) : null, a: v ? v.affichage : "", motif: v ? v.motif : "" }; });
+  noterGraphe(k.nom + " par mois", pts.map(function (pt) { return moisCourt(pt.m) + (estProj(pt.m) ? " (projection)" : ""); }), [{ nom: k.nom, valeurs: pts.map(function (pt) { return pt.v; }) }], pct ? "pct100" : k.unite === "€" ? "eur" : "nb");
   var vals = pts.filter(function (x) { return x.v !== null; }).map(function (x) { return x.v; });
   var W = 360, H = 160, g = 38, d = 10, h = 10, b = 22, pas = N > 1 ? (W - g - d - 8) / (N - 1) : 0;
   var min = vals.length ? Math.min.apply(null, vals) : 0, max = vals.length ? Math.max.apply(null, vals) : 1;
@@ -1962,6 +1963,7 @@ function barres(titre, cats, series, opts) {
   opts = opts || {};
   var N = cats.length;
   if (!N) return '<div class="graphe"><div class="gt"><b>' + esc(titre) + '</b></div><p class="legende" style="margin:10px 0">Aucun mois importé sur la période choisie.</p></div>';
+  noterGraphe(titre, cats, series, "eur");
   var W = 520, H = 230, g = 46, d = 8, h = 18, b = 34, pas = (W - g - d) / N, empile = !!opts.empile;
   var vals = [0];
   series.forEach(function (x) { x.valeurs.forEach(function (v) { if (v !== null && v !== undefined) vals.push(v); }); });
@@ -2533,6 +2535,294 @@ function exporterEcritures(R) {
   var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "ecritures-" + (R.titre || "detail").replace(/[^A-Za-z0-9]+/g, "-").slice(0, 40) + ".csv"; document.body.appendChild(a); a.click();
   setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
+/* ======================================================================================
+   Lot 17 : export Excel de la page affichée.
+   Le classeur reprend, avec la période, le périmètre et la vue (ajusté ou réel) de la page :
+   les indicateurs, tous les tableaux, les données de tous les graphiques, le détail de chaque montant
+   cliquable (formule, composition) et les écritures comptables qui le composent. Chaque montant d'un
+   tableau renvoie par un lien à sa ligne de « Détail des calculs », et chaque ligne de détail à ses écritures.
+   Le fichier .xlsx est écrit par le navigateur sans aucune bibliothèque externe ni connexion (décision 0010) ;
+   les chiffres sont ceux de la page : le navigateur ne recalcule rien d'officiel.
+   ====================================================================================== */
+var EXPORT_GR = [];
+function noterGraphe(titre, cats, series, genre) {
+  EXPORT_GR.push({ titre: titre, genre: genre || "eur", cats: cats.slice(), series: series.map(function (x) { return { nom: x.nom, valeurs: x.valeurs.slice() }; }) });
+}
+function exportable() { return etat.section === "tableaux" || etat.section === "tresorerie" || etat.page === "ecarts"; }
+function boutonExport() {
+  return exportable() ? '<button class="btn btn-ligne" id="btn-xlsx" title="Télécharger un classeur Excel : tableaux, données des graphiques, détail des calculs et écritures comptables">Exporter en Excel</button>' : "";
+}
+
+/* ---------- Écriture d'un fichier .xlsx (zip + XML), sans bibliothèque ---------- */
+var XL_FORMATS = { eur: '#,##0 "€"', eur2: '#,##0.00 "€"', pct: "0.0%", pct100: '0.0" %"', date: "dd/mm/yyyy" };
+var XL_NUMFMT = { eur: 164, eur2: 165, pct: 166, pct100: 167, date: 168 };
+function xlEsc(s) { return String(s == null ? "" : s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function xlCol(n) { var s = ""; n++; while (n > 0) { var r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; }
+function xlDate(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || "")); return m ? (Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(1899, 11, 30)) / 86400000 : null; }
+function celluleXl(c) { return c !== null && typeof c === "object" ? c : { v: c }; }
+function ecrireFeuilleXml(f, styleDe) {
+  var liens = [], largeurs = [], lignes = f.lignes, x = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'];
+  x.push("<sheetViews><sheetView workbookViewId=\"0\"" + (f.gel ? "" : "") + ">" + (f.gel ? '<pane ySplit="' + f.gel + '" topLeftCell="A' + (f.gel + 1) + '" activePane="bottomLeft" state="frozen"/>' : "") + "</sheetView></sheetViews>");
+  var dessin = [];
+  lignes.forEach(function (ligne, i) {
+    var cs = [];
+    (ligne || []).forEach(function (brut, j) {
+      var c = celluleXl(brut), ref = xlCol(j) + (i + 1), v = c.v;
+      if (v === null || v === undefined || v === "") { if (c.e || c.fond) cs.push('<c r="' + ref + '" s="' + styleDe(c) + '"/>'); return; }
+      var l = typeof v === "number" ? String(v).length : String(v).length;
+      if (i < 300 && !(c.e === "titre" || c.e === "note")) largeurs[j] = Math.max(largeurs[j] || 0, Math.min(60, l));
+      if (c.lien) liens.push({ ref: ref, loc: c.lien });
+      if (typeof v === "number" && isFinite(v)) cs.push('<c r="' + ref + '" s="' + styleDe(c) + '"><v>' + v + "</v></c>");
+      else cs.push('<c r="' + ref + '" s="' + styleDe(c) + '" t="inlineStr"><is><t xml:space="preserve">' + xlEsc(v) + "</t></is></c>");
+    });
+    dessin.push('<row r="' + (i + 1) + '">' + cs.join("") + "</row>");
+  });
+  var cols = largeurs.map(function (w, j) { return w ? '<col min="' + (j + 1) + '" max="' + (j + 1) + '" width="' + Math.max(9, Math.min(60, w + 3)) + '" customWidth="1"/>' : ""; }).join("");
+  if (cols) x.push("<cols>" + cols + "</cols>");
+  x.push("<sheetData>" + dessin.join("") + "</sheetData>");
+  if (f.filtre && lignes.length > f.filtre) x.push('<autoFilter ref="A' + f.filtre + ":" + xlCol(Math.max.apply(null, lignes.slice(f.filtre - 1, f.filtre).map(function (l) { return l.length; })) - 1) + lignes.length + '"/>');
+  if (liens.length) x.push("<hyperlinks>" + liens.map(function (l) { return '<hyperlink ref="' + l.ref + '" location="' + xlEsc(l.loc) + '" display="Voir le détail"/>'; }).join("") + "</hyperlinks>");
+  x.push("</worksheet>");
+  return x.join("");
+}
+function fabriqueStyles() {
+  var cles = {}, xfs = ['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'];
+  var styleDe = function (c) {
+    var fontId = c.e === "titre" ? 2 : c.e === "entete" ? 4 : c.e === "note" ? 5 : c.lien ? 3 : c.b ? 1 : 0, fillId = c.e === "entete" ? 2 : 0, nf = XL_NUMFMT[c.k] || 0, wrap = !!c.wrap;
+    var cle = [fontId, fillId, nf, wrap].join("|");
+    if (cles[cle] === undefined) { cles[cle] = xfs.length;
+      xfs.push('<xf numFmtId="' + nf + '" fontId="' + fontId + '" fillId="' + fillId + '" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"' + (wrap ? ' applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' : "/>")); }
+    return cles[cle];
+  };
+  var xml = function () {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="5">' +
+      Object.keys(XL_NUMFMT).map(function (k) { return '<numFmt numFmtId="' + XL_NUMFMT[k] + '" formatCode="' + xlEsc(XL_FORMATS[k]) + '"/>'; }).join("") + "</numFmts>" +
+      '<fonts count="6"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF0F506C"/><name val="Calibri"/></font>' +
+      '<font><u/><sz val="11"/><color rgb="FF007298"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF5B6770"/><name val="Calibri"/></font></fonts>' +
+      '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0F506C"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+      '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+      '<cellXfs count="' + xfs.length + '">' + xfs.join("") + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  };
+  return { styleDe: styleDe, xml: xml };
+}
+var CRC_TABLE = null;
+function crc32(u8) {
+  if (!CRC_TABLE) { CRC_TABLE = new Uint32Array(256); for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC_TABLE[n] = c >>> 0; } }
+  var crc = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) crc = CRC_TABLE[(crc ^ u8[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function compresser(u8) {
+  if (typeof CompressionStream === "undefined") return Promise.resolve({ data: u8, methode: 0 });
+  try { return new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer().then(function (b) { return { data: new Uint8Array(b), methode: 8 }; }, function () { return { data: u8, methode: 0 }; }); }
+  catch (e) { return Promise.resolve({ data: u8, methode: 0 }); }
+}
+function zipper(fichiers) {
+  var enc = new TextEncoder(), parts = [], central = [], decalage = 0, d = new Date();
+  var heure = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), jour = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  var u16 = function (v) { return [v & 255, (v >>> 8) & 255]; }, u32 = function (v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; };
+  var suite = Promise.resolve();
+  fichiers.forEach(function (f) {
+    suite = suite.then(function () { var brut = enc.encode(f.texte); return compresser(brut).then(function (z) {
+      var nom = enc.encode(f.nom), crc = crc32(brut);
+      var entete = new Uint8Array([0x50, 0x4B, 3, 4].concat(u16(20), u16(0x0800), u16(z.methode), u16(heure), u16(jour), u32(crc), u32(z.data.length), u32(brut.length), u16(nom.length), u16(0)));
+      parts.push(entete, nom, z.data);
+      central.push(new Uint8Array([0x50, 0x4B, 1, 2].concat(u16(20), u16(20), u16(0x0800), u16(z.methode), u16(heure), u16(jour), u32(crc), u32(z.data.length), u32(brut.length), u16(nom.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(decalage))), nom);
+      decalage += entete.length + nom.length + z.data.length;
+    }); });
+  });
+  return suite.then(function () {
+    var tailleCentral = central.reduce(function (s, x) { return s + x.length; }, 0);
+    var fin = new Uint8Array([0x50, 0x4B, 5, 6].concat(u16(0), u16(0), u16(fichiers.length), u16(fichiers.length), u32(tailleCentral), u32(decalage), u16(0)));
+    return new Blob(parts.concat(central, [fin]), { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  });
+}
+function ecrireXlsx(feuilles) {
+  var st = fabriqueStyles(), fichiers = [];
+  var xmlFeuilles = feuilles.map(function (f) { return ecrireFeuilleXml(f, st.styleDe); });
+  fichiers.push({ nom: "[Content_Types].xml", texte: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+    feuilles.map(function (f, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join("") + "</Types>" });
+  fichiers.push({ nom: "_rels/.rels", texte: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' });
+  fichiers.push({ nom: "xl/workbook.xml", texte: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets>' +
+    feuilles.map(function (f, i) { return '<sheet name="' + xlEsc(f.nom) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join("") + "</sheets></workbook>" });
+  fichiers.push({ nom: "xl/_rels/workbook.xml.rels", texte: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    feuilles.map(function (f, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join("") +
+    '<Relationship Id="rId' + (feuilles.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' });
+  xmlFeuilles.forEach(function (t, i) { fichiers.push({ nom: "xl/worksheets/sheet" + (i + 1) + ".xml", texte: t }); });
+  fichiers.push({ nom: "xl/styles.xml", texte: st.xml() }); /* après les feuilles : tous les styles utilisés sont connus */
+  return zipper(fichiers);
+}
+
+/* ---------- Contenu du classeur ---------- */
+function parseMontantXl(t) {
+  var s = String(t == null ? "" : t).replace(/[\u202f\u00a0\s]/g, ""), pct = /%$/.test(s), eurS = /€$/.test(s);
+  s = s.replace(/[€%]$/, "").replace(/\u2212/g, "-").replace(/,/g, ".");
+  if (!/^[-+]?\d+(\.\d+)?$/.test(s)) return null;
+  var v = parseFloat(s);
+  return pct ? { v: v / 100, k: "pct" } : { v: v, k: eurS ? "eur" : "nb" };
+}
+function texteNet(n) { return (n.textContent || "").replace(/[\u202f\u00a0]/g, " ").replace(/\s+/g, " ").trim(); }
+function enTexte(html) { var d = document.createElement("div"); d.innerHTML = html || ""; return texteNet(d); }
+function nomFichierXl() {
+  var cur = SOUS[etat.section].find(function (x) { return x[0] === etat.page; }), p = perimetre(etat.perim);
+  var net = function (s) { return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); };
+  return "Zenitude_" + net(cur ? cur[1] : "page") + "_" + net(p.libelle).slice(0, 40) + "_" + net(libFenetre()).slice(0, 30) + (ajuste() ? "_ajuste" : "_reel") + ".xlsx";
+}
+function tranchesXl(liste, fn, taille, progression) {
+  return new Promise(function (ok, ko) {
+    var i = 0;
+    (function pas() {
+      try { var fin = Math.min(liste.length, i + taille); for (; i < fin; i++) fn(liste[i], i); } catch (e) { return ko(e); }
+      if (progression) progression(liste.length ? Math.round(100 * i / liste.length) : 100);
+      if (i >= liste.length) return ok();
+      setTimeout(pas, 0);
+    })();
+  });
+}
+var XL_MAX_LIGNES = 1000000, XL_MAX_SOUS = 5000;
+function construireClasseur(progression) {
+  var p = perimetre(etat.perim), zone = el("contenu"), cur = SOUS[etat.section].find(function (x) { return x[0] === etat.page; }), titrePage = cur ? cur[1] : "Page";
+  var feuilles = [], pris = {}, specs = [], index = {}, notes = [], decrit = [];
+  var contexte = p.libelle + " · " + libFenetre() + " · " + (ajuste() ? "vue ajustée" : "vue réelle (comptabilité importée telle quelle)");
+  var nomFeuille = function (base) {
+    var n = String(base).replace(/[\[\]:*?\/\\']/g, " ").replace(/\s+/g, " ").trim().slice(0, 31) || "Feuille", cle = n.toLowerCase(), k = 2;
+    while (pris[cle]) { var suf = " " + k++; n = n.slice(0, 31 - suf.length) + suf; cle = n.toLowerCase(); }
+    pris[cle] = true; return n;
+  };
+  var DET = "Détail des calculs", ECR = "Écritures";
+  var refDe = function (attr) { if (index[attr] === undefined) { index[attr] = specs.length; specs.push(attr); } return index[attr]; };
+  var lienDet = function (attr) { return "'" + DET + "'!A" + (refDe(attr) + 2); };
+  var cellule = function (txt, brut, forceTexte) {
+    var m = forceTexte ? null : parseMontantXl(txt);
+    return m ? { v: m.v, k: m.k } : { v: txt };
+  };
+  /* 1. Indicateurs (cartes) */
+  var cartes = Array.prototype.slice.call(zone.querySelectorAll(".indic"));
+  if (cartes.length) {
+    var L = [[{ v: "Indicateurs", e: "titre" }], [{ v: contexte, e: "note" }], [], ["Indicateur", "Valeur", "Définition ou motif", "Détail du calcul"].map(function (t) { return { v: t, e: "entete" }; })];
+    cartes.forEach(function (c) {
+      var nom = c.querySelector(".nom"), val = c.querySelector(".val"), def = c.querySelector(".def, .motif"), attr = c.getAttribute("data-x");
+      var v = cellule(val ? texteNet(val) : "", c, c.classList.contains("nc")), ligne = [{ v: nom ? texteNet(nom) : "", b: true }, v, { v: def ? texteNet(def) : "" }];
+      if (attr) ligne.push({ v: "Voir le détail", lien: lienDet(attr) }); L.push(ligne);
+    });
+    feuilles.push({ nom: nomFeuille("Indicateurs"), lignes: L, gel: 4 });
+  }
+  /* 2. Tableaux */
+  var tables = Array.prototype.slice.call(zone.querySelectorAll("table")), nt = 0;
+  tables.forEach(function (t) {
+    var bloc = t.closest(".bloc, .cadre"), h = bloc && bloc.querySelector("h2, h3"), titre = h ? texteNet(h) : "Tableau " + (nt + 1);
+    var L = [[{ v: titre, e: "titre" }], [{ v: contexte, e: "note" }], []], entetes = 0;
+    Array.prototype.slice.call(t.querySelectorAll("tr")).forEach(function (tr) {
+      var enteteLigne = !!tr.closest("thead"), ligne = [];
+      Array.prototype.slice.call(tr.children).forEach(function (td) {
+        var attr = td.getAttribute("data-x") || (td.querySelector("[data-x]") ? td.querySelector("[data-x]").getAttribute("data-x") : null), txt = texteNet(td), c;
+        if (enteteLigne) c = { v: txt, e: "entete" };
+        else {
+          var chiffre = td.classList.contains("num") || !!attr;
+          c = cellule(txt, td, !chiffre);
+          var fort = td.querySelector("strong, b"); if (fort && texteNet(fort) === txt) c.b = true;
+          if (attr && c.v !== "") c.lien = lienDet(attr);
+        }
+        ligne.push(c); for (var k = 1; k < (td.colSpan || 1); k++) ligne.push(enteteLigne ? { v: "", e: "entete" } : null);
+      });
+      if (ligne.length) { L.push(ligne); if (enteteLigne) entetes = L.length - 3; }
+    });
+    if (L.length <= 3) return;
+    nt++; feuilles.push({ nom: nomFeuille("T" + nt + " " + titre), lignes: L, gel: 3 + entetes });
+  });
+  /* 3. Graphiques */
+  if (EXPORT_GR.length) {
+    var G = [[{ v: "Données des graphiques", e: "titre" }], [{ v: contexte, e: "note" }], []];
+    EXPORT_GR.forEach(function (g) {
+      G.push([{ v: g.titre, b: true }]);
+      G.push([{ v: "Période", e: "entete" }].concat(g.series.map(function (s) { return { v: s.nom + (g.genre === "pct100" ? " (%)" : g.genre === "eur" ? " (€)" : ""), e: "entete" }; })));
+      g.cats.forEach(function (c, i) { G.push([{ v: c }].concat(g.series.map(function (s) { var v = s.valeurs[i]; return v === null || v === undefined || isNaN(v) ? { v: "n.c." } : { v: Math.round(v * 100) / 100, k: g.genre === "pct100" ? "pct100" : g.genre === "eur" ? "eur" : "nb" }; }))); });
+      G.push([]);
+    });
+    feuilles.push({ nom: nomFeuille("Graphiques"), lignes: G });
+  }
+  /* 4. Montants cliquables non présents dans un tableau ou une carte (points de graphique) */
+  Array.prototype.slice.call(zone.querySelectorAll("[data-x]")).forEach(function (n) { refDe(n.getAttribute("data-x")); });
+  /* 5. Détail des calculs, composition et écritures */
+  var D1 = [["Réf.", "Montant calculé", "Contexte", "Valeur", "Formule", "Contrôle ou notes", "Écritures"].map(function (t) { return { v: t, e: "entete" }; })];
+  var CP = [["Réf.", "Montant calculé", "Composition", "Valeur"].map(function (t) { return { v: t, e: "entete" }; })];
+  var EC = [["Réf.", "Montant calculé", "Calcul d’origine", "Date", "Résidence", "Journal", "Pièce", "Compte", "Libellé", "Débit", "Crédit", "Tiers", "Lettrage", "Échéance"].map(function (t) { return { v: t, e: "entete" }; })];
+  var sous = 0, tronque = false;
+  var ajoutEcritures = function (ref, titreRef, R, origine, rows) {
+    (R.ecritures || []).forEach(function (r) {
+      if (EC.length >= XL_MAX_LIGNES) { tronque = true; return; }
+      var d = xlDate(r[2]);
+      EC.push([{ v: "C" + String(ref + 1).padStart(3, "0") }, { v: titreRef }, { v: origine }, d === null ? { v: r[2] } : { v: d, k: "date" }, { v: nomResidence(r[0]) }, { v: r[3] }, { v: r[4] }, { v: String(r[5]) }, { v: r[6] },
+        r[7] < 0 ? { v: -r[7] / 100, k: "eur2" } : null, r[7] > 0 ? { v: r[7] / 100, k: "eur2" } : null, { v: r[8] }, { v: r[9] }, { v: r[10] }]);
+    });
+  };
+  return tranchesXl(specs.slice(), function (attr, i) {
+    var s = JSON.parse(attr), R, premier = EC.length + 1, nEcr0 = EC.length - 1;
+    try { R = EXPLIQUER[s.t](s); } catch (e) { R = { titre: "Détail indisponible", valeur: "", parts: [], notes: [e.message] }; }
+    var ref = i, nomRef = R.titre, parcourus = {};
+    parcourus[attr] = true;
+    ajoutEcritures(ref, nomRef, R, R.titre);
+    var explorer = function (Rx, profondeur) {
+      if (!Rx.parts || profondeur > 6 || Rx.ecritures) return;
+      Rx.parts.forEach(function (x) {
+        if (!x.spec) return; var a = JSON.stringify(x.spec); if (parcourus[a]) return; parcourus[a] = true;
+        if (++sous > XL_MAX_SOUS) { tronque = true; return; }
+        var Rs; try { Rs = EXPLIQUER[x.spec.t](x.spec); } catch (e) { return; }
+        ajoutEcritures(ref, nomRef, Rs, Rs.titre); explorer(Rs, profondeur + 1);
+      });
+    };
+    explorer(R, 1);
+    var nEcr = EC.length - 1 - nEcr0, num = parseMontantXl(R.valeur);
+    D1.push([{ v: "C" + String(ref + 1).padStart(3, "0"), b: true }, { v: R.titre }, { v: R.sous || "" }, num ? { v: num.v, k: num.k } : { v: R.valeur || "" },
+      { v: R.formule || enTexte(R.formuleHtml) , wrap: true }, { v: R.controle ? R.controle.texte : (R.notes || []).join(" ") }, nEcr ? { v: nEcr + " (voir la feuille " + ECR + ")", lien: "'" + ECR + "'!A" + premier } : { v: "" }]);
+    (R.parts || []).forEach(function (x) { var n = parseMontantXl(x.val); CP.push([{ v: "C" + String(ref + 1).padStart(3, "0") }, { v: R.titre }, { v: x.lib }, n ? { v: n.v, k: n.k } : { v: x.val }]); });
+  }, 25, function (pc) { progression("Calcul des détails " + pc + " %"); }).then(function () {
+    if (tronque) notes.push("Le détail est limité à " + XL_MAX_LIGNES.toLocaleString("fr-FR") + " écritures et " + XL_MAX_SOUS.toLocaleString("fr-FR") + " sous-calculs : restreignez le périmètre ou la période pour tout obtenir.");
+    /* 6. Ajustements actifs */
+    var AJL = null;
+    if (ajuste() && nbActifs()) {
+      AJL = [["Réf.", "Nature", "Libellé", "Compte", "Portée", "Règle", "Montant sur la période de la page"].map(function (t) { return { v: t, e: "entete" }; })];
+      ajActifs().forEach(function (a) {
+        var R; try { R = EXPLIQUER.aj({ t: "aj", id: a.id, d: p.dossiers, m: fenetre() }); } catch (e) { R = { valeur: "" }; }
+        var n = parseMontantXl(R.valeur);
+        AJL.push([{ v: a.id, b: true }, { v: natureAj(a) }, { v: a.libelle }, { v: String(a.compte) }, { v: enTexte(textePortee(a)) }, { v: enTexte(resumeRegle(a)), wrap: true }, n ? { v: n.v, k: n.k } : { v: R.valeur || "" }]);
+      });
+      lisActifs().forEach(function (l) { AJL.push([{ v: "Lissage", b: true }, { v: "Lissage de poste" }, { v: "Écriture " + l.ecriture }, { v: String(l.compte) }, { v: nomResidence(l.dossier) }, { v: "Répartie du " + l.du + " au " + l.au }, { v: l.montant / 100, k: "eur2" }]); });
+    }
+    var R0 = [[{ v: "Export Zenitude Pilotage", e: "titre" }], [], ["Page", titrePage], ["Périmètre", p.libelle + (p.type === "residence" ? "" : " (" + p.dossiers.length + " résidence" + (p.dossiers.length > 1 ? "s" : "") + ")")],
+      ["Exercice", texteNet(el("exercice-nom")) + " : " + texteNet(el("exercice-dates"))], ["Période", libFenetre()], ["Données", ajuste() ? "Ajustées (provisions, comptes simulés et lissages actifs)" : "Réelles (comptabilité importée telle quelle)"],
+      ["Exporté le", new Date().toLocaleString("fr-FR")], ["Unité", "Euros, sauf mention contraire (indicateurs : unité affichée)"]].map(function (l) { return l.length === 2 ? [{ v: l[0], b: true }, { v: l[1] }] : l; });
+    notes.forEach(function (n) { R0.push([{ v: "Attention", b: true }, { v: n }]); });
+    R0.push([], [{ v: "Feuilles", e: "entete" }, { v: "Contenu", e: "entete" }]);
+    var ordre = feuilles.slice();
+    var ajoute = function (nom, lignes, extra) { var f = { nom: nomFeuille(nom), lignes: lignes }; Object.keys(extra || {}).forEach(function (k) { f[k] = extra[k]; }); ordre.push(f); };
+    if (AJL) ajoute("Ajustements actifs", AJL, { gel: 1 });
+    if (D1.length > 1) { ajoute(DET, D1, { gel: 1, filtre: 1 }); ajoute("Composition", CP, { gel: 1, filtre: 1 }); }
+    if (EC.length > 1) ajoute(ECR, EC, { gel: 1, filtre: 1 });
+    ordre.forEach(function (f) { var c = f.nom === DET ? "Chaque montant cliquable : formule, valeur, contrôle" : f.nom === ECR ? "Écritures comptables de chaque montant (filtre par Réf.)" : f.nom === "Composition" ? "Parts de chaque montant (résidence, mois, compte)" : f.nom === "Indicateurs" ? "Indicateurs de la page" : f.nom === "Graphiques" ? "Données de tous les graphiques de la page" : f.nom === "Ajustements actifs" ? "Provisions, ajustements et lissages pris en compte" : "Tableau de la page";
+      R0.push([{ v: f.nom, lien: "'" + f.nom + "'!A1" }, { v: c }]); });
+    ordre.unshift({ nom: nomFeuille("Résumé"), lignes: R0 });
+    return ordre;
+  });
+}
+function telechargerXl(blob, nom) {
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+}
+function exporterExcel(btn) {
+  if (btn.disabled) return;
+  var txt = btn.textContent, nom = nomFichierXl(); btn.disabled = true;
+  var etape = function (t) { btn.textContent = t; };
+  etape("Préparation…");
+  construireClasseur(etape).then(function (feuilles) { etape("Création du fichier…"); return ecrireXlsx(feuilles); })
+    .then(function (blob) { telechargerXl(blob, nom); })
+    .catch(function (e) { alert("L’export Excel a échoué : " + e.message); })
+    .then(function () { btn.disabled = false; btn.textContent = txt; });
+}
+document.addEventListener("click", function (e) {
+  var b = e.target.closest && e.target.closest("#btn-xlsx");
+  if (b && el("ecran-app").contains(b)) { e.stopPropagation(); exporterExcel(b); }
+}, true);
+
 /* Un seul écouteur pour tous les montants cliquables (pages, cartes, graphiques). Il passe avant les clics de
    ligne (ouvrir une résidence) : un clic sur un montant ouvre son détail, un clic ailleurs sur la ligne garde son rôle. */
 document.addEventListener("click", function (e) {

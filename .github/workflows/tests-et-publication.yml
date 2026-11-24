@@ -69,4 +69,7 @@ jobs:
       - name: Calculer et publier dans la base de test
         env:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          # Lot 18 : le dossier Pennylane de test est relu et republié avec la démonstration (mode par
+          # défaut : écritures validées seulement). En cas d'erreur Pennylane, la démonstration est publiée seule.
+          PENNYLANE_TOKEN_PILOTE: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
         run: python interface/publier_supabase.py

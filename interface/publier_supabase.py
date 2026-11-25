@@ -357,12 +357,12 @@ def ecrire_magasin(base, cle, dossier, maj, debut_lecture, envoyer=None, dernier
 
 
 def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None, periode=None, memo=None,
-                   magasin=None):
+                   magasin=None, regle=None):
     """Lit le dossier de test par le connecteur (lot 18). Renvoie (lignes, exercice, rapport).
 
     periode : (premier jour, dernier jour) choisis dans la page (lot 18b), ou None.
     """
-    from datetime import datetime, timezone
+    from datetime import date, datetime, timezone
     import source_pennylane
     from zenitude.connecteurs import pennylane as pl
     if not os.path.exists(os.path.join(demo, "configuration.xlsx")):
@@ -372,9 +372,15 @@ def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=No
     depuis = source_pennylane.debut_frise(demo)
     if magasin is not None:
         bas = max([x for x in (depuis, periode[0] if periode else None) if x], default=None)
-        magasin = preparer_magasin(magasin, bas, periode[1] if periode else None, datetime.now(timezone.utc))
+        haut = periode[1] if periode else None
+        if regle and not periode and (magasin.get("bornes") or [None, None])[0]:
+            # Lot 22 : la période de la règle n'est connue qu'après lecture des exercices ; le connecteur vérifie
+            # lui-même qu'elle est incluse dans la période déjà lue (sinon relecture complète).
+            b0, b1 = magasin["bornes"]
+            bas, haut = date.fromisoformat(b0[:10]), date.fromisoformat(b1[:10]) if b1 else None
+        magasin = preparer_magasin(magasin, bas, haut, datetime.now(timezone.utc))
     lignes, exercice, rapport = pl.extraire(client, source_pennylane.DOSSIER_TEST, mode, depuis=depuis,
-                                            periode=periode, lettrage_memo=memo, magasin=magasin)
+                                            periode=periode, lettrage_memo=memo, magasin=magasin, regle=regle)
     rapport["synchronise_le"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     return lignes, exercice, rapport
 
@@ -431,7 +437,8 @@ def _resultat_demande(demande, par, pennylane, connexions=None):
         if d == source_pennylane.DOSSIER_TEST and pennylane is not None and d in par:
             r = pennylane[2]
             out[d] = {"statut": "synchronisée", "lignes_reprises": r["lignes_reprises"], "lignes_lues": r["lignes_lues"],
-                      "brouillard": r.get("brouillard"), "periode": r.get("periode"), "mode": r["mode"]}
+                      "brouillard": r.get("brouillard"), "periode": r.get("periode"), "mode": r["mode"],
+                      "anticipees": (r.get("anticipees") or {}).get("lignes", 0)}
         elif d == source_pennylane.DOSSIER_TEST:
             out[d] = {"statut": "échec", "motif": "lecture Pennylane impossible"}
         elif d in connectes:
@@ -593,7 +600,9 @@ def _publier_tout(argv, base, cle, demande):
             mode = os.environ["PENNYLANE_MODE"].strip()  # choix au lancement manuel du workflow
         else:
             mode = "valides" if (param or {}).get("masquer_brouillard", True) else "tous"
-        periode = periode_de(demande) if demande is not None else periode_de(param)
+        # Lot 22 : règle N-1 + N par défaut ; une période explicite (demande avec mois) reste possible. Les mois
+        # enregistrés dans parametres_import par le lot 18b ne sont plus utilisés.
+        periode = periode_de(demande) if demande is not None else None
         try:
             import time
             t0 = time.monotonic()
@@ -605,7 +614,8 @@ def _publier_tout(argv, base, cle, demande):
             if magasin:
                 print(f"Écritures conservées relues dans la base : {len(magasin['lignes'])} ligne(s) en {t1 - t0:.0f} s")
             pennylane = lire_pennylane(jeton=jeton, mode=mode, periode=periode, memo=memo,
-                                       magasin=None if magasin is False else (magasin or {}))
+                                       magasin=None if magasin is False else (magasin or {}),
+                                       regle=None if periode else pl.REGLE_N1_N)
             if magasin is False:
                 pennylane[2].pop("_magasin_maj", None)
             print(pl.texte_rapport(pennylane[2]))
@@ -635,7 +645,9 @@ def _publier_tout(argv, base, cle, demande):
         src = par.get(source_pennylane.DOSSIER_TEST, {}).get("source")
         if src is not None:
             r = pennylane[2]
-            src.update({"periode": r.get("periode"), "brouillard": r.get("brouillard")})
+            src.update({"periode": r.get("periode"), "brouillard": r.get("brouillard"), "regle": r.get("regle"),
+                        "exercices_importes": r.get("exercices_importes"), "anticipees": r.get("anticipees"),
+                        "lignes_anterieures": r.get("lignes_anterieures", 0)})
             if src.get("comptes_provisoires"):
                 print("Comptes classés provisoirement (préfixes) : " + ", ".join(src["comptes_provisoires"]))
     try:

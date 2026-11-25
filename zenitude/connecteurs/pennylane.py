@@ -293,6 +293,21 @@ def choisir_exercice(exercices, aujourdhui):
     return max(commences or exercices, key=lambda e: e[0])
 
 
+# Lot 22 (décision 0016) : règle de période d'import. Exercice précédent complet (N-1) + exercice en cours (N),
+# jusqu'à la fin de N : les écritures passées d'avance (mois futurs de N) sont reprises et comptées à part.
+REGLE_N1_N = "n1_n"
+
+
+def periode_regle(exercices, aujourdhui):
+    """(début de N-1, fin de N) d'après les exercices réels du dossier ; sans exercice précédent : (début de N, fin
+    de N). N = exercice qui contient la date du jour (choisir_exercice). Renvoie aussi les exercices retenus."""
+    n = choisir_exercice(exercices, aujourdhui)
+    precedents = [e for e in exercices if e[1] < n[0]]
+    n1 = max(precedents, key=lambda e: e[0]) if precedents else None
+    return (n1[0] if n1 else n[0], n[1]), {"N-1": [n1[0].isoformat(), n1[1].isoformat()] if n1 else None,
+                                            "N": [n[0].isoformat(), n[1].isoformat()]}
+
+
 def _filtres_dates(debut, fin):
     f = []
     if debut:
@@ -526,12 +541,14 @@ def _lire_donnees(client, magasin, bas, haut, exercices, rapport):
 
 
 def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, periode=None, lettrage_memo=None,
-             magasin=None):
+             magasin=None, regle=None):
     """Lit le dossier et renvoie (lignes ecritures.csv, ligne exercices.csv, rapport).
 
     mode : "valides" (écritures validées seulement) ou "tous" (validées et brouillard).
     depuis : date minimale imposée par le site (frise) ; les écritures antérieures sont comptées.
     periode : (premier jour, dernier jour) de la période d'import choisie dans la page (lot 18b), ou None.
+    regle : REGLE_N1_N (lot 22) : sans période explicite, période = début de l'exercice N-1 -> fin de l'exercice N,
+    calculée sur les exercices du dossier ; les lignes datées après aujourd'hui sont comptées (écritures anticipées).
     lettrage_memo : {id de ligne: {"maj", "groupe", "lu_le"}} déjà connus (lot 18c) ; un groupe n'est redemandé
     que si la ligne a changé (updated_at) ou si le relevé a plus de 7 jours. Les relevés nouveaux sont
     renvoyés dans rapport["_lettrage_a_memoriser"] (jamais affiché).
@@ -561,12 +578,22 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
         raise ErreurPennylane("aucun exercice lisible dans le dossier")
     exercices.sort()
     rapport["exercices"] = len(exercices)
+    if periode is None and regle == REGLE_N1_N:
+        periode, rapport["exercices_importes"] = periode_regle(exercices, aujourdhui)
+        rapport["regle"] = REGLE_N1_N
+    elif regle is not None and regle != REGLE_N1_N:
+        raise ErreurPennylane(f"règle de période inconnue : {regle}")
 
     liste_journaux, _ = client.tout_lire("/journals", taille_connue=(magasin or {}).get("taille_page"))
     journaux = {j.get("id"): str(j.get("code") or "").strip() for j in liste_journaux}
     types_journaux = {j.get("id"): str(j.get("type") or "(vide)") for j in liste_journaux}
     bas = max([x for x in (depuis, periode[0] if periode else None) if x], default=None)
     haut = periode[1] if periode else None
+    if magasin and magasin.get("increment_depuis") and rapport.get("regle"):
+        sb, sh = (_date(x) if x else None for x in (magasin.get("bornes") or [None, None]))
+        if not ((sb is None or (bas is not None and bas >= sb)) and (sh is None or (haut is not None and haut <= sh))):
+            magasin = dict(magasin, increment_depuis=None,
+                           motif="période N-1 + N plus large que celle déjà lue (nouvel exercice)")
     liste_lignes, liste_entrees = _lire_donnees(client, magasin, bas, haut, exercices, rapport)
     entetes = {e.get("id"): e for e in liste_entrees}
     rapport["ecritures_pennylane"] = len(entetes)
@@ -690,6 +717,9 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
         ligne.pop("_id", None)
     lignes.sort(key=lambda x: (x["date"], x["piece"], x["compte"]))
 
+    jour_iso = aujourdhui.isoformat()
+    anticipees = [x["date"] for x in lignes if x["date"] > jour_iso]
+    rapport["anticipees"] = {"lignes": len(anticipees), "mois": sorted({d[:7] for d in anticipees})}
     exo = choisir_exercice(exercices, aujourdhui)
     exercice_csv = {"dossier": dossier, "debut": exo[0].isoformat(), "fin": exo[1].isoformat(),
                     "duree_mois": str(_duree_mois(*exo))}
@@ -749,6 +779,13 @@ def texte_rapport(rapport):
         out.append("ATTENTION : statut(s) inconnu(s), traité(s) comme non validé(s) : " + ", ".join(r["statuts_inconnus"]))
     for motif, n in r["lignes_ecartees"].items():
         out.append(f"Lignes écartées - {motif} : {n}")
+    if r.get("regle") == REGLE_N1_N:
+        ex = r.get("exercices_importes") or {}
+        out.append("Période : exercice N-1 " + (" au ".join(ex["N-1"]) if ex.get("N-1") else "(aucun exercice précédent)")
+                   + " + exercice N " + " au ".join(ex.get("N") or []))
+    if (r.get("anticipees") or {}).get("lignes"):
+        out.append(f"Écritures anticipées (datées après aujourd'hui), reprises : {r['anticipees']['lignes']} ligne(s), "
+                   f"mois {', '.join(r['anticipees']['mois'])}")
     if r["lignes_anterieures"]:
         out.append(f"Lignes antérieures à la frise du site, non reprises : {r['lignes_anterieures']}")
     if r.get("lignes_hors_periode"):

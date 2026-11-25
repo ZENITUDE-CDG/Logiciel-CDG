@@ -87,7 +87,7 @@ def test_residence_connectee(site):
     aller(pg, "PENNY-TEST")
     texte = pg.inner_text("#contenu")
     assert "Connexion Pennylane active (lecture seule)" in texte and "Écritures validées seulement" in texte
-    assert pg.input_value("#imp-debut") == "2026-01" and pg.input_value("#imp-fin") == "2026-04"
+    assert "Exercice précédent complet (N-1)" in pg.inner_text("#imp-periode")  # lot 22 : règle à la place des dates
     assert pg.get_attribute("#imp-brouillard", "aria-pressed") == "true"
     assert "2 ligne(s) en brouillard" in texte and "charges 50 €" in texte and "masquées" in texte
     assert "Analytique" not in texte and "Balances mensuelles" not in texte  # options retirées
@@ -98,13 +98,12 @@ def test_residence_connectee(site):
 def test_synchroniser_une_residence_et_suivre(site):
     pg, erreurs = demarrer(site)
     aller(pg, "PENNY-TEST")
-    pg.select_option("#imp-debut", "2026-02")
     pg.click("#imp-brouillard")
     pg.click("#imp-synchro")
     pg.wait_for_function("appelsFonction.length === 1")
     appel = pg.evaluate("appelsFonction[0]")
     assert appel == {"nom": "lancer-synchro", "body": {"dossiers": ["PENNY-TEST"], "perimetre": "Dossier Pennylane de test",
-                                                        "mois_debut": "2026-02", "mois_fin": "2026-04", "masquer_brouillard": False}}
+                                                        "mois_debut": None, "mois_fin": None, "masquer_brouillard": False}}
     pg.wait_for_selector("#imp-historique")
     assert "Synchronisation n° 42 lancée" in pg.inner_text("#imp-message")
     assert "demandée" in pg.inner_text("#imp-historique")
@@ -112,14 +111,14 @@ def test_synchroniser_une_residence_et_suivre(site):
     pg.evaluate("window.rechargements = 0; RECHARGER = function () { rechargements++; }; true")
     pg.evaluate("SYNC_DELAI = 50; tablesTest.synchronisations = [{ id: 42, statut: 'terminée', demandee_le: '2026-11-24T10:00:00Z', "
                 "demandee_par: 'admin@exemple.invalid', perimetre: 'Dossier Pennylane de test', dossiers: ['PENNY-TEST'], "
-                "mois_debut: '2026-02', mois_fin: '2026-04', masquer_brouillard: false, "
+                "mois_debut: null, mois_fin: null, masquer_brouillard: false, "
                 "resultat: { 'PENNY-TEST': { statut: 'synchronisée', lignes_reprises: 6 } } }]; suivreSynchro();")
     pg.wait_for_selector("#imp-recharger")
     assert "6 lignes" in pg.inner_text("#imp-historique")
     pg.wait_for_function("rechargements === 1")  # lot 18c : chiffres rechargés automatiquement
     # Les réglages restent affichés
     pg.evaluate("majContenu()")
-    assert pg.input_value("#imp-debut") == "2026-02" and pg.get_attribute("#imp-brouillard", "aria-pressed") == "false"
+    assert pg.get_attribute("#imp-brouillard", "aria-pressed") == "false" and "N-1 + N" in pg.inner_text("#imp-historique")
     assert erreurs == []
     pg.close()
 
@@ -152,21 +151,10 @@ def test_refus_de_la_fonction(site):
     pg.close()
 
 
-def test_periode_incoherente(site):
-    pg, _ = demarrer(site)
-    aller(pg, "PENNY-TEST")
-    pg.select_option("#imp-debut", "2026-04")
-    pg.select_option("#imp-fin", "2026-02")
-    pg.click("#imp-synchro")
-    assert "après le mois de fin" in pg.inner_text("#imp-message")
-    assert pg.evaluate("appelsFonction.length") == 0
-    pg.close()
-
-
 def test_collaborateur_sans_synchronisation(site):
     pg, erreurs = demarrer(site, role="collaborateur")
     aller(pg, "PENNY-TEST")
-    assert pg.is_disabled("#imp-synchro") and pg.is_disabled("#imp-debut") and pg.is_disabled("#imp-brouillard")
+    assert pg.is_disabled("#imp-synchro") and pg.is_disabled("#imp-brouillard")
     assert pg.query_selector("#imp-historique") is None
     assert erreurs == []
     pg.close()

@@ -31,6 +31,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 18a | Connecteur Pennylane (lecture seule) sur le dossier de test : écritures publiées comme résidence RES-TEST, visible des administrateurs ; synchronisation manuelle avec choix du mode (validées / validées et brouillard) | 17 |
 | 18d | Lecture par modifications (journal des modifications Pennylane) avec contrôle de la balance, écritures conservées entre deux synchronisations, tailles de page intermédiaires | 17 |
 | 18c | Synchronisation plus rapide (pages de 1 000, filtre de dates, lectures parallèles, lettrage mémorisé), heures de Paris, rechargement automatique des chiffres | 17 |
+| 22 | Période d'import automatique : exercice N-1 complet + exercice N jusqu'à sa fin (écritures anticipées comprises), par dossier | 9 |
 | 21 | Arrivée sur Import comptable ; historiques à 5 lignes + « Voir plus » ; Données externes réduites au modèle du catalogue (consolidé et modèle du lot 15 retirés) ; modèle de suivi Mixte | 7 |
 | 20 | Suivi KPI paramétrable : catalogue de données et d'indicateurs (création, activation, ordre, seuils), modèles de suivi par activité, modèle Excel exporté puis redéposé, tableau de bord « Indicateurs suivis » | 16 |
 | 19 | Dépôt du consolidé KPI (onglet « Données KPI », périmètre groupe ou résidence, rattachement par code Mews, statuts des mois, groupes du fichier) ; jetons Pennylane par dossier chiffrés dans le navigateur et testés (lecture seule, une société par résidence) | 32 |
@@ -53,6 +54,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Lot 17 (`docs/decisions/0010`) : menu latéral réordonné (Résidence en haut) ; export Excel de chaque page de données : tableaux, données des graphiques, détail des calculs et écritures comptables.
 - Lot 16 : ruban bleu en haut de chaque page (exercice de référence + résidence ou groupe) ; l'exercice fixe la période de la réglette, le périmètre quitte le menu latéral.
 - Lot 14 (`docs/decisions/0008`) : détail des écritures publié par résidence ; lissage comme Waibi (répartition possible sur l'exercice suivant, mois sans écriture compris).
+- Lot 22 (`docs/decisions/0016`) : période d'import = N-1 + N, calculée par dossier ; plus de choix de mois.
 - Lot 21 (`docs/decisions/0015`) : un seul chemin d'import des KPI (modèle du catalogue) ; modèle Mixte ; page d'arrivée Import comptable.
 - Lot 20 (`docs/decisions/0014`) : KPI paramétrables dans la page (administrateurs, effet immédiat, journal) ; données importées et indicateurs calculés séparés ; un modèle de suivi par résidence ; modèle Excel une feuille par modèle.
 - Lot 19 (`docs/decisions/0013`) : consolidé KPI déposé tel quel (valeurs aberrantes écartées et listées, ratios recalculés et contrôlés) ; un jeton Pennylane par dossier, chiffré dans le navigateur, clé privée dans le secret GitHub `PENNYLANE_CLE_PRIVEE`. Étape 2 (données réelles dans la base) à approuver par la DSI et la DAF.
@@ -84,7 +86,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 459 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
+python -m pytest            # 467 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
                             # sur GitHub : onglet Actions, lancé automatiquement à chaque dépôt
 sh demo.sh                  # démonstration complète
 python interface/generer_site.py   # régénère index.html (en ligne, sans données)

@@ -79,12 +79,14 @@ def env(monkeypatch):
     monkeypatch.setenv("PENNYLANE_TOKEN_PILOTE", "jeton-fictif")
     monkeypatch.delenv("PENNYLANE_MODE", raising=False)
     monkeypatch.setattr(pub, "url_supabase", lambda: BASE)
-    appels = []
+    appels, regles = [], []
     vrai = pub.lire_pennylane
+    monkeypatch.regles = regles
 
-    def lire(jeton=None, mode="valides", periode=None, **kw):
+    def lire(jeton=None, mode="valides", periode=None, regle=None, **kw):
         appels.append({"mode": mode, "periode": periode})
-        return vrai(client=client(), mode=mode, periode=periode)
+        regles.append(regle)
+        return vrai(client=client(), mode=mode, periode=periode, regle=regle)
     monkeypatch.setattr(pub, "lire_pennylane", lire)
     return monkeypatch, appels
 
@@ -127,7 +129,8 @@ def test_parametres_pour_la_publication_automatique(env):
                                "masquer_brouillard": False}])
     mp.setattr(pub, "requete", base)
     assert pub.main([]) == 0
-    assert appels == [{"mode": "tous", "periode": (date(2026, 2, 1), date(9999, 12, 31))}]
+    # Lot 22 : les mois enregistrés au lot 18b ne servent plus ; la règle N-1 + N s'applique (le mode reste lu)
+    assert appels == [{"mode": "tous", "periode": None}] and mp.regles == ["n1_n"]
     mp.setenv("PENNYLANE_MODE", "valides")  # choix au lancement manuel : prime sur la base
     assert pub.main([]) == 0 and appels[-1]["mode"] == "valides"
 

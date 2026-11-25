@@ -2193,10 +2193,12 @@ function messageImport(html, classe) {
   var b = el("imp-recharger"); if (b) b.onclick = function () { RECHARGER(); };
 }
 function lancerSynchro(p) {
-  var md = null, mf = null, masquer = el("imp-brouillard").classList.contains("on");  /* lot 22 : règle N-1 + N */
+  /* Lot 23 : retour au choix des mois (début à partir de l'exercice N-1, fin libre ; vide = sans limite). */
+  var md = el("imp-debut").value, mf = el("imp-fin").value || null, masquer = el("imp-brouillard").classList.contains("on");
+  if (mf && md > mf) { messageImport("Le mois de début est après le mois de fin.", ""); return; }
   var connectees = p.dossiers.filter(sourceDe).length;
-  if (!confirm("Synchroniser " + p.dossiers.length + " résidence(s), dont " + connectees + " connectée(s) à Pennylane : exercice précédent et exercice en cours de chaque résidence" +
-      ", écritures anticipées comprises, écritures en brouillard " + (masquer ? "masquées" : "reprises") + " ?")) return;
+  if (!confirm("Synchroniser " + p.dossiers.length + " résidence(s), dont " + connectees + " connectée(s) à Pennylane, de " + moisLong(md) + (mf ? " à " + moisLong(mf) : " sans limite de fin (écritures futures comprises)") +
+      ", écritures en brouillard " + (masquer ? "masquées" : "reprises") + " ?")) return;
   var b = el("imp-synchro"); b.disabled = true; b.textContent = "Lancement…";
   ZCLIENT.functions.invoke("lancer-synchro", { body: { dossiers: p.dossiers.slice(), perimetre: p.libelle, mois_debut: md, mois_fin: mf, masquer_brouillard: masquer } })
     .then(function (r) {
@@ -2207,7 +2209,7 @@ function lancerSynchro(p) {
     })
     .then(function (data) {
       (D.parametres_import = D.parametres_import || []);
-      p.dossiers.forEach(function (d) { var x = paramDe(d); if (!x) D.parametres_import.push(x = { dossier: d }); x.mois_debut = null; x.mois_fin = null; x.masquer_brouillard = masquer; });
+      p.dossiers.forEach(function (d) { var x = paramDe(d); if (!x) D.parametres_import.push(x = { dossier: d }); x.mois_debut = md; x.mois_fin = mf; x.masquer_brouillard = masquer; });
       D.synchronisations = (D.synchronisations || []).concat([{ id: data.id, statut: "demandée", demandee_le: new Date().toISOString(), demandee_par: D.enLigne.email,
         perimetre: p.libelle, dossiers: p.dossiers.slice(), mois_debut: md, mois_fin: mf, masquer_brouillard: masquer, resultat: {} }]);
       majContenu();
@@ -2216,18 +2218,26 @@ function lancerSynchro(p) {
     })
     .catch(function (e) { b.disabled = false; b.textContent = "Synchroniser"; messageImport("<b>Synchronisation non lancée.</b> " + esc((e && e.message) || String(e)), ""); });
 }
-/* Lot 22 : période importée d'après la règle N-1 + N (calculée par le connecteur à chaque synchronisation). */
+/* Lot 23 : bornes du choix des mois. Début au plus tôt = premier mois de l'exercice N-1 (première intégration d'une
+   société comprise, même sans écriture encore lue) ; fin au choix jusqu'à la fin de l'exercice N+1, ou sans limite. */
+function ajMois(m, n) { var y = +m.slice(0, 4), k = +m.slice(5) - 1 + n; y += Math.floor(k / 12); k = ((k % 12) + 12) % 12; return y + "-" + (k < 9 ? "0" : "") + (k + 1); }
+function bornesImport(p) {
+  var deb = null, finN = null, finMax = null;
+  p.dossiers.forEach(function (d) {
+    var ex = exercicesDe(d), n = ex.find(function (x) { return x.rang === "N"; }) || ex[ex.length - 1]; if (!n) return;
+    var n1 = ex.find(function (x) { return x.rang === "N-1"; }), np1 = ex.find(function (x) { return x.rang === "N+1"; });
+    var a = n1 ? n1.debut.slice(0, 7) : ajMois(n.debut.slice(0, 7), -12), b = n.fin.slice(0, 7), c = np1 ? np1.fin.slice(0, 7) : ajMois(b, 12);
+    if (!deb || a < deb) deb = a; if (!finN || b > finN) finN = b; if (!finMax || c > finMax) finMax = c;
+  });
+  var auj = moisCourant();
+  if (!deb) { deb = ajMois(auj, -12); finN = ajMois(auj, 11); finMax = ajMois(auj, 23); }
+  return { debut: deb, finN: finN, finMax: finMax };
+}
 function textePeriodeImport(p) {
-  var lib = function (x) { return x ? dateFr(x[0]) + " au " + dateFr(x[1]) : ""; }, src = p.dossiers.map(sourceDe).filter(Boolean);
-  if (p.dossiers.length === 1) {
-    var s = src[0];
-    if (!s) return "Résidence non connectée : la période sera calculée à la première synchronisation.";
-    var e = s.exercices_importes;
-    if (!e) return s.periode ? "Dernière synchronisation : du " + dateFr(s.periode[0]) + " au " + dateFr(s.periode[1]) + " (période choisie à la main, avant le lot 22)." : "Calculée à la prochaine synchronisation.";
-    return "Exercice N-1 : " + (e["N-1"] ? lib(e["N-1"]) : "aucun exercice précédent dans Pennylane") + "<br>Exercice N : " + lib(e.N) +
-      (s.lignes_anterieures ? "<br>" + nb(s.lignes_anterieures) + " ligne(s) antérieure(s) au début du site non reprise(s) (phase test)" : "");
-  }
-  return "Calculée pour chaque résidence d’après ses propres exercices (exercices décalés compris) : voir le tableau des résidences du périmètre.";
+  if (p.dossiers.length !== 1) return "Dernière période lue par résidence : voir le tableau des résidences du périmètre.";
+  var s = sourceDe(p.dossiers[0]);
+  if (!s) return "Résidence non connectée : rien n’a encore été lu dans Pennylane.";
+  return s.periode ? "Dernière synchronisation : du " + dateFr(s.periode[0]) + " au " + (s.periode[1] > "9999" ? "… (sans limite)" : dateFr(s.periode[1])) + "." : "";
 }
 PAGES.pennylane = function (p) {
   var connectees = p.dossiers.filter(sourceDe), seul = p.dossiers.length === 1, admin = peutSynchroniser();
@@ -2245,10 +2255,18 @@ PAGES.pennylane = function (p) {
       (connectees.every(function (d) { return (sourceDe(d).brouillard || {}).masque; }) ? " (masquées dans les chiffres)." : " (reprises dans les chiffres).")
     : "Information disponible après une synchronisation.";
   var libBouton = seul ? "Synchroniser" : "Synchroniser les " + p.dossiers.length + " résidences";
+  var bi = bornesImport(p), listeDeb = moisEntre(bi.debut, bi.finMax);
+  var md = (par0 && par0.mois_debut) || bi.debut, mf = par0 ? (par0.mois_debut || par0.mois_fin ? par0.mois_fin || "" : bi.finN) : bi.finN;
+  if (md < bi.debut) md = bi.debut;
+  var optDebut = listeDeb.map(function (m) { return '<option value="' + m + '"' + (m === md ? " selected" : "") + ">" + moisMaj(m) + "</option>"; }).join("");
+  var optFin = listeDeb.map(function (m) { return '<option value="' + m + '"' + (m === mf ? " selected" : "") + ">" + moisMaj(m) + "</option>"; }).join("") +
+    '<option value=""' + (mf === "" ? " selected" : "") + ">Sans limite</option>";
   var h = enTete("Import comptable", p, "") + etatCx + '<div id="imp-message"></div>' +
     '<h2 style="margin-bottom:12px">Import des données par l’API Pennylane</h2><div class="import-grille">' +
-    '<div class="cadre" id="imp-periode"><h3>Période importée</h3><div class="corps"><p style="margin:0 0 6px"><b>Exercice précédent complet (N-1) + exercice en cours (N)</b>, jusqu’à la fin de N : les écritures passées d’avance sont reprises.</p>' +
-      '<p class="legende" style="margin:0">' + textePeriodeImport(p) + "</p></div></div>" +
+    '<div class="cadre" id="imp-periode"><h3>Dates d’import</h3><div class="corps"><div class="duo"><div><span class="mini">Importer de</span><select id="imp-debut"' + (admin ? "" : " disabled") + ">" + optDebut + '</select></div>' +
+      '<div><span class="mini">à</span><select id="imp-fin"' + (admin ? "" : " disabled") + ">" + optFin + "</select></div></div>" +
+      '<p class="legende" style="margin:10px 0 0">Début au plus tôt : premier mois de l’exercice N-1' + (seul ? "" : " (le plus ancien des résidences du périmètre)") + '. Fin libre ; « Sans limite » reprend aussi les écritures passées d’avance.</p>' +
+      '<p class="legende" style="margin:6px 0 0">' + textePeriodeImport(p) + "</p></div></div>" +
     '<div class="cadre"><h3>Options</h3><div class="corps"><div class="options"><span>Masquer les écritures en brouillard <span class="info-ronde" title="Écritures dont la pièce est encore à valider ou à comptabiliser dans Pennylane">i</span></span>' +
       '<button class="bascule' + (masquer ? " on" : "") + '" id="imp-brouillard" aria-pressed="' + masquer + '"' + (admin ? ' title="Cliquer pour changer"' : ' disabled title="Réservé aux administrateurs"') + "></button><span></span></div>" +
       '<p class="legende" style="margin-top:10px">' + infoBr + "</p>" + (ant ? '<p class="legende" id="imp-anticipees">' + nb(ant) + " ligne(s) datée(s) après aujourd’hui (écritures anticipées), reprises dans les chiffres.</p>" : "") + "</div></div>" +

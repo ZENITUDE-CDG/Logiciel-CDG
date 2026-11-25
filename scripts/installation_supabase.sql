@@ -1,17 +1,17 @@
--- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 19). À coller en une fois dans SQL Editor.
+-- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 20). À coller en une fois dans SQL Editor.
 -- Fichier assemblé par scripts/assembler_installation.py : remise à zéro + migrations + données de départ.
 -- Remet la base de test à zéro : données fictives uniquement. Ne jamais exécuter sur une base réelle.
 -- Après l'avoir lancé, relancer la publication des données (GitHub, Actions, « Run workflow »).
 
 -- ===================== scripts/reinitialiser_base_test.sql =====================
 -- Remise à zéro de la BASE DE TEST Supabase (données fictives uniquement).
--- Supprime les tableaux et fonctions des lots 12 à 19, y compris ceux d'une version précédente.
+-- Supprime les tableaux et fonctions des lots 12 à 20, y compris ceux d'une version précédente.
 -- Ne jamais exécuter sur une base contenant des données réelles.
 
-DROP TABLE IF EXISTS connexions_pennylane, cle_jetons, depots_kpi, kpi_mois, pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
+DROP TABLE IF EXISTS residence_modele, kpi_journal, kpi_catalogue, kpi_modeles, connexions_pennylane, cle_jetons, depots_kpi, kpi_mois, pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
   parcs, residence_groupe, groupes, residences, profils CASCADE;
 
-DROP FUNCTION IF EXISTS trace_connexion_pennylane(), trace_cle_jetons(), trace_kpi(), garde_code_mews(), trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
+DROP FUNCTION IF EXISTS controle_kpi_catalogue(), journal_kpi_catalogue(), trace_residence_modele(), controle_signe_mesure(), trace_connexion_pennylane(), trace_cle_jetons(), trace_kpi(), garde_code_mews(), trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
   modifie_dossier(text), voit_dossier(text), ajustements_trace(),
   voit_groupe(text), voit_residence(text), modifie_residence(text),
   est_administrateur(), role_courant(), email_courant(), utilisateur_courant() CASCADE;
@@ -889,6 +889,230 @@ BEGIN
   END IF;
 END
 $$;
+
+-- ===================== migrations/012_suivi_kpi_parametrable.sql =====================
+-- Migration 012 : suivi KPI paramétrable (lot 20, décision 0014). SQL standard PostgreSQL, rejouable.
+-- S'ajoute aux migrations 001 à 011 sans remise à zéro.
+--
+-- kpi_modeles       : modèles de suivi (Tourisme, Seniors, Étudiants…). Lecture : toute personne connectée ;
+--                     écriture : administrateur.
+-- kpi_catalogue     : données (saisies ou importées chaque mois) et indicateurs (calculés, jamais importés :
+--                     facteur x somme(numérateur) / somme(dénominateur)). Le code est stable : il ne change jamais.
+--                     La base refuse un indicateur qui utilise une donnée inconnue, un modèle inconnu, la
+--                     désactivation d'une donnée utilisée par un indicateur actif, et la suppression d'une donnée
+--                     qui a des valeurs importées (on la désactive). Lecture : connectés ; écriture : administrateur.
+-- kpi_journal       : chaque création, modification ou suppression du catalogue (avant / après, auteur, date),
+--                     écrit par la base seule. Lecture : administrateur.
+-- residence_modele  : modèle de suivi de chaque résidence (dossier). Lecture selon le parc ; écriture admin.
+-- mesures_importees : une valeur négative n'est acceptée que pour une donnée « signée » du catalogue (montants).
+
+CREATE TABLE IF NOT EXISTS kpi_modeles (
+    id      text PRIMARY KEY CHECK (id ~ '^[A-Z0-9_]{2,30}$'),
+    libelle text NOT NULL CHECK (length(libelle) BETWEEN 1 AND 60),
+    ordre   integer NOT NULL DEFAULT 0,
+    actif   boolean NOT NULL DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS kpi_catalogue (
+    code              text PRIMARY KEY CHECK (code ~ '^[A-Z0-9_]{2,40}$'),
+    type              text NOT NULL CHECK (type IN ('donnee', 'indicateur')),
+    libelle           text NOT NULL CHECK (length(libelle) BETWEEN 1 AND 120),
+    rubrique          text NOT NULL DEFAULT 'Autres' CHECK (length(rubrique) BETWEEN 1 AND 60),
+    ordre             integer NOT NULL DEFAULT 0,
+    unite             text NOT NULL DEFAULT 'nombre' CHECK (unite IN ('nombre', 'euro', 'pourcent', 'jours', 'ratio')),
+    actif             boolean NOT NULL DEFAULT true,
+    modeles           text[] NOT NULL DEFAULT '{}',
+    colonne_consolide text CHECK (colonne_consolide IS NULL OR length(colonne_consolide) BETWEEN 1 AND 120),
+    signe             text NOT NULL DEFAULT 'positif' CHECK (signe IN ('positif', 'signe')),
+    numerateur        text[] NOT NULL DEFAULT '{}',
+    denominateur      text[] NOT NULL DEFAULT '{}',
+    facteur           numeric NOT NULL DEFAULT 1 CHECK (facteur <> 0),
+    sens              text CHECK (sens IS NULL OR sens IN ('haut', 'bas')),
+    seuil             numeric,
+    description       text NOT NULL DEFAULT '' CHECK (length(description) <= 500),
+    version           integer NOT NULL DEFAULT 1,
+    modifie_par       text,
+    modifie_le        timestamptz NOT NULL DEFAULT now(),
+    CHECK (type = 'indicateur' OR (cardinality(numerateur) = 0 AND cardinality(denominateur) = 0)),
+    CHECK (type = 'donnee' OR cardinality(numerateur) >= 1)
+);
+
+CREATE TABLE IF NOT EXISTS kpi_journal (
+    id     bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    code   text NOT NULL,
+    action text NOT NULL CHECK (action IN ('création', 'modification', 'suppression')),
+    avant  jsonb,
+    apres  jsonb,
+    par    text,
+    le     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS residence_modele (
+    dossier     text PRIMARY KEY CHECK (dossier ~ '^[A-Z0-9_-]+$'),
+    modele      text NOT NULL REFERENCES kpi_modeles(id) ON UPDATE CASCADE,
+    modifie_par text,
+    modifie_le  timestamptz NOT NULL DEFAULT now()
+);
+
+-- Contrôles du catalogue (la base reste seule juge, quelle que soit la page).
+CREATE OR REPLACE FUNCTION controle_kpi_catalogue() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE x text; utilise text;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    SELECT string_agg(code, ', ') INTO utilise FROM kpi_catalogue
+      WHERE type = 'indicateur' AND (OLD.code = ANY(numerateur) OR OLD.code = ANY(denominateur));
+    IF utilise IS NOT NULL THEN
+      RAISE EXCEPTION 'donnée % utilisée par : % (retirez-la d''abord des formules)', OLD.code, utilise USING ERRCODE = '23503';
+    END IF;
+    IF EXISTS (SELECT 1 FROM mesures_importees WHERE mesure = OLD.code) THEN
+      RAISE EXCEPTION 'donnée % : des valeurs sont déjà importées ; désactivez-la au lieu de la supprimer', OLD.code USING ERRCODE = '23503';
+    END IF;
+    RETURN OLD;
+  END IF;
+  IF TG_OP = 'UPDATE' AND (NEW.code <> OLD.code OR NEW.type <> OLD.type) THEN
+    RAISE EXCEPTION 'le code et le type d''un élément du catalogue ne changent jamais (créez-en un nouveau)' USING ERRCODE = '23514';
+  END IF;
+  FOREACH x IN ARRAY NEW.modeles LOOP
+    IF NOT EXISTS (SELECT 1 FROM kpi_modeles WHERE id = x) THEN
+      RAISE EXCEPTION 'modèle de suivi inconnu : %', x USING ERRCODE = '23503';
+    END IF;
+  END LOOP;
+  IF NEW.type = 'indicateur' THEN
+    FOREACH x IN ARRAY NEW.numerateur || NEW.denominateur LOOP
+      IF NOT EXISTS (SELECT 1 FROM kpi_catalogue WHERE code = x AND type = 'donnee') THEN
+        RAISE EXCEPTION 'formule de % : % n''est pas une donnée du catalogue', NEW.code, x USING ERRCODE = '23503';
+      END IF;
+    END LOOP;
+  ELSIF TG_OP = 'UPDATE' AND OLD.actif AND NOT NEW.actif THEN
+    SELECT string_agg(code, ', ') INTO utilise FROM kpi_catalogue
+      WHERE type = 'indicateur' AND actif AND (NEW.code = ANY(numerateur) OR NEW.code = ANY(denominateur));
+    IF utilise IS NOT NULL THEN
+      RAISE EXCEPTION 'donnée % utilisée par des indicateurs actifs : %', NEW.code, utilise USING ERRCODE = '23514';
+    END IF;
+  END IF;
+  NEW.modifie_par := coalesce(email_courant(), NEW.modifie_par);
+  NEW.modifie_le := now();
+  IF TG_OP = 'UPDATE' THEN NEW.version := OLD.version + 1; END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS kpi_catalogue_controle ON kpi_catalogue;
+CREATE TRIGGER kpi_catalogue_controle BEFORE INSERT OR UPDATE OR DELETE ON kpi_catalogue
+  FOR EACH ROW EXECUTE FUNCTION controle_kpi_catalogue();
+
+-- Journal écrit par la base seule (personne ne peut y écrire directement).
+CREATE OR REPLACE FUNCTION journal_kpi_catalogue() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO kpi_journal (code, action, avant, apres, par)
+  VALUES (coalesce(NEW.code, OLD.code),
+          CASE TG_OP WHEN 'INSERT' THEN 'création' WHEN 'UPDATE' THEN 'modification' ELSE 'suppression' END,
+          CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE to_jsonb(OLD) END,
+          CASE WHEN TG_OP = 'DELETE' THEN NULL ELSE to_jsonb(NEW) END,
+          email_courant());
+  RETURN NULL;
+END
+$$;
+DROP TRIGGER IF EXISTS kpi_catalogue_journal ON kpi_catalogue;
+CREATE TRIGGER kpi_catalogue_journal AFTER INSERT OR UPDATE OR DELETE ON kpi_catalogue
+  FOR EACH ROW EXECUTE FUNCTION journal_kpi_catalogue();
+
+CREATE OR REPLACE FUNCTION trace_residence_modele() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.modifie_par := coalesce(email_courant(), NEW.modifie_par); NEW.modifie_le := now();
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS residence_modele_trace ON residence_modele;
+CREATE TRIGGER residence_modele_trace BEFORE INSERT OR UPDATE ON residence_modele
+  FOR EACH ROW EXECUTE FUNCTION trace_residence_modele();
+
+-- Valeurs importées : négatives seulement pour une donnée signée (remplace la règle « CA_... » du lot 19).
+CREATE OR REPLACE FUNCTION controle_signe_mesure() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NEW.valeur < 0 AND NOT EXISTS (SELECT 1 FROM kpi_catalogue WHERE code = NEW.mesure AND signe = 'signe')
+     AND NEW.mesure NOT LIKE 'CA\_%' THEN
+    RAISE EXCEPTION 'valeur négative refusée pour % (donnée non signée)', NEW.mesure USING ERRCODE = '23514';
+  END IF;
+  RETURN NEW;
+END
+$$;
+ALTER TABLE mesures_importees DROP CONSTRAINT IF EXISTS mesures_importees_valeur_signe;
+DROP TRIGGER IF EXISTS mesures_importees_signe ON mesures_importees;
+CREATE TRIGGER mesures_importees_signe BEFORE INSERT OR UPDATE ON mesures_importees
+  FOR EACH ROW EXECUTE FUNCTION controle_signe_mesure();
+
+ALTER TABLE kpi_modeles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi_catalogue ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi_journal ENABLE ROW LEVEL SECURITY;
+ALTER TABLE residence_modele ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS kpi_modeles_lecture ON kpi_modeles;
+CREATE POLICY kpi_modeles_lecture ON kpi_modeles FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS kpi_modeles_admin ON kpi_modeles;
+CREATE POLICY kpi_modeles_admin ON kpi_modeles FOR ALL TO authenticated
+  USING (est_administrateur()) WITH CHECK (est_administrateur());
+DROP POLICY IF EXISTS kpi_catalogue_lecture ON kpi_catalogue;
+CREATE POLICY kpi_catalogue_lecture ON kpi_catalogue FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS kpi_catalogue_admin ON kpi_catalogue;
+CREATE POLICY kpi_catalogue_admin ON kpi_catalogue FOR ALL TO authenticated
+  USING (est_administrateur()) WITH CHECK (est_administrateur());
+DROP POLICY IF EXISTS kpi_journal_lecture ON kpi_journal;
+CREATE POLICY kpi_journal_lecture ON kpi_journal FOR SELECT TO authenticated USING (est_administrateur());
+DROP POLICY IF EXISTS residence_modele_lecture ON residence_modele;
+CREATE POLICY residence_modele_lecture ON residence_modele FOR SELECT TO authenticated USING (voit_dossier(dossier));
+DROP POLICY IF EXISTS residence_modele_admin ON residence_modele;
+CREATE POLICY residence_modele_admin ON residence_modele FOR ALL TO authenticated
+  USING (est_administrateur()) WITH CHECK (est_administrateur() AND voit_dossier(dossier));
+
+REVOKE ALL ON kpi_modeles, kpi_catalogue, kpi_journal, residence_modele FROM anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON kpi_modeles, kpi_catalogue, residence_modele TO authenticated;
+REVOKE INSERT, UPDATE, DELETE ON kpi_journal FROM authenticated;
+GRANT SELECT ON kpi_journal TO authenticated;
+
+-- Catalogue de départ (repris du consolidé KPI, lot 19) : ajouté une seule fois, jamais écrasé.
+-- >>> amorce générée par interface/catalogue_kpi.py (ne pas modifier à la main)
+INSERT INTO kpi_modeles (id, libelle, ordre) VALUES
+  ('TOURISME', 'Tourisme (RT)', 1),
+  ('SENIORS', 'Seniors', 2),
+  ('ETUDIANTS', 'Étudiants', 3)
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO kpi_catalogue (code, type, libelle, rubrique, ordre, unite, actif, modeles, colonne_consolide, signe, numerateur, denominateur, facteur, sens, seuil) VALUES
+  ('LN_VENDUES', 'donnee', 'Nuitées totales', 'Hébergement', 100, 'nombre', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'Nuitées totales', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('LN_DISPONIBLES', 'donnee', 'Capacité totale (lots × jours)', 'Hébergement', 110, 'nombre', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'Capacité totale', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('LOTS_HOT', 'donnee', 'Lots hôteliers', 'Hébergement', 120, 'nombre', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'Lots hôtelier', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('LN_VENDUES_HOT', 'donnee', 'Chambres vendues hôtelières', 'Hébergement', 130, 'nombre', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'Chambres vendues hôtelières', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('LN_DISPO_HOT', 'donnee', 'Capacité hôtelière (lots × jours)', 'Hébergement', 140, 'nombre', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'Capacité hôtelière (lots × jours)', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('NB_SEJOURS', 'donnee', 'Nombre de réservations', 'Hébergement', 150, 'nombre', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'Nb de réservations', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('NUITEES_CLIENTS', 'donnee', 'Clients présents', 'Hébergement', 160, 'nombre', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'Clients présents', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('LOTS_SEN', 'donnee', 'Lots seniors', 'Seniors', 170, 'nombre', true, ARRAY['SENIORS']::text[], 'Lots seniors', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('LOTS_SEN_OCC', 'donnee', 'Lots seniors occupés', 'Seniors', 180, 'nombre', true, ARRAY['SENIORS']::text[], 'Lots seniors occupés', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('NUITEES_SEN', 'donnee', 'Nuitées seniors', 'Seniors', 190, 'nombre', true, ARRAY['SENIORS']::text[], 'Nuitées seniors', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('LN_DISPO_SEN', 'donnee', 'Capacité seniors', 'Seniors', 200, 'nombre', true, ARRAY['SENIORS']::text[], 'Capacité seniors', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_MEWS_HEB_SEN', 'donnee', 'CA hébergement seniors HT', 'Seniors', 210, 'euro', true, ARRAY['SENIORS']::text[], 'CA hébergement seniors HT', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_SAP', 'donnee', 'CA SAP HT', 'Seniors', 220, 'euro', true, ARRAY['SENIORS']::text[], 'CA SAP', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_RESTO_SEN', 'donnee', 'CA restauration seniors HT', 'Seniors', 230, 'euro', true, ARRAY['SENIORS']::text[], 'CA Restauration seniors', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('COUVERTS_PDJ', 'donnee', 'Petits-déjeuners servis', 'Restauration', 240, 'nombre', true, ARRAY['TOURISME', 'SENIORS']::text[], 'Nb PDJ', 'positif', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_MEWS_PDJ', 'donnee', 'CA petit-déjeuner HT', 'Restauration', 250, 'euro', true, ARRAY['TOURISME', 'SENIORS']::text[], 'CA HT PDJ', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_MEWS_RESTO', 'donnee', 'CA restaurant HT', 'Restauration', 260, 'euro', true, ARRAY['TOURISME', 'SENIORS']::text[], 'CA HT RESTO', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_MEWS_TOTAL', 'donnee', 'CA total résidence HT', 'Chiffre d''affaires', 270, 'euro', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'CA total résidence HT', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_MEWS_HOTELIER', 'donnee', 'CA total hôtelier HT', 'Chiffre d''affaires', 280, 'euro', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'CA total hôtelier HT', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_MEWS_HEB_HOT', 'donnee', 'CA hébergement hôtelier HT', 'Chiffre d''affaires', 290, 'euro', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'CA hébergement hôtelier HT', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('CA_MEWS_SPA', 'donnee', 'CA spa HT', 'Chiffre d''affaires', 300, 'euro', true, ARRAY['TOURISME']::text[], 'CA HT SPA', 'signe', '{}'::text[], '{}'::text[], 1, NULL, NULL),
+  ('TO_RES', 'indicateur', 'Taux d''occupation de la résidence', 'Hébergement', 10, 'pourcent', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'TO résidence', 'positif', ARRAY['LN_VENDUES']::text[], ARRAY['LN_DISPONIBLES']::text[], 1, 'haut', NULL),
+  ('TO_HOT', 'indicateur', 'Taux d''occupation hôtelier', 'Hébergement', 20, 'pourcent', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'TO hôtelier', 'positif', ARRAY['LN_VENDUES_HOT']::text[], ARRAY['LN_DISPO_HOT']::text[], 1, 'haut', NULL),
+  ('PM', 'indicateur', 'Prix moyen chambre', 'Hébergement', 30, 'euro', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'PM', 'positif', ARRAY['CA_MEWS_HEB_HOT']::text[], ARRAY['LN_VENDUES_HOT']::text[], 1, 'haut', NULL),
+  ('REVPAR', 'indicateur', 'RevPar', 'Hébergement', 40, 'euro', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'RevPar', 'positif', ARRAY['CA_MEWS_HEB_HOT']::text[], ARRAY['LN_DISPO_HOT']::text[], 1, 'haut', NULL),
+  ('REVPAC', 'indicateur', 'RevPac', 'Hébergement', 50, 'euro', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'RevPac', 'positif', ARRAY['CA_MEWS_HOTELIER']::text[], ARRAY['NUITEES_CLIENTS']::text[], 1, 'haut', NULL),
+  ('DMS', 'indicateur', 'Durée moyenne de séjour', 'Hébergement', 60, 'jours', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], 'DMS', 'positif', ARRAY['LN_VENDUES_HOT']::text[], ARRAY['NB_SEJOURS']::text[], 1, 'haut', NULL),
+  ('TO_SEN', 'indicateur', 'Taux d''occupation seniors', 'Seniors', 70, 'pourcent', true, ARRAY['SENIORS']::text[], 'TO seniors', 'positif', ARRAY['NUITEES_SEN']::text[], ARRAY['LN_DISPO_SEN']::text[], 1, 'haut', NULL),
+  ('CAPTAGE_PDJ', 'indicateur', 'Taux de captage petit-déjeuner', 'Restauration', 80, 'pourcent', true, ARRAY['TOURISME', 'SENIORS']::text[], 'Captage PDJ', 'positif', ARRAY['COUVERTS_PDJ']::text[], ARRAY['NUITEES_CLIENTS']::text[], 1, 'haut', NULL),
+  ('CA_TOTAL', 'indicateur', 'CA total de la résidence', 'Chiffre d''affaires', 90, 'euro', true, ARRAY['TOURISME', 'SENIORS', 'ETUDIANTS']::text[], NULL, 'positif', ARRAY['CA_MEWS_TOTAL']::text[], '{}'::text[], 1, 'haut', NULL)
+ON CONFLICT (code) DO NOTHING;
+-- <<< fin de l'amorce
 
 -- ===================== scripts/donnees_test.sql =====================
 -- Données de départ de la phase test (lots 12 et 13). Tout est fictif sauf les deux adresses

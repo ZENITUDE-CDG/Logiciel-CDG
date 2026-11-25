@@ -109,7 +109,7 @@ def test_synchroniser_une_residence_et_suivre(site):
     assert "Synchronisation n° 42 lancée" in pg.inner_text("#imp-message")
     assert "demandée" in pg.inner_text("#imp-historique")
     # La base passe la demande à « terminée » : le suivi l'affiche et propose de recharger
-    pg.evaluate("window.rechargements = 0; RECHARGER = function () { rechargements++; }")
+    pg.evaluate("window.rechargements = 0; RECHARGER = function () { rechargements++; }; true")
     pg.evaluate("SYNC_DELAI = 50; tablesTest.synchronisations = [{ id: 42, statut: 'terminée', demandee_le: '2026-11-24T10:00:00Z', "
                 "demandee_par: 'admin@exemple.invalid', perimetre: 'Dossier Pennylane de test', dossiers: ['PENNY-TEST'], "
                 "mois_debut: '2026-02', mois_fin: '2026-04', masquer_brouillard: false, "

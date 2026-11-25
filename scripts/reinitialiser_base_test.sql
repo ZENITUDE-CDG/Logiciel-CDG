@@ -1,11 +1,11 @@
 -- Remise à zéro de la BASE DE TEST Supabase (données fictives uniquement).
--- Supprime les tableaux et fonctions des lots 12 à 19, y compris ceux d'une version précédente.
+-- Supprime les tableaux et fonctions des lots 12 à 20, y compris ceux d'une version précédente.
 -- Ne jamais exécuter sur une base contenant des données réelles.
 
-DROP TABLE IF EXISTS connexions_pennylane, cle_jetons, depots_kpi, kpi_mois, pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
+DROP TABLE IF EXISTS residence_modele, kpi_journal, kpi_catalogue, kpi_modeles, connexions_pennylane, cle_jetons, depots_kpi, kpi_mois, pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
   parcs, residence_groupe, groupes, residences, profils CASCADE;
 
-DROP FUNCTION IF EXISTS trace_connexion_pennylane(), trace_cle_jetons(), trace_kpi(), garde_code_mews(), trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
+DROP FUNCTION IF EXISTS controle_kpi_catalogue(), journal_kpi_catalogue(), trace_residence_modele(), controle_signe_mesure(), trace_connexion_pennylane(), trace_cle_jetons(), trace_kpi(), garde_code_mews(), trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
   modifie_dossier(text), voit_dossier(text), ajustements_trace(),
   voit_groupe(text), voit_residence(text), modifie_residence(text),
   est_administrateur(), role_courant(), email_courant(), utilisateur_courant() CASCADE;

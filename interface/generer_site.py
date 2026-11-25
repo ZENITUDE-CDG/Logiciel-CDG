@@ -214,6 +214,9 @@ LIGNES_SIG = [
 # Une colonne par mesure d'exploitation du catalogue ; d'autres en-têtes reconnus (alias) pour reprendre les
 # dossiers KPI existants. Les autres colonnes de ces dossiers (CA SAP, TO seniors...) seront ajoutées quand le
 # contrôle de gestion aura validé les KPI qui les utilisent.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import catalogue_kpi  # noqa: E402  (lot 20)
+
 IMPORT_KPI = [
     {"code": "LN_VENDUES", "entete": "Chambres vendues", "alias": ["Logements-nuits vendus", "Nuitées vendues"],
      "consolide": "Nuitées totales"},
@@ -694,6 +697,9 @@ def construire(demo=DEMO):
         "lignes_ebitda": _lignes_exportees(LIGNES_EBITDA),
         "ratios_ebitda": RATIOS_EBITDA,
         "import_kpi": IMPORT_KPI, "ratios_consolide": RATIOS_CONSOLIDE,
+        # Lot 20 : catalogue de départ (démonstration locale ; en ligne, la page lit la base)
+        "catalogue_defaut": catalogue_kpi.CATALOGUE, "modeles_defaut": catalogue_kpi.MODELES,
+        "modele_par_activite": catalogue_kpi.MODELE_PAR_ACTIVITE,
         "ebitda": ebitda,
         "lignes_sig": _lignes_exportees(LIGNES_SIG),
         "sig": sig, "imports": imports, "journaux": journaux, "plan": plan,

@@ -54,6 +54,7 @@ window.clientSimule = function (tables) {
     var api = {
       select: function () { return api; }, order: function () { return api; },
       range: function (a, b) { q.plage = [a, b]; return api; },  // lot 19 : lecture par pages
+      limit: function (n) { q.plage = [0, n - 1]; return api; },  // lot 20 : journal du catalogue
       eq: function (k, v) { q.filtres.push([k, v]); return api; },
       maybeSingle: function () { q.unique = true; return api; },
       insert: function (v) { q.op = "insert"; q.valeurs = v; return api; },

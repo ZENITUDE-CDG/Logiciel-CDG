@@ -40,6 +40,11 @@ class FausseBase:
             if self.sans_migration:
                 raise pub.PublicationRefusee("Supabase a refusé GET parametres_import (code 404) : PGRST205")
             return self.params
+        if methode == "GET" and chemin.startswith("lettrages_pennylane"):
+            return []
+        if methode == "POST" and chemin.startswith("lettrages_pennylane"):
+            self.lettrages = getattr(self, "lettrages", []) + corps
+            return None
         if methode == "GET" and chemin.startswith("synchronisations"):
             ident = int(chemin.split("id=eq.")[1].split("&")[0])
             return [self.demandes[ident]] if ident in self.demandes else []
@@ -92,7 +97,7 @@ def test_demande_traitee(env, capsys):
     assert src["periode"] == ["2026-01-01", "2026-03-31"] and src["mode"] == "valides"
     assert src["brouillard"] == {"lignes": 2, "masque": True, "charges": "50.00", "produits": "0.00"}
     sortie = capsys.readouterr().out
-    assert "50.00" not in sortie and "hors de la période d'import" in sortie
+    assert "50.00" not in sortie and "filtre de dates appliqué par Pennylane : oui" in sortie
     assert "RES-001" in base.publie  # la démonstration est republiée avec
 
 
@@ -179,7 +184,8 @@ def test_periode_dans_le_connecteur():
     lignes, _, r = pl.extraire(client(), "PENNY-TEST", "tous", depuis=date(2025, 10, 1), aujourdhui=AUJOURDHUI,
                                periode=(date(2026, 4, 1), date(2026, 4, 30)))
     assert {l["date"][:7] for l in lignes} == {"2026-04"}
-    assert r["lignes_hors_periode"] == 4 and r["periode"] == ["2026-04-01", "2026-04-30"]
+    assert r["lignes_hors_periode"] == 0 and r["lecture"]["filtre_dates"]  # période demandée à Pennylane
+    assert r["periode"] == ["2026-04-01", "2026-04-30"]
     assert "50.00" not in pl.texte_rapport(r)
 
 

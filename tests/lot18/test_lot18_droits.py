@@ -103,3 +103,14 @@ def test_personne_n_ecrit_le_journal_depuis_la_page(jeu):
 def test_statut_controle(jeu):
     cur = jeu.cursor()
     refuse(jeu, cur, "UPDATE synchronisations SET statut = 'inventé'", erreur=errors.CheckViolation)
+
+
+def test_memoire_du_lettrage_inaccessible_depuis_la_page(jeu):
+    cur = jeu.cursor()
+    cur.execute("INSERT INTO lettrages_pennylane (dossier, ligne_id, maj, groupe) VALUES ('D-1', 12, 'x', 'L12')")
+    cur.execute("SELECT lu_le IS NOT NULL FROM lettrages_pennylane WHERE ligne_id = 12")
+    assert cur.fetchone()[0]
+    for email in (ADMIN, COLLAB, None):
+        c = connecte(jeu, email)
+        refuse(jeu, c, "SELECT * FROM lettrages_pennylane")
+        refuse(jeu, c, "INSERT INTO lettrages_pennylane (dossier, ligne_id) VALUES ('D-1', 13)")

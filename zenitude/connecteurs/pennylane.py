@@ -27,12 +27,14 @@ Correspondance des champs (relevée sur le dossier de test, workflow « Test str
 """
 import json
 import re
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 import urllib.error
 import urllib.parse
 import urllib.request
 from collections import Counter, deque
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 
 BASE = "https://app.pennylane.com/api/external/v2"
@@ -67,6 +69,21 @@ class ErreurPennylane(Exception):
     pass
 
 
+class RequeteRefusee(ErreurPennylane):
+    """Requête refusée comme invalide (400, 422) : paramètre non accepté (taille de page, filtre)."""
+
+    def __init__(self, message, code):
+        super().__init__(message)
+        self.code = code
+
+
+# Lot 18c : vitesse. Pages de 1 000 éléments si Pennylane les accepte (sinon 100), filtre de dates
+# demandé à Pennylane (sinon filtrage ici), lectures en parallèle dans la limite de débit, lettrage mémorisé.
+TAILLES_PAGE = (1000, 100)
+LECTURES_PARALLELES = 5
+VALIDITE_LETTRAGE = timedelta(days=7)
+
+
 # --------------------------------------------------------------------------------------------- client
 
 def _ouvrir_http(url, entetes):
@@ -90,8 +107,14 @@ class Client:
         self.base = base.rstrip("/")
         self._instants = deque()
         self.requetes = 0
+        self._verrou = threading.Lock()
 
     def _attendre_tour(self):
+        with self._verrou:  # plusieurs lectures en parallèle partagent la même limite de débit
+            self.requetes += 1
+            self._attendre_tour_seul()
+
+    def _attendre_tour_seul(self):
         maintenant = self._horloge()
         while self._instants and maintenant - self._instants[0] >= FENETRE_SECONDES:
             self._instants.popleft()
@@ -111,7 +134,6 @@ class Client:
                    "X-Use-2026-API-Changes": "true"}
         for essai in range(6):
             self._attendre_tour()
-            self.requetes += 1
             code, hdr, texte = self._ouvrir(url, entetes)
             if code == 429:
                 attente = hdr.get("Retry-After") or hdr.get("retry-after") or "5"
@@ -125,6 +147,8 @@ class Client:
                 raise ErreurPennylane("jeton refusé (401) : jeton expiré, supprimé ou mal copié")
             if code == 403:
                 raise ErreurPennylane("accès interdit (403) : droits du jeton insuffisants")
+            if code in (400, 422):
+                raise RequeteRefusee(f"requête refusée par Pennylane (code {code}) sur {_chemin(url, self.base)}", code)
             if code != 200:
                 # Le corps de la réponse n'est jamais affiché (il pourrait contenir des données).
                 raise ErreurPennylane(f"réponse inattendue de Pennylane (code {code}) sur {_chemin(url, self.base)}")
@@ -140,11 +164,28 @@ class Client:
             url += "?" + urllib.parse.urlencode(params)
         return self.get_url(url)
 
-    def lister(self, chemin, limite=100):
+    def tout_lire(self, chemin, filtres=None):
+        """Toute une liste, en essayant d'abord les grandes pages et le filtre, avec repli automatique.
+
+        Renvoie (éléments, {"taille_page", "filtre"}) : filtre = True si Pennylane a accepté le filtre.
+        """
+        essais = [(n, filtres) for n in TAILLES_PAGE] if filtres else []
+        essais += [(n, None) for n in TAILLES_PAGE]
+        derniere = None
+        for taille, f in essais:
+            try:
+                return list(self.lister(chemin, taille, f)), {"taille_page": taille, "filtre": bool(f)}
+            except RequeteRefusee as e:
+                derniere = e
+        raise derniere
+
+    def lister(self, chemin, limite=100, filtres=None):
         """Tous les éléments d'une liste paginée par curseur (items, has_more, next_cursor)."""
         curseur, pages = None, 0
         while True:
             params = {"limit": limite}
+            if filtres:
+                params["filter"] = json.dumps(filtres, separators=(",", ":"))
             if curseur:
                 params["cursor"] = curseur
             rep = self.get(chemin, params)
@@ -209,12 +250,32 @@ def choisir_exercice(exercices, aujourdhui):
     return max(commences or exercices, key=lambda e: e[0])
 
 
-def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, periode=None):
+def _filtres_dates(debut, fin):
+    f = []
+    if debut:
+        f.append({"field": "date", "operator": "gteq", "value": debut.isoformat()})
+    if fin and fin.year < 9999:
+        f.append({"field": "date", "operator": "lteq", "value": fin.isoformat()})
+    return f or None
+
+
+def _date_heure(v):
+    try:
+        d = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, periode=None, lettrage_memo=None):
     """Lit le dossier et renvoie (lignes ecritures.csv, ligne exercices.csv, rapport).
 
     mode : "valides" (écritures validées seulement) ou "tous" (validées et brouillard).
     depuis : date minimale imposée par le site (frise) ; les écritures antérieures sont comptées.
     periode : (premier jour, dernier jour) de la période d'import choisie dans la page (lot 18b), ou None.
+    lettrage_memo : {id de ligne: {"maj", "groupe", "lu_le"}} déjà connus (lot 18c) ; un groupe n'est redemandé
+    que si la ligne a changé (updated_at) ou si le relevé a plus de 7 jours. Les relevés nouveaux sont
+    renvoyés dans rapport["_lettrage_a_memoriser"] (jamais affiché).
     Le rapport ne contient aucun montant, sauf rapport["brouillard"] (sommes des écritures en brouillard),
     destiné à la base et jamais affiché dans les journaux.
     """
@@ -236,23 +297,33 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
     exercices.sort()
     rapport["exercices"] = len(exercices)
 
-    liste_journaux = list(client.lister("/journals"))
+    liste_journaux, _ = client.tout_lire("/journals")
     journaux = {j.get("id"): str(j.get("code") or "").strip() for j in liste_journaux}
     types_journaux = {j.get("id"): str(j.get("type") or "(vide)") for j in liste_journaux}
-    comptes_types = Counter(str(a.get("type") or "(vide)") for a in client.lister("/ledger_accounts"))
+    comptes_lus, _ = client.tout_lire("/ledger_accounts")
+    comptes_types = Counter(str(a.get("type") or "(vide)") for a in comptes_lus)
     rapport["types_de_comptes"] = dict(sorted(comptes_types.items()))
 
-    entetes = {}
-    for e in client.lister("/ledger_entries"):
-        entetes[e.get("id")] = e
+    # Écritures et lignes : lues en parallèle, limitées à la période quand Pennylane accepte le filtre.
+    bas = max([x for x in (depuis, periode[0] if periode else None) if x], default=None)
+    haut = periode[1] if periode else None
+    filtres = _filtres_dates(bas, haut)
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        f_entrees = ex.submit(client.tout_lire, "/ledger_entries", filtres)
+        f_lignes = ex.submit(client.tout_lire, "/ledger_entry_lines", filtres)
+        liste_entrees, info_e = f_entrees.result()
+        liste_lignes, info_l = f_lignes.result()
+    entetes = {e.get("id"): e for e in liste_entrees}
     rapport["ecritures_pennylane"] = len(entetes)
+    rapport["lecture"] = {"taille_page": min(info_e["taille_page"], info_l["taille_page"]),
+                          "filtre_dates": bool(filtres) and info_e["filtre"] and info_l["filtre"]}
 
     statuts = Counter()
     statuts_par_type = Counter()
     lignes, ecartees, hors_exercice, anterieures, hors_periode = [], Counter(), 0, 0, 0
     brouillard = {"lignes": 0, "charges": Decimal("0"), "produits": Decimal("0")}
     a_lettrer = []
-    for l in client.lister("/ledger_entry_lines"):
+    for l in liste_lignes:
         id_entree = (l.get("ledger_entry") or {}).get("id")
         ent = entetes.get(id_entree)
         if ent is None:
@@ -313,26 +384,48 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
         lignes.append(ligne)
         url = (l.get("lettered_ledger_entry_lines") or {}).get("url")
         if url and compte.startswith(PREFIXES_TIERS):
-            a_lettrer.append((ligne, url))
+            a_lettrer.append((ligne, url, str(l.get("updated_at") or "")))
 
-    # Lettrage : un appel par groupe (les autres membres du groupe sont reconnus sans nouvel appel).
-    groupe_de = {}
-    groupes = 0
-    for ligne, url in a_lettrer:
-        if ligne["_id"] in groupe_de:
-            ligne["lettrage"] = groupe_de[ligne["_id"]]
-            continue
+    # Lettrage : groupes mémorisés réutilisés ; les autres demandés en parallèle (un appel par groupe, les autres
+    # membres du groupe sont reconnus sans nouvel appel).
+    memo = lettrage_memo or {}
+    maintenant = datetime.now(timezone.utc)
+    groupe_de, verrou, a_demander, depuis_memo = {}, threading.Lock(), [], 0
+    for ligne, url, maj in a_lettrer:
+        m = memo.get(ligne["_id"]) or memo.get(str(ligne["_id"]))
+        lu = _date_heure(m.get("lu_le")) if m else None
+        if m and maj and m.get("maj") == maj and lu and maintenant - lu < VALIDITE_LETTRAGE:
+            ligne["lettrage"] = m.get("groupe") or ""
+            depuis_memo += 1
+        else:
+            a_demander.append((ligne, url, maj))
+
+    def demander(element):
+        ligne, url, _ = element
+        with verrou:
+            if ligne["_id"] in groupe_de:
+                return
         rep = client.get_url(url)
         membres = rep if isinstance(rep, list) else (rep.get("items") or [])
         ids = {m.get("id") for m in membres if m.get("id") is not None}
         if not ids:
-            continue
+            with verrou:
+                groupe_de.setdefault(ligne["_id"], "")
+            return
         ids.add(ligne["_id"])
         code = "L" + str(min(ids, key=lambda x: (str(type(x)), x)))
-        for i in ids:
-            groupe_de[i] = code
-        ligne["lettrage"] = code
-        groupes += 1
+        with verrou:
+            for i in ids:
+                groupe_de[i] = code
+
+    with ThreadPoolExecutor(max_workers=LECTURES_PARALLELES) as ex:
+        list(ex.map(demander, a_demander))
+    a_memoriser = {}
+    for ligne, url, maj in a_demander:
+        ligne["lettrage"] = groupe_de.get(ligne["_id"], "")
+        a_memoriser[ligne["_id"]] = {"maj": maj, "groupe": ligne["lettrage"]}
+    rapport["_lettrage_a_memoriser"] = a_memoriser
+    rapport["lettrage"] = {"lignes": len(a_lettrer), "depuis_memoire": depuis_memo, "demandees": len(a_demander)}
 
     for ligne in lignes:
         ligne.pop("_id", None)
@@ -361,7 +454,7 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
         "comptes": len({x["compte"] for x in lignes}),
         "comptes_tiers": len({x["compte"] for x in lignes if x["tiers"]}),
         "longueurs_comptes_tiers": dict(sorted(Counter(len(x["compte"]) for x in lignes if x["tiers"]).items())),
-        "groupes_lettrage": groupes,
+        "groupes_lettrage": len({l["lettrage"] for l in lignes if l["lettrage"]}),
         "equilibre": debit == credit,
         "exercice_retenu": f"{exo[0].isoformat()} au {exo[1].isoformat()}",
         "requetes": client.requetes,
@@ -411,6 +504,14 @@ def texte_rapport(rapport):
                f" ; longueurs de leurs numéros : {r['longueurs_comptes_tiers'] or 'aucun'}")
     out.append(f"Types de comptes Pennylane : {r['types_de_comptes']}")
     out.append(f"Groupes de lettrage : {r['groupes_lettrage']}")
+    lt = r.get("lettrage")
+    if lt:
+        out.append(f"Lettrage : {lt['lignes']} ligne(s) de tiers, {lt['depuis_memoire']} reprise(s) de la mémoire, "
+                   f"{lt['demandees']} demandée(s) à Pennylane")
+    lec = r.get("lecture")
+    if lec:
+        out.append(f"Lecture : pages de {lec['taille_page']} éléments ; filtre de dates appliqué par Pennylane : "
+                   f"{'oui' if lec['filtre_dates'] else 'non'}")
     out.append(f"Lignes reprises équilibrées (débits = crédits) : {'oui' if r['equilibre'] else 'NON'}")
     out.append(f"Requêtes envoyées à Pennylane : {r['requetes']}")
     return "\n".join(out)

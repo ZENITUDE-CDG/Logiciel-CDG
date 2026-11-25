@@ -68,7 +68,8 @@ LETTRAGE = {12: [12, 61], 61: [12, 61], 22: [], 31: []}
 class FauxPennylane:
     """Faux serveur : pagination par deux éléments, un 429 au premier appel des journaux."""
 
-    def __init__(self, entrees=ENTREES, lignes=LIGNES, taille=2):
+    def __init__(self, entrees=ENTREES, lignes=LIGNES, taille=2, refuse_grand=False, refuse_filtre=False):
+        self.refuse_grand, self.refuse_filtre = refuse_grand, refuse_filtre
         self.donnees = {
             "/fiscal_years": [{"id": 1, "start": "2025-01-01", "finish": "2025-12-31", "status": "closed"},
                               {"id": 2, "start": "2026-01-01", "finish": "2026-12-31", "status": "open"}],
@@ -98,7 +99,16 @@ class FauxPennylane:
             i = int(chemin.split("/")[2])
             return 200, {}, json.dumps({"items": [{"id": x} for x in LETTRAGE.get(i, [])],
                                         "has_more": False, "next_cursor": None})
+        if self.refuse_grand and int(q.get("limit") or 0) > 100:
+            return 400, {}, json.dumps({"error": "limit must be <= 100"})
         items = self.donnees[chemin]
+        if "filter" in q:
+            if self.refuse_filtre:
+                return 400, {}, json.dumps({"error": "invalid filter"})
+            for f in json.loads(q["filter"]):
+                assert f["field"] == "date"
+                op = {"gteq": lambda a, b: a >= b, "lteq": lambda a, b: a <= b}[f["operator"]]
+                items = [x for x in items if op(x["date"], f["value"])]
         debut = int(q.get("cursor") or 0)
         page = items[debut:debut + self.taille]
         suite = debut + self.taille < len(items)
@@ -144,8 +154,12 @@ def test_filtre_par_statut():
 
 
 def test_ecritures_anterieures_comptees_non_reprises():
-    _, _, rapport = extraire("valides")
+    # Sans filtre accepté par Pennylane, les écritures antérieures sont lues puis écartées et comptées ;
+    # avec le filtre (lot 18c), elles ne sont même pas lues.
+    _, _, rapport = extraire("valides", serveur=FauxPennylane(refuse_filtre=True))
     assert rapport["lignes_anterieures"] == 2
+    _, _, r_filtre = extraire("valides")
+    assert r_filtre["lignes_anterieures"] == 0 and r_filtre["lignes_lues"] == len(LIGNES) - 2
     lignes, _, r = extraire("valides", depuis=None)
     assert r["lignes_anterieures"] == 0 and any(l["date"] == "2025-03-01" for l in lignes)
 
@@ -168,7 +182,7 @@ def test_adresse_hors_api_refusee():
 
 def test_pagination_et_reprise_sur_429():
     serveur = FauxPennylane()
-    lignes, _, rapport = extraire("tous", serveur=serveur)
+    lignes, _, rapport = extraire("tous", serveur=serveur, depuis=None)
     assert rapport["lignes_lues"] == len(LIGNES)
     assert sum("/journals" in u for u in serveur.appels) == 3  # 429, puis deux pages
     assert any("cursor=" in u for u in serveur.appels)

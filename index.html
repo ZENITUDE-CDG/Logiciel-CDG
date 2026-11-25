@@ -702,7 +702,12 @@ function demarrer() {
   remplirUtilisateur();
   // Lot 14 : index.html#choix (logo des autres pages) ouvre directement le choix des résidences.
   if (location.hash === "#choix") { p = null; try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
-  if (p && perimetre(p)) { etat.perim = p; appliquerExercice(); return ouvrirApp(); }
+  if (p && perimetre(p)) {
+    etat.perim = p; appliquerExercice(); ouvrirApp();
+    var r = session("apres-recharge"); /* lot 18c : retour sur la page d'où la synchronisation a été suivie */
+    if (r && r[0] && r[1]) { session("apres-recharge", null); try { allerA(r[0], r[1]); } catch (e) {} }
+    return;
+  }
   ouvrirChoix();
 }
 function utilisateurEnLigne() {
@@ -2106,7 +2111,18 @@ function moisCourant() { var d = new Date(); return d.getFullYear() + "-" + (d.g
 function moisMaj(m) { var s = moisLong(m); return s.charAt(0).toUpperCase() + s.slice(1); }
 function sourceDe(d) { return (D.sources || {})[d] || null; }
 function paramDe(d) { return (D.parametres_import || []).find(function (x) { return x.dossier === d; }) || null; }
-function dateHeure(iso) { if (!iso) return ""; var s = String(iso); return dateFr(s) + (s.length > 10 ? " " + s.slice(11, 16) : ""); }
+/* Lot 18c : heures affichées à l'heure de Paris (la base et GitHub donnent l'heure universelle). */
+function dateHeure(iso) {
+  if (!iso) return ""; var s = String(iso);
+  if (s.length <= 10) return dateFr(s);
+  var d = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(s) ? s : s + "Z");
+  if (isNaN(d)) return dateFr(s);
+  var p = {}; new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+    .formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
+  return p.day + "/" + p.month + "/" + p.year + " " + p.hour + ":" + p.minute;
+}
+/* Rechargement des chiffres à la fin d'une synchronisation : même page, même périmètre. */
+var RECHARGER = function () { session("apres-recharge", [etat.section, etat.page]); location.reload(); };
 function peutSynchroniser() { return enLigne() && estAdmin() && !!(ZCLIENT && ZCLIENT.functions); }
 function libStatutSync(s) { var c = { "demandée": "att", "en cours": "att", "terminée": "ok", "échec": "ko" }[s] || "att"; return '<span class="pastille ' + c + '">' + esc(s) + "</span>"; }
 function detailSync(x) {
@@ -2138,9 +2154,12 @@ function suivreSynchro() {
       D.synchronisations = r || [];
       var z = el("imp-historique"); if (z) z.outerHTML = blocHistorique();
       var finies = D.synchronisations.filter(function (x) { return avant.indexOf(x.id) >= 0 && (x.statut === "terminée" || x.statut === "échec"); });
-      if (finies.length) messageImport(finies[0].statut === "terminée" ?
-        "Synchronisation n° " + finies[0].id + " terminée. <button class=\"btn btn-ligne\" id=\"imp-recharger\">Recharger les chiffres</button>" :
-        "Synchronisation n° " + finies[0].id + " en échec : " + esc(finies[0].message || ""), finies[0].statut === "terminée" ? "info" : "");
+      if (finies.length) {
+        var ok = finies[0].statut === "terminée";
+        messageImport(ok ? "Synchronisation n° " + finies[0].id + " terminée : chargement des nouveaux chiffres… <button class=\"btn btn-ligne\" id=\"imp-recharger\">Recharger maintenant</button>" :
+          "Synchronisation n° " + finies[0].id + " en échec : " + esc(finies[0].message || ""), ok ? "info" : "");
+        if (ok) setTimeout(function () { RECHARGER(); }, 1500);
+      }
       if (D.synchronisations.some(function (x) { return x.statut === "demandée" || x.statut === "en cours"; })) suivreSynchro();
     }).catch(function () { suivreSynchro(); });
   }, SYNC_DELAI);
@@ -2148,7 +2167,7 @@ function suivreSynchro() {
 function messageImport(html, classe) {
   var z = el("imp-message"); if (!z) return;
   z.innerHTML = html ? '<div class="connexion-etat ' + (classe || "") + '" style="margin:0 0 16px">' + html + "</div>" : "";
-  var b = el("imp-recharger"); if (b) b.onclick = function () { location.reload(); };
+  var b = el("imp-recharger"); if (b) b.onclick = function () { RECHARGER(); };
 }
 function lancerSynchro(p) {
   var md = el("imp-debut").value, mf = el("imp-fin").value, masquer = el("imp-brouillard").classList.contains("on");

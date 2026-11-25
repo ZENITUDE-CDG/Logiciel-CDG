@@ -223,7 +223,36 @@ def calculer(demo=generer_site.DEMO, pennylane=None):
     return commun, par
 
 
-def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None, periode=None):
+def lire_memo_lettrage(base, cle, dossier, envoyer=None):
+    """Groupes de lettrage déjà relevés (table lettrages_pennylane, lot 18c), par pages de 1 000. {} si absente."""
+    envoyer = envoyer or requete
+    memo, offset = {}, 0
+    while True:
+        try:
+            rep = envoyer("GET", base + f"/rest/v1/lettrages_pennylane?dossier=eq.{dossier}"
+                          f"&select=ligne_id,maj,groupe,lu_le&order=ligne_id&limit=1000&offset={offset}", cle) or []
+        except PublicationRefusee as e:
+            if "PGRST205" in str(e) or "(code 404)" in str(e) or "does not exist" in str(e):
+                print("avertissement : migration 008 non appliquée (lettrage relu en entier)")
+                return {}
+            raise
+        for r in rep:
+            memo[r["ligne_id"]] = {"maj": r.get("maj") or "", "groupe": r.get("groupe") or "", "lu_le": r.get("lu_le")}
+        if len(rep) < 1000:
+            return memo
+        offset += 1000
+
+
+def ecrire_memo_lettrage(base, cle, dossier, a_ecrire, envoyer=None):
+    """Mémorise les groupes de lettrage relevés (lu_le posé par la base), par paquets de 1 000."""
+    envoyer = envoyer or requete
+    lignes = [{"dossier": dossier, "ligne_id": i, "maj": v["maj"], "groupe": v["groupe"]} for i, v in a_ecrire.items()]
+    for k in range(0, len(lignes), 1000):
+        envoyer("POST", base + "/rest/v1/lettrages_pennylane?on_conflict=dossier,ligne_id", cle, lignes[k:k + 1000],
+                "resolution=merge-duplicates,return=minimal")
+
+
+def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None, periode=None, memo=None):
     """Lit le dossier de test par le connecteur (lot 18). Renvoie (lignes, exercice, rapport).
 
     periode : (premier jour, dernier jour) choisis dans la page (lot 18b), ou None.
@@ -236,8 +265,10 @@ def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=No
         generer_demo.main(demo)
     client = client or pl.Client(jeton)
     lignes, exercice, rapport = pl.extraire(client, source_pennylane.DOSSIER_TEST, mode,
-                                            depuis=source_pennylane.debut_frise(demo), periode=periode)
-    rapport["synchronise_le"] = datetime.now().replace(microsecond=0).isoformat()
+                                            depuis=source_pennylane.debut_frise(demo), periode=periode,
+                                            lettrage_memo=memo)
+    from datetime import timezone
+    rapport["synchronise_le"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     return lignes, exercice, rapport
 
 
@@ -363,8 +394,12 @@ def _publier_tout(argv, base, cle, demande):
             mode = "valides" if (param or {}).get("masquer_brouillard", True) else "tous"
         periode = periode_de(demande) if demande is not None else periode_de(param)
         try:
-            pennylane = lire_pennylane(jeton=jeton, mode=mode, periode=periode)
+            import time
+            t0 = time.monotonic()
+            memo = lire_memo_lettrage(base, cle, source_pennylane.DOSSIER_TEST)
+            pennylane = lire_pennylane(jeton=jeton, mode=mode, periode=periode, memo=memo)
             print(pl.texte_rapport(pennylane[2]))
+            print(f"Durée de lecture Pennylane : {time.monotonic() - t0:.0f} s")
         except pl.ErreurPennylane as e:
             erreur = str(e)
             if obligatoire:
@@ -400,6 +435,11 @@ def _publier_tout(argv, base, cle, demande):
         print("avertissement : " + a)
     print(f"publié : données communes et {len(lignes)} résidence(s) : "
           + ", ".join(l["residence_id"] for l in lignes))
+    if pennylane is not None and pennylane[2].get("_lettrage_a_memoriser"):
+        try:
+            ecrire_memo_lettrage(base, cle, source_pennylane.DOSSIER_TEST, pennylane[2]["_lettrage_a_memoriser"])
+        except PublicationRefusee as e:
+            print("avertissement : lettrage non mémorisé (" + str(e)[:200] + ")")
     if demande is not None:
         maj_demande(base, cle, demande["id"], {"statut": "terminée", "fin": _maintenant(),
                                                "resultat": _resultat_demande(demande, par, pennylane)})

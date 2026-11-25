@@ -109,12 +109,14 @@ def test_synchroniser_une_residence_et_suivre(site):
     assert "Synchronisation n° 42 lancée" in pg.inner_text("#imp-message")
     assert "demandée" in pg.inner_text("#imp-historique")
     # La base passe la demande à « terminée » : le suivi l'affiche et propose de recharger
+    pg.evaluate("window.rechargements = 0; RECHARGER = function () { rechargements++; }")
     pg.evaluate("SYNC_DELAI = 50; tablesTest.synchronisations = [{ id: 42, statut: 'terminée', demandee_le: '2026-11-24T10:00:00Z', "
                 "demandee_par: 'admin@exemple.invalid', perimetre: 'Dossier Pennylane de test', dossiers: ['PENNY-TEST'], "
                 "mois_debut: '2026-02', mois_fin: '2026-04', masquer_brouillard: false, "
                 "resultat: { 'PENNY-TEST': { statut: 'synchronisée', lignes_reprises: 6 } } }]; suivreSynchro();")
     pg.wait_for_selector("#imp-recharger")
     assert "6 lignes" in pg.inner_text("#imp-historique")
+    pg.wait_for_function("rechargements === 1")  # lot 18c : chiffres rechargés automatiquement
     # Les réglages restent affichés
     pg.evaluate("majContenu()")
     assert pg.input_value("#imp-debut") == "2026-02" and pg.get_attribute("#imp-brouillard", "aria-pressed") == "false"
@@ -189,5 +191,30 @@ def test_page_hors_ligne(site):
     pg.evaluate("choisir('DEMO-2001'); allerA('import', 'pennylane')")
     assert pg.is_disabled("#imp-synchro")
     assert "Résidence non connectée à Pennylane" in pg.inner_text("#contenu")
+    assert erreurs == []
+    pg.close()
+
+
+def test_heures_de_paris(site):
+    pg, erreurs = demarrer(site)
+    assert pg.evaluate("dateHeure('2026-11-24T14:08:00+00:00')") == "24/11/2026 15:08"
+    assert pg.evaluate("dateHeure('2026-11-24T13:57:00')") == "24/11/2026 14:57"  # sans fuseau : heure universelle
+    assert pg.evaluate("dateHeure('2026-07-01T10:00:00Z')") == "01/07/2026 12:00"  # heure d'été
+    assert pg.evaluate("dateHeure('2026-11-24')") == "24/11/2026"
+    assert erreurs == []
+    pg.close()
+
+
+def test_retour_sur_la_page_apres_rechargement(site):
+    pg = site["nav"].new_page()
+    erreurs = []
+    pg.on("pageerror", lambda e: erreurs.append(str(e)))
+    pg.goto(site["complet"].as_uri())
+    pg.evaluate("sessionStorage.setItem('zen-utilisateur', JSON.stringify({ mail: 'demo@exemple.invalid', nom: 'Démo', ini: 'D' })); "
+                "sessionStorage.setItem('zen-perim', JSON.stringify('DEMO-2001')); "
+                "sessionStorage.setItem('zen-apres-recharge', JSON.stringify(['import', 'pennylane']))")
+    pg.reload()
+    pg.wait_for_selector("#imp-synchro")
+    assert pg.evaluate("etat.page") == "pennylane" and pg.evaluate("sessionStorage.getItem('zen-apres-recharge')") is None
     assert erreurs == []
     pg.close()

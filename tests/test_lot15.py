@@ -121,4 +121,5 @@ def test_modele_d_import(tmp_path):
     depot = load_workbook(RACINE / "modeles" / "Zenitude_Import_KPI_modele.xlsx")
     assert [c.value for c in depot["Saisie"][1]] == gm.ENTETES, "modèle à régénérer : python interface/generer_modele_import.py"
     catalogue = {"LN_VENDUES", "LN_DISPONIBLES", "NB_SEJOURS", "NUITEES_CLIENTS", "COUVERTS_PDJ"}
-    assert {k["code"] for k in generer_site.IMPORT_KPI} <= catalogue
+    # Lot 19 : les mesures propres au consolidé KPI (modele = False) sont hors du modèle de saisie.
+    assert {k["code"] for k in generer_site.IMPORT_KPI if k.get("modele", True)} <= catalogue

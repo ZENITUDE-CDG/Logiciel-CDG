@@ -3,9 +3,9 @@
 Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouveau contributeur.
 À lire avant CLAUDE.md.
 
-## Où en est-on (23 novembre 2026)
+## Où en est-on (25 novembre 2026)
 
-- Phase : **test uniquement**. Données fictives. Pennylane : seul le dossier de test `PENNY-TEST` est lu, en lecture seule (lot 18, décision 0011). Pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004, 0006, 0007) ; rien en local. Les chiffres sont calculés par GitHub Actions et publiés dans la base ; la page en ligne ne contient aucune donnée.
+- Phase : **test uniquement**. Données fictives. Pennylane : seul le dossier de test `PENNY-TEST` est lu, en lecture seule (lot 18, décision 0011) ; les jetons d'autres dossiers peuvent être enregistrés chiffrés et testés (identité de la société seulement, lot 19, décision 0013). Pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004, 0006, 0007) ; rien en local. Les chiffres sont calculés par GitHub Actions et publiés dans la base ; la page en ligne ne contient aucune donnée.
 - Cadrage : ZENITUDE v0.8 approuvé pour la phase test (`docs/decisions/0001-approbation-cadrage-test.md`).
   Approbations DAF, contrôle de gestion et DSI : **non tracées**.
 - Équipe : deux personnes (porteur du projet et Benjamin), développement avec Claude Code.
@@ -31,6 +31,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 18a | Connecteur Pennylane (lecture seule) sur le dossier de test : écritures publiées comme résidence RES-TEST, visible des administrateurs ; synchronisation manuelle avec choix du mode (validées / validées et brouillard) | 17 |
 | 18d | Lecture par modifications (journal des modifications Pennylane) avec contrôle de la balance, écritures conservées entre deux synchronisations, tailles de page intermédiaires | 17 |
 | 18c | Synchronisation plus rapide (pages de 1 000, filtre de dates, lectures parallèles, lettrage mémorisé), heures de Paris, rechargement automatique des chiffres | 17 |
+| 19 | Dépôt du consolidé KPI (onglet « Données KPI », périmètre groupe ou résidence, rattachement par code Mews, statuts des mois, groupes du fichier) ; jetons Pennylane par dossier chiffrés dans le navigateur et testés (lecture seule, une société par résidence) | 32 |
 | 18b | Synchronisation lancée depuis la page Import comptable (résidence ou groupe), période d'import, masquage du brouillard, historique | 17 |
 | 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
@@ -50,6 +51,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Lot 17 (`docs/decisions/0010`) : menu latéral réordonné (Résidence en haut) ; export Excel de chaque page de données : tableaux, données des graphiques, détail des calculs et écritures comptables.
 - Lot 16 : ruban bleu en haut de chaque page (exercice de référence + résidence ou groupe) ; l'exercice fixe la période de la réglette, le périmètre quitte le menu latéral.
 - Lot 14 (`docs/decisions/0008`) : détail des écritures publié par résidence ; lissage comme Waibi (répartition possible sur l'exercice suivant, mois sans écriture compris).
+- Lot 19 (`docs/decisions/0013`) : consolidé KPI déposé tel quel (valeurs aberrantes écartées et listées, ratios recalculés et contrôlés) ; un jeton Pennylane par dossier, chiffré dans le navigateur, clé privée dans le secret GitHub `PENNYLANE_CLE_PRIVEE`. Étape 2 (données réelles dans la base) à approuver par la DSI et la DAF.
 - Lot 18b (`docs/decisions/0012`) : fonction serveur Supabase `lancer-synchro` (jeton GitHub limité aux Actions du dépôt, dans les secrets Supabase) ; tables `parametres_import` et `synchronisations`.
 - Lot 18 (`docs/decisions/0011`) : connexion Pennylane autorisée pour le seul dossier de test, lecture seule, liste blanche ; classement provisoire des comptes non classés du dossier de test ; aucune valeur dans les journaux.
 - Lot 13 (`docs/decisions/0007`) : publication par GitHub Actions avec la clé secrète dans les secrets GitHub ; ajustements partagés, actifs dès leur création, sans validation à deux personnes ; lissage ; base de test = huit résidences de démonstration (Benjamin : groupe GRP-SENIORS).
@@ -72,11 +74,13 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 14. Lot 11 : rattachements PCG provisoires (708, 709, 608, 648, 649) et comptes non classés (643, 644, 646, 681 sans subdivision, 697, 768) à valider par la direction financière ; règlement ANC 2026-03 (titre V du PCG) à analyser ; exercice N-1 à importer pour remplir la colonne N-1.
 10. Charte graphique : appliquée au lot 8. Présentation EBITDA à valider par le contrôle de gestion.
 
+16. Lot 19, étape 2 : données réelles dans la base (résidences réelles, contrainte « fictif », lecture des dossiers connectés, synchronisation de plusieurs dossiers) : décision DSI et DAF.
+
 ## Comment reprendre
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 336 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
+python -m pytest            # 446 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
                             # sur GitHub : onglet Actions, lancé automatiquement à chaque dépôt
 sh demo.sh                  # démonstration complète
 python interface/generer_site.py   # régénère index.html (en ligne, sans données)

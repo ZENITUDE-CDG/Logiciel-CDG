@@ -15,8 +15,11 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RACINE, "interface"))
-from generer_site import IMPORT_KPI  # noqa: E402
+from generer_site import IMPORT_KPI as _TOUS  # noqa: E402
 from generer_demo import RESIDENCES  # noqa: E402
+
+# Lot 19 : les mesures propres au consolidé KPI ne figurent pas dans le modèle de saisie.
+IMPORT_KPI = [k for k in _TOUS if k.get("modele", True)]
 
 SORTIE = os.path.join(RACINE, "modeles", "Zenitude_Import_KPI_modele.xlsx")
 ENTETES = ["Code résidence", "Résidence (facultatif)", "Mois (AAAA-MM)"] + [k["entete"] for k in IMPORT_KPI]

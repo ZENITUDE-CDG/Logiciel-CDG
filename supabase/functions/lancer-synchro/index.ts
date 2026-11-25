@@ -1,4 +1,9 @@
-// Fonction serveur Supabase « lancer-synchro » (lot 18b, décision 0012).
+// Fonction serveur Supabase « lancer-synchro » (lot 18b, décision 0012 ; lot 19, décision 0013).
+//
+// Deux types de demande :
+//   synchro (par défaut) : relire Pennylane, recalculer et publier (lot 18b) ;
+//   test                 : tester les jetons Pennylane enregistrés dans le logiciel (lot 19) : identité de la
+//                          société et droits, sans lire de comptabilité ni enregistrer de paramètres d'import.
 //
 // Appelée par la page Import comptable (bouton Synchroniser). Elle :
 //   1. vérifie que la personne connectée est un administrateur actif (table profils) ;
@@ -48,6 +53,9 @@ export function controler(corps: any): { erreur?: string; demande?: any } {
   const dossiers = Array.isArray(corps.dossiers) ? [...new Set(corps.dossiers.map(String))] : [];
   if (!dossiers.length || dossiers.length > 500) return { erreur: "liste de résidences vide ou trop longue" };
   if (dossiers.some((d) => !DOSSIER.test(d as string))) return { erreur: "identifiant de dossier invalide" };
+  const type = corps.type ?? "synchro";
+  if (type !== "synchro" && type !== "test") return { erreur: "type de demande inconnu" };
+  if (type === "test") return { demande: { type, dossiers, perimetre: String(corps.perimetre ?? "").slice(0, 120) } };
   const md = corps.mois_debut ?? null, mf = corps.mois_fin ?? null;
   if (md !== null && !MOIS.test(md)) return { erreur: "mois de début invalide (AAAA-MM)" };
   if (mf !== null && !MOIS.test(mf)) return { erreur: "mois de fin invalide (AAAA-MM)" };
@@ -99,7 +107,13 @@ if (import.meta.main) Deno.serve(async (req) => {
     return reponse(409, { erreur: `une synchronisation est déjà en cours (n° ${actives[0].id}) : attendez qu'elle se termine` }, origine);
   }
 
-  // 4. Paramètres et demande
+  // 4. Paramètres (synchronisation seulement) et demande
+  if (demande.type === "test") {
+    const { data: lt, error: et } = await base.from("synchronisations")
+      .insert({ ...demande, demandee_par: email, statut: "demandée" }).select("id").single();
+    if (et || !lt) return reponse(500, { erreur: "enregistrement de la demande impossible (migration 011 appliquée ?)" }, origine);
+    return await lancer(base, jetonGithub, lt.id, origine);
+  }
   const params = demande.dossiers.map((d: string) => ({ dossier: d, mois_debut: demande.mois_debut, mois_fin: demande.mois_fin,
     masquer_brouillard: demande.masquer_brouillard, modifie_par: email }));
   const { error: ep } = await base.from("parametres_import").upsert(params, { onConflict: "dossier" });
@@ -108,18 +122,22 @@ if (import.meta.main) Deno.serve(async (req) => {
     .insert({ ...demande, demandee_par: email, statut: "demandée" }).select("id").single();
   if (ei || !ligne) return reponse(500, { erreur: "enregistrement de la demande impossible" }, origine);
 
-  // 5. Lancement immédiat du workflow GitHub
+  return await lancer(base, jetonGithub, ligne.id, origine);
+});
+
+// 5. Lancement immédiat du workflow GitHub
+async function lancer(base: any, jetonGithub: string, id: number, origine: string | null): Promise<Response> {
   const gh = await fetch(`https://api.github.com/repos/${DEPOT}/actions/workflows/${WORKFLOW}/dispatches`, {
     method: "POST",
     headers: { "Authorization": `Bearer ${jetonGithub}`, "Accept": "application/vnd.github+json",
                "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "zenitude-lancer-synchro" },
-    body: JSON.stringify({ ref: "main", inputs: { demande: String(ligne.id) } }),
+    body: JSON.stringify({ ref: "main", inputs: { demande: String(id) } }),
   });
   if (gh.status !== 204) {
     const motif = gh.status === 401 || gh.status === 403 ? "jeton GitHub refusé (expiré ou droits insuffisants)"
       : gh.status === 404 ? "workflow ou dépôt introuvable (nom du dépôt ou du fichier)" : `GitHub a répondu ${gh.status}`;
-    await base.from("synchronisations").update({ statut: "échec", fin: new Date().toISOString(), message: "lancement refusé : " + motif }).eq("id", ligne.id);
-    return reponse(502, { erreur: "lancement refusé : " + motif, id: ligne.id }, origine);
+    await base.from("synchronisations").update({ statut: "échec", fin: new Date().toISOString(), message: "lancement refusé : " + motif }).eq("id", id);
+    return reponse(502, { erreur: "lancement refusé : " + motif, id }, origine);
   }
-  return reponse(200, { id: ligne.id, statut: "demandée" }, origine);
-});
+  return reponse(200, { id, statut: "demandée" }, origine);
+}

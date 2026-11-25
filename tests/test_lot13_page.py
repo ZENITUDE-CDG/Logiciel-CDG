@@ -34,7 +34,7 @@ window.clientSimule = function (tables) {
     journalBase.push(JSON.parse(JSON.stringify(q)));
     var lignes = tables[q.table] || (tables[q.table] = []);
     var garde = function (l) { return q.filtres.every(function (f) { return l[f[0]] === f[1]; }); };
-    if (q.op === "select") { var r = lignes.filter(garde); return { data: q.unique ? (r[0] || null) : r, error: null }; }
+    if (q.op === "select") { var r = lignes.filter(garde); if (q.plage) r = r.slice(q.plage[0], q.plage[1] + 1); return { data: q.unique ? (r[0] || null) : r, error: null }; }
     if (q.op === "insert") {
       var v = Object.assign({}, q.valeurs);
       if (q.table === "ajustements") Object.assign(v, { id: prochain++, cree_par: "collab@exemple.invalid", modifie_par: "collab@exemple.invalid" });
@@ -53,6 +53,7 @@ window.clientSimule = function (tables) {
     var q = { table: table, op: "select", filtres: [], valeurs: null, unique: false };
     var api = {
       select: function () { return api; }, order: function () { return api; },
+      range: function (a, b) { q.plage = [a, b]; return api; },  // lot 19 : lecture par pages
       eq: function (k, v) { q.filtres.push([k, v]); return api; },
       maybeSingle: function () { q.unique = true; return api; },
       insert: function (v) { q.op = "insert"; q.valeurs = v; return api; },

@@ -215,11 +215,41 @@ LIGNES_SIG = [
 # dossiers KPI existants. Les autres colonnes de ces dossiers (CA SAP, TO seniors...) seront ajoutées quand le
 # contrôle de gestion aura validé les KPI qui les utilisent.
 IMPORT_KPI = [
-    {"code": "LN_VENDUES", "entete": "Chambres vendues", "alias": ["Logements-nuits vendus", "Nuitées vendues"]},
-    {"code": "LN_DISPONIBLES", "entete": "Chambres disponibles", "alias": ["Logements-nuits disponibles"]},
-    {"code": "NB_SEJOURS", "entete": "Séjours", "alias": ["Nombre de séjours", "Séjours (estim.)"]},
-    {"code": "NUITEES_CLIENTS", "entete": "Clients présents (nuitées)", "alias": ["Clients présents", "Nuitées clients"]},
-    {"code": "COUVERTS_PDJ", "entete": "Petits-déjeuners servis", "alias": ["PDJ servis", "PDJ servis (estim.)", "Couverts petit-déjeuner"]},
+    {"code": "LN_VENDUES", "entete": "Chambres vendues", "alias": ["Logements-nuits vendus", "Nuitées vendues"],
+     "consolide": "Nuitées totales"},
+    {"code": "LN_DISPONIBLES", "entete": "Chambres disponibles", "alias": ["Logements-nuits disponibles"],
+     "consolide": "Capacité totale"},
+    {"code": "NB_SEJOURS", "entete": "Séjours", "alias": ["Nombre de séjours", "Séjours (estim.)"],
+     "consolide": "Nb de réservations"},
+    {"code": "NUITEES_CLIENTS", "entete": "Clients présents (nuitées)", "alias": ["Clients présents", "Nuitées clients"],
+     "consolide": "Clients présents"},
+    {"code": "COUVERTS_PDJ", "entete": "Petits-déjeuners servis", "alias": ["PDJ servis", "PDJ servis (estim.)", "Couverts petit-déjeuner"],
+     "consolide": "Nb PDJ"},
+]
+# Lot 19 (décision 0013) : quantités et montants de base de l'onglet « Données KPI » du consolidé KPI
+# (Consolide_KPI_<année>.xlsx). Importées telles quelles ; les ratios sont recalculés, jamais importés.
+# Les mesures CA_... sont des montants HT : elles peuvent être négatives (avoirs) ; les autres jamais.
+for _code, _entete in [
+        ("LOTS_HOT", "Lots hôtelier"), ("LOTS_SEN", "Lots seniors"), ("LOTS_SEN_OCC", "Lots seniors occupés"),
+        ("LN_VENDUES_HOT", "Chambres vendues hôtelières"), ("LN_DISPO_HOT", "Capacité hôtelière (lots × jours)"),
+        ("NUITEES_SEN", "Nuitées seniors"), ("LN_DISPO_SEN", "Capacité seniors"),
+        ("CA_MEWS_TOTAL", "CA total résidence HT"), ("CA_MEWS_HOTELIER", "CA total hôtelier HT"),
+        ("CA_MEWS_HEB_HOT", "CA hébergement hôtelier HT"), ("CA_MEWS_HEB_SEN", "CA hébergement seniors HT"),
+        ("CA_MEWS_PDJ", "CA HT PDJ"), ("CA_MEWS_RESTO", "CA HT RESTO"), ("CA_MEWS_SPA", "CA HT SPA"),
+        ("CA_SAP", "CA SAP"), ("CA_RESTO_SEN", "CA Restauration seniors")]:
+    IMPORT_KPI.append({"code": _code, "entete": _entete, "alias": [], "consolide": _entete, "modele": False})
+
+# Contrôle du consolidé : chaque ratio du fichier est recalculé à partir des quantités importées (même définition
+# que l'outil KPI) ; un écart est signalé, jamais corrigé. Le ratio lui-même n'est pas importé.
+RATIOS_CONSOLIDE = [
+    {"colonne": "TO hôtelier", "num": "LN_VENDUES_HOT", "den": "LN_DISPO_HOT"},
+    {"colonne": "PM", "num": "CA_MEWS_HEB_HOT", "den": "LN_VENDUES_HOT"},
+    {"colonne": "RevPar", "num": "CA_MEWS_HEB_HOT", "den": "LN_DISPO_HOT"},
+    {"colonne": "RevPac", "num": "CA_MEWS_HOTELIER", "den": "NUITEES_CLIENTS"},
+    {"colonne": "DMS", "num": "LN_VENDUES_HOT", "den": "NB_SEJOURS"},
+    {"colonne": "Captage PDJ", "num": "COUVERTS_PDJ", "den": "NUITEES_CLIENTS"},
+    {"colonne": "TO seniors", "num": "NUITEES_SEN", "den": "LN_DISPO_SEN"},
+    {"colonne": "TO résidence", "num": "LN_VENDUES", "den": "LN_DISPONIBLES"},
 ]
 LIBELLES_JOURNAUX = {"VT": "Ventes", "HA": "Achats", "BQ": "Banque", "OD": "Opérations diverses", "AN": "À-nouveaux"}
 
@@ -663,7 +693,7 @@ def construire(demo=DEMO):
         "mois": mois_annee,
         "lignes_ebitda": _lignes_exportees(LIGNES_EBITDA),
         "ratios_ebitda": RATIOS_EBITDA,
-        "import_kpi": IMPORT_KPI,
+        "import_kpi": IMPORT_KPI, "ratios_consolide": RATIOS_CONSOLIDE,
         "ebitda": ebitda,
         "lignes_sig": _lignes_exportees(LIGNES_SIG),
         "sig": sig, "imports": imports, "journaux": journaux, "plan": plan,

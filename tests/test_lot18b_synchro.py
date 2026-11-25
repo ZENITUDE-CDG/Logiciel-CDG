@@ -42,6 +42,14 @@ class FausseBase:
             return self.params
         if methode == "GET" and chemin.startswith("lettrages_pennylane"):
             return []
+        # Lot 19 : connexions Pennylane (jetons chiffrés) et clé publique
+        if methode == "GET" and chemin.startswith("connexions_pennylane"):
+            return list(getattr(self, "connexions", []))
+        if methode == "PATCH" and chemin.startswith("connexions_pennylane"):
+            self.maj_connexions = getattr(self, "maj_connexions", []) + [(chemin.split("dossier=eq.")[1], corps)]
+            return None
+        if methode == "GET" and chemin.startswith("cle_jetons"):
+            return list(getattr(self, "cles", []))
         if chemin.startswith("pennylane_"):
             self.magasin = getattr(self, "magasin", []) + [(methode, chemin.split("?")[0])]
             return [] if methode == "GET" else None

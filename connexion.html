@@ -43,7 +43,7 @@
   if (new URLSearchParams(location.search).has("deconnexion")) {
     await Zen.client.auth.signOut();
     history.replaceState(null, "", "connexion.html");
-  } else if (await Zen.session()) { location.replace("espace.html"); return; }
+  } else if (await Zen.session()) { location.replace("index.html#choix"); return; }
   var form = document.getElementById("form"), msg = document.getElementById("msg"), btn = document.getElementById("valider");
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -57,7 +57,7 @@
       btn.disabled = false; btn.textContent = "Se connecter";
       return;
     }
-    location.replace("espace.html");
+    location.replace("index.html#choix");
   });
 })();
 </script>

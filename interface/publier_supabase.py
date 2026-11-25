@@ -252,22 +252,136 @@ def ecrire_memo_lettrage(base, cle, dossier, a_ecrire, envoyer=None):
                 "resolution=merge-duplicates,return=minimal")
 
 
-def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None, periode=None, memo=None):
+# ------------------------------------------------- écritures conservées (lot 18d, lecture par modifications)
+
+RELECTURE_COMPLETE = 7      # jours : relecture complète au moins une fois par semaine
+RETENTION_JOURNAL = 27      # jours : Pennylane garde 4 semaines de modifications
+
+
+def _absente(e):
+    return "PGRST205" in str(e) or "(code 404)" in str(e) or "does not exist" in str(e)
+
+
+def _tout_lire_table(base, cle, table, dossier, envoyer):
+    out, offset = [], 0
+    while True:
+        rep = envoyer("GET", base + f"/rest/v1/{table}?dossier=eq.{dossier}&select=id,contenu&order=id"
+                      f"&limit=1000&offset={offset}", cle) or []
+        out.extend(rep)
+        if len(rep) < 1000:
+            return out
+        offset += 1000
+
+
+def lire_magasin(base, cle, dossier, envoyer=None):
+    """Écritures conservées et état de la dernière lecture ; None si rien, False si la migration 009 manque."""
+    envoyer = envoyer or requete
+    try:
+        etat = envoyer("GET", base + f"/rest/v1/pennylane_etat?dossier=eq.{dossier}&select=*", cle) or []
+    except PublicationRefusee as e:
+        if _absente(e):
+            print("avertissement : migration 009 non appliquée (lecture complète à chaque synchronisation)")
+            return False
+        raise
+    if not etat:
+        return None
+    lignes = {r["id"]: r["contenu"] for r in _tout_lire_table(base, cle, "pennylane_lignes", dossier, envoyer)}
+    entrees = {r["id"]: r["contenu"] for r in _tout_lire_table(base, cle, "pennylane_ecritures", dossier, envoyer)}
+    e = etat[0]
+    return {"lignes": lignes, "entrees": entrees, "bornes": [e.get("borne_debut"), e.get("borne_fin")],
+            "taille_page": e.get("taille_page"), "derniere_lecture": e.get("derniere_lecture"),
+            "derniere_complete": e.get("derniere_complete")}
+
+
+def preparer_magasin(m, bas, haut, maintenant):
+    """Lecture par modifications si les données conservées sont récentes et couvrent la période demandée."""
+    from datetime import date, datetime, timedelta
+    if not m:
+        return None
+
+    def instant(v):
+        try:
+            d = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+            return d if d.tzinfo else d.replace(tzinfo=maintenant.tzinfo)
+        except (TypeError, ValueError):
+            return None
+
+    def jour(v):
+        return date.fromisoformat(str(v)[:10]) if v else None
+    lecture, complete = instant(m.get("derniere_lecture")), instant(m.get("derniere_complete"))
+    sb, sh = (jour(x) for x in (m.get("bornes") or [None, None]))
+    motif = None
+    if not lecture or not complete:
+        motif = "état de la dernière lecture illisible"
+    elif maintenant - complete > timedelta(days=RELECTURE_COMPLETE):
+        motif = f"relecture complète hebdomadaire (dernière il y a plus de {RELECTURE_COMPLETE} jours)"
+    elif maintenant - lecture > timedelta(days=RETENTION_JOURNAL):
+        motif = "dernière lecture trop ancienne pour le journal des modifications"
+    elif not ((sb is None or (bas is not None and bas >= sb)) and (sh is None or (haut is not None and haut <= sh))):
+        motif = "période demandée plus large que celle déjà lue"
+    if motif:
+        return {"taille_page": m.get("taille_page"), "motif": motif}
+    return dict(m, increment_depuis=(lecture - timedelta(minutes=10)).isoformat().replace("+00:00", "Z"))
+
+
+def ecrire_magasin(base, cle, dossier, maj, debut_lecture, envoyer=None):
+    """Conserve les écritures lues (complet : tout remplacer ; modifications : seulement les changements).
+
+    L'état est effacé avant une réécriture complète et écrit en dernier : une interruption provoque une
+    relecture complète à la synchronisation suivante, jamais des données incomplètes.
+    """
+    envoyer = envoyer or requete
+    r = base + "/rest/v1/"
+
+    def paquets(table, elements):
+        lignes = [{"dossier": dossier, "id": i, "contenu": c} for i, c in elements.items()]
+        for k in range(0, len(lignes), 1000):
+            envoyer("POST", r + f"{table}?on_conflict=dossier,id", cle, lignes[k:k + 1000],
+                    "resolution=merge-duplicates,return=minimal")
+
+    def effacer(table, ids):
+        ids = list(ids)
+        for k in range(0, len(ids), 200):
+            envoyer("DELETE", r + f"{table}?dossier=eq.{dossier}&id=in.({','.join(str(i) for i in ids[k:k + 200])})", cle)
+    etat = {"dossier": dossier, "derniere_lecture": debut_lecture,
+            "borne_debut": (maj.get("bornes") or [None, None])[0], "borne_fin": (maj.get("bornes") or [None, None])[1],
+            "taille_page": maj.get("taille_page")}
+    if maj["mode"] == "complet":
+        envoyer("DELETE", r + f"pennylane_etat?dossier=eq.{dossier}", cle)
+        envoyer("DELETE", r + f"pennylane_lignes?dossier=eq.{dossier}", cle)
+        envoyer("DELETE", r + f"pennylane_ecritures?dossier=eq.{dossier}", cle)
+        paquets("pennylane_lignes", maj["lignes"])
+        paquets("pennylane_ecritures", maj["entrees"])
+        etat["derniere_complete"] = debut_lecture
+        envoyer("POST", r + "pennylane_etat?on_conflict=dossier", cle, [etat], "resolution=merge-duplicates,return=minimal")
+    else:
+        paquets("pennylane_lignes", maj["lignes"])
+        paquets("pennylane_ecritures", maj["entrees"])
+        effacer("pennylane_lignes", maj.get("lignes_suppr") or [])
+        effacer("pennylane_ecritures", maj.get("entrees_suppr") or [])
+        envoyer("PATCH", r + f"pennylane_etat?dossier=eq.{dossier}", cle,
+                {"derniere_lecture": debut_lecture, "taille_page": maj.get("taille_page")}, "return=minimal")
+
+
+def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None, periode=None, memo=None,
+                   magasin=None):
     """Lit le dossier de test par le connecteur (lot 18). Renvoie (lignes, exercice, rapport).
 
     periode : (premier jour, dernier jour) choisis dans la page (lot 18b), ou None.
     """
-    from datetime import datetime
+    from datetime import datetime, timezone
     import source_pennylane
     from zenitude.connecteurs import pennylane as pl
     if not os.path.exists(os.path.join(demo, "configuration.xlsx")):
         import generer_demo
         generer_demo.main(demo)
     client = client or pl.Client(jeton)
-    lignes, exercice, rapport = pl.extraire(client, source_pennylane.DOSSIER_TEST, mode,
-                                            depuis=source_pennylane.debut_frise(demo), periode=periode,
-                                            lettrage_memo=memo)
-    from datetime import timezone
+    depuis = source_pennylane.debut_frise(demo)
+    if magasin is not None:
+        bas = max([x for x in (depuis, periode[0] if periode else None) if x], default=None)
+        magasin = preparer_magasin(magasin, bas, periode[1] if periode else None, datetime.now(timezone.utc))
+    lignes, exercice, rapport = pl.extraire(client, source_pennylane.DOSSIER_TEST, mode, depuis=depuis,
+                                            periode=periode, lettrage_memo=memo, magasin=magasin)
     rapport["synchronise_le"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     return lignes, exercice, rapport
 
@@ -384,7 +498,7 @@ def _publier_tout(argv, base, cle, demande):
     param = next((p for p in params if p.get("dossier") == source_pennylane.DOSSIER_TEST), None)
     jeton = os.environ.get("PENNYLANE_TOKEN_PILOTE", "").strip()
     obligatoire = "--pennylane" in argv or demande is not None
-    pennylane, erreur = None, None
+    pennylane, erreur, debut_lecture = None, None, None
     if jeton:
         if demande is not None:
             mode = "valides" if demande.get("masquer_brouillard", True) else "tous"
@@ -396,10 +510,19 @@ def _publier_tout(argv, base, cle, demande):
         try:
             import time
             t0 = time.monotonic()
+            from datetime import datetime, timezone
+            debut_lecture = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
             memo = lire_memo_lettrage(base, cle, source_pennylane.DOSSIER_TEST)
-            pennylane = lire_pennylane(jeton=jeton, mode=mode, periode=periode, memo=memo)
+            magasin = lire_magasin(base, cle, source_pennylane.DOSSIER_TEST)
+            t1 = time.monotonic()
+            if magasin:
+                print(f"Écritures conservées relues dans la base : {len(magasin['lignes'])} ligne(s) en {t1 - t0:.0f} s")
+            pennylane = lire_pennylane(jeton=jeton, mode=mode, periode=periode, memo=memo,
+                                       magasin=None if magasin is False else (magasin or {}))
+            if magasin is False:
+                pennylane[2].pop("_magasin_maj", None)
             print(pl.texte_rapport(pennylane[2]))
-            print(f"Durée de lecture Pennylane : {time.monotonic() - t0:.0f} s")
+            print(f"Durée de lecture Pennylane : {time.monotonic() - t1:.0f} s")
         except pl.ErreurPennylane as e:
             erreur = str(e)
             if obligatoire:
@@ -435,6 +558,14 @@ def _publier_tout(argv, base, cle, demande):
         print("avertissement : " + a)
     print(f"publié : données communes et {len(lignes)} résidence(s) : "
           + ", ".join(l["residence_id"] for l in lignes))
+    if pennylane is not None and pennylane[2].get("_magasin_maj"):
+        try:
+            import time
+            t2 = time.monotonic()
+            ecrire_magasin(base, cle, source_pennylane.DOSSIER_TEST, pennylane[2]["_magasin_maj"], debut_lecture)
+            print(f"Écritures conservées pour la prochaine synchronisation ({time.monotonic() - t2:.0f} s)")
+        except PublicationRefusee as e:
+            print("avertissement : écritures non conservées (" + str(e)[:200] + ") ; relecture complète la prochaine fois")
     if pennylane is not None and pennylane[2].get("_lettrage_a_memoriser"):
         try:
             ecrire_memo_lettrage(base, cle, source_pennylane.DOSSIER_TEST, pennylane[2]["_lettrage_a_memoriser"])

@@ -79,7 +79,7 @@ class RequeteRefusee(ErreurPennylane):
 
 # Lot 18c : vitesse. Pages de 1 000 éléments si Pennylane les accepte (sinon 100), filtre de dates
 # demandé à Pennylane (sinon filtrage ici), lectures en parallèle dans la limite de débit, lettrage mémorisé.
-TAILLES_PAGE = (1000, 100)
+TAILLES_PAGE = (1000, 500, 250, 200, 100)
 LECTURES_PARALLELES = 5
 VALIDITE_LETTRAGE = timedelta(days=7)
 
@@ -147,7 +147,7 @@ class Client:
                 raise ErreurPennylane("jeton refusé (401) : jeton expiré, supprimé ou mal copié")
             if code == 403:
                 raise ErreurPennylane("accès interdit (403) : droits du jeton insuffisants")
-            if code in (400, 422):
+            if code in (400, 404, 422):
                 raise RequeteRefusee(f"requête refusée par Pennylane (code {code}) sur {_chemin(url, self.base)}", code)
             if code != 200:
                 # Le corps de la réponse n'est jamais affiché (il pourrait contenir des données).
@@ -164,13 +164,17 @@ class Client:
             url += "?" + urllib.parse.urlencode(params)
         return self.get_url(url)
 
-    def tout_lire(self, chemin, filtres=None):
+    def tout_lire(self, chemin, filtres=None, taille_connue=None):
         """Toute une liste, en essayant d'abord les grandes pages et le filtre, avec repli automatique.
 
+        taille_connue : taille de page acceptée lors d'une synchronisation précédente, essayée en premier.
         Renvoie (éléments, {"taille_page", "filtre"}) : filtre = True si Pennylane a accepté le filtre.
         """
-        essais = [(n, filtres) for n in TAILLES_PAGE] if filtres else []
-        essais += [(n, None) for n in TAILLES_PAGE]
+        tailles = list(TAILLES_PAGE)
+        if taille_connue in tailles:
+            tailles = [t for t in tailles if t <= taille_connue]
+        essais = [(n, filtres) for n in tailles] if filtres else []
+        essais += [(n, None) for n in tailles]
         derniere = None
         for taille, f in essais:
             try:
@@ -178,6 +182,45 @@ class Client:
             except RequeteRefusee as e:
                 derniere = e
         raise derniere
+
+    def journal(self, chemin, depuis_iso):
+        """Journal des modifications Pennylane (changelogs) depuis une date (4 semaines au plus).
+
+        Première page avec start_date, suivantes avec le seul curseur (les deux ensemble sont refusés).
+        """
+        out, curseur, pages = [], None, 0
+        while True:
+            params = {"limit": 1000}
+            if curseur:
+                params["cursor"] = curseur
+            else:
+                params["start_date"] = depuis_iso
+            rep = self.get(chemin, params)
+            pages += 1
+            out.extend(rep if isinstance(rep, list) else (rep.get("items") or []))
+            if isinstance(rep, list):
+                return out
+            curseur = rep.get("next_cursor")
+            if not rep.get("has_more") or not curseur or pages >= 1000:
+                return out
+
+    def par_ids(self, chemin, ids):
+        """Éléments d'une liste par identifiants : filtre « in » par paquets de 100, sinon un par un."""
+        ids = sorted(set(ids), key=str)
+        out = []
+        for k in range(0, len(ids), 100):
+            paquet = ids[k:k + 100]
+            try:
+                out.extend(self.lister(chemin, 100, [{"field": "id", "operator": "in", "value": paquet}]))
+            except RequeteRefusee:
+                def un(i):
+                    try:
+                        return self.get(f"{chemin}/{i}")
+                    except RequeteRefusee:
+                        return None  # supprimé entre-temps
+                with ThreadPoolExecutor(max_workers=LECTURES_PARALLELES) as ex:
+                    out.extend(x for x in ex.map(un, paquet) if x)
+        return out
 
     def lister(self, chemin, limite=100, filtres=None):
         """Tous les éléments d'une liste paginée par curseur (items, has_more, next_cursor)."""
@@ -267,7 +310,179 @@ def _date_heure(v):
         return None
 
 
-def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, periode=None, lettrage_memo=None):
+CHAMPS_LIGNE = ("id", "date", "label", "debit", "credit", "updated_at")
+CHAMPS_ECRITURE = ("id", "date", "label", "piece_number", "invoice_number", "status", "journal_id", "updated_at")
+
+
+def reduire_ligne(l):
+    """Ligne brute réduite aux champs utiles, pour la conserver entre deux synchronisations (lot 18d)."""
+    r = {k: l.get(k) for k in CHAMPS_LIGNE}
+    r["ledger_account"] = {"number": (l.get("ledger_account") or {}).get("number")}
+    r["journal"] = {"id": (l.get("journal") or {}).get("id")}
+    r["ledger_entry"] = {"id": (l.get("ledger_entry") or {}).get("id")}
+    lettre = l.get("lettered_ledger_entry_lines") or {}
+    r["lettered_ledger_entry_lines"] = {k: lettre[k] for k in ("ids", "url") if k in lettre}
+    return r
+
+
+def reduire_ecriture(e):
+    r = {k: e.get(k) for k in CHAMPS_ECRITURE}
+    if r.get("journal_id") is None and isinstance(e.get("journal"), dict):
+        r["journal_id"] = e["journal"].get("id")
+    return r
+
+
+def _evenements(items, cle):
+    """Identifiants modifiés et supprimés d'après un journal des modifications."""
+    maj, suppr = set(), set()
+    for it in items:
+        obj = it.get(cle)
+        rid = obj.get("id") if isinstance(obj, dict) else None
+        if rid is None:
+            rid = it.get("record_id", it.get("id"))
+        if rid is None:
+            raise ErreurPennylane("journal des modifications illisible")
+        op = str(it.get("operation") or it.get("event") or it.get("action") or "").lower()
+        if op.startswith("del") or op.startswith("destroy"):
+            suppr.add(rid)
+            maj.discard(rid)
+        else:
+            maj.add(rid)
+            suppr.discard(rid)
+    return maj, suppr
+
+
+def _dans(jour, bas, haut):
+    return jour is not None and (bas is None or jour >= bas) and (haut is None or jour <= haut)
+
+
+def _bornes(magasin):
+    b = (magasin or {}).get("bornes") or [None, None]
+    return _date(b[0]) if b[0] else None, _date(b[1]) if b[1] else None
+
+
+def _valeur(v):
+    if isinstance(v, dict):
+        v = v.get("amount", v.get("value"))
+    return _montant(v)
+
+
+def _balance_identique(client, lignes, bas, haut, exercices):
+    """Compare la balance de Pennylane (débits, crédits par compte) à celle des lignes conservées."""
+    debut = bas or min((_date(l.get("date")) for l in lignes if _date(l.get("date"))), default=exercices[0][0])
+    fin = haut if haut and haut.year < 9999 else max(e[1] for e in exercices)
+    nous = {}
+    for l in lignes:
+        if not _dans(_date(l.get("date")), debut, fin):
+            continue
+        n = str((l.get("ledger_account") or {}).get("number") or "").strip()
+        d, c = nous.get(n, (Decimal("0"), Decimal("0")))
+        nous[n] = (d + _montant(l.get("debit")), c + _montant(l.get("credit")))
+    eux, curseur = {}, None
+    while True:
+        params = {"period_start": debut.isoformat(), "period_end": fin.isoformat(), "limit": 1000}
+        if curseur:
+            params["cursor"] = curseur
+        rep = client.get("/trial_balance", params)
+        for it in (rep.get("items") if isinstance(rep, dict) else rep) or []:
+            n = str(it.get("number") or it.get("formatted_number") or "").strip()
+            d, c = eux.get(n, (Decimal("0"), Decimal("0")))
+            eux[n] = (d + _valeur(it.get("debits")), c + _valeur(it.get("credits")))
+        curseur = rep.get("next_cursor") if isinstance(rep, dict) else None
+        if not (isinstance(rep, dict) and rep.get("has_more") and curseur):
+            break
+    zero = (Decimal("0"), Decimal("0"))
+    ecarts = [n for n in set(nous) | set(eux)
+              if abs(nous.get(n, zero)[0] - eux.get(n, zero)[0]) > Decimal("0.01")
+              or abs(nous.get(n, zero)[1] - eux.get(n, zero)[1]) > Decimal("0.01")]
+    return not ecarts, len(ecarts)
+
+
+def _increment(client, magasin, exercices, rapport):
+    """Applique le journal des modifications aux données conservées. None si la balance ne concorde pas."""
+    depuis = magasin["increment_depuis"]
+    sb, sh = _bornes(magasin)
+    maj_l, sup_l = _evenements(client.journal("/changelogs/ledger_entry_lines", depuis), "ledger_entry_line")
+    try:
+        maj_e, sup_e = _evenements(client.journal("/changelogs/ledger_entries", depuis), "ledger_entry")
+        journal_ecritures = True
+    except RequeteRefusee:
+        journal_ecritures = False
+    lignes = dict(magasin.get("lignes") or {})
+    entrees = dict(magasin.get("entrees") or {})
+    upsert_l, suppr_l = {}, set(sup_l)
+    for i in sup_l:
+        lignes.pop(i, None)
+    for l in (client.par_ids("/ledger_entry_lines", maj_l) if maj_l else []):
+        if _dans(_date(l.get("date")), sb, sh):
+            lignes[l["id"]] = upsert_l[l["id"]] = l
+        else:
+            lignes.pop(l["id"], None)
+            suppr_l.add(l["id"])
+    upsert_e, suppr_e = {}, set()
+    if journal_ecritures:
+        suppr_e |= sup_e
+        for i in sup_e:
+            entrees.pop(i, None)
+        a_lire = set(maj_e)
+    else:
+        nouvelles, _ = client.tout_lire("/ledger_entries", _filtres_dates(sb, sh), magasin.get("taille_page"))
+        neuves = {e["id"]: e for e in nouvelles}
+        suppr_e |= set(entrees) - set(neuves)
+        upsert_e.update(neuves)
+        entrees = dict(neuves)
+        a_lire = set()
+    a_lire |= {(l.get("ledger_entry") or {}).get("id") for l in lignes.values()} - set(entrees) - {None}
+    for e in (client.par_ids("/ledger_entries", a_lire) if a_lire else []):
+        entrees[e["id"]] = upsert_e[e["id"]] = e
+    identique, ecarts = _balance_identique(client, list(lignes.values()), sb, sh, exercices)
+    rapport["controle_balance"] = "identique" if identique else f"différente sur {ecarts} compte(s)"
+    if not identique:
+        return None
+    rapport["lecture"] = {"mode": "modifications", "depuis": depuis, "lignes_modifiees": len(upsert_l),
+                          "lignes_supprimees": len(suppr_l), "journal_ecritures": journal_ecritures,
+                          "taille_page": magasin.get("taille_page") or 100, "filtre_dates": True}
+    rapport["_magasin_maj"] = {"mode": "increment", "lignes": {i: reduire_ligne(l) for i, l in upsert_l.items()}, "lignes_suppr": sorted(suppr_l, key=str),
+                               "entrees": {i: reduire_ecriture(e) for i, e in upsert_e.items()},
+                               "entrees_suppr": sorted(suppr_e, key=str),
+                               "bornes": (magasin.get("bornes") or [None, None]),
+                               "taille_page": magasin.get("taille_page")}
+    return list(lignes.values()), list(entrees.values())
+
+
+def _lire_donnees(client, magasin, bas, haut, exercices, rapport):
+    """Lignes et écritures brutes : par modifications si possible, sinon lecture complète."""
+    taille = (magasin or {}).get("taille_page")
+    if magasin and magasin.get("increment_depuis"):
+        try:
+            r = _increment(client, magasin, exercices, rapport)
+            if r is not None:
+                return r
+            rapport["lecture_motif"] = "balance différente de celle de Pennylane : relecture complète"
+        except RequeteRefusee:
+            rapport["lecture_motif"] = "journal des modifications indisponible : relecture complète"
+    elif magasin is not None:
+        rapport["lecture_motif"] = magasin.get("motif") or "relecture complète"
+    comptes_lus, _ = client.tout_lire("/ledger_accounts", taille_connue=taille)
+    rapport["types_de_comptes"] = dict(sorted(Counter(str(a.get("type") or "(vide)") for a in comptes_lus).items()))
+    filtres = _filtres_dates(bas, haut)
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        f_entrees = ex.submit(client.tout_lire, "/ledger_entries", filtres, taille)
+        f_lignes = ex.submit(client.tout_lire, "/ledger_entry_lines", filtres, taille)
+        liste_entrees, info_e = f_entrees.result()
+        liste_lignes, info_l = f_lignes.result()
+    taille_ok = min(info_e["taille_page"], info_l["taille_page"])
+    rapport["lecture"] = {"mode": "complète", "taille_page": taille_ok,
+                          "filtre_dates": bool(filtres) and info_e["filtre"] and info_l["filtre"]}
+    rapport["_magasin_maj"] = {"mode": "complet", "lignes": {l["id"]: reduire_ligne(l) for l in liste_lignes},
+                               "entrees": {e["id"]: reduire_ecriture(e) for e in liste_entrees},
+                               "bornes": [bas.isoformat() if bas else None, haut.isoformat() if haut else None],
+                               "taille_page": taille_ok}
+    return liste_lignes, liste_entrees
+
+
+def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, periode=None, lettrage_memo=None,
+             magasin=None):
     """Lit le dossier et renvoie (lignes ecritures.csv, ligne exercices.csv, rapport).
 
     mode : "valides" (écritures validées seulement) ou "tous" (validées et brouillard).
@@ -276,6 +491,12 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
     lettrage_memo : {id de ligne: {"maj", "groupe", "lu_le"}} déjà connus (lot 18c) ; un groupe n'est redemandé
     que si la ligne a changé (updated_at) ou si le relevé a plus de 7 jours. Les relevés nouveaux sont
     renvoyés dans rapport["_lettrage_a_memoriser"] (jamais affiché).
+    magasin : écritures et lignes brutes conservées de la synchronisation précédente (lot 18d) :
+    {"lignes": {id: ligne}, "entrees": {id: écriture}, "bornes": [début, fin], "taille_page": n,
+     "increment_depuis": date ISO ou None}. Avec increment_depuis, seules les modifications depuis cette date
+    sont demandées à Pennylane (journal des modifications), puis la balance de Pennylane est comparée à celle
+    des lignes conservées : en cas d'écart, relecture complète automatique. Les changements à conserver sont
+    renvoyés dans rapport["_magasin_maj"] (jamais affiché).
     Le rapport ne contient aucun montant, sauf rapport["brouillard"] (sommes des écritures en brouillard),
     destiné à la base et jamais affiché dans les journaux.
     """
@@ -297,32 +518,20 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
     exercices.sort()
     rapport["exercices"] = len(exercices)
 
-    liste_journaux, _ = client.tout_lire("/journals")
+    liste_journaux, _ = client.tout_lire("/journals", taille_connue=(magasin or {}).get("taille_page"))
     journaux = {j.get("id"): str(j.get("code") or "").strip() for j in liste_journaux}
     types_journaux = {j.get("id"): str(j.get("type") or "(vide)") for j in liste_journaux}
-    comptes_lus, _ = client.tout_lire("/ledger_accounts")
-    comptes_types = Counter(str(a.get("type") or "(vide)") for a in comptes_lus)
-    rapport["types_de_comptes"] = dict(sorted(comptes_types.items()))
-
-    # Écritures et lignes : lues en parallèle, limitées à la période quand Pennylane accepte le filtre.
     bas = max([x for x in (depuis, periode[0] if periode else None) if x], default=None)
     haut = periode[1] if periode else None
-    filtres = _filtres_dates(bas, haut)
-    with ThreadPoolExecutor(max_workers=2) as ex:
-        f_entrees = ex.submit(client.tout_lire, "/ledger_entries", filtres)
-        f_lignes = ex.submit(client.tout_lire, "/ledger_entry_lines", filtres)
-        liste_entrees, info_e = f_entrees.result()
-        liste_lignes, info_l = f_lignes.result()
+    liste_lignes, liste_entrees = _lire_donnees(client, magasin, bas, haut, exercices, rapport)
     entetes = {e.get("id"): e for e in liste_entrees}
     rapport["ecritures_pennylane"] = len(entetes)
-    rapport["lecture"] = {"taille_page": min(info_e["taille_page"], info_l["taille_page"]),
-                          "filtre_dates": bool(filtres) and info_e["filtre"] and info_l["filtre"]}
 
     statuts = Counter()
     statuts_par_type = Counter()
     lignes, ecartees, hors_exercice, anterieures, hors_periode = [], Counter(), 0, 0, 0
     brouillard = {"lignes": 0, "charges": Decimal("0"), "produits": Decimal("0")}
-    a_lettrer = []
+    a_lettrer, lettrage_direct = [], 0
     for l in liste_lignes:
         id_entree = (l.get("ledger_entry") or {}).get("id")
         ent = entetes.get(id_entree)
@@ -382,9 +591,14 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
             "_id": l.get("id"),
         }
         lignes.append(ligne)
-        url = (l.get("lettered_ledger_entry_lines") or {}).get("url")
-        if url and compte.startswith(PREFIXES_TIERS):
-            a_lettrer.append((ligne, url, str(l.get("updated_at") or "")))
+        lettre = l.get("lettered_ledger_entry_lines") or {}
+        if compte.startswith(PREFIXES_TIERS):
+            if isinstance(lettre.get("ids"), list):  # groupe donné par la ligne elle-même : aucun appel
+                ids = [i for i in lettre["ids"] if i is not None]
+                ligne["lettrage"] = ("L" + str(min(ids, key=lambda x: (str(type(x)), x)))) if ids else ""
+                lettrage_direct += 1
+            elif lettre.get("url"):
+                a_lettrer.append((ligne, lettre["url"], str(l.get("updated_at") or "")))
 
     # Lettrage : groupes mémorisés réutilisés ; les autres demandés en parallèle (un appel par groupe, les autres
     # membres du groupe sont reconnus sans nouvel appel).
@@ -425,7 +639,8 @@ def extraire(client, dossier, mode="valides", depuis=None, aujourdhui=None, peri
         ligne["lettrage"] = groupe_de.get(ligne["_id"], "")
         a_memoriser[ligne["_id"]] = {"maj": maj, "groupe": ligne["lettrage"]}
     rapport["_lettrage_a_memoriser"] = a_memoriser
-    rapport["lettrage"] = {"lignes": len(a_lettrer), "depuis_memoire": depuis_memo, "demandees": len(a_demander)}
+    rapport["lettrage"] = {"lignes": len(a_lettrer) + lettrage_direct, "depuis_ligne": lettrage_direct,
+                           "depuis_memoire": depuis_memo, "demandees": len(a_demander)}
 
     for ligne in lignes:
         ligne.pop("_id", None)
@@ -502,16 +717,24 @@ def texte_rapport(rapport):
         out.append(f"Lignes hors de tout exercice, non reprises : {r['lignes_hors_exercice']}")
     out.append(f"Comptes mouvementés : {r['comptes']} ; comptes de tiers (40, 41) : {r['comptes_tiers']}"
                f" ; longueurs de leurs numéros : {r['longueurs_comptes_tiers'] or 'aucun'}")
-    out.append(f"Types de comptes Pennylane : {r['types_de_comptes']}")
+    if r.get("types_de_comptes"):
+        out.append(f"Types de comptes Pennylane : {r['types_de_comptes']}")
     out.append(f"Groupes de lettrage : {r['groupes_lettrage']}")
     lt = r.get("lettrage")
     if lt:
-        out.append(f"Lettrage : {lt['lignes']} ligne(s) de tiers, {lt['depuis_memoire']} reprise(s) de la mémoire, "
-                   f"{lt['demandees']} demandée(s) à Pennylane")
+        out.append(f"Lettrage : {lt['lignes']} ligne(s) de tiers, {lt.get('depuis_ligne', 0)} lue(s) sur la ligne, "
+                   f"{lt['depuis_memoire']} reprise(s) de la mémoire, {lt['demandees']} demandée(s) à Pennylane")
     lec = r.get("lecture")
-    if lec:
-        out.append(f"Lecture : pages de {lec['taille_page']} éléments ; filtre de dates appliqué par Pennylane : "
+    if lec and lec.get("mode") == "modifications":
+        out.append(f"Lecture : par modifications depuis {lec['depuis']} : {lec['lignes_modifiees']} ligne(s) modifiée(s) "
+                   f"ou ajoutée(s), {lec['lignes_supprimees']} supprimée(s) ; journal des écritures : "
+                   f"{'oui' if lec['journal_ecritures'] else 'non (écritures relues)'}")
+    elif lec:
+        out.append(f"Lecture : complète{' (' + r['lecture_motif'] + ')' if r.get('lecture_motif') else ''} ; pages de "
+                   f"{lec['taille_page']} éléments ; filtre de dates appliqué par Pennylane : "
                    f"{'oui' if lec['filtre_dates'] else 'non'}")
+    if r.get("controle_balance"):
+        out.append(f"Contrôle de la balance Pennylane : {r['controle_balance']}")
     out.append(f"Lignes reprises équilibrées (débits = crédits) : {'oui' if r['equilibre'] else 'NON'}")
     out.append(f"Requêtes envoyées à Pennylane : {r['requetes']}")
     return "\n".join(out)

@@ -42,6 +42,9 @@ class FausseBase:
             return self.params
         if methode == "GET" and chemin.startswith("lettrages_pennylane"):
             return []
+        if chemin.startswith("pennylane_"):
+            self.magasin = getattr(self, "magasin", []) + [(methode, chemin.split("?")[0])]
+            return [] if methode == "GET" else None
         if methode == "POST" and chemin.startswith("lettrages_pennylane"):
             self.lettrages = getattr(self, "lettrages", []) + corps
             return None

@@ -8,7 +8,7 @@
 -- Supprime les tableaux et fonctions des lots 12 à 18, y compris ceux d'une version précédente.
 -- Ne jamais exécuter sur une base contenant des données réelles.
 
-DROP TABLE IF EXISTS lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
+DROP TABLE IF EXISTS pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
   parcs, residence_groupe, groupes, residences, profils CASCADE;
 
 DROP FUNCTION IF EXISTS trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
@@ -608,6 +608,46 @@ CREATE TRIGGER lettrages_pennylane_trace BEFORE INSERT OR UPDATE ON lettrages_pe
 
 ALTER TABLE lettrages_pennylane ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON lettrages_pennylane FROM anon, authenticated;
+
+-- ===================== migrations/009_ecritures_pennylane.sql =====================
+-- Migration 009 : écritures Pennylane conservées entre deux synchronisations (lot 18d, lecture par
+-- modifications). SQL standard PostgreSQL, rejouable.
+--
+-- pennylane_lignes    : lignes d'écritures d'un dossier, réduites aux champs utiles (date, compte, journal,
+--                       écriture, libellé, débit, crédit, lettrage, date de modification).
+-- pennylane_ecritures : écritures d'un dossier (pièce, statut, journal, date).
+-- pennylane_etat      : par dossier, dates de la dernière lecture et de la dernière relecture complète,
+--                       période couverte, taille de page acceptée par Pennylane.
+-- Même contenu que le détail des écritures déjà publié pour les renvois au clic (lot 14). Tables techniques :
+-- aucun accès depuis la page (ni lecture ni écriture) ; seul GitHub Actions y accède, avec la clé secrète.
+
+CREATE TABLE IF NOT EXISTS pennylane_lignes (
+    dossier  text NOT NULL CHECK (dossier ~ '^[A-Z0-9_-]+$'),
+    id       bigint NOT NULL,
+    contenu  jsonb NOT NULL,
+    PRIMARY KEY (dossier, id)
+);
+
+CREATE TABLE IF NOT EXISTS pennylane_ecritures (
+    dossier  text NOT NULL CHECK (dossier ~ '^[A-Z0-9_-]+$'),
+    id       bigint NOT NULL,
+    contenu  jsonb NOT NULL,
+    PRIMARY KEY (dossier, id)
+);
+
+CREATE TABLE IF NOT EXISTS pennylane_etat (
+    dossier            text PRIMARY KEY CHECK (dossier ~ '^[A-Z0-9_-]+$'),
+    derniere_lecture   timestamptz NOT NULL,
+    derniere_complete  timestamptz NOT NULL,
+    borne_debut        date,
+    borne_fin          date,
+    taille_page        integer CHECK (taille_page IS NULL OR taille_page BETWEEN 1 AND 1000)
+);
+
+ALTER TABLE pennylane_lignes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pennylane_ecritures ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pennylane_etat ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON pennylane_lignes, pennylane_ecritures, pennylane_etat FROM anon, authenticated;
 
 -- ===================== scripts/donnees_test.sql =====================
 -- Données de départ de la phase test (lots 12 et 13). Tout est fictif sauf les deux adresses

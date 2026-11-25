@@ -33,7 +33,7 @@ def appels(serveur, mot):
 def test_grandes_pages_et_filtre_a_la_source():
     s = FauxPennylane()
     (lignes, _, r), _ = lire(s)
-    assert r["lecture"] == {"taille_page": 1000, "filtre_dates": True}
+    assert r["lecture"] == {"mode": "complète", "taille_page": 1000, "filtre_dates": True}
     assert all("limit=1000" in u and "filter=" in u for u in appels(s, "/ledger_entry_lines?"))
     assert r["lignes_lues"] == 4 and r["lignes_hors_periode"] == 0  # Pennylane n'a renvoyé que mars
     assert {l["date"][:7] for l in lignes} == {"2026-03"}

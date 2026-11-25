@@ -1,6 +1,4 @@
-# Synchronisation Pennylane (lots 18, 18b et 19, décisions 0011, 0012 et 0013).
-# Lot 19 : une demande de type « test » teste seulement les jetons enregistrés dans le logiciel (GET /me, identité
-# de la société et droits), sans lire de comptabilité ni rien publier.
+# Synchronisation Pennylane (lots 18 et 18b, décisions 0011, 0012 et 0017).
 # Lancée depuis la page Import comptable (fonction serveur Supabase « lancer-synchro », qui transmet le
 # numéro de la demande), ou à la main : onglet Actions, « Synchro Pennylane », « Run workflow ».
 # Lecture seule (secret PENNYLANE_TOKEN_PILOTE), calcul par le moteur, publication dans la base de test
@@ -45,8 +43,6 @@ jobs:
         env:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           PENNYLANE_TOKEN_PILOTE: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
-          # Lot 19 (décision 0013) : clé privée qui déchiffre les jetons enregistrés dans le logiciel
-          PENNYLANE_CLE_PRIVEE: ${{ secrets.PENNYLANE_CLE_PRIVEE }}
           PENNYLANE_MODE: ${{ inputs.mode != 'reglage-de-la-page' && inputs.mode || '' }}
           DEMANDE: ${{ inputs.demande }}
         run: |

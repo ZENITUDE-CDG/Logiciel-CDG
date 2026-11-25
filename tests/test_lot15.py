@@ -5,7 +5,6 @@ import sys
 from decimal import Decimal
 
 import pytest
-from openpyxl import load_workbook
 
 RACINE = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RACINE / "interface"))
@@ -110,16 +109,3 @@ def test_resultat_net_du_tableau_egal_au_resultat_comptable(demo):
         assert Decimal(D["ebitda"][d]["total"]["RN"]) == attendu, d
 
 
-def test_modele_d_import(tmp_path):
-    import generer_modele_import as gm
-    sortie = tmp_path / "modele.xlsx"
-    gm.main(str(sortie))
-    wb = load_workbook(sortie)
-    assert wb.sheetnames == ["Saisie", "Exemple", "Mode d'emploi", "Résidences"]
-    assert [c.value for c in wb["Saisie"][1]] == gm.ENTETES
-    assert wb["Saisie"]["A2"].value is None                      # onglet de saisie vide
-    depot = load_workbook(RACINE / "modeles" / "Zenitude_Import_KPI_modele.xlsx")
-    assert [c.value for c in depot["Saisie"][1]] == gm.ENTETES, "modèle à régénérer : python interface/generer_modele_import.py"
-    catalogue = {"LN_VENDUES", "LN_DISPONIBLES", "NB_SEJOURS", "NUITEES_CLIENTS", "COUVERTS_PDJ"}
-    # Lot 19 : les mesures propres au consolidé KPI (modele = False) sont hors du modèle de saisie.
-    assert {k["code"] for k in generer_site.IMPORT_KPI if k.get("modele", True)} <= catalogue

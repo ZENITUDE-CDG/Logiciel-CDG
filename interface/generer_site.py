@@ -210,7 +210,7 @@ LIGNES_SIG = [
     ("IS", "Participation et impôt sur les bénéfices", ["69"], "charge", 2),
     ("RN", "Résultat net", ("+", "RCAI", "REXC", "-", "IS"), "total", 0),
 ]
-# Lot 15 : colonnes du modèle d'import des KPI (page Données externes, interface/generer_modele_import.py).
+# Lot 15 : mesures importées (libellés de secours ; depuis le lot 21, le catalogue fait foi).
 # Une colonne par mesure d'exploitation du catalogue ; d'autres en-têtes reconnus (alias) pour reprendre les
 # dossiers KPI existants. Les autres colonnes de ces dossiers (CA SAP, TO seniors...) seront ajoutées quand le
 # contrôle de gestion aura validé les KPI qui les utilisent.

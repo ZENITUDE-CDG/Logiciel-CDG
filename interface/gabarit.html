@@ -700,7 +700,7 @@ var MENU = [
   ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6", true]
 ];
 var iDefaut = D.calcul.mois.indexOf(D.meta.periode_defaut);
-var etat = { utilisateur: null, perim: null, exercice: "N", section: "tableaux", page: "synthese", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null, delai: "30", crSel: null, crPerim: null, crTous: false };
+var etat = { utilisateur: null, perim: null, exercice: "N", section: "import", page: "pennylane", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null, delai: "30", crSel: null, crPerim: null, crTous: false };
 var principaux = D.kpi.filter(function (k) { return k.principal; });
 var MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 var MOIS_COURT = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
@@ -2163,7 +2163,7 @@ function detailSync(x) {
 }
 function blocHistorique() {
   if (!enLigne() || !estAdmin()) return "";
-  var L = (D.synchronisations || []).slice().sort(function (a, b) { return b.id - a.id; }).slice(0, 15);
+  var T = (D.synchronisations || []).slice().sort(function (a, b) { return b.id - a.id; }), L = etat.histoTout ? T : T.slice(0, 5);
   var h = '<div class="bloc" id="imp-historique"><div class="bloc-tete"><h2>Historique des synchronisations</h2>' +
     (L.some(function (x) { return x.statut === "demandée" || x.statut === "en cours"; }) ? '<span class="legende">Mise à jour automatique toutes les 8 secondes.</span>' : "") + "</div>";
   if (!L.length) return h + '<p class="legende">Aucune synchronisation lancée depuis la page.</p></div>';
@@ -2174,7 +2174,7 @@ function blocHistorique() {
       (test ? "<i>test des jetons</i>" : (x.mois_debut ? moisMaj(x.mois_debut) : "début") + " → " + (x.mois_fin ? moisMaj(x.mois_fin) : "fin")) + "</td><td>" + (test ? "" : x.masquer_brouillard ? "masqué" : "repris") + '</td><td class="c">' + libStatutSync(x.statut) +
       "</td><td>" + detailSync(x) + (x.execution ? ' <a href="' + esc(x.execution) + '" target="_blank" rel="noopener">exécution</a>' : "") + "</td></tr>";
   });
-  return h + "</tbody></table></div></div>";
+  return h + "</tbody></table></div>" + voirPlus("histoTout", T.length) + "</div>";
 }
 function suivreSynchro() {
   if (SYNC_SUIVI) clearTimeout(SYNC_SUIVI);
@@ -2423,6 +2423,7 @@ PAGES.pennylane = function (p) {
     }); });
   el("contenu").innerHTML = h + blocConnexions(p) + t + '</tbody></table></div><p class="legende">Données budgétaires : à venir avec le module Budgets. Écritures comptées jusqu’au dernier mois importé du site (' + moisLong(D.meta.dernier_mois_importe) + ").</p></div>" + blocHistorique();
   if (enLigne() && estAdmin()) brancherConnexions(p);
+  el("contenu").onclick = function (ev) { var b = ev.target.closest && ev.target.closest("[data-voir-plus]"); if (b && etat.page === "pennylane") { etat[b.dataset.voirPlus] = !etat[b.dataset.voirPlus]; var z = el("imp-historique"); if (z) z.outerHTML = blocHistorique(); } };
   if (admin) {
     el("imp-brouillard").onclick = function () { var on = !this.classList.contains("on"); this.classList.toggle("on", on); this.setAttribute("aria-pressed", on); };
     el("imp-synchro").onclick = function () { lancerSynchro(p); };
@@ -2449,20 +2450,9 @@ PAGES.analytique = function () {
 };
 PAGES.parametres = function (p) {
   p = p || perimetre(etat.perim);
-  el("contenu").innerHTML = enTete("Paramètres KPI", p, "Catalogue des données et indicateurs suivis, modèles de suivi") + blocsCatalogue(p) + parametresMoteur();
+  el("contenu").innerHTML = enTete("Paramètres KPI", p, "Catalogue des données et indicateurs suivis, modèles de suivi") + blocsCatalogue(p);
   if (catDispo()) brancherCatalogue(p);
 };
-/* Configuration du moteur (classeur de configuration, lots 1 à 6) : indicateurs du moteur, versions, journal. */
-function parametresMoteur() {
-  var h = '<h2 class="sep-titre">Configuration du moteur de calcul (classeur de configuration, version ' + esc(D.meta.version_config) + ')</h2>' +
-    '<div class="bloc"><div class="bloc-tete"><h2>Définitions des indicateurs du moteur</h2></div><div class="defile"><table class="tab"><thead><tr><th>Code</th><th>Indicateur</th><th>Formule</th><th>Unité</th><th>Approbateur</th></tr></thead><tbody>' +
-    D.kpi.map(function (k) { return "<tr><td><code>" + esc(k.code) + "</code></td><td><b>" + esc(k.nom) + '</b><br><span class="legende">' + esc(k.definition) + "</span></td><td><code>" + esc(k.formule) + "</code></td><td>" + esc(k.unite) + "</td><td>" + esc(k.approbateur) + "</td></tr>"; }).join("") +
-    '</tbody></table></div></div><div class="bloc"><div class="bloc-tete"><h2>Versions de la configuration</h2></div><div class="defile"><table class="tab"><thead><tr><th>Version</th><th>Statut</th><th>Déposée par</th><th>Approuvée par</th><th>Date</th></tr></thead><tbody>' +
-    D.versions.map(function (v) { return "<tr><td>" + esc(v.id) + '</td><td><span class="pastille ' + (v.statut === "appliquée" ? "ok" : "att") + '">' + esc(v.statut) + "</span></td><td>" + esc(v.auteur_depot) + "</td><td>" + esc(v.approbations.join(", ") || "-") + "</td><td>" + esc(v.date_depot.replace("T", " ")) + "</td></tr>"; }).join("") +
-    '</tbody></table></div></div><div class="bloc"><div class="bloc-tete"><h2>Journal</h2></div><div class="defile"><table class="tab"><thead><tr><th>Date</th><th>Action</th><th>Auteur</th><th>Détail</th></tr></thead><tbody>' +
-    D.journal.map(function (j) { return "<tr><td>" + esc(j.date.replace("T", " ")) + "</td><td>" + esc(j.action) + "</td><td>" + esc(j.auteur) + "</td><td>" + esc(j.detail) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
-  return h + '<p class="legende">Page générée le ' + esc(D.meta.genere_le) + ", empreinte de configuration <code>" + esc(D.meta.empreinte_config.slice(0, 12)) + "</code>.</p>";
-}
 /* ---------- Résidence (lot 10) : fiche complète d'une résidence ---------- */
 function ligneFiche(lib, val) { return "<dt>" + esc(lib) + "</dt><dd>" + (val ? esc(val) : '<span class="mut">Non renseigné</span>') + "</dd>"; }
 PAGES.residence = function (p) {
@@ -2645,10 +2635,8 @@ EXPLIQUER.mes = function (s) {
   } else {
     R.formule = "Donnée d’exploitation : somme des valeurs mensuelles de chaque résidence (source fictive en phase test, plus tard Mews ou saisie)";
     R.partsTitre = "Valeurs par résidence et par mois";
-    s.d.forEach(function (d) { s.m.forEach(function (m) { var x = EXPL[d] && EXPL[d][m] ? EXPL[d][m][s.k] : undefined, st = statutMois(d, m);
-      R.parts.push({ lib: nomResidence(d) + ", " + moisLong(m) + (st && st.statut ? " · " + st.statut + (st.detail ? " (" + st.detail + ")" : "") : ""), val: x === undefined ? "absent (non calculable)" : valNum(x) }); }); });
-    var nonComplets = []; s.d.forEach(function (d) { s.m.forEach(function (m) { var st = statutMois(d, m); if (st && st.statut && normaliserEntete(st.statut) !== "complet") nonComplets.push(nomResidence(d) + " " + moisCourt(m) + " : " + st.statut); }); });
-    if (nonComplets.length) R.notes = (R.notes || []).concat(["Mois non complets dans le consolidé KPI : " + nonComplets.slice(0, 12).join(" ; ") + (nonComplets.length > 12 ? "…" : "")]);
+    s.d.forEach(function (d) { s.m.forEach(function (m) { var x = EXPL[d] && EXPL[d][m] ? EXPL[d][m][s.k] : undefined;
+      R.parts.push({ lib: nomResidence(d) + ", " + moisLong(m), val: x === undefined ? "absent (non calculable)" : valNum(x) }); }); });
   }
   return R;
 };
@@ -3546,7 +3534,8 @@ function appliquerMesures() {
   Object.keys(C.exploitation).forEach(function (d) { EXPL[d] = {}; Object.keys(C.exploitation[d]).forEach(function (m) { EXPL[d][m] = {};
     Object.keys(C.exploitation[d][m]).forEach(function (k) { EXPL[d][m][k] = parseFloat(C.exploitation[d][m][k]); }); }); });
   MESURES_IMP.forEach(function (x) { if (!residence(x.dossier)) return; ((EXPL[x.dossier] = EXPL[x.dossier] || {})[x.mois] = EXPL[x.dossier][x.mois] || {})[x.mesure] = x.valeur; });
-  (D.import_kpi || []).forEach(function (k) { if (!mesureExterne(k.code) && MESURES_IMP.some(function (x) { return x.mesure === k.code; })) C.mesures_externes.push({ code: k.code, libelle: k.entete }); });
+  (CAT.length ? CAT.filter(function (x) { return x.type === "donnee"; }).map(function (x) { return { code: x.code, entete: x.libelle }; }) : D.import_kpi || [])
+    .forEach(function (k) { if (!mesureExterne(k.code) && MESURES_IMP.some(function (x) { return x.mesure === k.code; })) C.mesures_externes.push({ code: k.code, libelle: k.entete }); });
   Object.keys(D.couverture).forEach(function (d) { Object.keys(D.couverture[d]).forEach(function (m) { var e = (EXPL[d] || {})[m] || {};
     D.couverture[d][m].exploitation = D.meta.mesures.filter(function (k) { return e[k] !== undefined; }).length; }); });
   ajVider();
@@ -3562,71 +3551,14 @@ function normaliserMois(v) {
   return a && +mo >= 1 && +mo <= 12 ? a + "-" + mo.padStart(2, "0") : null;
 }
 function normaliserEntete(x) { return String(x == null ? "" : x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
-/* Contrôle d'un fichier importé (tableau de lignes, la première contenant les en-têtes). Tout ou rien : la moindre
-   erreur bloque l'import (invariant 7). Retourne { valeurs, erreurs, avertissements, colonnes }. */
-function validerImport(lignes) {
-  var R = { valeurs: [], erreurs: [], avertissements: [], colonnes: [] };
-  var iTete = lignes.findIndex(function (l) { return (l || []).some(function (x) { return /^mois/.test(normaliserEntete(x)); }); });
-  if (iTete < 0) { R.erreurs.push({ ligne: 1, colonne: "", motif: "en-tête « Mois (AAAA-MM) » introuvable : utilisez le modèle" }); return R; }
-  var tete = lignes[iTete].map(normaliserEntete), cRes = -1, cMois = -1, cols = [];
-  tete.forEach(function (h, i) {
-    if (cMois < 0 && /^mois/.test(h)) { cMois = i; return; }
-    if (cRes < 0 && (/^code residence/.test(h) || h === "dossier pennylane" || h === "dossier" || h === "residence" || h === "code")) { cRes = i; return; }
-    var k = (D.import_kpi || []).find(function (x) { return [x.entete, x.code].concat(x.alias || []).some(function (a) { return normaliserEntete(a) === h; }); });
-    if (k) { if (cols.some(function (c) { return c.code === k.code; })) R.erreurs.push({ ligne: iTete + 1, colonne: lignes[iTete][i], motif: "colonne en double pour " + k.code }); else cols.push({ i: i, code: k.code, entete: lignes[iTete][i] }); }
-    else if (h && !/^residence/.test(h)) R.avertissements.push({ ligne: iTete + 1, colonne: lignes[iTete][i], motif: "colonne non reconnue, ignorée" });
-  });
-  if (cRes < 0) R.erreurs.push({ ligne: iTete + 1, colonne: "", motif: "colonne « Code résidence » introuvable" });
-  if (!cols.length) R.erreurs.push({ ligne: iTete + 1, colonne: "", motif: "aucune colonne de KPI reconnue" });
-  R.colonnes = cols;
-  if (R.erreurs.length) return R;
-  var vus = {}, parCode = {};
-  D.residences.forEach(function (r) { [r.code, r.dossier, r.nom].forEach(function (x) { if (x) parCode[normaliserEntete(x)] = r.dossier; }); });
-  for (var n = iTete + 1; n < lignes.length; n++) {
-    var l = lignes[n] || [], num = n + 1;
-    if (!l.some(function (x) { return x !== null && x !== undefined && String(x).trim() !== ""; })) continue;
-    var code = String(l[cRes] == null ? "" : l[cRes]).trim(), d = parCode[normaliserEntete(code)], mo = normaliserMois(l[cMois]);
-    if (!code) { R.erreurs.push({ ligne: num, colonne: "Code résidence", motif: "vide" }); continue; }
-    if (!d) { R.erreurs.push({ ligne: num, colonne: "Code résidence", motif: "« " + code + " » inconnu ou hors de votre parc" }); continue; }
-    if (!mo) { R.erreurs.push({ ligne: num, colonne: "Mois", motif: "« " + (l[cMois] == null ? "" : l[cMois]) + " » : format attendu AAAA-MM" }); continue; }
-    if (idxMois(mo) < 0) R.avertissements.push({ ligne: num, colonne: "Mois", motif: moisLong(mo) + " hors de la frise du logiciel : enregistré, non affiché" });
-    var ligneVals = {};
-    cols.forEach(function (c) {
-      var v = l[c.i];
-      if (v === null || v === undefined || String(v).trim() === "") return;
-      var x = typeof v === "number" ? v : +String(v).replace(/\s|\u00a0|\u202f/g, "").replace(",", ".");
-      if (!isFinite(x) || x < 0) { R.erreurs.push({ ligne: num, colonne: c.entete, motif: "« " + v + " » : nombre positif ou nul attendu" }); return; }
-      var cle = d + "|" + mo + "|" + c.code;
-      if (vus[cle]) { R.erreurs.push({ ligne: num, colonne: c.entete, motif: "déjà fourni ligne " + vus[cle] + " pour " + nomResidence(d) + ", " + moisLong(mo) }); return; }
-      vus[cle] = num; ligneVals[c.code] = x;
-      R.valeurs.push({ dossier: d, mois: mo, mesure: c.code, valeur: x });
-    });
-    if (ligneVals.LN_VENDUES !== undefined && ligneVals.LN_DISPONIBLES !== undefined && ligneVals.LN_VENDUES > ligneVals.LN_DISPONIBLES)
-      R.avertissements.push({ ligne: num, colonne: "Chambres vendues", motif: "supérieur aux chambres disponibles (taux d’occupation au-dessus de 100 %)" });
-  }
-  if (!R.valeurs.length && !R.erreurs.length) R.erreurs.push({ ligne: iTete + 2, colonne: "", motif: "aucune valeur à importer" });
-  return R;
-}
-function lireCsv(texte) {
-  var sep = (texte.split("\n")[0].match(/;/g) || []).length >= (texte.split("\n")[0].match(/,/g) || []).length ? ";" : ",";
-  return texte.replace(/^\ufeff/, "").split(/\r?\n/).map(function (l) {
-    var out = [], cur = "", q = false;
-    for (var i = 0; i < l.length; i++) { var ch = l[i];
-      if (q) { if (ch === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch; }
-      else if (ch === '"') q = true; else if (ch === sep) { out.push(cur); cur = ""; } else cur += ch; }
-    out.push(cur); return out; });
-}
 function lireFichierImport(fichier) {
-  if (/\.csv$/i.test(fichier.name)) return fichier.text().then(lireCsv);
   var charger = window.XLSX ? Promise.resolve() : new Promise(function (ok, ko) { var s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload = ok; s.onerror = function () { ko(new Error("lecteur Excel indisponible (réseau) : enregistrez le fichier en CSV et importez le CSV")); }; document.head.appendChild(s); });
   return charger.then(function () { return fichier.arrayBuffer(); }).then(function (buf) {
-    var wb = XLSX.read(buf, { type: "array", cellDates: true }), nom = wb.SheetNames.indexOf("Données KPI") >= 0 ? "Données KPI" : wb.SheetNames.indexOf("Saisie") >= 0 ? "Saisie" : wb.SheetNames[0];
-    var lignes = XLSX.utils.sheet_to_json(wb.Sheets[nom], { header: 1, raw: true, defval: null });
-    lignes.feuille = nom;  // lot 19 : le consolidé KPI est lu dans son onglet « Données KPI »
-    if (wb.SheetNames.indexOf("Lisez-moi") >= 0) {  // lot 20 : modèle du catalogue, une feuille par modèle de suivi
-      var tout = {}; wb.SheetNames.forEach(function (n) { tout[n] = XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: null }); });
-      lignes = tout["Lisez-moi"]; lignes.feuille = "Lisez-moi"; lignes.classeur = tout;
-    }
+    // Modèle du catalogue (lot 20) : toutes les feuilles sont lues ; « Lisez-moi » porte la description du modèle.
+    var wb = XLSX.read(buf, { type: "array", cellDates: true }), tout = {};
+    wb.SheetNames.forEach(function (n) { tout[n] = XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: null }); });
+    var lignes = tout["Lisez-moi"] || tout[wb.SheetNames[0]] || [];
+    lignes.classeur = tout;
     return lignes;
   });
 }
@@ -3651,147 +3583,10 @@ function supprimerImport(d) {
   return sb(ZCLIENT.from("mesures_importees").delete().eq("dossier", d).select("dossier")).then(verifierTouche)
     .then(function () { return relireMesures(); });
 }
-function modeleCsv(p) {
-  var cols = ["Code résidence", "Résidence (facultatif)", "Mois (AAAA-MM)"].concat((D.import_kpi || []).map(function (k) { return k.entete; }));
-  var lignes = [cols.join(";")];
-  p.dossiers.forEach(function (d) { var r = residence(d); fenetre().forEach(function (m) { lignes.push([r.code || d, r.nom, m].concat((D.import_kpi || []).map(function () { return ""; })).join(";")); }); });
-  return "\ufeff" + lignes.join("\n");
-}
-/* ---------- Lot 19 : dépôt du consolidé KPI (onglet « Données KPI », décision 0013) ----------
-   Le fichier produit chaque mois par l'outil KPI (Consolide_KPI_<année>.xlsx) se dépose tel quel. Seules les
-   résidences du périmètre choisi (groupe ou résidence) sont importées ; les quantités et montants de base sont
-   repris, les ratios du fichier servent de contrôle. Une valeur illisible ou une quantité négative est écartée
-   et signalée (le reste du fichier est importé) ; une erreur de structure bloque tout. */
-var KPI_MOIS = [], KPI_IDX = {};
-function kpiMoisCharger() {
-  if (enLigne()) KPI_MOIS = (D.kpi_mois || []).slice();
-  else try { KPI_MOIS = JSON.parse(localStorage.getItem("zen-kpi-mois")) || []; } catch (e) { KPI_MOIS = []; }
-  KPI_IDX = {}; KPI_MOIS.forEach(function (x) { KPI_IDX[x.dossier + "|" + x.mois] = x; });
-}
-function statutMois(d, m) { return KPI_IDX[d + "|" + m] || null; }
-function codesMewsLocaux() { try { return JSON.parse(localStorage.getItem("zen-codes-mews")) || {}; } catch (e) { return {}; } }
-function codeMewsDe(d) {
-  if (enLigne()) { var r = (D.residences_base || []).find(function (x) { return x.dossier_pennylane === d; }); return r ? r.code_mews || "" : ""; }
-  return codesMewsLocaux()[d] || "";
-}
+/* ---------- Dépôt du modèle Excel (lots 19 à 21) : aperçu, enregistrement, historique ----------
+   Lot 21 : le consolidé KPI et le modèle de saisie du lot 15 ne sont plus acceptés ; seul le modèle du catalogue
+   (Paramètres KPI) se dépose. */
 function residenceIdDe(d) { var r = (D.residences_base || []).find(function (x) { return x.dossier_pennylane === d; }); return r ? r.id : (residence(d) || {}).code; }
-function indexResidences() {
-  var idx = {};
-  D.residences.forEach(function (r) { [codeMewsDe(r.dossier), r.code, r.dossier, r.nom].forEach(function (x) { if (x && !idx[normaliserEntete(x)]) idx[normaliserEntete(x)] = r.dossier; }); });
-  return idx;
-}
-/* Nom Mews -> dossier : nom exact, puis code avant « - » (« XYZ - Résidence… »), puis premier mot collé au tiret (« ABCZS- … »). */
-function rattacher(nom, idx) {
-  var n = String(nom || "").trim(), m;
-  if (idx[normaliserEntete(n)]) return idx[normaliserEntete(n)];
-  if ((m = /^(.+?)\s+-\s+/.exec(n)) && idx[normaliserEntete(m[1])]) return idx[normaliserEntete(m[1])];
-  if ((m = /^([A-Za-z0-9]+)\s*-/.exec(n)) && idx[normaliserEntete(m[1])]) return idx[normaliserEntete(m[1])];
-  return null;
-}
-function codeMewsPropose(nom) {
-  var m = /^\s*([A-Za-z0-9]+)\s*-/.exec(String(nom || ""));
-  if (m) return m[1].toUpperCase();
-  return String(nom || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
-}
-function estConsolide(lignes) { return (lignes || []).slice(0, 5).some(function (l) { return (l || []).some(function (x) { return normaliserEntete(x) === "residence nom mews"; }); }); }
-var GROUPES_FICHIER = [["Segment", "SEG", "Segment"], ["Région", "REG", "Région"], ["RM", "RM", "RM"], ["Regroupement", "RGP", "Regroupement"]];
-function slugGroupe(x) { return String(x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); }
-function validerConsolide(lignes, p) {
-  var R = { consolide: true, valeurs: [], statuts: [], erreurs: [], avertissements: [], ecartees: [], controles: [], nonRattachees: [], horsPerimetre: 0,
-    parRes: {}, nouvelles: 0, modifiees: 0, identiques: 0, colonnes: [], groupes: [], residencesFichier: 0 };
-  var iT = lignes.findIndex(function (l) { return (l || []).some(function (x) { return normaliserEntete(x) === "residence nom mews"; }); });
-  if (iT < 0) { R.erreurs.push({ ligne: 1, colonne: "", motif: "colonne « Résidence (nom Mews) » introuvable : déposez le consolidé KPI (onglet « Données KPI »)" }); return R; }
-  var T = lignes[iT].map(normaliserEntete), col = function (nom) { return T.indexOf(normaliserEntete(nom)); };
-  var cRes = col("Résidence (nom Mews)"), cMois = col("Mois"), cAn = col("Année"), cMn = col("Mois n°"), cSrc = col("Source"), cStat = col("Statut"), cDet = col("Détail");
-  if (cMois < 0 && (cAn < 0 || cMn < 0)) R.erreurs.push({ ligne: iT + 1, colonne: "Mois", motif: "colonne « Mois » introuvable" });
-  var cols = [];
-  // Lot 20 : colonnes lues d'après le catalogue (colonne du consolidé de chaque donnée active), sinon liste fixe du lot 19.
-  var parCat = typeof catDispo === "function" && catDispo() && CAT.length;
-  var sources = parCat ? CAT.filter(function (x) { return x.type === "donnee" && x.actif && x.colonne_consolide; }).map(function (x) { return { code: x.code, consolide: x.colonne_consolide, signe: x.signe }; })
-    : (D.import_kpi || []).filter(function (k) { return k.consolide; }).map(function (k) { return { code: k.code, consolide: k.consolide, signe: k.code.indexOf("CA_") === 0 ? "signe" : "positif" }; });
-  sources.forEach(function (k) { var i = col(k.consolide);
-    if (i >= 0) cols.push({ i: i, code: k.code, entete: k.consolide, signe: k.signe });
-    else R.avertissements.push({ ligne: iT + 1, colonne: k.consolide, motif: "colonne absente du fichier : mesure " + k.code + " non importée" }); });
-  if (!cols.length) R.erreurs.push({ ligne: iT + 1, colonne: "", motif: "aucune colonne de KPI reconnue" });
-  R.colonnes = cols;
-  if (R.erreurs.length) return R;
-  var ratios = (parCat ? CAT.filter(function (x) { return x.type === "indicateur" && x.actif && x.colonne_consolide; }).map(function (x) { return { colonne: x.colonne_consolide, num: x.numerateur, den: x.denominateur, facteur: +x.facteur }; })
-    : (D.ratios_consolide || []).map(function (r) { return { colonne: r.colonne, num: [r.num], den: [r.den], facteur: 1 }; }))
-    .map(function (r) { return { i: col(r.colonne), r: r }; }).filter(function (x) { return x.i >= 0; });
-  var cGr = GROUPES_FICHIER.map(function (g) { return col(g[0]); });
-  var idx = indexResidences(), vus = {}, nonR = {}, dans = {}, exist = {}, dernier = {}, fichierRes = {};
-  p.dossiers.forEach(function (d) { dans[d] = 1; });
-  MESURES_IMP.forEach(function (x) { exist[x.dossier + "|" + x.mois + "|" + x.mesure] = x.valeur; });
-  var txt = function (l, c, n) { return c < 0 || l[c] === null || l[c] === undefined ? "" : String(l[c]).trim().slice(0, n); };
-  for (var n = iT + 1; n < lignes.length; n++) {
-    var l = lignes[n] || [], num = n + 1;
-    if (!l.some(function (x) { return x !== null && x !== undefined && String(x).trim() !== ""; })) continue;
-    var nom = txt(l, cRes, 300);
-    if (!nom) { R.erreurs.push({ ligne: num, colonne: "Résidence (nom Mews)", motif: "vide" }); continue; }
-    fichierRes[nom] = 1;
-    var mo = cMois >= 0 ? normaliserMois(l[cMois]) : null;
-    if (!mo && cAn >= 0 && cMn >= 0 && l[cAn] && l[cMn]) mo = normaliserMois(String(l[cAn]) + "-" + String(l[cMn]).padStart(2, "0"));
-    if (!mo) { R.erreurs.push({ ligne: num, colonne: "Mois", motif: "« " + txt(l, cMois, 40) + " » : mois illisible" }); continue; }
-    var d = rattacher(nom, idx);
-    if (!d) { var z = nonR[nom] = nonR[nom] || { nom: nom, code: codeMewsPropose(nom), lignes: 0 }; z.lignes++; continue; }
-    if (!dernier[d] || mo >= dernier[d].mois) dernier[d] = { mois: mo, valeurs: cGr.map(function (c) { return txt(l, c, 100); }) };
-    if (!dans[d]) { R.horsPerimetre++; continue; }
-    var cle = d + "|" + mo;
-    if (vus[cle]) { R.erreurs.push({ ligne: num, colonne: "Mois", motif: nomResidence(d) + ", " + moisLong(mo) + " : déjà fourni ligne " + vus[cle] }); continue; }
-    vus[cle] = num;
-    var pr = R.parRes[d] = R.parRes[d] || { mois: {}, nouvelles: 0, modifiees: 0, identiques: 0, ecartees: 0, statuts: {} }, vals = {};
-    pr.mois[mo] = 1;
-    cols.forEach(function (c) {
-      var v = l[c.i];
-      if (v === null || v === undefined || String(v).trim() === "") return;
-      var x = typeof v === "number" ? v : +String(v).replace(/\s|\u00a0|\u202f/g, "").replace(",", ".");
-      var ecarter = !isFinite(x) ? "nombre illisible" : x < 0 && c.signe !== "signe" ? "quantité négative" : null;
-      if (ecarter) { R.ecartees.push({ ligne: num, d: d, mois: mo, colonne: c.entete, valeur: v, motif: ecarter }); pr.ecartees++; return; }
-      vals[c.code] = x;
-      var ex = exist[d + "|" + mo + "|" + c.code], e = ex === undefined ? "nouvelles" : Math.abs(ex - x) > 1e-9 ? "modifiees" : "identiques";
-      R[e]++; pr[e]++;
-      if (e !== "identiques") R.valeurs.push({ dossier: d, mois: mo, mesure: c.code, valeur: x });
-    });
-    ratios.forEach(function (q) {
-      var f = l[q.i], somme = function (cs) { var s = 0; for (var i = 0; i < cs.length; i++) { if (vals[cs[i]] === undefined) return undefined; s += vals[cs[i]]; } return s; };
-      var a = somme(q.r.num), b = q.r.den.length ? somme(q.r.den) : 1;
-      if (typeof f !== "number" || !isFinite(f) || a === undefined || !b) return;
-      var c = q.r.facteur * a / b;
-      if (Math.abs(c - f) > Math.max(1e-4, 1e-3 * Math.abs(f))) R.controles.push({ ligne: num, d: d, mois: mo, colonne: q.r.colonne, fichier: f, calcule: c });
-    });
-    var st = { dossier: d, mois: mo, source: txt(l, cSrc, 60), statut: txt(l, cStat, 40), detail: txt(l, cDet, 500) };
-    if (st.statut) pr.statuts[st.statut] = (pr.statuts[st.statut] || 0) + 1;
-    var anc = statutMois(d, mo);
-    if (!anc || anc.statut !== st.statut || anc.detail !== st.detail || anc.source !== st.source) R.statuts.push(st);
-  }
-  R.residencesFichier = Object.keys(fichierRes).length;
-  R.nonRattachees = Object.keys(nonR).sort().map(function (k) { return nonR[k]; });
-  // Groupes proposés : segment, région, RM et regroupement du dernier mois de chaque résidence rattachée.
-  var G = {};
-  Object.keys(dernier).forEach(function (d) { GROUPES_FICHIER.forEach(function (g, i) { var v = dernier[d].valeurs[i];
-    if (!v || /^\(?non renseign/i.test(v)) return;
-    var id = "GR-" + g[1] + "-" + slugGroupe(v); if (id.length < 5) return;
-    (G[id] = G[id] || { id: id, type: g[0], libelle: g[2] + " " + v, dossiers: [] }).dossiers.push(d); }); });
-  R.groupes = Object.keys(G).sort().map(function (k) { G[k].dossiers.sort(); return G[k]; });
-  if (R.nonRattachees.length) R.avertissements.push({ ligne: "", colonne: "Résidence (nom Mews)", motif: R.nonRattachees.length + " résidence(s) du fichier non rattachée(s) au logiciel : leurs lignes sont ignorées" });
-  if (R.ecartees.length) R.avertissements.push({ ligne: "", colonne: "", motif: R.ecartees.length + " valeur(s) écartée(s) (illisibles ou quantités négatives) : le reste est importé" });
-  if (R.controles.length) R.avertissements.push({ ligne: "", colonne: "", motif: R.controles.length + " ratio(s) du fichier différent(s) du ratio recalculé : à vérifier dans l’outil KPI" });
-  if (!R.erreurs.length && !Object.keys(R.parRes).length) R.erreurs.push({ ligne: "", colonne: "", motif: "aucune ligne pour les résidences du périmètre « " + p.libelle + " »" + (R.nonRattachees.length ? " : rattachez d’abord les résidences du fichier" : "") });
-  return R;
-}
-function enregistrerStatuts(statuts, fichier) {
-  var lignes = statuts.map(function (s) { return { dossier: s.dossier, mois: s.mois, source: s.source, statut: s.statut, detail: s.detail, fichier: String(fichier || "").slice(0, 200) }; });
-  if (!enLigne()) {
-    lignes.forEach(function (s) { var k = s.dossier + "|" + s.mois, i = KPI_MOIS.findIndex(function (x) { return x.dossier + "|" + x.mois === k; }); if (i >= 0) KPI_MOIS[i] = s; else KPI_MOIS.push(s); });
-    try { localStorage.setItem("zen-kpi-mois", JSON.stringify(KPI_MOIS)); } catch (e) {}
-    kpiMoisChargerLocal(); return Promise.resolve();
-  }
-  var lots = []; for (var i = 0; i < lignes.length; i += 1000) lots.push(lignes.slice(i, i + 1000));
-  return lots.reduce(function (p, lot) { return p.then(function () { return sb(ZCLIENT.from("kpi_mois").upsert(lot, { onConflict: "dossier,mois" }).select("dossier")).then(verifierTouche); }); }, Promise.resolve())
-    .then(function () { return lireTout(function () { return ZCLIENT.from("kpi_mois").select("*").order("dossier").order("mois"); }); })
-    .then(function (r) { D.kpi_mois = r || []; kpiMoisCharger(); });
-}
-function kpiMoisChargerLocal() { KPI_IDX = {}; KPI_MOIS.forEach(function (x) { KPI_IDX[x.dossier + "|" + x.mois] = x; }); }
 function enregistrerDepot(I, p) {
   var R = I.R, ligne = { fichier: String(I.nom).slice(0, 200), perimetre: String(p.libelle).slice(0, 120), residences: Object.keys(R.parRes).length,
     mois: Object.keys(R.parRes).reduce(function (s, d) { return s + Object.keys(R.parRes[d].mois).length; }, 0), nouvelles: R.nouvelles, modifiees: R.modifiees, ecartees: R.ecartees.length };
@@ -3799,106 +3594,46 @@ function enregistrerDepot(I, p) {
   return sb(ZCLIENT.from("depots_kpi").insert(ligne).select("id")).then(verifierTouche)
     .then(function () { return lireFacultatif(ZCLIENT.from("depots_kpi").select("*").order("id")); }).then(function (r) { D.depots_kpi = r; });
 }
-function enregistrerConsolide(I, p) {
-  return enregistrerImport(I.R.valeurs).then(function () { return enregistrerStatuts(I.R.statuts, I.nom); }).then(function () { return enregistrerDepot(I, p); });
-}
-/* Rattachement : le code Mews (préfixe du nom) est enregistré sur la résidence choisie. */
-function enregistrerRattachements(choix) {
-  if (!choix.length) return Promise.resolve();
-  if (!enLigne()) { var m = codesMewsLocaux(); choix.forEach(function (c) { m[c.dossier] = c.code; }); try { localStorage.setItem("zen-codes-mews", JSON.stringify(m)); } catch (e) {} return Promise.resolve(); }
-  return choix.reduce(function (pr, c) { return pr.then(function () { return sb(ZCLIENT.from("residences").update({ code_mews: c.code }).eq("id", residenceIdDe(c.dossier)).select("id")).then(verifierTouche); }); }, Promise.resolve())
-    .then(function () { return lireOuNull(ZCLIENT.from("residences").select("id, dossier_pennylane, code_mews")); }).then(function (r) { D.residences_base = r || []; });
-}
-/* Groupes du fichier (segment, région, RM, regroupement) : créés ou mis à jour, résidences rattachées seulement. */
-function creerGroupesFichier(G) {
-  var concernees = {}; G.forEach(function (g) { g.dossiers.forEach(function (d) { concernees[residenceIdDe(d)] = 1; }); });
-  var voulus = {}; G.forEach(function (g) { g.dossiers.forEach(function (d) { voulus[residenceIdDe(d) + "|" + g.id] = { residence_id: residenceIdDe(d), groupe_id: g.id }; }); });
-  var types = GROUPES_FICHIER.map(function (g) { return "GR-" + g[1] + "-"; });
-  var enTrop = (D.residence_groupe || []).filter(function (l) { return concernees[l.residence_id] && types.some(function (t) { return l.groupe_id.indexOf(t) === 0; }) && !voulus[l.residence_id + "|" + l.groupe_id]; });
-  return sb(ZCLIENT.from("groupes").upsert(G.map(function (g) { return { id: g.id, libelle: g.libelle }; }), { onConflict: "id" }).select("id")).then(verifierTouche)
-    .then(function () { return enTrop.reduce(function (pr, l) { return pr.then(function () { return sb(ZCLIENT.from("residence_groupe").delete().eq("residence_id", l.residence_id).eq("groupe_id", l.groupe_id).select("groupe_id")); }); }, Promise.resolve()); })
-    .then(function () { var v = Object.keys(voulus).map(function (k) { return voulus[k]; }); return v.length ? sb(ZCLIENT.from("residence_groupe").upsert(v, { onConflict: "residence_id,groupe_id" }).select("groupe_id")) : null; })
-    .then(function () { return { groupes: G.length, retraits: enTrop.length }; });
-}
-var SYMB_STATUT = { "complet": ["✔", "ok"], "estime": ["~", "att"], "anomalie": ["⚠", "ko"], "ancien fichier": ["H", "mut"] };
-function symboleStatut(s) { if (!s) return ""; var k = SYMB_STATUT[normaliserEntete(s.statut)] || ["•", "mut"];
-  return '<span class="st-mois ' + k[1] + '" title="' + esc(s.statut + (s.source ? " · " + s.source : "") + (s.detail ? " · " + s.detail : "")) + '">' + k[0] + "</span>"; }
-function rendreConsolide(I, p, admin) {
-  var R = I.R, h = '<div class="imp-resultat" id="cons-resultat"><h3>' + esc(I.nom) + " · " + (R.titre ? esc(R.titre) : "consolidé KPI (onglet « " + esc(I.feuille || "Données KPI") + " »)") + "</h3>";
+function rendreDepot(I, p, admin) {
+  var R = I.R, h = '<div class="imp-resultat" id="cons-resultat"><h3>' + esc(I.nom) + " · " + esc(R.titre || "modèle Excel du catalogue") + "</h3>";
   var tab = function (tete, rows) { return '<div class="defile" style="max-height:260px"><table class="tab"><thead><tr>' + tete.map(function (x) { return "<th>" + x + "</th>"; }).join("") + "</tr></thead><tbody>" + rows.join("") + "</tbody></table></div>"; };
   if (R.erreurs.length) h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Dépôt refusé.</b> ' + esc(R.erreurs[0].motif) + (R.erreurs.length > 1 ? " (et " + (R.erreurs.length - 1) + " autre(s) erreur(s))" : "") + ". Rien n’a été enregistré.</div></div>" +
-    tab(["Ligne", "Colonne", "Motif"], R.erreurs.slice(0, 200).map(function (x) { return "<tr><td>" + x.ligne + "</td><td>" + esc(x.colonne) + "</td><td>" + esc(x.motif) + "</td></tr>"; }));
+    tab(["Ligne", "Feuille", "Motif"], R.erreurs.slice(0, 200).map(function (x) { return "<tr><td>" + x.ligne + "</td><td>" + esc(x.colonne) + "</td><td>" + esc(x.motif) + "</td></tr>"; }));
   else {
     var nRes = Object.keys(R.parRes).length, nMois = Object.keys(R.parRes).reduce(function (s, d) { return s + Object.keys(R.parRes[d].mois).length; }, 0);
     h += '<p class="cons-chiffres"><b>' + esc(p.libelle) + "</b> : " + nRes + " résidence(s), " + nb(nMois) + " mois · <b>" + nb(R.nouvelles) + "</b> valeur(s) nouvelle(s), <b>" + nb(R.modifiees) + "</b> modifiée(s), " + nb(R.identiques) + " identique(s)" +
       (R.ecartees.length ? " · " + nb(R.ecartees.length) + " écartée(s)" : "") + (R.horsPerimetre ? " · " + nb(R.horsPerimetre) + " ligne(s) d’autres résidences ignorées (hors du périmètre)" : "") + "</p>";
     var lst = Object.keys(R.parRes).sort(function (a, b) { return nomResidence(a) < nomResidence(b) ? -1 : 1; });
-    h += tab(["Résidence", "Mois", '<span class="num">Nouvelles</span>', '<span class="num">Modifiées</span>', '<span class="num">Écartées</span>', "Statuts des mois"], lst.map(function (d) { var x = R.parRes[d];
-      return "<tr><td><b>" + esc(nomResidence(d)) + "</b></td><td>" + esc(libMois(Object.keys(x.mois).sort())) + '</td><td class="num">' + nb(x.nouvelles) + '</td><td class="num">' + nb(x.modifiees) + '</td><td class="num">' + nb(x.ecartees) + "</td><td>" +
-        esc(Object.keys(x.statuts).sort().map(function (s) { return s + " " + x.statuts[s]; }).join(", ")) + "</td></tr>"; }));
-  }
-  if (R.nonRattachees.length) {
-    var libres = D.residences.filter(function (r) { return !codeMewsDe(r.dossier); });
-    h += '<div class="cons-bloc" id="cons-rattacher"><h4>Résidences du fichier non rattachées (' + R.nonRattachees.length + ")</h4><p class=\"legende\">Leurs lignes sont ignorées. Choisissez la résidence du logiciel correspondante : le code Mews est retenu pour les prochains dépôts." +
-      (admin ? "" : " Réservé aux administrateurs.") + "</p>" + tab(["Nom dans le fichier", "Code Mews", '<span class="num">Lignes</span>', "Résidence du logiciel"], R.nonRattachees.slice(0, 300).map(function (x, i) {
-        return "<tr><td>" + esc(x.nom) + "</td><td><code>" + esc(x.code) + '</code></td><td class="num">' + nb(x.lignes) + "</td><td>" + (admin ? '<select data-cons-rat="' + i + '"><option value="">ne pas rattacher</option>' +
-          libres.map(function (r) { return '<option value="' + esc(r.dossier) + '">' + esc(r.nom) + "</option>"; }).join("") + "</select>" : "") + "</td></tr>"; })) +
-      (admin ? '<div class="aj-actions"><button class="btn btn-ligne" id="cons-rat-ok">Enregistrer les rattachements</button></div>' : "") + "</div>";
+    h += tab(["Résidence", "Mois", '<span class="num">Nouvelles</span>', '<span class="num">Modifiées</span>', '<span class="num">Vides</span>', '<span class="num">Écartées</span>'], lst.map(function (d) { var x = R.parRes[d];
+      return "<tr><td><b>" + esc(nomResidence(d)) + "</b></td><td>" + esc(libMois(Object.keys(x.mois).sort())) + '</td><td class="num">' + nb(x.nouvelles) + '</td><td class="num">' + nb(x.modifiees) + '</td><td class="num">' + nb(x.manquantes || 0) + '</td><td class="num">' + nb(x.ecartees) + "</td></tr>"; }));
   }
   if (R.avertissements.length && !R.erreurs.length) h += '<div class="cons-bloc" id="cons-attention"><h4>Points d’attention</h4><ul class="cat-ctl">' + R.avertissements.slice(0, 30).map(function (a) { return '<li class="att">' + esc((a.colonne ? a.colonne + " : " : "") + a.motif) + "</li>"; }).join("") + "</ul></div>";
-  if (R.ecartees.length) h += '<div class="cons-bloc"><h4>Valeurs écartées (' + R.ecartees.length + ')</h4><p class="legende">Non importées : la valeur déjà enregistrée, s’il y en a une, est conservée. À corriger dans l’outil KPI.</p>' +
-    tab(["Ligne", "Résidence", "Mois", "Colonne", "Valeur", "Motif"], R.ecartees.slice(0, 200).map(function (x) { return "<tr><td>" + x.ligne + "</td><td>" + esc(nomResidence(x.d)) + "</td><td>" + moisMaj(x.mois) + "</td><td>" + esc(x.colonne) + "</td><td>" + esc(String(x.valeur)) + "</td><td>" + esc(x.motif) + "</td></tr>"; })) + "</div>";
-  if (R.controles.length) h += '<div class="cons-bloc"><h4>Ratios à vérifier (' + R.controles.length + ')</h4><p class="legende">Le ratio du fichier diffère du ratio recalculé à partir des quantités importées. Le logiciel affiche toujours le ratio recalculé.</p>' +
-    tab(["Ligne", "Résidence", "Mois", "Ratio", '<span class="num">Fichier</span>', '<span class="num">Recalculé</span>'], R.controles.slice(0, 200).map(function (x) { return "<tr><td>" + x.ligne + "</td><td>" + esc(nomResidence(x.d)) + "</td><td>" + moisMaj(x.mois) + "</td><td>" + esc(x.colonne) + '</td><td class="num">' + valNum(x.fichier) + '</td><td class="num">' + valNum(x.calcule) + "</td></tr>"; })) + "</div>";
-  if (R.groupes.length && admin && enLigne()) h += '<div class="cons-bloc" id="cons-groupes"><h4>Groupes du fichier</h4><p class="legende">Segments, régions, RM et regroupements lus dans le fichier pour les résidences rattachées. Une fois créés, ils servent au choix du périmètre, aux imports et aux synchronisations de groupe.</p>' +
-    tab(["Groupe", "Type", '<span class="num">Résidences</span>', "État"], R.groupes.map(function (g) { var ex = (D.groupes_base || []).some(function (x) { return x.id === g.id; });
-      return "<tr><td><b>" + esc(g.libelle) + "</b></td><td>" + esc(g.type) + '</td><td class="num">' + g.dossiers.length + "</td><td>" + (ex ? "existe (mis à jour)" : "à créer") + "</td></tr>"; })) +
-    '<div class="aj-actions"><button class="btn btn-ligne" id="cons-groupes-ok">Créer ou mettre à jour ' + R.groupes.length + " groupe(s)</button></div></div>";
-  var nb2 = R.valeurs.length, nbSt = R.statuts.length;
-  h += '<div class="aj-actions">' + (!R.erreurs.length && admin && (nb2 || nbSt) ? '<button class="btn btn-principal" id="cons-ok">Importer ' + nb(nb2) + " valeur(s)" + (nbSt ? " et " + nb(nbSt) + " statut(s) de mois" : "") + "</button>" : "") +
-    (!R.erreurs.length && !nb2 && !nbSt ? '<span class="legende">Rien de nouveau : toutes les valeurs du périmètre sont déjà importées.</span>' : "") + '<button class="btn btn-ligne" id="imp-annuler">' + (R.erreurs.length || (!nb2 && !nbSt) ? "Fermer" : "Annuler") + "</button></div></div>";
+  if (R.ecartees.length) h += '<div class="cons-bloc"><h4>Valeurs écartées (' + R.ecartees.length + ')</h4><p class="legende">Non importées : la valeur déjà enregistrée, s’il y en a une, est conservée.</p>' +
+    tab(["Ligne", "Résidence", "Mois", "Donnée", "Valeur", "Motif"], R.ecartees.slice(0, 200).map(function (x) { return "<tr><td>" + x.ligne + "</td><td>" + esc(nomResidence(x.d)) + "</td><td>" + moisMaj(x.mois) + "</td><td>" + esc(x.colonne) + "</td><td>" + esc(String(x.valeur)) + "</td><td>" + esc(x.motif) + "</td></tr>"; })) + "</div>";
+  var nv = R.valeurs.length;
+  h += '<div class="aj-actions">' + (!R.erreurs.length && admin && nv ? '<button class="btn btn-principal" id="cons-ok">Importer ' + nb(nv) + " valeur(s)</button>" : "") +
+    (!R.erreurs.length && !nv ? '<span class="legende">Rien de nouveau : toutes les valeurs du fichier sont déjà importées.</span>' : "") + '<button class="btn btn-ligne" id="imp-annuler">' + (R.erreurs.length || !nv ? "Fermer" : "Annuler") + "</button></div></div>";
   return h;
 }
-function brancherConsolide(I, p) {
-  var R = I.R, b;
-  // Une variable par bouton : chaque gestionnaire garde le sien (correctif du lot 20).
-  var bOk = el("cons-ok"), bRat = el("cons-rat-ok"), bGr = el("cons-groupes-ok");
-  if ((b = bOk)) b.addEventListener("click", function () { bOk.disabled = true; bOk.textContent = "Import en cours…";
-    enregistrerConsolide(I, p).then(function () { etat.import = null; appliquerMesures(); majContenu();
-      messageExternes("Consolidé importé : " + nb(R.valeurs.length) + " valeur(s) et " + nb(R.statuts.length) + " statut(s) de mois. Les KPI de tous les tableaux de bord en tiennent compte.", "info"); })
+function brancherDepot(I, p) {
+  var bOk = el("cons-ok");
+  if (bOk) bOk.addEventListener("click", function () { bOk.disabled = true; bOk.textContent = "Import en cours…";
+    enregistrerImport(I.R.valeurs).then(function () { return enregistrerDepot(I, p); }).then(function () { etat.import = null; appliquerMesures(); majContenu();
+      messageExternes("Modèle importé : " + nb(I.R.valeurs.length) + " valeur(s). Les KPI de tous les tableaux de bord en tiennent compte.", "info"); })
       .catch(function (e) { bOk.disabled = false; bOk.textContent = "Importer"; alert(messageErreur(e)); }); });
-  if ((b = bRat)) b.addEventListener("click", function () {
-    var choix = [], vus = {};
-    el("contenu").querySelectorAll("[data-cons-rat]").forEach(function (s) { if (!s.value) return; var x = R.nonRattachees[+s.dataset.consRat];
-      if (vus[s.value]) return; vus[s.value] = 1; choix.push({ dossier: s.value, code: x.code }); });
-    if (!choix.length) return;
-    bRat.disabled = true;
-    enregistrerRattachements(choix).then(function () { etat.import = { nom: I.nom, feuille: I.feuille, lignes: I.lignes, R: validerConsolide(I.lignes, p) }; majContenu(); })
-      .catch(function (e) { bRat.disabled = false; alert(messageErreur(e)); }); });
-  if ((b = bGr)) b.addEventListener("click", function () { bGr.disabled = true; bGr.textContent = "Création…";
-    creerGroupesFichier(R.groupes).then(function (r) { messageExternes(r.groupes + " groupe(s) créé(s) ou mis à jour. Rechargement pour les afficher dans le choix du périmètre…", "info"); setTimeout(function () { RECHARGER(); }, 1200); })
-      .catch(function (e) { bGr.disabled = false; alert(messageErreur(e)); }); });
 }
 function messageExternes(html, classe) {
   var z = el("ext-message"); if (!z) return;
   z.innerHTML = html ? '<div class="connexion-etat ' + (classe || "") + '" style="margin:0 0 16px">' + html + "</div>" : "";
 }
-function blocSuiviMois(p) {
-  var ms = fenetre(), ds = p.dossiers.filter(function (d) { return ms.some(function (m) { return statutMois(d, m); }); });
-  var h = '<div class="bloc" id="ext-suivi"><div class="bloc-tete"><h2>Suivi des mois importés</h2><span class="legende">✔ complet · ~ estimé · ⚠ anomalie · H ancien fichier KPI ; survol = détail</span></div>';
-  if (!ds.length) return h + '<p class="mut">Aucun statut de mois sur ce périmètre et cette période (déposez le consolidé KPI).</p></div>';
-  h += '<div class="defile"><table class="tab grille-st"><thead><tr><th>Résidence</th>' + ms.map(function (m) { return '<th class="c">' + moisCourt(m) + "</th>"; }).join("") + "</tr></thead><tbody>";
-  ds.forEach(function (d) { h += "<tr><td><b>" + esc(nomResidence(d)) + "</b></td>" + ms.map(function (m) { return '<td class="c">' + symboleStatut(statutMois(d, m)) + "</td>"; }).join("") + "</tr>"; });
-  return h + "</tbody></table></div></div>";
-}
 function blocDepots() {
   if (!enLigne() || !estAdmin()) return "";
-  var L = (D.depots_kpi || []).slice().sort(function (a, b) { return b.id - a.id; }).slice(0, 10);
-  var h = '<div class="bloc" id="ext-depots"><div class="bloc-tete"><h2>Historique des dépôts du consolidé</h2></div>';
+  var T = (D.depots_kpi || []).slice().sort(function (a, b) { return b.id - a.id; }), L = etat.depotsTout ? T : T.slice(0, 5);
+  var h = '<div class="bloc" id="ext-depots"><div class="bloc-tete"><h2>Historique des dépôts</h2></div>';
   if (!L.length) return h + '<p class="legende">Aucun dépôt.</p></div>';
   return h + '<div class="defile"><table class="tab"><thead><tr><th>Déposé le</th><th>Par</th><th>Fichier</th><th>Périmètre</th><th class="num">Résidences</th><th class="num">Mois</th><th class="num">Nouvelles</th><th class="num">Modifiées</th><th class="num">Écartées</th></tr></thead><tbody>' +
     L.map(function (x) { return "<tr><td>" + dateHeure(x.depose_le) + "</td><td>" + esc(x.depose_par || "") + "</td><td>" + esc(x.fichier) + "</td><td>" + esc(x.perimetre) + '</td><td class="num">' + nb(x.residences) + '</td><td class="num">' + nb(x.mois) +
-      '</td><td class="num">' + nb(x.nouvelles) + '</td><td class="num">' + nb(x.modifiees) + '</td><td class="num">' + nb(x.ecartees) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+      '</td><td class="num">' + nb(x.nouvelles) + '</td><td class="num">' + nb(x.modifiees) + '</td><td class="num">' + nb(x.ecartees) + "</td></tr>"; }).join("") + "</tbody></table></div>" + voirPlus("depotsTout", T.length) + "</div>";
 }
 /* ======================================================================================
    Lot 20 : suivi KPI paramétrable (décision 0014). Catalogue de données (saisies ou importées) et
@@ -4056,7 +3791,7 @@ function controlesCatalogue(p) {
 /* ---------- Enregistrement (base en ligne, navigateur en démonstration locale) ---------- */
 function catRecharger() {
   return Promise.all([lireOuNull(ZCLIENT.from("kpi_catalogue").select("*").order("ordre")), lireOuNull(ZCLIENT.from("kpi_modeles").select("*").order("ordre")),
-                      lireOuNull(ZCLIENT.from("residence_modele").select("*")), lireFacultatif(ZCLIENT.from("kpi_journal").select("*").order("id", { ascending: false }).limit(50))])
+                      lireOuNull(ZCLIENT.from("residence_modele").select("*")), lireFacultatif(ZCLIENT.from("kpi_journal").select("*").order("id", { ascending: false }).limit(1000))])
     .then(function (r) { D.catalogue = r[0] || []; D.kpi_modeles = r[1] || []; D.res_modeles = r[2] || []; D.kpi_journal = r[3] || []; catCharger(); });
 }
 function catSauver(lignes) {
@@ -4109,7 +3844,6 @@ function formulaireCat(E) {
       '<label>Sens<select id="cat-sens"><option value="haut"' + (x.sens === "haut" ? " selected" : "") + '>plus haut = mieux</option><option value="bas"' + (x.sens === "bas" ? " selected" : "") + '>plus bas = mieux</option><option value=""' + (!x.sens ? " selected" : "") + ">neutre</option></select></label>" +
       '<label>Seuil d’alerte<input id="cat-seuil" type="number" step="any" value="' + esc(seuilAff) + '" placeholder="aucun"><span class="legende">Dans l’unité affichée (ex. 60 pour 60 %)</span></label>'
       : '<label>Valeurs<select id="cat-signe"><option value="positif"' + (x.signe !== "signe" ? " selected" : "") + '>positives ou nulles (quantités)</option><option value="signe"' + (x.signe === "signe" ? " selected" : "") + ">positives ou négatives (montants, avoirs)</option></select></label>") +
-    '<label>Colonne du consolidé KPI<input id="cat-colonne" value="' + esc(x.colonne_consolide || "") + '" maxlength="120" placeholder="(facultatif)"><span class="legende">' + (ind ? "Ratio du fichier comparé au calcul (contrôle)" : "En-tête lu dans l’onglet « Données KPI »") + "</span></label>" +
     '<label class="cat-large">Description<input id="cat-description" value="' + esc(x.description || "") + '" maxlength="500"></label>' +
     '<div class="cat-large"><b>Modèles qui le suivent</b><div class="cat-coches">' + CAT_MODELES.map(function (m) { return '<label><input type="checkbox" name="cat-modele" value="' + esc(m.id) + '"' + (suitModele(x, m.id) ? " checked" : "") + "> " + esc(m.libelle) + "</label>"; }).join("") + "</div></div>" +
     (ind ? '<div class="cat-large"><b>Numérateur</b> (somme de)' + coches("cat-num", x.numerateur || []) + "</div>" + '<div class="cat-large"><b>Dénominateur</b> (somme de ; aucun = simple somme)' + coches("cat-den", x.denominateur || []) + "</div>" : "") +
@@ -4121,7 +3855,7 @@ function lireFormulaireCat(E) {
   var v = function (id) { var z = el(id); return z ? z.value.trim() : ""; }, coch = function (nom) { return Array.prototype.map.call(document.querySelectorAll('input[name="' + nom + '"]:checked'), function (i) { return i.value; }); };
   var ancien = E.code ? elementCat(E.code) : null, type = ancien ? ancien.type : E.type, unite = v("cat-unite");
   var x = { code: (ancien ? ancien.code : v("cat-code").toUpperCase()), type: type, libelle: v("cat-libelle"), rubrique: v("cat-rubrique") || "Autres", unite: unite,
-    actif: el("cat-actif").checked, modeles: coch("cat-modele"), colonne_consolide: v("cat-colonne") || null, description: v("cat-description"),
+    actif: el("cat-actif").checked, modeles: coch("cat-modele"), colonne_consolide: ancien ? ancien.colonne_consolide || null : null, description: v("cat-description"),
     ordre: ancien ? ancien.ordre : (CAT.reduce(function (s, y) { return Math.max(s, y.ordre); }, 0) + 10) };
   if (type === "indicateur") {
     var s = v("cat-seuil");
@@ -4158,14 +3892,14 @@ function deplacerCat(code, sens) {
 function tableauCatalogue(type, admin) {
   var liste = CAT.filter(function (x) { return x.type === type; }), ind = type === "indicateur";
   if (!liste.length) return '<p class="mut">Aucun élément.</p>';
-  var h = '<div class="defile"><table class="tab" id="cat-' + type + '"><thead><tr><th>Ordre</th><th>Libellé</th><th>Code</th>' + (ind ? "<th>Formule</th><th>Seuil</th>" : "<th>Valeurs</th>") + "<th>Unité</th><th>Modèles</th><th>Colonne du consolidé</th><th>État</th><th></th></tr></thead><tbody>";
+  var h = '<div class="defile"><table class="tab" id="cat-' + type + '"><thead><tr><th>Ordre</th><th>Libellé</th><th>Code</th>' + (ind ? "<th>Formule</th><th>Seuil</th>" : "<th>Valeurs</th>") + "<th>Unité</th><th>Modèles</th><th>État</th><th></th></tr></thead><tbody>";
   rubriquesCat(liste).forEach(function (rb) {
-    h += '<tr class="rub-ligne"><td colspan="' + (ind ? 10 : 9) + '"><b>' + esc(rb) + "</b></td></tr>";
+    h += '<tr class="rub-ligne"><td colspan="' + (ind ? 9 : 8) + '"><b>' + esc(rb) + "</b></td></tr>";
     liste.filter(function (x) { return x.rubrique === rb; }).forEach(function (x) {
       h += '<tr class="' + (x.actif ? "" : "cat-inactif") + '" data-cat="' + esc(x.code) + '"><td style="white-space:nowrap">' + (admin ? '<button class="btn-petit" data-cat-haut="' + esc(x.code) + '" title="Monter">↑</button><button class="btn-petit" data-cat-bas="' + esc(x.code) + '" title="Descendre">↓</button>' : "") +
         "</td><td><b>" + esc(x.libelle) + "</b>" + (x.description ? '<br><span class="legende">' + esc(x.description) + "</span>" : "") + "</td><td><code>" + esc(x.code) + "</code></td>" +
         (ind ? "<td>" + esc(formuleTexte(x)) + "</td><td>" + (x.seuil !== null && x.seuil !== undefined && x.seuil !== "" ? (x.sens === "bas" ? "≤ " : "≥ ") + formatUnite(+x.seuil, x.unite) : "") + "</td>" : "<td>" + (x.signe === "signe" ? "signées" : "positives") + "</td>") +
-        "<td>" + esc(UNITES[x.unite] || x.unite) + "</td><td>" + puceModeles(x) + "</td><td>" + esc(x.colonne_consolide || "") + "</td><td>" + (x.actif ? '<span class="pastille ok">actif</span>' : '<span class="pastille">inactif</span>') +
+        "<td>" + esc(UNITES[x.unite] || x.unite) + "</td><td>" + puceModeles(x) + "</td><td>" + (x.actif ? '<span class="pastille ok">actif</span>' : '<span class="pastille">inactif</span>') +
         "</td><td>" + (admin ? '<button class="btn-petit" data-cat-modif="' + esc(x.code) + '">Modifier</button>' : "") + "</td></tr>";
     });
   });
@@ -4188,13 +3922,13 @@ function blocModeles(p, admin) {
 }
 function blocJournalCat() {
   if (!enLigne() || !estAdmin()) return "";
-  var L = (D.kpi_journal || []).slice(0, 30);
+  var T = D.kpi_journal || [], L = etat.journalTout ? T : T.slice(0, 5);
   var h = '<div class="bloc" id="cat-journal"><div class="bloc-tete"><h2>Journal des modifications du catalogue</h2></div>';
   if (!L.length) return h + '<p class="legende">Aucune modification.</p></div>';
   var champs = ["libelle", "rubrique", "unite", "actif", "modeles", "numerateur", "denominateur", "facteur", "seuil", "sens", "signe", "colonne_consolide", "ordre"];
   return h + '<div class="defile" style="max-height:320px"><table class="tab"><thead><tr><th>Date</th><th>Par</th><th>Élément</th><th>Action</th><th>Changements</th></tr></thead><tbody>' + L.map(function (j) {
     var ch = j.action === "modification" && j.avant && j.apres ? champs.filter(function (c) { return JSON.stringify(j.avant[c]) !== JSON.stringify(j.apres[c]); }).map(function (c) { return c + " : " + JSON.stringify(j.avant[c]) + " → " + JSON.stringify(j.apres[c]); }).join(" ; ") : "";
-    return "<tr><td>" + dateHeure(j.le) + "</td><td>" + esc(j.par || "système") + "</td><td><code>" + esc(j.code) + "</code></td><td>" + esc(j.action) + '</td><td class="legende">' + esc(ch) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+    return "<tr><td>" + dateHeure(j.le) + "</td><td>" + esc(j.par || "système") + "</td><td><code>" + esc(j.code) + "</code></td><td>" + esc(j.action) + '</td><td class="legende">' + esc(ch) + "</td></tr>"; }).join("") + "</tbody></table></div>" + voirPlus("journalTout", T.length) + "</div>";
 }
 function blocsCatalogue(p) {
   if (!catDispo()) return '<div class="bloc"><div class="bloc-tete"><h2>Suivi KPI paramétrable</h2></div><p class="legende">Migration 012 non appliquée dans la base : voir <code>docs/lot20_mise_en_route.md</code>.</p></div>';
@@ -4216,6 +3950,7 @@ function brancherCatalogue(p) {
   if ((b = el("cat-nouv-ind"))) b.onclick = function () { ouvrir({ type: "indicateur" }); };
   if ((b = el("cat-nouv-don"))) b.onclick = function () { ouvrir({ type: "donnee" }); };
   if ((b = el("cat-export"))) b.onclick = function () { allerA("import", "externes"); };
+  el("contenu").querySelectorAll("[data-voir-plus]").forEach(function (x) { x.onclick = function () { etat[x.dataset.voirPlus] = !etat[x.dataset.voirPlus]; majContenu(); }; });
   el("contenu").querySelectorAll("[data-cat-modif]").forEach(function (x) { x.onclick = function () { ouvrir({ code: x.dataset.catModif }); }; });
   el("contenu").querySelectorAll("[data-cat-haut]").forEach(function (x) { x.onclick = function () { deplacerCat(x.dataset.catHaut, -1).then(majContenu, ech); }; });
   el("contenu").querySelectorAll("[data-cat-bas]").forEach(function (x) { x.onclick = function () { deplacerCat(x.dataset.catBas, 1).then(majContenu, ech); }; });
@@ -4279,7 +4014,8 @@ function validerModeleKpi(lignes, p) {
   if (meta.Format !== FORMAT_MODELE) { R.erreurs.push({ ligne: "", colonne: "Lisez-moi", motif: "format du modèle inconnu : exportez un nouveau modèle depuis le logiciel" }); return R; }
   var feuilles = Object.keys(meta).filter(function (k) { return /^Feuille /.test(k); });
   if (!feuilles.length) { R.erreurs.push({ ligne: "", colonne: "Lisez-moi", motif: "aucune feuille de modèle déclarée" }); return R; }
-  var dans = {}, exist = {}, vus = {}, idx = indexResidences();
+  var dans = {}, exist = {}, vus = {};
+  var parCode = {}; D.residences.forEach(function (r) { parCode[r.dossier] = r.dossier; if (r.code) parCode[r.code] = r.dossier; });
   p.dossiers.forEach(function (d) { dans[d] = 1; });
   MESURES_IMP.forEach(function (x) { exist[x.dossier + "|" + x.mois + "|" + x.mesure] = x.valeur; });
   feuilles.forEach(function (k) {
@@ -4303,7 +4039,7 @@ function validerModeleKpi(lignes, p) {
     for (var n = iC + 1; n < L.length; n++) {
       var l = L[n] || [], num = n + 1;
       if (!l.some(function (v) { return v !== null && v !== undefined && String(v).trim() !== ""; })) continue;
-      var ref = String(l[0] == null ? "" : l[0]).trim(), d = residence(ref) ? ref : rattacher(ref, idx), mo = normaliserMois(l[2]);
+      var ref = String(l[0] == null ? "" : l[0]).trim(), d = parCode[ref], mo = normaliserMois(l[2]);
       if (!d) { R.erreurs.push({ ligne: num, colonne: nom, motif: "résidence « " + ref + " » inconnue" }); continue; }
       if (!mo) { R.erreurs.push({ ligne: num, colonne: nom, motif: nomResidence(d) + " : mois illisible" }); continue; }
       if (!dans[d]) { R.horsPerimetre++; continue; }
@@ -4331,16 +4067,19 @@ function validerModeleKpi(lignes, p) {
   return R;
 }
 function blocExportModele(p, admin) {
-  if (!catDispo()) return "";
+  if (!catDispo()) return '<div class="bloc"><div class="bloc-tete"><h2>Modèle Excel du catalogue</h2></div><p class="legende">Migration 012 non appliquée dans la base : voir <code>docs/lot20_mise_en_route.md</code>.</p></div>';
   var ms = fenetre(), debut = etat.modDebut || ms[0], fin = etat.modFin || ms[ms.length - 1], liste = MOIS.slice();
   var sans = p.dossiers.filter(function (d) { return !modeleDe(d); }), ctl = controlesCatalogue(p).filter(function (c) { return c.niveau === "ko"; });
   var opts = function (sel) { return liste.map(function (m) { return '<option value="' + m + '"' + (m === sel ? " selected" : "") + ">" + moisMaj(m) + "</option>"; }).join(""); };
-  var h = '<div class="bloc" id="mod-bloc"><div class="bloc-tete"><h2>Modèle Excel du catalogue</h2><span class="legende">Exporter, remplir, redéposer : les colonnes suivent les données actives de chaque modèle de suivi</span></div>' +
-    '<div class="aj-actions" style="flex-wrap:wrap"><label>Du <select id="mod-debut">' + opts(debut) + '</select></label><label>au <select id="mod-fin">' + opts(fin) + "</select></label>" +
-    '<button class="btn btn-principal" id="mod-export"' + (ctl.length ? " disabled" : "") + ">Exporter le modèle (" + (p.dossiers.length - sans.length) + " résidence(s))</button></div>";
-  if (ctl.length) h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Export bloqué :</b> ' + esc(ctl.map(function (c) { return c.texte; }).join(" ; ")) + ". Corrigez dans Paramètres KPI.</div></div>";
-  h += '<p class="legende">Le fichier contient une feuille par modèle (' + esc(CAT_MODELES.map(function (m) { return m.libelle; }).join(", ")) + "), déjà remplie avec les valeurs importées. Redéposez-le avec « Choisir le fichier… » : il est reconnu automatiquement.</p></div>";
-  return h;
+  var h = '<div class="bloc" id="mod-bloc"><div class="bloc-tete"><h2>Importer les KPI mensuels</h2><span class="legende">Toutes les résidences du périmètre en une fois</span></div><div class="imp-etapes">' +
+    '<div><b>1. Exporter le modèle</b><p class="legende">Une feuille par modèle de suivi, avec les données actives du catalogue, déjà remplie avec les valeurs importées.</p>' +
+    '<div class="aj-actions" style="flex-wrap:wrap;margin:0"><label>Du <select id="mod-debut">' + opts(debut) + '</select></label><label>au <select id="mod-fin">' + opts(fin) + "</select></label></div>" +
+    '<button class="btn btn-principal" id="mod-export" style="margin-top:8px"' + (ctl.length ? " disabled" : "") + ">Exporter le modèle (" + (p.dossiers.length - sans.length) + " résidence(s))</button></div>" +
+    '<div><b>2. Remplir</b><p class="legende">Une ligne par résidence et par mois. Cellule vide = non fournie (jamais zéro). Ne modifiez ni les deux premières lignes des feuilles, ni l’onglet « Lisez-moi ».</p></div>' +
+    '<div><b>3. Redéposer</b><p class="legende">' + (admin ? "Tout est vérifié avant d’enregistrer ; un aperçu s’affiche." : "Réservé aux administrateurs.") + "</p>" +
+    (admin ? '<label class="btn btn-ligne" for="imp-fichier" style="cursor:pointer">Choisir le fichier…</label><input type="file" id="imp-fichier" accept=".xlsx" style="display:none">' : "") + "</div></div>";
+  if (ctl.length) h += '<div class="connexion-etat" style="margin-top:12px"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Export bloqué :</b> ' + esc(ctl.map(function (c) { return c.texte; }).join(" ; ")) + ". Corrigez dans Paramètres KPI.</div></div>";
+  return h + "</div>";
 }
 function brancherExportModele(p) {
   var b;
@@ -4358,56 +4097,38 @@ function brancherExportModele(p) {
 }
 PAGES.externes = function (p) {
   var admin = estAdmin(), I = etat.import;
-  var h = enTete("Données externes", p, "KPI mensuels hors comptabilité : import par résidence et par mois") + '<div id="ext-message"></div>';
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Importer les KPI mensuels</h2><span class="legende">Toutes les résidences du périmètre en une fois, une ligne par résidence et par mois</span></div>' +
-    '<div class="connexion-etat info" style="margin:0 0 14px"><span class="info-ronde" style="width:18px;height:18px">i</span><div><b>Le plus simple : déposez directement le consolidé KPI</b> (<code>Consolide_KPI_&lt;année&gt;.xlsx</code>). Son onglet « Données KPI » est reconnu automatiquement ; seules les résidences du périmètre choisi (<b>' + esc(p.libelle) + '</b>) sont importées.</div></div>' +
-    '<div class="imp-etapes"><div><b>1. Télécharger un modèle</b><p class="legende">Le modèle Excel vide, ou un modèle CSV déjà rempli avec les résidences du périmètre et les mois de la réglette.</p>' +
-    '<a class="btn btn-ligne" href="modeles/Zenitude_Import_KPI_modele.xlsx" download>Modèle Excel</a> <button class="btn btn-ligne" id="imp-csv">Modèle CSV pré-rempli</button></div>' +
-    "<div><b>2. Remplir</b><p class=\"legende\">Une colonne par KPI : " + (D.import_kpi || []).map(function (k) { return esc(k.entete); }).join(", ") + ". Cellule vide = non fourni (jamais zéro).</p></div>" +
-    '<div><b>3. Importer</b><p class="legende">' + (admin ? "Fichier Excel (.xlsx) ou CSV. Tout est vérifié avant d’enregistrer : à la moindre erreur, rien n’est importé." : "Réservé aux administrateurs.") + "</p>" +
-    (admin ? '<label class="btn btn-principal" for="imp-fichier" style="cursor:pointer">Choisir le fichier…</label><input type="file" id="imp-fichier" accept=".xlsx,.xls,.csv" style="display:none">' : "") + "</div></div>";
-  h = h.replace('<div class="bloc"><div class="bloc-tete"><h2>Importer les KPI mensuels</h2>', blocExportModele(p, admin) + '<div class="bloc"><div class="bloc-tete"><h2>Importer les KPI mensuels</h2>');
-  if (I && I.R.consolide) h += rendreConsolide(I, p, admin);
-  else if (I) {
-    h += '<div class="imp-resultat"><h3>' + esc(I.nom) + " : " + I.R.valeurs.length + " valeur(s), " + I.R.erreurs.length + " erreur(s), " + I.R.avertissements.length + " avertissement(s)</h3>";
-    var tab = function (liste, cl) { return '<div class="defile" style="max-height:260px"><table class="tab ' + cl + '"><thead><tr><th>Ligne</th><th>Colonne</th><th>Motif</th></tr></thead><tbody>' + liste.slice(0, 200).map(function (x) { return "<tr><td>" + x.ligne + "</td><td>" + esc(x.colonne) + "</td><td>" + esc(x.motif) + "</td></tr>"; }).join("") + "</tbody></table></div>"; };
-    if (I.R.erreurs.length) h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Import refusé.</b> Corrigez ces lignes dans le fichier, puis importez-le de nouveau. Rien n’a été enregistré.</div></div>' + tab(I.R.erreurs, "imp-err");
-    if (I.R.avertissements.length) h += "<p class=\"legende\"><b>Avertissements</b> (n’empêchent pas l’import)</p>" + tab(I.R.avertissements, "");
-    if (!I.R.erreurs.length) {
-      var parRes = {}; I.R.valeurs.forEach(function (v) { parRes[v.dossier] = parRes[v.dossier] || { n: 0, mois: {} }; parRes[v.dossier].n++; parRes[v.dossier].mois[v.mois] = 1; });
-      h += '<table class="tab"><thead><tr><th>Résidence</th><th class="num">Valeurs</th><th>Mois</th></tr></thead><tbody>' + Object.keys(parRes).map(function (d) { var ms2 = Object.keys(parRes[d].mois).sort(); return "<tr><td>" + esc(nomResidence(d)) + '</td><td class="num">' + parRes[d].n + "</td><td>" + esc(libMois(ms2)) + "</td></tr>"; }).join("") + "</tbody></table>" +
-        '<div class="aj-actions"><button class="btn btn-principal" id="imp-ok">Importer ' + I.R.valeurs.length + ' valeur(s)</button><button class="btn btn-ligne" id="imp-annuler">Annuler</button></div>';
-    } else h += '<div class="aj-actions"><button class="btn btn-ligne" id="imp-annuler">Fermer</button></div>';
-    h += "</div>";
-  }
-  h += "</div>";
-  var parD = {}; MESURES_IMP.forEach(function (x) { if (p.dossiers.indexOf(x.dossier) < 0) return; var o = parD[x.dossier] = parD[x.dossier] || { n: 0, mois: {}, le: "" }; o.n++; o.mois[x.mois] = 1; if (x.le > o.le) o.le = x.le; });
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Valeurs importées</h2><span class="legende">Elles remplacent les valeurs publiées pour le même mois et le même KPI</span></div>';
-  if (!Object.keys(parD).length) h += '<p class="mut">Aucune valeur importée sur ce périmètre.</p>';
-  else h += '<div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">Valeurs</th><th>Mois</th><th>Dernier import</th><th></th></tr></thead><tbody>' + Object.keys(parD).map(function (d) { var o = parD[d], ms2 = Object.keys(o.mois).sort();
-    return "<tr><td><b>" + esc(nomResidence(d)) + '</b></td><td class="num">' + o.n + "</td><td>" + esc(libMois(ms2)) + "</td><td>" + (o.le ? esc(dateFr(o.le)) : "") + "</td><td>" + (admin ? '<button class="btn-petit" data-imp-sup="' + esc(d) + '">Supprimer</button>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
-  h += "</div>";
-  h += blocSuiviMois(p) + blocDepots();
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Mesures d’exploitation disponibles, ' + D.meta.annee + "</h2></div>" + grilleCouverture(p, false) + "</div>";
+  var h = enTete("Données externes", p, "KPI mensuels : modèle Excel du catalogue (Paramètres KPI)") + '<div id="ext-message"></div>';
+  h += blocExportModele(p, admin);
+  if (I) h += rendreDepot(I, p, admin);
+  h += blocValeursImportees(p, admin) + blocDepots();
   el("contenu").innerHTML = h;
-  el("imp-csv").addEventListener("click", function () { telecharger("Zenitude_Import_KPI_" + p.id + ".csv", modeleCsv(p), "text/csv;charset=utf-8"); });
   var f = el("imp-fichier");
   if (f) f.addEventListener("change", function () { var fi = this.files[0]; this.value = ""; if (!fi) return;
     lireFichierImport(fi).then(function (lignes) {
-      etat.import = estModeleKpi(lignes) ? { nom: fi.name, feuille: "toutes", lignes: lignes, R: validerModeleKpi(lignes, p) }
-        : estConsolide(lignes) ? { nom: fi.name, feuille: lignes.feuille, lignes: lignes, R: validerConsolide(lignes, p) } : { nom: fi.name, R: validerImport(lignes) };
+      etat.import = { nom: fi.name, lignes: lignes, R: estModeleKpi(lignes) ? validerModeleKpi(lignes, p)
+        : refusDepot("fichier non reconnu : déposez le modèle exporté depuis ce bloc (il contient un onglet « Lisez-moi »)") };
       majContenu(); })
-      .catch(function (e) { etat.import = { nom: fi.name, R: { valeurs: [], erreurs: [{ ligne: "", colonne: "", motif: "fichier illisible : " + (e.message || e) }], avertissements: [] } }; majContenu(); }); });
+      .catch(function (e) { etat.import = { nom: fi.name, R: refusDepot("fichier illisible : " + (e.message || e)) }; majContenu(); }); });
   if (el("imp-annuler")) el("imp-annuler").addEventListener("click", function () { etat.import = null; majContenu(); });
-  if (I && I.R.consolide) brancherConsolide(I, p);
+  if (I) brancherDepot(I, p);
   brancherExportModele(p);
-  if (el("imp-ok")) el("imp-ok").addEventListener("click", function () { var b = this; b.disabled = true; b.textContent = "Import en cours…";
-    enregistrerImport(I.R.valeurs).then(function () { etat.import = null; appliquerMesures(); majContenu(); alert(I.R.valeurs.length + " valeur(s) importée(s). Les KPI de tous les tableaux de bord en tiennent compte."); })
-      .catch(function (e) { b.disabled = false; b.textContent = "Importer"; alert(messageErreur(e)); }); });
   el("contenu").querySelectorAll("[data-imp-sup]").forEach(function (b) { b.addEventListener("click", function () {
     if (!confirm("Supprimer toutes les valeurs importées pour " + nomResidence(b.dataset.impSup) + " ? Les valeurs publiées reprennent leur place.")) return;
     supprimerImport(b.dataset.impSup).then(function () { appliquerMesures(); majContenu(); }).catch(function (e) { alert(messageErreur(e)); }); }); });
+  el("contenu").querySelectorAll("[data-voir-plus]").forEach(function (b) { b.addEventListener("click", function () { etat[b.dataset.voirPlus] = !etat[b.dataset.voirPlus]; majContenu(); }); });
 };
+function blocValeursImportees(p, admin) {
+  var parD = {}; MESURES_IMP.forEach(function (x) { if (p.dossiers.indexOf(x.dossier) < 0) return; var o = parD[x.dossier] = parD[x.dossier] || { n: 0, mois: {}, le: "" }; o.n++; o.mois[x.mois] = 1; if (x.le > o.le) o.le = x.le; });
+  var h = '<div class="bloc" id="ext-valeurs"><div class="bloc-tete"><h2>Valeurs importées</h2><span class="legende">Par résidence du périmètre</span></div>';
+  if (!Object.keys(parD).length) return h + '<p class="mut">Aucune valeur importée sur ce périmètre.</p></div>';
+  return h + '<div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">Valeurs</th><th>Mois</th><th>Dernier import</th><th></th></tr></thead><tbody>' + Object.keys(parD).sort(function (a, b) { return nomResidence(a) < nomResidence(b) ? -1 : 1; }).map(function (d) { var o = parD[d], ms2 = Object.keys(o.mois).sort();
+    return "<tr><td><b>" + esc(nomResidence(d)) + '</b></td><td class="num">' + o.n + "</td><td>" + esc(libMois(ms2)) + "</td><td>" + (o.le ? esc(dateFr(o.le)) : "") + "</td><td>" + (admin ? '<button class="btn-petit" data-imp-sup="' + esc(d) + '">Supprimer</button>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+}
+function refusDepot(motif) {
+  return { titre: "fichier non reconnu", valeurs: [], statuts: [], erreurs: [{ ligne: "", colonne: "", motif: motif }], avertissements: [], ecartees: [], parRes: {}, nouvelles: 0, modifiees: 0, identiques: 0, horsPerimetre: 0 };
+}
+/* Lot 21 : « Voir plus » commun aux historiques (5 dernières lignes, puis tout). */
+function voirPlus(cle, n) { return n > 5 ? '<div class="aj-actions" style="margin-top:8px"><button class="btn-petit" data-voir-plus="' + cle + '">' + (etat[cle] ? "Réduire" : "Voir plus (" + n + ")") + "</button></div>" : ""; }
 
 /* ---------- Thème d'affichage ---------- */
 function themeChoisi() { try { return localStorage.getItem("zen-theme") || "light"; } catch (e) { return "light"; } }
@@ -4425,7 +4146,6 @@ ajCharger();
 lisCharger();
 bqpCharger();
 mesuresImporteesCharger();
-kpiMoisCharger();
 catCharger();
 appliquerMesures();
 appliquerMenu(menuReduit());
@@ -4544,7 +4264,7 @@ function chargerDonnees(client) {
     lireOuNull(client.from("kpi_catalogue").select("*").order("ordre")),
     lireOuNull(client.from("kpi_modeles").select("*").order("ordre")),
     lireOuNull(client.from("residence_modele").select("*")),
-    lireFacultatif(client.from("kpi_journal").select("*").order("id", { ascending: false }).limit(50))
+    lireFacultatif(client.from("kpi_journal").select("*").order("id", { ascending: false }).limit(1000))
   ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10],
     resbase: r[11], kpimois: r[12], depots: r[13], cx: r[14], cle: r[15], cat: r[16], modeles: r[17], resmod: r[18], journalkpi: r[19] }; });
 }

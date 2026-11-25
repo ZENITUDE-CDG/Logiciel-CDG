@@ -39,6 +39,10 @@ def ouvrir(site, largeur=1400, perimetre="DEMO-2006"):
     pg.wait_for_selector("#ecran-choix.visible")
     pg.click(f"#choix-res button[data-p={perimetre}]")
     pg.wait_for_selector("#rub-haut")
+    # Lot 21 : on arrive sur Import comptable ; ces tests portent sur la réglette de la Synthèse.
+    assert pg.evaluate("etat.section + '/' + etat.page") == "import/pennylane"
+    pg.evaluate("allerA('tableaux', 'synthese')")
+    pg.wait_for_selector("#reg-lib")
     return pg, erreurs
 
 

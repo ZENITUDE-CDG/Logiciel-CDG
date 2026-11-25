@@ -17,12 +17,13 @@ MODELES = [
     {"id": "TOURISME", "libelle": "Tourisme (RT)", "ordre": 1},
     {"id": "SENIORS", "libelle": "Seniors", "ordre": 2},
     {"id": "ETUDIANTS", "libelle": "Étudiants", "ordre": 3},
+    {"id": "MIXTE", "libelle": "Mixte (plusieurs activités)", "ordre": 4},  # lot 21
 ]
 # Modèle proposé d'après l'activité de la résidence (référentiel) ; toujours modifiable.
-MODELE_PAR_ACTIVITE = {"Hôtellerie": "TOURISME", "Seniors": "SENIORS", "Mixte": "SENIORS", "Étudiants": "ETUDIANTS"}
+MODELE_PAR_ACTIVITE = {"Hôtellerie": "TOURISME", "Seniors": "SENIORS", "Mixte": "MIXTE", "Étudiants": "ETUDIANTS"}
 
-T, S, E = "TOURISME", "SENIORS", "ETUDIANTS"
-TOUS = [T, S, E]
+T, S, E, M = "TOURISME", "SENIORS", "ETUDIANTS", "MIXTE"
+TOUS = [T, S, E, M]
 
 
 def _d(code, libelle, rubrique, unite, modeles, colonne, signe="positif"):
@@ -45,8 +46,8 @@ CATALOGUE = [
     _i("REVPAR", "RevPar", "Hébergement", "euro", TOUS, ["CA_MEWS_HEB_HOT"], ["LN_DISPO_HOT"], "RevPar"),
     _i("REVPAC", "RevPac", "Hébergement", "euro", TOUS, ["CA_MEWS_HOTELIER"], ["NUITEES_CLIENTS"], "RevPac"),
     _i("DMS", "Durée moyenne de séjour", "Hébergement", "jours", TOUS, ["LN_VENDUES_HOT"], ["NB_SEJOURS"], "DMS"),
-    _i("TO_SEN", "Taux d'occupation seniors", "Seniors", "pourcent", [S], ["NUITEES_SEN"], ["LN_DISPO_SEN"], "TO seniors"),
-    _i("CAPTAGE_PDJ", "Taux de captage petit-déjeuner", "Restauration", "pourcent", [T, S], ["COUVERTS_PDJ"], ["NUITEES_CLIENTS"], "Captage PDJ"),
+    _i("TO_SEN", "Taux d'occupation seniors", "Seniors", "pourcent", [S, M], ["NUITEES_SEN"], ["LN_DISPO_SEN"], "TO seniors"),
+    _i("CAPTAGE_PDJ", "Taux de captage petit-déjeuner", "Restauration", "pourcent", [T, S, M], ["COUVERTS_PDJ"], ["NUITEES_CLIENTS"], "Captage PDJ"),
     _i("CA_TOTAL", "CA total de la résidence", "Chiffre d'affaires", "euro", TOUS, ["CA_MEWS_TOTAL"], []),
     # Données
     _d("LN_VENDUES", "Nuitées totales", "Hébergement", "nombre", TOUS, "Nuitées totales"),
@@ -56,20 +57,20 @@ CATALOGUE = [
     _d("LN_DISPO_HOT", "Capacité hôtelière (lots × jours)", "Hébergement", "nombre", TOUS, "Capacité hôtelière (lots × jours)"),
     _d("NB_SEJOURS", "Nombre de réservations", "Hébergement", "nombre", TOUS, "Nb de réservations"),
     _d("NUITEES_CLIENTS", "Clients présents", "Hébergement", "nombre", TOUS, "Clients présents"),
-    _d("LOTS_SEN", "Lots seniors", "Seniors", "nombre", [S], "Lots seniors"),
-    _d("LOTS_SEN_OCC", "Lots seniors occupés", "Seniors", "nombre", [S], "Lots seniors occupés"),
-    _d("NUITEES_SEN", "Nuitées seniors", "Seniors", "nombre", [S], "Nuitées seniors"),
-    _d("LN_DISPO_SEN", "Capacité seniors", "Seniors", "nombre", [S], "Capacité seniors"),
-    _d("CA_MEWS_HEB_SEN", "CA hébergement seniors HT", "Seniors", "euro", [S], "CA hébergement seniors HT", "signe"),
-    _d("CA_SAP", "CA SAP HT", "Seniors", "euro", [S], "CA SAP", "signe"),
-    _d("CA_RESTO_SEN", "CA restauration seniors HT", "Seniors", "euro", [S], "CA Restauration seniors", "signe"),
-    _d("COUVERTS_PDJ", "Petits-déjeuners servis", "Restauration", "nombre", [T, S], "Nb PDJ"),
-    _d("CA_MEWS_PDJ", "CA petit-déjeuner HT", "Restauration", "euro", [T, S], "CA HT PDJ", "signe"),
-    _d("CA_MEWS_RESTO", "CA restaurant HT", "Restauration", "euro", [T, S], "CA HT RESTO", "signe"),
+    _d("LOTS_SEN", "Lots seniors", "Seniors", "nombre", [S, M], "Lots seniors"),
+    _d("LOTS_SEN_OCC", "Lots seniors occupés", "Seniors", "nombre", [S, M], "Lots seniors occupés"),
+    _d("NUITEES_SEN", "Nuitées seniors", "Seniors", "nombre", [S, M], "Nuitées seniors"),
+    _d("LN_DISPO_SEN", "Capacité seniors", "Seniors", "nombre", [S, M], "Capacité seniors"),
+    _d("CA_MEWS_HEB_SEN", "CA hébergement seniors HT", "Seniors", "euro", [S, M], "CA hébergement seniors HT", "signe"),
+    _d("CA_SAP", "CA SAP HT", "Seniors", "euro", [S, M], "CA SAP", "signe"),
+    _d("CA_RESTO_SEN", "CA restauration seniors HT", "Seniors", "euro", [S, M], "CA Restauration seniors", "signe"),
+    _d("COUVERTS_PDJ", "Petits-déjeuners servis", "Restauration", "nombre", [T, S, M], "Nb PDJ"),
+    _d("CA_MEWS_PDJ", "CA petit-déjeuner HT", "Restauration", "euro", [T, S, M], "CA HT PDJ", "signe"),
+    _d("CA_MEWS_RESTO", "CA restaurant HT", "Restauration", "euro", [T, S, M], "CA HT RESTO", "signe"),
     _d("CA_MEWS_TOTAL", "CA total résidence HT", "Chiffre d'affaires", "euro", TOUS, "CA total résidence HT", "signe"),
     _d("CA_MEWS_HOTELIER", "CA total hôtelier HT", "Chiffre d'affaires", "euro", TOUS, "CA total hôtelier HT", "signe"),
     _d("CA_MEWS_HEB_HOT", "CA hébergement hôtelier HT", "Chiffre d'affaires", "euro", TOUS, "CA hébergement hôtelier HT", "signe"),
-    _d("CA_MEWS_SPA", "CA spa HT", "Chiffre d'affaires", "euro", [T], "CA HT SPA", "signe"),
+    _d("CA_MEWS_SPA", "CA spa HT", "Chiffre d'affaires", "euro", [T, M], "CA HT SPA", "signe"),
 ]
 for _n, _x in enumerate(CATALOGUE):
     _x["ordre"] = (_n + 1) * 10
@@ -92,14 +93,25 @@ COLONNES = ["code", "type", "libelle", "rubrique", "ordre", "unite", "actif", "m
             "numerateur", "denominateur", "facteur", "sens", "seuil"]
 
 
-def sql_amorce():
-    """Bloc SQL d'amorçage (inclus tel quel dans migrations/012_suivi_kpi_parametrable.sql)."""
+def sans_mixte():
+    """Catalogue tel qu'amorcé par la migration 012 (lot 20), avant l'ajout du modèle Mixte (migration 013)."""
+    import copy
+    cat = copy.deepcopy(CATALOGUE)
+    for x in cat:
+        x["modeles"] = [m for m in x["modeles"] if m != M]
+    return [m for m in MODELES if m["id"] != M], cat
+
+
+def sql_amorce(lot20=True):
+    """Bloc SQL d'amorçage inclus tel quel dans migrations/012_suivi_kpi_parametrable.sql (lot20=True : sans Mixte).
+    Le modèle Mixte est ajouté par la migration 013 ; l'état final de la base est vérifié par un test sur base."""
+    modeles, catalogue = sans_mixte() if lot20 else (MODELES, CATALOGUE)
     out = ["-- >>> amorce générée par interface/catalogue_kpi.py (ne pas modifier à la main)",
            "INSERT INTO kpi_modeles (id, libelle, ordre) VALUES"]
-    out.append(",\n".join(f"  ({_sql(m['id'])}, {_sql(m['libelle'])}, {m['ordre']})" for m in MODELES) + "\nON CONFLICT (id) DO NOTHING;")
+    out.append(",\n".join(f"  ({_sql(m['id'])}, {_sql(m['libelle'])}, {m['ordre']})" for m in modeles) + "\nON CONFLICT (id) DO NOTHING;")
     out.append("INSERT INTO kpi_catalogue (" + ", ".join(COLONNES) + ") VALUES")
     # Données d'abord : la base vérifie que la formule d'un indicateur n'utilise que des données existantes.
-    rangees = sorted(CATALOGUE, key=lambda x: x["type"] != "donnee")
+    rangees = sorted(catalogue, key=lambda x: x["type"] != "donnee")
     out.append(",\n".join("  (" + ", ".join(_sql(x[c]) for c in COLONNES) + ")" for x in rangees) + "\nON CONFLICT (code) DO NOTHING;")
     out.append("-- <<< fin de l'amorce")
     return "\n".join(out)

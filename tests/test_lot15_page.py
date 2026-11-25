@@ -1,5 +1,5 @@
 """Lot 15 dans un vrai navigateur (données fictives) : comptes bancaires, analyse du solde, FRNG / BFR / TN,
-graphiques liés à la réglette, tableau EBITDA, import des KPI (tout ou rien), en local et avec une base simulée.
+graphiques liés à la réglette, tableau EBITDA, en local et avec une base simulée (l'import des KPI du lot 15 est remplacé par le modèle du catalogue, lot 21).
 Ignorés si Playwright n'est pas installé."""
 import json
 import pathlib
@@ -114,50 +114,6 @@ def test_equilibre_financier(site):
     pg.close()
 
 
-CSV_OK = "\\ufeffCode résidence;Résidence (facultatif);Mois (AAAA-MM);Chambres vendues;Chambres disponibles;Séjours;Clients présents (nuitées);Petits-déjeuners servis\\nRES-001;;2026-03;1;2232;;2198;1650\\nDEMO-2002;;03/2026;3000;2000;;;\\n"
-CSV_KO = "Code résidence;Mois (AAAA-MM);Chambres vendues;Inconnue\\nRES-999;2026-03;10;1\\nRES-001;2026-13;10;\\nRES-001;2026-03;-5;\\nRES-001;2026-04;10;\\nRES-001;2026-04;11;\\n"
-
-
-def test_controle_de_l_import(site):
-    pg, _ = ouvrir(site)
-    ok = pg.evaluate(f"validerImport(lireCsv('{CSV_OK}'))")
-    assert ok["erreurs"] == [] and len(ok["valeurs"]) == 6
-    assert {"dossier": "DEMO-2002", "mois": "2026-03", "mesure": "LN_VENDUES", "valeur": 3000} in ok["valeurs"]
-    assert any("supérieur aux chambres disponibles" in a["motif"] for a in ok["avertissements"])
-    ko = pg.evaluate(f"validerImport(lireCsv('{CSV_KO}'))")
-    motifs = " | ".join(f"{e['ligne']}:{e['motif']}" for e in ko["erreurs"])
-    assert "2:« RES-999 » inconnu" in motifs and "3:« 2026-13 »" in motifs and "4:« -5 »" in motifs and "6:déjà fourni ligne 5" in motifs
-    assert any(a["colonne"] == "Inconnue" for a in ko["avertissements"])
-    assert pg.evaluate("validerImport([['a', 'b'], ['1', '2']]).erreurs[0].motif").startswith("en-tête")
-    pg.close()
-
-
-def test_import_par_l_ecran_tout_ou_rien(site, tmp_path):
-    pg, erreurs = ouvrir(site)
-    pg.evaluate("choisir('GROUPE'); allerA('import', 'externes')")
-    mauvais, bon = tmp_path / "mauvais.csv", tmp_path / "bon.csv"
-    mauvais.write_text(CSV_KO.replace("\\n", "\n"), encoding="utf-8")
-    bon.write_text(CSV_OK.replace("\\n", "\n").replace("\\ufeff", ""), encoding="utf-8")
-    avant = pg.evaluate("resultatFen(['DEMO-2001'], ['2026-03'], false)['TO-SEN'].affichage")
-    pg.set_input_files("#imp-fichier", str(mauvais))
-    pg.wait_for_selector(".imp-err")
-    assert "Import refusé" in pg.inner_text("#contenu") and not pg.query_selector("#imp-ok")
-    assert pg.evaluate("MESURES_IMP.length") == 0
-    pg.click("#imp-annuler")
-    pg.set_input_files("#imp-fichier", str(bon))
-    pg.wait_for_function("etat.import && etat.import.nom === 'bon.csv'")
-    assert pg.evaluate("etat.import.R.erreurs") == []
-    pg.click("#imp-ok")
-    pg.wait_for_function("MESURES_IMP.length === 6")
-    apres = pg.evaluate("resultatFen(['DEMO-2001'], ['2026-03'], false)['TO-SEN'].affichage")
-    assert avant != apres and apres == "0,0 %"
-    assert "Les Terrasses du Port" in pg.inner_text("#contenu")
-    pg.click("[data-imp-sup='DEMO-2001']")
-    assert pg.evaluate("resultatFen(['DEMO-2001'], ['2026-03'], false)['TO-SEN'].affichage") == avant
-    assert erreurs == []
-    pg.close()
-
-
 def demarrer_en_ligne(site, role):
     pg = site["nav"].new_page(viewport={"width": 1500, "height": 1000})
     erreurs = []
@@ -171,25 +127,6 @@ def demarrer_en_ligne(site, role):
     pg.evaluate("([t, r]) => demarrerAvecClient(clientSimule(t), { email: 'x@exemple.invalid', nom: 'X', role: r })", [tables, role])
     pg.wait_for_selector("#ecran-choix.visible")
     return pg, erreurs
-
-
-def test_en_ligne_administrateur_importe_dans_la_base(site, tmp_path):
-    pg, erreurs = demarrer_en_ligne(site, "administrateur")
-    pg.evaluate("choisir('GROUPE'); allerA('tresorerie', 'tr_banques')")
-    assert "Travaux" in pg.inner_text("#contenu")
-    pg.evaluate("allerA('import', 'externes')")
-    bon = tmp_path / "bon.csv"
-    bon.write_text("\ufeff" + CSV_OK.replace("\\n", "\n").replace("\\ufeff", ""), encoding="utf-8")
-    pg.set_input_files("#imp-fichier", str(bon))
-    pg.wait_for_function("etat.import && etat.import.nom === 'bon.csv'")
-    assert pg.evaluate("etat.import.R.erreurs") == []
-    pg.click("#imp-ok")
-    pg.wait_for_function("MESURES_IMP.length === 6")
-    up = pg.evaluate("journalBase.filter(q => q.op === 'upsert' && q.table === 'mesures_importees')")
-    assert up[0]["conflit"] == "dossier,mois,mesure" and len(up[0]["valeurs"]) == 6
-    assert pg.evaluate("localStorage.getItem('zen-mesures')") is None
-    assert erreurs == []
-    pg.close()
 
 
 def test_en_ligne_collaborateur_sans_import_ni_comptes_bancaires(site):

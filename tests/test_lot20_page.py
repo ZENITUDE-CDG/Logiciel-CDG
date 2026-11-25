@@ -61,10 +61,11 @@ def test_modeles_proposes_et_controles(site):
     page(pg, "import", "parametres", "GROUPE")
     texte = pg.inner_text("#contenu")
     assert "Contrôles du catalogue" in texte and "sans modèle de suivi" in texte
-    assert "Configuration du moteur de calcul" in texte  # l'ancienne page reste en bas
+    assert "Configuration du moteur de calcul" not in texte  # lot 21 : ancienne configuration retirée de la page
     pg.click("#cat-proposer")
     pg.wait_for_function("tablesTest.residence_modele.length >= 8")
-    attendu = {"DEMO-2001": "TOURISME", "DEMO-2002": "TOURISME", "DEMO-2003": "SENIORS", "DEMO-2004": "SENIORS"}
+    attendu = {"DEMO-2001": "TOURISME", "DEMO-2002": "TOURISME", "DEMO-2003": "SENIORS", "DEMO-2004": "SENIORS",
+               "DEMO-2006": "ETUDIANTS", "DEMO-2008": "MIXTE"}  # lot 21 : Mixte -> modèle Mixte
     obtenu = {x["dossier"]: x["modele"] for x in pg.evaluate("tablesTest.residence_modele")}
     assert {k: obtenu[k] for k in attendu} == attendu
     assert pg.query_selector("#cat-proposer") is None

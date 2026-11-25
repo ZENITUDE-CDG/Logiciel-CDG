@@ -45,7 +45,7 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (462 tests au lot 20 ; détail historique : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15, 5 du lot 16, 5 du lot 17 ; les tests de page des lots 9, 11, 13 à 17 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
+- Tests : `python -m pytest` (459 tests au lot 21 ; détail historique : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15, 5 du lot 16, 5 du lot 17 ; les tests de page des lots 9, 11, 13 à 17 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
 - Tests et publication automatiques : `.github/workflows/tests-et-publication.yml`. À chaque dépôt, toute la suite tourne sur GitHub (onglet Actions) avec une base PostgreSQL temporaire créée depuis `migrations/` (aucun secret, Supabase jamais touché). Puis, sur main seulement et si les tests passent, `python interface/publier_supabase.py` publie les chiffres dans la base de test avec le secret GitHub `SUPABASE_SECRET_KEY` (décision 0007). Essai sans envoi : `python interface/publier_supabase.py --essai <dossier>`.
 - Installation de la base de test : `python scripts/assembler_installation.py` régénère `scripts/installation_supabase.sql` (remise à zéro + migrations + données de départ) ; un test vérifie qu'il est à jour.
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
@@ -58,7 +58,6 @@
 - Configuration de test avec les six KPI (lot 6) : `python tests/generer_config_kpi.py tests/fixtures/config_complete_v1.xlsx tests/fixtures/config_kpi_lot6.xlsx`.
 - KPI d'un dossier : `python -m zenitude.kpi calcul <store> <dossier> <ecritures.csv> <exercices.csv> <mesures.csv> [--du AAAA-MM --au AAAA-MM] [--json]`.
 - Site (lot 7) : `python interface/generer_demo.py` puis `python interface/generer_site.py` (écrit `index.html` à la racine, affiché par GitHub Pages ; depuis le lot 13, sans aucune donnée). Démonstration complète à ouvrir en local : `python interface/generer_site.py demo.html`.
-- Modèle d'import des KPI (lot 15) : `python interface/generer_modele_import.py` (écrit `modeles/Zenitude_Import_KPI_modele.xlsx`) ; un test vérifie qu'il est à jour.
 - Lot 8 (site) : soldes intermédiaires de gestion (`LIGNES_SIG` dans `interface/generer_site.py`, préfixe de compte le plus long, calculés en Python comme le tableau EBITDA) affichés dans la Synthèse d'activité avec un sélecteur EBITDA / SIG ; charte allégée dans `interface/gabarit.html`. Découpage SIG provisoire, à valider par le contrôle de gestion.
 - Vue groupe : `python -m zenitude.kpi groupe <store> <ecritures.csv> <mesures.csv> --du AAAA-MM --au AAAA-MM (--dossiers A,B | --activite Seniors) [--json]`.
 
@@ -284,3 +283,11 @@ Décision : `docs/decisions/0014-suivi-kpi-parametrable.md`. Mise en route : `do
 - Tests : `tests/test_lot20_catalogue.py` (4), `tests/lot20/test_lot20_droits.py` (5, base), `tests/test_lot20_page.py` (7, navigateur, dont fichier Excel relu par openpyxl). Simulateur de base : `range` et `limit`.
 - Correctifs : boutons de l'aperçu des dépôts KPI (variable partagée, lot 19) ; test du rechargement automatique (lot 18c) rendu effectif.
 - Limites : indicateurs du moteur (classeur) non encore remplacés par le catalogue ; export Excel de la page « Indicateurs suivis » par le mécanisme du lot 17 (tableaux affichés) ; pas de comparaison budget ; le moteur Python ne lit pas encore les mesures importées.
+
+## Lot 21 - STATUT : réalisé (allègement des pages d'import, modèle Mixte)
+Décision : `docs/decisions/0015-allegement-des-pages-d-import.md`. Mise en route : `docs/lot21_mise_en_route.md`.
+- Arrivée sur Import et paramètres, Import comptable (`etat` initial) ; retour après synchronisation inchangé.
+- Historiques à 5 lignes + « Voir plus » (`voirPlus(cle, n)`, clés `histoTout`, `depotsTout`, `journalTout`).
+- Données externes : seul le modèle du catalogue (`blocExportModele` : exporter, remplir, redéposer ; `rendreDepot`, `brancherDepot`, `refusDepot`). Retirés : modèle de saisie et CSV du lot 15 (`validerImport`, `lireCsv`, `modeleCsv`, `generer_modele_import.py`, `modeles/`), consolidé du lot 19 (`validerConsolide`, rattachement Mews, groupes du fichier, statuts des mois), grille des mesures disponibles. Tables `kpi_mois` et `residences.code_mews` conservées sans usage.
+- Paramètres KPI : modèle `MIXTE` (migration 013, `catalogue_kpi.py` ; amorce de la 012 = `sql_amorce()` sans Mixte, état final vérifié par `tests/lot21/test_lot21_base.py`) ; configuration du moteur et colonne du consolidé retirées de la page.
+- Tests : `tests/test_lot21_page.py` (5), `tests/lot21/test_lot21_base.py` (2) ; tests retirés avec les fonctions supprimées (lot 15 : 4, lot 19 : 6).

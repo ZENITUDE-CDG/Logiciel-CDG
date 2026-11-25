@@ -78,9 +78,11 @@ def test_controles_du_catalogue(jeu):
     # Donnée utilisée par un indicateur actif : ni désactivée, ni supprimée
     refuse(jeu, cur, "UPDATE kpi_catalogue SET actif = false WHERE code = 'LN_VENDUES'", erreur=errors.CheckViolation)
     refuse(jeu, cur, "DELETE FROM kpi_catalogue WHERE code = 'LN_VENDUES'", erreur=errors.ForeignKeyViolation)
+    cur.execute("SELECT version FROM kpi_catalogue WHERE code = 'TO_RES'")
+    avant = cur.fetchone()[0]
     cur.execute("UPDATE kpi_catalogue SET actif = false WHERE code = 'TO_RES'")
     cur.execute("SELECT version, modifie_par FROM kpi_catalogue WHERE code = 'TO_RES'")
-    assert cur.fetchone() == (2, ADMIN)
+    assert cur.fetchone() == (avant + 1, ADMIN)
     # Donnée avec des valeurs importées : on la désactive, on ne la supprime pas
     cur.execute("INSERT INTO mesures_importees (dossier, mois, mesure, valeur) VALUES ('D-1', '2026-10', 'ESSAI', 3)")
     refuse(jeu, cur, "DELETE FROM kpi_catalogue WHERE code = 'ESSAI'", erreur=errors.ForeignKeyViolation)

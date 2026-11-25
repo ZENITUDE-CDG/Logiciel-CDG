@@ -262,35 +262,39 @@ def _absente(e):
     return "PGRST205" in str(e) or "(code 404)" in str(e) or "does not exist" in str(e)
 
 
-def _tout_lire_table(base, cle, table, dossier, envoyer):
-    out, offset = [], 0
-    while True:
-        rep = envoyer("GET", base + f"/rest/v1/{table}?dossier=eq.{dossier}&select=id,contenu&order=id"
-                      f"&limit=1000&offset={offset}", cle) or []
-        out.extend(rep)
-        if len(rep) < 1000:
-            return out
-        offset += 1000
+TAILLE_MORCEAU = 900_000  # caractères par ligne de pennylane_magasin
 
 
 def lire_magasin(base, cle, dossier, envoyer=None):
-    """Écritures conservées et état de la dernière lecture ; None si rien, False si la migration 009 manque."""
+    """Écritures conservées et état de la dernière lecture (lot 18d).
+
+    Conservées compressées en quelques morceaux (table pennylane_magasin, migration 010) : une ou deux requêtes
+    au lieu d'une par millier de lignes. None si rien (ou morceaux incomplets), False si la migration manque.
+    """
+    import base64
+    import zlib
     envoyer = envoyer or requete
     try:
         etat = envoyer("GET", base + f"/rest/v1/pennylane_etat?dossier=eq.{dossier}&select=*", cle) or []
+        if not etat:
+            return None
+        morceaux = envoyer("GET", base + f"/rest/v1/pennylane_magasin?dossier=eq.{dossier}&select=morceau,donnees"
+                           "&order=morceau", cle) or []
     except PublicationRefusee as e:
         if _absente(e):
-            print("avertissement : migration 009 non appliquée (lecture complète à chaque synchronisation)")
+            print("avertissement : migrations 009 et 010 non appliquées (lecture complète à chaque synchronisation)")
             return False
         raise
-    if not etat:
-        return None
-    lignes = {r["id"]: r["contenu"] for r in _tout_lire_table(base, cle, "pennylane_lignes", dossier, envoyer)}
-    entrees = {r["id"]: r["contenu"] for r in _tout_lire_table(base, cle, "pennylane_ecritures", dossier, envoyer)}
     e = etat[0]
-    return {"lignes": lignes, "entrees": entrees, "bornes": [e.get("borne_debut"), e.get("borne_fin")],
-            "taille_page": e.get("taille_page"), "derniere_lecture": e.get("derniere_lecture"),
-            "derniere_complete": e.get("derniere_complete")}
+    if not morceaux or len(morceaux) != e.get("morceaux") or [m["morceau"] for m in morceaux] != list(range(len(morceaux))):
+        return None
+    try:
+        brut = json.loads(zlib.decompress(base64.b64decode("".join(m["donnees"] for m in morceaux))))
+    except (ValueError, zlib.error):
+        return None
+    return {"lignes": {l["id"]: l for l in brut["lignes"]}, "entrees": {x["id"]: x for x in brut["entrees"]},
+            "bornes": [e.get("borne_debut"), e.get("borne_fin")], "taille_page": e.get("taille_page"),
+            "derniere_lecture": e.get("derniere_lecture"), "derniere_complete": e.get("derniere_complete")}
 
 
 def preparer_magasin(m, bas, haut, maintenant):
@@ -324,43 +328,32 @@ def preparer_magasin(m, bas, haut, maintenant):
     return dict(m, increment_depuis=(lecture - timedelta(minutes=10)).isoformat().replace("+00:00", "Z"))
 
 
-def ecrire_magasin(base, cle, dossier, maj, debut_lecture, envoyer=None):
-    """Conserve les écritures lues (complet : tout remplacer ; modifications : seulement les changements).
+def ecrire_magasin(base, cle, dossier, maj, debut_lecture, envoyer=None, derniere_complete=None):
+    """Conserve toutes les écritures lues, compressées, en quelques morceaux.
 
-    L'état est effacé avant une réécriture complète et écrit en dernier : une interruption provoque une
+    L'état est effacé d'abord et écrit en dernier, avec le nombre de morceaux : une interruption provoque une
     relecture complète à la synchronisation suivante, jamais des données incomplètes.
+    derniere_complete : date de la dernière relecture complète à garder (lecture par modifications).
     """
+    import base64
+    import zlib
     envoyer = envoyer or requete
     r = base + "/rest/v1/"
-
-    def paquets(table, elements):
-        lignes = [{"dossier": dossier, "id": i, "contenu": c} for i, c in elements.items()]
-        for k in range(0, len(lignes), 1000):
-            envoyer("POST", r + f"{table}?on_conflict=dossier,id", cle, lignes[k:k + 1000],
-                    "resolution=merge-duplicates,return=minimal")
-
-    def effacer(table, ids):
-        ids = list(ids)
-        for k in range(0, len(ids), 200):
-            envoyer("DELETE", r + f"{table}?dossier=eq.{dossier}&id=in.({','.join(str(i) for i in ids[k:k + 200])})", cle)
-    etat = {"dossier": dossier, "derniere_lecture": debut_lecture,
-            "borne_debut": (maj.get("bornes") or [None, None])[0], "borne_fin": (maj.get("bornes") or [None, None])[1],
-            "taille_page": maj.get("taille_page")}
-    if maj["mode"] == "complet":
-        envoyer("DELETE", r + f"pennylane_etat?dossier=eq.{dossier}", cle)
-        envoyer("DELETE", r + f"pennylane_lignes?dossier=eq.{dossier}", cle)
-        envoyer("DELETE", r + f"pennylane_ecritures?dossier=eq.{dossier}", cle)
-        paquets("pennylane_lignes", maj["lignes"])
-        paquets("pennylane_ecritures", maj["entrees"])
-        etat["derniere_complete"] = debut_lecture
-        envoyer("POST", r + "pennylane_etat?on_conflict=dossier", cle, [etat], "resolution=merge-duplicates,return=minimal")
-    else:
-        paquets("pennylane_lignes", maj["lignes"])
-        paquets("pennylane_ecritures", maj["entrees"])
-        effacer("pennylane_lignes", maj.get("lignes_suppr") or [])
-        effacer("pennylane_ecritures", maj.get("entrees_suppr") or [])
-        envoyer("PATCH", r + f"pennylane_etat?dossier=eq.{dossier}", cle,
-                {"derniere_lecture": debut_lecture, "taille_page": maj.get("taille_page")}, "return=minimal")
+    brut = {"lignes": list((maj.get("toutes_lignes") or {}).values()),
+            "entrees": list((maj.get("toutes_entrees") or {}).values())}
+    texte = base64.b64encode(zlib.compress(json.dumps(brut, separators=(",", ":")).encode("utf-8"), 6)).decode("ascii")
+    morceaux = [texte[k:k + TAILLE_MORCEAU] for k in range(0, len(texte), TAILLE_MORCEAU)] or [""]
+    bornes = maj.get("bornes") or [None, None]
+    complete = debut_lecture if maj["mode"] == "complet" else (derniere_complete or debut_lecture)
+    envoyer("DELETE", r + f"pennylane_etat?dossier=eq.{dossier}", cle)
+    envoyer("DELETE", r + f"pennylane_magasin?dossier=eq.{dossier}", cle)
+    for i, m in enumerate(morceaux):
+        envoyer("POST", r + "pennylane_magasin", cle, [{"dossier": dossier, "morceau": i, "donnees": m}], "return=minimal")
+    envoyer("POST", r + "pennylane_etat?on_conflict=dossier", cle,
+            [{"dossier": dossier, "derniere_lecture": debut_lecture, "derniere_complete": complete,
+              "borne_debut": bornes[0], "borne_fin": bornes[1], "taille_page": maj.get("taille_page"),
+              "morceaux": len(morceaux)}], "resolution=merge-duplicates,return=minimal")
+    return len(morceaux), len(texte)
 
 
 def lire_pennylane(demo=generer_site.DEMO, jeton=None, mode="valides", client=None, periode=None, memo=None,
@@ -562,8 +555,10 @@ def _publier_tout(argv, base, cle, demande):
         try:
             import time
             t2 = time.monotonic()
-            ecrire_magasin(base, cle, source_pennylane.DOSSIER_TEST, pennylane[2]["_magasin_maj"], debut_lecture)
-            print(f"Écritures conservées pour la prochaine synchronisation ({time.monotonic() - t2:.0f} s)")
+            n, taille = ecrire_magasin(base, cle, source_pennylane.DOSSIER_TEST, pennylane[2]["_magasin_maj"],
+                                       debut_lecture, derniere_complete=(magasin or {}).get("derniere_complete"))
+            print(f"Écritures conservées pour la prochaine synchronisation : {n} morceau(x), "
+                  f"{taille // 1000} ko compressés ({time.monotonic() - t2:.0f} s)")
         except PublicationRefusee as e:
             print("avertissement : écritures non conservées (" + str(e)[:200] + ") ; relecture complète la prochaine fois")
     if pennylane is not None and pennylane[2].get("_lettrage_a_memoriser"):

@@ -321,7 +321,8 @@ def reduire_ligne(l):
     r["journal"] = {"id": (l.get("journal") or {}).get("id")}
     r["ledger_entry"] = {"id": (l.get("ledger_entry") or {}).get("id")}
     lettre = l.get("lettered_ledger_entry_lines") or {}
-    r["lettered_ledger_entry_lines"] = {k: lettre[k] for k in ("ids", "url") if k in lettre}
+    r["lettered_ledger_entry_lines"] = ({"ids": lettre["ids"]} if isinstance(lettre.get("ids"), list)
+                                        else {k: lettre[k] for k in ("url",) if k in lettre})
     return r
 
 
@@ -367,17 +368,16 @@ def _valeur(v):
     return _montant(v)
 
 
-def _balance_identique(client, lignes, bas, haut, exercices):
-    """Compare la balance de Pennylane (débits, crédits par compte) à celle des lignes conservées."""
+def _balance_identique(client, lignes, bas, haut, exercices, entrees=None):
+    """Compare la balance de Pennylane (débits, crédits par compte) à celle des lignes conservées.
+
+    Les comptes de nos lignes sont rattachés au plus long numéro de la balance Pennylane qui les commence
+    (la balance peut regrouper les comptes de tiers sous leur compte collectif). Deux comparaisons : toutes les
+    lignes, puis sans les écritures en brouillard (si la balance de Pennylane les exclut). Renvoie
+    (identique, texte) ; le texte ne contient que des nombres de comptes et des racines à deux chiffres.
+    """
     debut = bas or min((_date(l.get("date")) for l in lignes if _date(l.get("date"))), default=exercices[0][0])
     fin = haut if haut and haut.year < 9999 else max(e[1] for e in exercices)
-    nous = {}
-    for l in lignes:
-        if not _dans(_date(l.get("date")), debut, fin):
-            continue
-        n = str((l.get("ledger_account") or {}).get("number") or "").strip()
-        d, c = nous.get(n, (Decimal("0"), Decimal("0")))
-        nous[n] = (d + _montant(l.get("debit")), c + _montant(l.get("credit")))
     eux, curseur = {}, None
     while True:
         params = {"period_start": debut.isoformat(), "period_end": fin.isoformat(), "limit": 1000}
@@ -391,11 +391,45 @@ def _balance_identique(client, lignes, bas, haut, exercices):
         curseur = rep.get("next_cursor") if isinstance(rep, dict) else None
         if not (isinstance(rep, dict) and rep.get("has_more") and curseur):
             break
-    zero = (Decimal("0"), Decimal("0"))
-    ecarts = [n for n in set(nous) | set(eux)
-              if abs(nous.get(n, zero)[0] - eux.get(n, zero)[0]) > Decimal("0.01")
-              or abs(nous.get(n, zero)[1] - eux.get(n, zero)[1]) > Decimal("0.01")]
-    return not ecarts, len(ecarts)
+    statut_de = {i: str(e.get("status") or "") for i, e in (entrees or {}).items()}
+
+    def cle(n):
+        for k in range(len(n), 0, -1):
+            if n[:k] in eux:
+                return n[:k]
+        return n
+
+    def comparer(sans_brouillard):
+        nous = {}
+        for l in lignes:
+            if not _dans(_date(l.get("date")), debut, fin):
+                continue
+            if sans_brouillard and statut_de.get((l.get("ledger_entry") or {}).get("id")) in STATUTS_BROUILLARD:
+                continue
+            n = cle(str((l.get("ledger_account") or {}).get("number") or "").strip())
+            d, c = nous.get(n, (Decimal("0"), Decimal("0")))
+            nous[n] = (d + _montant(l.get("debit")), c + _montant(l.get("credit")))
+        zero = (Decimal("0"), Decimal("0"))
+        genres = Counter()
+        for n in set(nous) | set(eux):
+            a, b = nous.get(n, zero), eux.get(n, zero)
+            if abs(a[0] - b[0]) > Decimal("0.01") or abs(a[1] - b[1]) > Decimal("0.01"):
+                genre = ("absent de la balance Pennylane" if n not in eux else
+                         "absent des écritures lues" if n not in nous else "montant différent")
+                genres[(genre, n[:2])] += 1
+        return genres
+
+    toutes = comparer(False)
+    if not toutes:
+        return True, "identique"
+    sans = comparer(True) if statut_de else toutes
+    if not sans:
+        return True, "identique (écritures en brouillard exclues de la balance Pennylane)"
+    detail = {}
+    for (genre, racine), n in sorted(toutes.items()):
+        detail.setdefault(genre, Counter())[racine] += n
+    morceaux = [f"{sum(c.values())} {g} ({', '.join(f'{r} : {k}' for r, k in sorted(c.items()))})" for g, c in detail.items()]
+    return False, f"différente sur {sum(toutes.values())} compte(s) : " + " ; ".join(morceaux)
 
 
 def _increment(client, magasin, exercices, rapport):
@@ -435,14 +469,16 @@ def _increment(client, magasin, exercices, rapport):
     a_lire |= {(l.get("ledger_entry") or {}).get("id") for l in lignes.values()} - set(entrees) - {None}
     for e in (client.par_ids("/ledger_entries", a_lire) if a_lire else []):
         entrees[e["id"]] = upsert_e[e["id"]] = e
-    identique, ecarts = _balance_identique(client, list(lignes.values()), sb, sh, exercices)
-    rapport["controle_balance"] = "identique" if identique else f"différente sur {ecarts} compte(s)"
+    identique, texte = _balance_identique(client, list(lignes.values()), sb, sh, exercices, entrees)
+    rapport["controle_balance"] = texte
     if not identique:
         return None
     rapport["lecture"] = {"mode": "modifications", "depuis": depuis, "lignes_modifiees": len(upsert_l),
                           "lignes_supprimees": len(suppr_l), "journal_ecritures": journal_ecritures,
                           "taille_page": magasin.get("taille_page") or 100, "filtre_dates": True}
-    rapport["_magasin_maj"] = {"mode": "increment", "lignes": {i: reduire_ligne(l) for i, l in upsert_l.items()}, "lignes_suppr": sorted(suppr_l, key=str),
+    rapport["_magasin_maj"] = {"mode": "increment", "toutes_lignes": {i: reduire_ligne(l) for i, l in lignes.items()},
+                               "toutes_entrees": {i: reduire_ecriture(e) for i, e in entrees.items()},
+                               "lignes": {i: reduire_ligne(l) for i, l in upsert_l.items()}, "lignes_suppr": sorted(suppr_l, key=str),
                                "entrees": {i: reduire_ecriture(e) for i, e in upsert_e.items()},
                                "entrees_suppr": sorted(suppr_e, key=str),
                                "bornes": (magasin.get("bornes") or [None, None]),
@@ -474,8 +510,16 @@ def _lire_donnees(client, magasin, bas, haut, exercices, rapport):
     taille_ok = min(info_e["taille_page"], info_l["taille_page"])
     rapport["lecture"] = {"mode": "complète", "taille_page": taille_ok,
                           "filtre_dates": bool(filtres) and info_e["filtre"] and info_l["filtre"]}
-    rapport["_magasin_maj"] = {"mode": "complet", "lignes": {l["id"]: reduire_ligne(l) for l in liste_lignes},
-                               "entrees": {e["id"]: reduire_ecriture(e) for e in liste_entrees},
+    toutes_l = {l["id"]: reduire_ligne(l) for l in liste_lignes}
+    toutes_e = {e["id"]: reduire_ecriture(e) for e in liste_entrees}
+    # Contrôle de la balance aussi après une lecture complète (diagnostic, une requête)
+    try:
+        _, texte = _balance_identique(client, liste_lignes, bas, haut, exercices, {e["id"]: e for e in liste_entrees})
+        rapport["controle_balance_lecture_complete"] = texte
+    except ErreurPennylane:
+        rapport["controle_balance_lecture_complete"] = "balance Pennylane illisible"
+    rapport["_magasin_maj"] = {"mode": "complet", "toutes_lignes": toutes_l, "toutes_entrees": toutes_e,
+                               "lignes": toutes_l, "entrees": toutes_e,
                                "bornes": [bas.isoformat() if bas else None, haut.isoformat() if haut else None],
                                "taille_page": taille_ok}
     return liste_lignes, liste_entrees
@@ -734,7 +778,9 @@ def texte_rapport(rapport):
                    f"{lec['taille_page']} éléments ; filtre de dates appliqué par Pennylane : "
                    f"{'oui' if lec['filtre_dates'] else 'non'}")
     if r.get("controle_balance"):
-        out.append(f"Contrôle de la balance Pennylane : {r['controle_balance']}")
+        out.append(f"Contrôle de la balance Pennylane (lecture par modifications) : {r['controle_balance']}")
+    if r.get("controle_balance_lecture_complete"):
+        out.append(f"Contrôle de la balance Pennylane (lecture complète) : {r['controle_balance_lecture_complete']}")
     out.append(f"Lignes reprises équilibrées (débits = crédits) : {'oui' if r['equilibre'] else 'NON'}")
     out.append(f"Requêtes envoyées à Pennylane : {r['requetes']}")
     return "\n".join(out)

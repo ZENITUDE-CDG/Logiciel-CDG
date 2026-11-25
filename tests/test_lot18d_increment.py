@@ -180,7 +180,7 @@ def test_taille_de_page_intermediaire_et_memorisee():
     s2 = Serveur(taille_max=250)
     m = {"taille_page": 250}
     _, r2, _ = lire(s2, m)
-    assert not [u for u in s2.appels if "limit=1000" in u or "limit=500" in u]
+    assert not [u for u in s2.appels if ("limit=1000" in u or "limit=500" in u) and "trial_balance" not in u]
     assert r2["lecture"]["taille_page"] == 250
 
 
@@ -239,36 +239,48 @@ def test_choix_lecture_par_modifications():
 
 
 class BaseMagasin(FausseBase):
-    """Fausse base qui conserve vraiment les tables pennylane_* (lecture par pages, effacement, mise à jour)."""
+    """Fausse base qui conserve vraiment pennylane_etat et pennylane_magasin."""
 
     def __init__(self, **kw):
         super().__init__(**kw)
-        self.t = {"pennylane_lignes": {}, "pennylane_ecritures": {}, "pennylane_etat": {}}
+        self.t = {"pennylane_magasin": {}, "pennylane_etat": {}}
 
     def __call__(self, methode, url, cle, corps=None, prefer=None):
         chemin = url.split("/rest/v1/")[1]
         table, _, q = chemin.partition("?")
         if table not in self.t:
             return super().__call__(methode, url, cle, corps, prefer)
-        p = dict(x.split("=", 1) for x in q.split("&") if "=" in x)
         d = self.t[table]
         if methode == "GET":
-            if table == "pennylane_etat":
-                return [v for v in d.values() if "eq." + v["dossier"] == p["dossier"]]
-            rows = sorted(d.values(), key=lambda v: v["id"])
-            o = int(p["offset"])
-            return rows[o:o + int(p["limit"])]
+            return [v for _, v in sorted(d.items())]
         if methode == "POST":
             for r in corps:
-                d[(r["dossier"], r["id"]) if "id" in r else r["dossier"]] = dict(r)
+                d[(r["dossier"], r.get("morceau", 0))] = dict(r)
         elif methode == "DELETE":
-            ids = p.get("id", "")[4:-1].split(",") if "id" in p else None
-            for k in list(d):
-                if ids is None or str(k[1]) in ids:
-                    del d[k]
+            d.clear()
         elif methode == "PATCH":
             for v in d.values():
                 v.update(corps)
+
+    def lignes(self):
+        import base64
+        import zlib
+        texte = "".join(v["donnees"] for _, v in sorted(self.t["pennylane_magasin"].items()))
+        return json.loads(zlib.decompress(base64.b64decode(texte)))["lignes"]
+
+
+def test_magasin_en_plusieurs_morceaux(monkeypatch):
+    base = BaseMagasin()
+    monkeypatch.setattr(pub, "TAILLE_MORCEAU", 200)
+    lignes = {i: {"id": i, "date": "2026-01-01", "label": "x" * (i % 7)} for i in range(300)}
+    n, _ = pub.ecrire_magasin("https://x", "k", "PENNY-TEST", {"mode": "complet", "toutes_lignes": lignes,
+                                                               "toutes_entrees": {}, "bornes": ["2025-10-01", None],
+                                                               "taille_page": 100}, "2026-11-25T10:00:00+00:00", envoyer=base)
+    assert n > 1 and list(base.t["pennylane_etat"].values())[0]["morceaux"] == n
+    m = pub.lire_magasin("https://x", "k", "PENNY-TEST", envoyer=base)
+    assert m["lignes"] == lignes and m["derniere_complete"] == "2026-11-25T10:00:00+00:00"
+    del base.t["pennylane_magasin"][("PENNY-TEST", 1)]  # morceau perdu : relecture complète
+    assert pub.lire_magasin("https://x", "k", "PENNY-TEST", envoyer=base) is None
 
 
 def test_deux_synchronisations_de_suite(monkeypatch, capsys):
@@ -284,13 +296,51 @@ def test_deux_synchronisations_de_suite(monkeypatch, capsys):
     monkeypatch.setattr(pub, "requete", base)
     assert pub.main([]) == 0
     sortie1 = capsys.readouterr().out
-    assert "Lecture : complète" in sortie1 and len(base.t["pennylane_lignes"]) == 10
+    assert "Lecture : complète" in sortie1 and len(base.lignes()) == 10
+    assert "Contrôle de la balance Pennylane (lecture complète) : identique" in sortie1
     assert list(base.t["pennylane_etat"].values())[0]["derniere_complete"]
     modifier(serveur)
     avant = len(serveur.appels)
     assert pub.main([]) == 0
     sortie2 = capsys.readouterr().out
-    assert "par modifications" in sortie2 and "Contrôle de la balance Pennylane : identique" in sortie2
+    assert "par modifications" in sortie2 and "(lecture par modifications) : identique" in sortie2
     assert len(serveur.appels) - avant <= 12
-    assert {k[1] for k in base.t["pennylane_lignes"]} == {11, 12, 21, 22, 31, 32, 61, 62, 81, 82}
+    assert {l["id"] for l in base.lignes()} == {11, 12, 21, 22, 31, 32, 61, 62, 81, 82}
     assert "120.00" not in sortie2
+
+
+def balance(lignes, items, entrees=None):
+    c = pl.Client("jeton-fictif", ouvrir=lambda u, h: (200, {}, json.dumps({"items": items, "has_more": False})),
+                  dormir=lambda s: None)
+    return pl._balance_identique(c, lignes, date(2026, 1, 1), date(2026, 12, 31), [(date(2026, 1, 1), date(2026, 12, 31))],
+                                 entrees)
+
+
+def L(i, compte, debit="0", credit="0", entree=1):
+    return {"id": i, "date": "2026-03-01", "ledger_account": {"number": compte}, "debit": debit, "credit": credit,
+            "ledger_entry": {"id": entree}}
+
+
+def test_balance_regroupe_les_comptes_de_tiers():
+    lignes = [L(1, "4010001", credit="100"), L(2, "4010002", credit="50"), L(3, "6064000", debit="150")]
+    ok, texte = balance(lignes, [{"number": "401", "debits": "0", "credits": "150"},
+                                 {"number": "6064000", "debits": "150", "credits": "0"}])
+    assert ok and texte == "identique"
+
+
+def test_balance_sans_brouillard():
+    lignes = [L(1, "512", debit="10", entree=1), L(2, "471", credit="10", entree=1),
+              L(3, "512", debit="5", entree=2), L(4, "471", credit="5", entree=2)]
+    items = [{"number": "512", "debits": "10", "credits": "0"}, {"number": "471", "debits": "0", "credits": "10"}]
+    ok, texte = balance(lignes, items, {1: {"status": "complete"}, 2: {"status": "validation_needed"}})
+    assert ok and "brouillard exclues" in texte
+
+
+def test_balance_diagnostic_sans_montant():
+    lignes = [L(1, "4010001", credit="100"), L(2, "6064000", debit="100"), L(3, "512", debit="7"), L(4, "471", credit="7")]
+    ok, texte = balance(lignes, [{"number": "6064000", "debits": "100", "credits": "0"},
+                                 {"number": "512", "debits": "9", "credits": "0"}, {"number": "471", "debits": "0", "credits": "7"}])
+    assert not ok
+    assert texte == ("différente sur 2 compte(s) : 1 absent de la balance Pennylane (40 : 1) ; "
+                     "1 montant différent (51 : 1)")
+    assert "100" not in texte and "7" not in texte.replace("différente", "")

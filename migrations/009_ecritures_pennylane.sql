@@ -1,5 +1,6 @@
 -- Migration 009 : écritures Pennylane conservées entre deux synchronisations (lot 18d, lecture par
--- modifications). SQL standard PostgreSQL, rejouable.
+-- modifications). SQL standard PostgreSQL, rejouable. Tables pennylane_lignes et pennylane_ecritures
+-- remplacées par pennylane_magasin (migration 010).
 --
 -- pennylane_lignes    : lignes d'écritures d'un dossier, réduites aux champs utiles (date, compte, journal,
 --                       écriture, libellé, débit, crédit, lettrage, date de modification).

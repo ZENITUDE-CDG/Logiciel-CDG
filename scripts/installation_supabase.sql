@@ -8,7 +8,7 @@
 -- Supprime les tableaux et fonctions des lots 12 à 18, y compris ceux d'une version précédente.
 -- Ne jamais exécuter sur une base contenant des données réelles.
 
-DROP TABLE IF EXISTS pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
+DROP TABLE IF EXISTS pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
   parcs, residence_groupe, groupes, residences, profils CASCADE;
 
 DROP FUNCTION IF EXISTS trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
@@ -611,7 +611,8 @@ REVOKE ALL ON lettrages_pennylane FROM anon, authenticated;
 
 -- ===================== migrations/009_ecritures_pennylane.sql =====================
 -- Migration 009 : écritures Pennylane conservées entre deux synchronisations (lot 18d, lecture par
--- modifications). SQL standard PostgreSQL, rejouable.
+-- modifications). SQL standard PostgreSQL, rejouable. Tables pennylane_lignes et pennylane_ecritures
+-- remplacées par pennylane_magasin (migration 010).
 --
 -- pennylane_lignes    : lignes d'écritures d'un dossier, réduites aux champs utiles (date, compte, journal,
 --                       écriture, libellé, débit, crédit, lettrage, date de modification).
@@ -648,6 +649,30 @@ ALTER TABLE pennylane_lignes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pennylane_ecritures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pennylane_etat ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON pennylane_lignes, pennylane_ecritures, pennylane_etat FROM anon, authenticated;
+
+-- ===================== migrations/010_magasin_compresse.sql =====================
+-- Migration 010 : écritures Pennylane conservées compressées (lot 18d, vitesse). SQL standard, rejouable.
+--
+-- Mesuré le 25 novembre 2026 sur le dossier de test : 35 863 lignes, une ligne de table par écriture,
+-- 26 à 57 s pour relire, 32 à 55 s pour écrire. Les écritures sont désormais conservées en quelques morceaux
+-- compressés (environ 1 Mo pour 36 000 lignes) : une ou deux requêtes.
+-- pennylane_magasin : morceaux numérotés à partir de 0 ; pennylane_etat.morceaux en donne le nombre attendu
+-- (des morceaux manquants provoquent une relecture complète). Aucun accès depuis la page.
+
+CREATE TABLE IF NOT EXISTS pennylane_magasin (
+    dossier  text NOT NULL CHECK (dossier ~ '^[A-Z0-9_-]+$'),
+    morceau  integer NOT NULL CHECK (morceau >= 0),
+    donnees  text NOT NULL,
+    PRIMARY KEY (dossier, morceau)
+);
+ALTER TABLE pennylane_etat ADD COLUMN IF NOT EXISTS morceaux integer;
+ALTER TABLE pennylane_magasin ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON pennylane_magasin FROM anon, authenticated;
+
+-- Tables d'une ligne par écriture (migration 009), remplacées par pennylane_magasin. L'état est effacé :
+-- la synchronisation suivante fait une lecture complète et remplit pennylane_magasin.
+DROP TABLE IF EXISTS pennylane_lignes, pennylane_ecritures;
+DELETE FROM pennylane_etat;
 
 -- ===================== scripts/donnees_test.sql =====================
 -- Données de départ de la phase test (lots 12 et 13). Tout est fictif sauf les deux adresses

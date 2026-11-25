@@ -95,6 +95,8 @@ class FauxPennylane:
         if chemin == "/journals" and not self.deja_429:
             self.deja_429 = True
             return 429, {"Retry-After": "1"}, ""
+        if chemin == "/trial_balance":  # balance non simulée ici (voir test_lot18d_increment.py)
+            return 404, {}, "{}"
         if chemin.endswith("/lettered_ledger_entry_lines"):
             i = int(chemin.split("/")[2])
             return 200, {}, json.dumps({"items": [{"id": x} for x in LETTRAGE.get(i, [])],

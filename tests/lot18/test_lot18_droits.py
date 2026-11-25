@@ -118,10 +118,10 @@ def test_memoire_du_lettrage_inaccessible_depuis_la_page(jeu):
 
 def test_ecritures_conservees_inaccessibles_depuis_la_page(jeu):
     cur = jeu.cursor()
-    cur.execute("INSERT INTO pennylane_lignes (dossier, id, contenu) VALUES ('D-1', 1, '{\"debit\": \"1.00\"}')")
-    cur.execute("INSERT INTO pennylane_etat (dossier, derniere_lecture, derniere_complete) VALUES ('D-1', now(), now())")
+    cur.execute("INSERT INTO pennylane_magasin (dossier, morceau, donnees) VALUES ('D-1', 0, 'eJw=')")
+    cur.execute("INSERT INTO pennylane_etat (dossier, derniere_lecture, derniere_complete, morceaux) VALUES ('D-1', now(), now(), 1)")
     for email in (ADMIN, COLLAB, None):
         c = connecte(jeu, email)
-        for table in ("pennylane_lignes", "pennylane_ecritures", "pennylane_etat"):
+        for table in ("pennylane_magasin", "pennylane_etat"):
             refuse(jeu, c, f"SELECT * FROM {table}")
-        refuse(jeu, c, "DELETE FROM pennylane_lignes")
+        refuse(jeu, c, "DELETE FROM pennylane_magasin")

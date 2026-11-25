@@ -1,7 +1,7 @@
 # 0013 - Lot 19 : dépôt du consolidé KPI et jetons Pennylane par dossier
 
 Date : 25 novembre 2026
-Statut : étape 1 approuvée par le porteur du projet (25 novembre 2026). Étape 2 (données réelles) : **à approuver**
+Statut : **la partie jetons chiffrés a été retirée le 25 novembre 2026 (décision 0017)**. Étape 1 approuvée par le porteur du projet (25 novembre 2026). Étape 2 (données réelles) : **à approuver**
 par la DSI et la DAF avant toute mise en œuvre.
 
 ## Contexte

@@ -1,9 +1,6 @@
-// Fonction serveur Supabase « lancer-synchro » (lot 18b, décision 0012 ; lot 19, décision 0013).
-//
-// Deux types de demande :
-//   synchro (par défaut) : relire Pennylane, recalculer et publier (lot 18b) ;
-//   test                 : tester les jetons Pennylane enregistrés dans le logiciel (lot 19) : identité de la
-//                          société et droits, sans lire de comptabilité ni enregistrer de paramètres d'import.
+// Fonction serveur Supabase « lancer-synchro » (lot 18b, décision 0012).
+// Une seule sorte de demande : relire Pennylane, recalculer et publier. Le jeton Pennylane reste dans les
+// secrets GitHub du dépôt (décision 0017) : cette fonction ne le voit jamais.
 //
 // Appelée par la page Import comptable (bouton Synchroniser). Elle :
 //   1. vérifie que la personne connectée est un administrateur actif (table profils) ;
@@ -53,9 +50,7 @@ export function controler(corps: any): { erreur?: string; demande?: any } {
   const dossiers = Array.isArray(corps.dossiers) ? [...new Set(corps.dossiers.map(String))] : [];
   if (!dossiers.length || dossiers.length > 500) return { erreur: "liste de résidences vide ou trop longue" };
   if (dossiers.some((d) => !DOSSIER.test(d as string))) return { erreur: "identifiant de dossier invalide" };
-  const type = corps.type ?? "synchro";
-  if (type !== "synchro" && type !== "test") return { erreur: "type de demande inconnu" };
-  if (type === "test") return { demande: { type, dossiers, perimetre: String(corps.perimetre ?? "").slice(0, 120) } };
+  if (corps.type !== undefined && corps.type !== "synchro") return { erreur: "type de demande inconnu" };
   const md = corps.mois_debut ?? null, mf = corps.mois_fin ?? null;
   if (md !== null && !MOIS.test(md)) return { erreur: "mois de début invalide (AAAA-MM)" };
   if (mf !== null && !MOIS.test(mf)) return { erreur: "mois de fin invalide (AAAA-MM)" };
@@ -107,13 +102,7 @@ if (import.meta.main) Deno.serve(async (req) => {
     return reponse(409, { erreur: `une synchronisation est déjà en cours (n° ${actives[0].id}) : attendez qu'elle se termine` }, origine);
   }
 
-  // 4. Paramètres (synchronisation seulement) et demande
-  if (demande.type === "test") {
-    const { data: lt, error: et } = await base.from("synchronisations")
-      .insert({ ...demande, demandee_par: email, statut: "demandée" }).select("id").single();
-    if (et || !lt) return reponse(500, { erreur: "enregistrement de la demande impossible (migration 011 appliquée ?)" }, origine);
-    return await lancer(base, jetonGithub, lt.id, origine);
-  }
+  // 4. Paramètres et demande
   const params = demande.dossiers.map((d: string) => ({ dossier: d, mois_debut: demande.mois_debut, mois_fin: demande.mois_fin,
     masquer_brouillard: demande.masquer_brouillard, modifie_par: email }));
   const { error: ep } = await base.from("parametres_import").upsert(params, { onConflict: "dossier" });

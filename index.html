@@ -119,21 +119,14 @@ tr.lis-a td:first-child { box-shadow:3px 0 0 var(--orange) inset; }
 .imp-resultat { margin-top:16px; border-top:1px solid var(--bord); padding-top:12px; }
 .imp-resultat h3 { font-size:14px; margin:0 0 10px; }
 .imp-err td { color:var(--erreur); }
-/* Lot 19 : consolidé KPI et connexions Pennylane */
+/* Lot 19 : consolidé KPI */
 .cons-chiffres { margin:0 0 10px; }
 .cons-bloc { margin-top:16px; }
 .cons-bloc h4 { font-size:13px; margin:0 0 6px; }
 .st-mois { font-weight:700; cursor:help; }
 .st-mois.ok { color:var(--ok); } .st-mois.att { color:var(--attente); } .st-mois.ko { color:var(--erreur); } .st-mois.mut { color:var(--mut); }
 .grille-st td, .grille-st th { padding-left:6px; padding-right:6px; }
-.cx-saisie td { background:var(--fond); }
-.cx-saisie .cx-form { display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:6px 0; }
-.cx-saisie input[type=password] { min-width:320px; flex:1; font-family:monospace; }
 .cx-erreur { color:var(--erreur); font-size:12px; width:100%; }
-.cx-fenetre { position:fixed; inset:0; background:rgba(15,30,40,.55); display:flex; align-items:center; justify-content:center; z-index:200; padding:20px; }
-.cx-fenetre > div { background:var(--surface); color:inherit; border-radius:10px; max-width:720px; width:100%; max-height:92vh; overflow:auto; padding:22px 24px; box-shadow:0 10px 40px rgba(0,0,0,.3); }
-.cx-fenetre textarea { width:100%; height:150px; font-family:monospace; font-size:11px; }
-.cx-fenetre ol { padding-left:20px; } .cx-fenetre li { margin:4px 0; }
 /* Lot 20 : suivi KPI paramétrable */
 .sep-titre { font-size:15px; margin:28px 0 12px; padding-top:16px; border-top:1px solid var(--bord); color:var(--mut); }
 tr.rub-ligne td { background:var(--fond); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
@@ -2159,7 +2152,7 @@ function detailSync(x) {
   var r = x.resultat || {}, ds = Object.keys(r);
   if (!ds.length) return x.statut === "terminée" ? "" : '<span class="mut">' + (x.statut === "en cours" ? "lecture de Pennylane et calcul…" : "en attente de GitHub…") + "</span>";
   return ds.map(function (d) { var y = r[d]; return "<code>" + esc(d) + "</code> " + esc(y.statut) + (y.lignes_reprises != null ? " (" + nb(y.lignes_reprises) + " lignes)" : "") +
-    (x.type === "test" && y.motif ? ' <span class="mut">' + esc(y.motif) + "</span>" : x.type !== "test" && y.statut === "non lue" ? ' <span class="mut">' + esc(y.motif || "") + "</span>" : ""); }).join("<br>");
+    (y.statut === "non lue" ? ' <span class="mut">' + esc(y.motif || "") + "</span>" : ""); }).join("<br>");
 }
 function blocHistorique() {
   if (!enLigne() || !estAdmin()) return "";
@@ -2169,9 +2162,8 @@ function blocHistorique() {
   if (!L.length) return h + '<p class="legende">Aucune synchronisation lancée depuis la page.</p></div>';
   h += '<div class="defile"><table class="tab"><thead><tr><th>N°</th><th>Demandée le</th><th>Par</th><th>Périmètre</th><th>Période</th><th>Brouillard</th><th class="c">Statut</th><th>Détail</th></tr></thead><tbody>';
   L.forEach(function (x) {
-    var test = x.type === "test";
     h += "<tr><td>" + x.id + "</td><td>" + dateHeure(x.demandee_le) + "</td><td>" + esc(x.demandee_par || "") + "</td><td>" + esc(x.perimetre || "") + " (" + (x.dossiers || []).length + ")</td><td>" +
-      (test ? "<i>test des jetons</i>" : !x.mois_debut && !x.mois_fin ? "N-1 + N" : (x.mois_debut ? moisMaj(x.mois_debut) : "début") + " → " + (x.mois_fin ? moisMaj(x.mois_fin) : "fin")) + "</td><td>" + (test ? "" : x.masquer_brouillard ? "masqué" : "repris") + '</td><td class="c">' + libStatutSync(x.statut) +
+      (!x.mois_debut && !x.mois_fin ? "N-1 + N" : (x.mois_debut ? moisMaj(x.mois_debut) : "début") + " → " + (x.mois_fin ? moisMaj(x.mois_fin) : "fin")) + "</td><td>" + (x.masquer_brouillard ? "masqué" : "repris") + '</td><td class="c">' + libStatutSync(x.statut) +
       "</td><td>" + detailSync(x) + (x.execution ? ' <a href="' + esc(x.execution) + '" target="_blank" rel="noopener">exécution</a>' : "") + "</td></tr>";
   });
   return h + "</tbody></table></div>" + voirPlus("histoTout", T.length) + "</div>";
@@ -2185,12 +2177,7 @@ function suivreSynchro() {
       D.synchronisations = r || [];
       var z = el("imp-historique"); if (z) z.outerHTML = blocHistorique();
       var finies = D.synchronisations.filter(function (x) { return avant.indexOf(x.id) >= 0 && (x.statut === "terminée" || x.statut === "échec"); });
-      if (finies.length && finies[0].type === "test") {
-        var okT = finies[0].statut === "terminée";
-        messageImport(okT ? "Test des jetons n° " + finies[0].id + " terminé : " + esc(Object.keys(finies[0].resultat || {}).map(function (d) { var y = finies[0].resultat[d]; return nomResidence(d) + " " + y.statut; }).join(" ; ")) + "."
-          : "Test des jetons n° " + finies[0].id + " en échec : " + esc(finies[0].message || ""), okT ? "info" : "");
-        rechargerConnexions().then(function () { var m = el("imp-message") ? el("imp-message").innerHTML : ""; majContenu(); var z = el("imp-message"); if (z) z.innerHTML = m; });
-      } else if (finies.length) {
+      if (finies.length) {
         var ok = finies[0].statut === "terminée";
         messageImport(ok ? "Synchronisation n° " + finies[0].id + " terminée : chargement des nouveaux chiffres… <button class=\"btn btn-ligne\" id=\"imp-recharger\">Recharger maintenant</button>" :
           "Synchronisation n° " + finies[0].id + " en échec : " + esc(finies[0].message || ""), ok ? "info" : "");
@@ -2206,12 +2193,10 @@ function messageImport(html, classe) {
   var b = el("imp-recharger"); if (b) b.onclick = function () { RECHARGER(); };
 }
 function lancerSynchro(p) {
-  /* Lot 23 : retour au choix des mois (début à partir de l'exercice N-1, fin libre ; vide = sans limite). */
-  var md = el("imp-debut").value, mf = el("imp-fin").value || null, masquer = el("imp-brouillard").classList.contains("on");
-  if (mf && md > mf) { messageImport("Le mois de début est après le mois de fin.", ""); return; }
+  var md = null, mf = null, masquer = el("imp-brouillard").classList.contains("on");  /* lot 22 : règle N-1 + N */
   var connectees = p.dossiers.filter(sourceDe).length;
-  if (!confirm("Synchroniser " + p.dossiers.length + " résidence(s), dont " + connectees + " connectée(s) à Pennylane, de " + moisLong(md) + (mf ? " à " + moisLong(mf) : " sans limite de fin (écritures futures comprises)") +
-      ", écritures en brouillard " + (masquer ? "masquées" : "reprises") + " ?")) return;
+  if (!confirm("Synchroniser " + p.dossiers.length + " résidence(s), dont " + connectees + " connectée(s) à Pennylane : exercice précédent et exercice en cours de chaque résidence" +
+      ", écritures anticipées comprises, écritures en brouillard " + (masquer ? "masquées" : "reprises") + " ?")) return;
   var b = el("imp-synchro"); b.disabled = true; b.textContent = "Lancement…";
   ZCLIENT.functions.invoke("lancer-synchro", { body: { dossiers: p.dossiers.slice(), perimetre: p.libelle, mois_debut: md, mois_fin: mf, masquer_brouillard: masquer } })
     .then(function (r) {
@@ -2222,7 +2207,7 @@ function lancerSynchro(p) {
     })
     .then(function (data) {
       (D.parametres_import = D.parametres_import || []);
-      p.dossiers.forEach(function (d) { var x = paramDe(d); if (!x) D.parametres_import.push(x = { dossier: d }); x.mois_debut = md; x.mois_fin = mf; x.masquer_brouillard = masquer; });
+      p.dossiers.forEach(function (d) { var x = paramDe(d); if (!x) D.parametres_import.push(x = { dossier: d }); x.mois_debut = null; x.mois_fin = null; x.masquer_brouillard = masquer; });
       D.synchronisations = (D.synchronisations || []).concat([{ id: data.id, statut: "demandée", demandee_le: new Date().toISOString(), demandee_par: D.enLigne.email,
         perimetre: p.libelle, dossiers: p.dossiers.slice(), mois_debut: md, mois_fin: mf, masquer_brouillard: masquer, resultat: {} }]);
       majContenu();
@@ -2231,173 +2216,18 @@ function lancerSynchro(p) {
     })
     .catch(function (e) { b.disabled = false; b.textContent = "Synchroniser"; messageImport("<b>Synchronisation non lancée.</b> " + esc((e && e.message) || String(e)), ""); });
 }
-/* ---------- Lot 19 : connexions Pennylane, un jeton chiffré par dossier (décision 0013) ----------
-   Le jeton collé ici est chiffré dans le navigateur (RSA-OAEP SHA-256 + AES-GCM 256, WebCrypto) avec la clé
-   publique du logiciel, avant tout envoi. La base ne le rend jamais à la page (droits par colonne) ; seul GitHub
-   Actions le déchiffre, avec la clé privée rangée dans le secret PENNYLANE_CLE_PRIVEE. */
-var CX_ETATS = { a_tester: ["à tester", "att"], connectee: ["connectée", "ok"], refusee: ["refusée", "ko"], a_renouveler: ["à renouveler", "ko"], erreur: ["erreur", "ko"] };
-function connexionDe(d) { return (D.connexions || []).find(function (x) { return x.dossier === d; }) || null; }
-function cleJetons() { return (D.cle_jetons || [])[0] || null; }
-function joursAvant(iso) { if (!iso) return null; var t = new Date(), a = Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)); return Math.round((a - Date.UTC(t.getFullYear(), t.getMonth(), t.getDate())) / 864e5); }
-function etatConnexion(d) {
-  var c = connexionDe(d), k = cleJetons();
-  if (!c) return { code: "aucune", lib: "non connectée", cl: "" };
-  if (k && c.empreinte_cle && c.empreinte_cle !== k.empreinte) return { code: "ressaisir", lib: "à ressaisir (clé remplacée)", cl: "ko" };
-  var j = joursAvant(c.expire_le), e = CX_ETATS[c.etat || "a_tester"] || [c.etat, "att"];
-  if (c.etat === "connectee" && j !== null && j < 0) return { code: "expire", lib: "expiré", cl: "ko" };
-  if (c.etat === "connectee" && j !== null && j <= 30) return { code: "bientot", lib: "connectée · expire dans " + j + " j", cl: "att" };
-  return { code: c.etat, lib: e[0], cl: e[1] };
-}
-function b64(buf) { var s = "", b = new Uint8Array(buf); for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
-function deB64(t) { var s = atob(t), b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
-function hexa(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (x) { return (x < 16 ? "0" : "") + x.toString(16); }).join(""); }
-function creerCleJetons() {
-  var S = crypto.subtle;
-  return S.generateKey({ name: "RSA-OAEP", modulusLength: 3072, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["encrypt", "decrypt"])
-    .then(function (p) { return Promise.all([S.exportKey("spki", p.publicKey), S.exportKey("pkcs8", p.privateKey)]); })
-    .then(function (r) { return S.digest("SHA-256", r[0]).then(function (h) {
-      return { publique: b64(r[0]), empreinte: hexa(h), pem: "-----BEGIN PRIVATE KEY-----\n" + b64(r[1]).match(/.{1,64}/g).join("\n") + "\n-----END PRIVATE KEY-----\n" }; }); });
-}
-function chiffrerJeton(jeton, cle) {
-  var S = crypto.subtle, iv = crypto.getRandomValues(new Uint8Array(12));
-  return Promise.all([S.importKey("spki", deB64(cle.cle_publique), { name: "RSA-OAEP", hash: "SHA-256" }, false, ["encrypt"]),
-                      S.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"])])
-    .then(function (r) { return Promise.all([S.exportKey("raw", r[1]).then(function (k) { return S.encrypt({ name: "RSA-OAEP" }, r[0], k); }),
-      S.encrypt({ name: "AES-GCM", iv: iv }, r[1], new TextEncoder().encode(jeton))]); })
-    .then(function (r) { return "v1." + b64(r[0]) + "." + b64(iv) + "." + b64(r[1]); });
-}
-function finJeton(j) { var s = String(j).replace(/[^A-Za-z0-9_-]/g, ""); return s.length >= 4 ? s.slice(-4) : null; }
-function controlerJeton(j) {
-  j = String(j || "").trim();
-  if (!j) return "collez le jeton copié dans Pennylane";
-  if (/\s/.test(j)) return "le jeton ne doit contenir ni espace ni retour à la ligne";
-  if (j.length < 20 || j.length > 500) return "longueur inattendue : vérifiez que le jeton est copié en entier";
-  if (!/^[\x21-\x7e]+$/.test(j) || !finJeton(j)) return "caractères inattendus : vérifiez la copie";
-  return null;
-}
-function resultatFonction(r) {
-  if (!r.error) return r.data;
-  var ctx = r.error.context;
-  return Promise.resolve(ctx && typeof ctx.json === "function" ? ctx.json().catch(function () { return {}; }) : {})
-    .then(function (j) { throw { message: (j && j.erreur) || r.error.message || "lancement impossible" }; });
-}
-function rechargerConnexions() {
-  return Promise.all([lireOuNull(ZCLIENT.from("connexions_pennylane").select(CX_COLONNES)), lireFacultatif(ZCLIENT.from("cle_jetons").select("id, cle_publique, empreinte, creee_par, creee_le"))])
-    .then(function (r) { D.connexions = r[0]; D.cle_jetons = r[1]; });
-}
-function lancerTestJetons(p, dossiers) {
-  if (!dossiers.length) { messageImport("Aucun jeton à tester sur ce périmètre.", ""); return Promise.resolve(); }
-  return ZCLIENT.functions.invoke("lancer-synchro", { body: { type: "test", dossiers: dossiers.slice(), perimetre: p.libelle } }).then(resultatFonction)
-    .then(function (data) {
-      D.synchronisations = (D.synchronisations || []).concat([{ id: data.id, type: "test", statut: "demandée", demandee_le: new Date().toISOString(), demandee_par: D.enLigne.email,
-        perimetre: p.libelle, dossiers: dossiers.slice(), resultat: {} }]);
-      majContenu();
-      messageImport("Test des jetons n° " + data.id + " lancé : GitHub interroge Pennylane (identité de la société et droits du jeton, aucune donnée comptable). Résultat dans moins d’une minute en général.", "info");
-      suivreSynchro();
-    })
-    .catch(function (e) { messageImport("<b>Test non lancé.</b> " + esc((e && e.message) || String(e)), ""); });
-}
-function blocConnexions(p) {
-  if (!enLigne() || !estAdmin()) return "";
-  var h = '<div class="bloc" id="cx-bloc"><div class="bloc-tete"><h2>Connexions Pennylane</h2><span class="legende">Un jeton en lecture seule par dossier, chiffré dans votre navigateur avant l’envoi</span></div>';
-  if (D.connexions === null || D.connexions === undefined) return h + '<p class="legende">Migration 011 non appliquée dans la base : voir <code>docs/lot19_mise_en_route.md</code>.</p></div>';
-  var k = cleJetons();
-  if (!k) return h + '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Aucune clé de chiffrement.</b> Elle se crée une seule fois, dans votre navigateur : la clé publique reste dans le logiciel, la clé privée est à coller dans un secret GitHub. Ensuite, chaque jeton collé ici est chiffré avant d’être envoyé.</div></div>' +
-    '<div class="aj-actions"><button class="btn btn-principal" id="cx-cle-creer">Créer la clé de chiffrement</button></div></div>';
-  var etats = p.dossiers.map(function (d) { return etatConnexion(d); });
-  var n = function (codes) { return etats.filter(function (e) { return codes.indexOf(e.code) >= 0; }).length; };
-  var alertes = [];
-  if (n(["bientot"])) alertes.push(n(["bientot"]) + " jeton(s) expirent dans les 30 jours");
-  if (n(["expire", "a_renouveler"])) alertes.push(n(["expire", "a_renouveler"]) + " jeton(s) à renouveler");
-  if (n(["refusee", "erreur", "ressaisir"])) alertes.push(n(["refusee", "erreur", "ressaisir"]) + " jeton(s) refusé(s), en erreur ou à ressaisir");
-  h += '<p class="legende">' + n(["connectee", "bientot"]) + " connectée(s) sur " + p.dossiers.length + " · clé de chiffrement créée le " + (k.creee_le ? dateFr(k.creee_le) : "?") + (k.creee_par ? " par " + esc(k.creee_par) : "") +
-    " (empreinte <code>" + esc(k.empreinte.slice(0, 12)) + "…</code>) · <button class=\"btn-petit\" id=\"cx-cle-creer\">Remplacer la clé</button></p>";
-  if (alertes.length) h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>À traiter :</b> ' + esc(alertes.join(" ; ")) + ".</div></div>";
-  h += '<div class="defile"><table class="tab" id="cx-table"><thead><tr><th>Résidence</th><th>Dossier</th><th>État</th><th>Société Pennylane</th><th>Jeton</th><th>Expire le</th><th>Dernier test</th><th>Motif</th><th></th></tr></thead><tbody>';
-  p.dossiers.forEach(function (d, i) {
-    var c = connexionDe(d), e = etats[i];
-    h += '<tr data-cx="' + esc(d) + '"><td><b>' + esc(nomResidence(d)) + "</b></td><td><code>" + esc(d) + "</code></td><td>" + (e.cl ? '<span class="pastille ' + e.cl + '">' + esc(e.lib) + "</span>" : '<span class="mut">' + esc(e.lib) + "</span>") +
-      "</td><td>" + (c && c.societe_nom ? esc(c.societe_nom) + ' <span class="mut">n° ' + esc(c.societe_id) + "</span>" : "") + "</td><td>" + (c && c.fin_jeton ? "<code>…" + esc(c.fin_jeton) + "</code>" : "") +
-      "</td><td>" + (c ? (c.expire_le ? dateFr(c.expire_le) : c.duree === "illimite" ? "illimité" : "") : "") + "</td><td>" + (c && c.teste_le ? dateHeure(c.teste_le) : "") + "</td><td>" + (c && c.motif ? esc(c.motif) : "") +
-      '</td><td style="white-space:nowrap"><button class="btn-petit" data-cx-saisir="' + esc(d) + '">' + (c ? "Remplacer" : "Saisir le jeton") + "</button>" + (c ? ' <button class="btn-petit" data-cx-retirer="' + esc(d) + '">Retirer</button>' : "") + "</td></tr>";
-    if (etat.cxSaisie === d) h += '<tr class="cx-saisie"><td colspan="9"><div class="cx-form"><span>Jeton de <b>' + esc(nomResidence(d)) + '</b> :</span><input type="password" id="cx-jeton" autocomplete="off" spellcheck="false" placeholder="Coller le jeton (Pennylane, Paramètres, Connectivité, Développeurs)">' +
-      '<label>Durée choisie dans Pennylane <select id="cx-duree"><option value="12" selected>12 mois</option><option value="6">6 mois</option><option value="1">1 mois</option><option value="illimite">illimitée</option></select></label>' +
-      '<button class="btn btn-principal" id="cx-enregistrer">Chiffrer et enregistrer</button><button class="btn btn-ligne" id="cx-annuler">Annuler</button><span class="cx-erreur" id="cx-erreur"></span>' +
-      '<span class="legende" style="width:100%">Créez le jeton en <b>Lecture seule</b>. Il est chiffré ici, avant l’envoi ; il ne sera plus jamais affiché. Un test est lancé aussitôt : société du jeton, droits en lecture seule, pas de doublon avec une autre résidence.</span></div></td></tr>';
-  });
-  h += "</tbody></table></div>";
-  var aTester = p.dossiers.filter(function (d) { return connexionDe(d); });
-  h += '<div class="aj-actions"><button class="btn btn-ligne" id="cx-tester"' + (aTester.length && peutSynchroniser() ? "" : " disabled") + ">Tester les " + aTester.length + " jeton(s) du périmètre</button></div></div>";
-  return h;
-}
-function fenetreCle() {
-  var ancienne = cleJetons();
-  if (ancienne && !confirm("Remplacer la clé de chiffrement ? Tous les jetons déjà enregistrés devront être saisis de nouveau (ils restent chiffrés avec l’ancienne clé), et le secret GitHub PENNYLANE_CLE_PRIVEE devra être remplacé.")) return;
-  creerCleJetons().then(function (cle) {
-    var f = document.createElement("div"); f.className = "cx-fenetre"; f.id = "cx-fenetre";
-    f.innerHTML = '<div role="dialog" aria-modal="true"><h2 style="margin-top:0">Clé de chiffrement des jetons</h2>' +
-      "<p>La clé <b>publique</b> sera enregistrée dans le logiciel. La clé <b>privée</b> ci-dessous n’est affichée qu’<b>une seule fois</b> et n’est enregistrée nulle part : rangez-la dans GitHub maintenant.</p>" +
-      '<ol><li>Copiez la clé privée (bouton « Copier »).</li><li>Dans GitHub : dépôt Logiciel-CDG, <b>Settings</b>, <b>Secrets and variables</b>, <b>Actions</b>, <b>New repository secret</b> (ou modifiez le secret existant).</li>' +
-      "<li>Nom : <code>PENNYLANE_CLE_PRIVEE</code> ; valeur : collez la clé entière, lignes BEGIN et END comprises ; <b>Add secret</b>.</li><li>Revenez ici, cochez la case, puis « Enregistrer la clé publique ».</li></ol>" +
-      '<textarea id="cx-pem" readonly>' + esc(cle.pem) + '</textarea><div class="aj-actions"><button class="btn btn-ligne" id="cx-copier">Copier la clé privée</button></div>' +
-      '<p><label><input type="checkbox" id="cx-cle-ok"> J’ai enregistré la clé privée dans le secret GitHub PENNYLANE_CLE_PRIVEE.</label></p>' +
-      '<p class="legende">Empreinte de la clé : <code>' + cle.empreinte.slice(0, 12) + '…</code></p><div class="aj-actions"><button class="btn btn-principal" id="cx-cle-enregistrer" disabled>Enregistrer la clé publique</button><button class="btn btn-ligne" id="cx-cle-fermer">Annuler</button></div></div>';
-    document.body.appendChild(f);
-    var fermer = function () { cle = null; f.remove(); };
-    el("cx-copier").onclick = function () { var z = el("cx-pem"); z.select(); try { navigator.clipboard.writeText(z.value); } catch (e) { document.execCommand("copy"); } this.textContent = "Copiée"; };
-    el("cx-cle-ok").onchange = function () { el("cx-cle-enregistrer").disabled = !this.checked; };
-    el("cx-cle-fermer").onclick = fermer;
-    el("cx-cle-enregistrer").onclick = function () { var b = this; b.disabled = true;
-      sb(ZCLIENT.from("cle_jetons").upsert({ id: 1, cle_publique: cle.publique, empreinte: cle.empreinte }, { onConflict: "id" }).select("id")).then(verifierTouche)
-        .then(rechargerConnexions).then(function () { fermer(); majContenu(); messageImport("Clé de chiffrement enregistrée. Vous pouvez saisir les jetons des résidences.", "info"); })
-        .catch(function (e) { b.disabled = false; alert(messageErreur(e)); }); };
-  }).catch(function (e) { alert("Création de la clé impossible dans ce navigateur : " + ((e && e.message) || e)); });
-}
-function enregistrerJeton(p, d) {
-  var champ = el("cx-jeton"), j = champ.value.trim(), err = controlerJeton(j), k = cleJetons(), duree = el("cx-duree").value, fin = finJeton(j);
-  if (err) { el("cx-erreur").textContent = err; return; }
-  var b = el("cx-enregistrer"); b.disabled = true; b.textContent = "Chiffrement…";
-  chiffrerJeton(j, k).then(function (c) {
-    j = null; champ.value = "";
-    return sb(ZCLIENT.from("connexions_pennylane").upsert({ dossier: d, jeton_chiffre: c, empreinte_cle: k.empreinte, fin_jeton: fin, duree: duree }, { onConflict: "dossier" }).select("dossier")).then(verifierTouche);
-  }).then(rechargerConnexions).then(function () {
-    etat.cxSaisie = null; majContenu();
-    if (peutSynchroniser()) return lancerTestJetons(p, [d]);
-    messageImport("Jeton enregistré (chiffré). Le test se lance depuis le logiciel en ligne.", "info");
-  }).catch(function (e) { j = null; b.disabled = false; b.textContent = "Chiffrer et enregistrer"; el("cx-erreur").textContent = messageErreur(e); });
-}
-function brancherConnexions(p) {
-  var b;
-  if ((b = el("cx-cle-creer"))) b.onclick = fenetreCle;
-  if ((b = el("cx-tester"))) b.onclick = function () { this.disabled = true; lancerTestJetons(p, p.dossiers.filter(function (d) { return connexionDe(d); })); };
-  el("contenu").querySelectorAll("[data-cx-saisir]").forEach(function (x) { x.onclick = function () { etat.cxSaisie = x.dataset.cxSaisir; majContenu(); var c = el("cx-jeton"); if (c) c.focus(); }; });
-  el("contenu").querySelectorAll("[data-cx-retirer]").forEach(function (x) { x.onclick = function () { var d = x.dataset.cxRetirer;
-    if (!confirm("Retirer la connexion Pennylane de " + nomResidence(d) + " ? Le jeton chiffré est effacé du logiciel. Pensez à supprimer aussi le jeton dans Pennylane.")) return;
-    sb(ZCLIENT.from("connexions_pennylane").delete().eq("dossier", d).select("dossier")).then(verifierTouche).then(rechargerConnexions).then(function () { majContenu(); }).catch(function (e) { alert(messageErreur(e)); }); }; });
-  if ((b = el("cx-enregistrer"))) b.onclick = function () { enregistrerJeton(p, etat.cxSaisie); };
-  if ((b = el("cx-jeton"))) b.onkeydown = function (ev) { if (ev.key === "Enter") enregistrerJeton(p, etat.cxSaisie); };
-  if ((b = el("cx-annuler"))) b.onclick = function () { etat.cxSaisie = null; majContenu(); };
-}
-/* Lot 23 : bornes du choix des mois. Début au plus tôt = premier mois de l'exercice N-1 (première intégration d'une
-   société comprise, même sans écriture encore lue) ; fin au choix jusqu'à la fin de l'exercice N+1, ou sans limite. */
-function ajMois(m, n) { var y = +m.slice(0, 4), k = +m.slice(5) - 1 + n; y += Math.floor(k / 12); k = ((k % 12) + 12) % 12; return y + "-" + (k < 9 ? "0" : "") + (k + 1); }
-function bornesImport(p) {
-  var deb = null, finN = null, finMax = null;
-  p.dossiers.forEach(function (d) {
-    var ex = exercicesDe(d), n = ex.find(function (x) { return x.rang === "N"; }) || ex[ex.length - 1]; if (!n) return;
-    var n1 = ex.find(function (x) { return x.rang === "N-1"; }), np1 = ex.find(function (x) { return x.rang === "N+1"; });
-    var a = n1 ? n1.debut.slice(0, 7) : ajMois(n.debut.slice(0, 7), -12), b = n.fin.slice(0, 7), c = np1 ? np1.fin.slice(0, 7) : ajMois(b, 12);
-    if (!deb || a < deb) deb = a; if (!finN || b > finN) finN = b; if (!finMax || c > finMax) finMax = c;
-  });
-  var auj = moisCourant();
-  if (!deb) { deb = ajMois(auj, -12); finN = ajMois(auj, 11); finMax = ajMois(auj, 23); }
-  return { debut: deb, finN: finN, finMax: finMax };
-}
+/* Lot 22 : période importée d'après la règle N-1 + N (calculée par le connecteur à chaque synchronisation). */
 function textePeriodeImport(p) {
-  if (p.dossiers.length !== 1) return "Dernière période lue par résidence : voir le tableau des résidences du périmètre.";
-  var s = sourceDe(p.dossiers[0]);
-  if (!s) return "Résidence non connectée : rien n’a encore été lu dans Pennylane.";
-  return s.periode ? "Dernière synchronisation : du " + dateFr(s.periode[0]) + " au " + (s.periode[1] > "9999" ? "… (sans limite)" : dateFr(s.periode[1])) + "." : "";
+  var lib = function (x) { return x ? dateFr(x[0]) + " au " + dateFr(x[1]) : ""; }, src = p.dossiers.map(sourceDe).filter(Boolean);
+  if (p.dossiers.length === 1) {
+    var s = src[0];
+    if (!s) return "Résidence non connectée : la période sera calculée à la première synchronisation.";
+    var e = s.exercices_importes;
+    if (!e) return s.periode ? "Dernière synchronisation : du " + dateFr(s.periode[0]) + " au " + dateFr(s.periode[1]) + " (période choisie à la main, avant le lot 22)." : "Calculée à la prochaine synchronisation.";
+    return "Exercice N-1 : " + (e["N-1"] ? lib(e["N-1"]) : "aucun exercice précédent dans Pennylane") + "<br>Exercice N : " + lib(e.N) +
+      (s.lignes_anterieures ? "<br>" + nb(s.lignes_anterieures) + " ligne(s) antérieure(s) au début du site non reprise(s) (phase test)" : "");
+  }
+  return "Calculée pour chaque résidence d’après ses propres exercices (exercices décalés compris) : voir le tableau des résidences du périmètre.";
 }
 PAGES.pennylane = function (p) {
   var connectees = p.dossiers.filter(sourceDe), seul = p.dossiers.length === 1, admin = peutSynchroniser();
@@ -2415,18 +2245,10 @@ PAGES.pennylane = function (p) {
       (connectees.every(function (d) { return (sourceDe(d).brouillard || {}).masque; }) ? " (masquées dans les chiffres)." : " (reprises dans les chiffres).")
     : "Information disponible après une synchronisation.";
   var libBouton = seul ? "Synchroniser" : "Synchroniser les " + p.dossiers.length + " résidences";
-  var bi = bornesImport(p), listeDeb = moisEntre(bi.debut, bi.finMax);
-  var md = (par0 && par0.mois_debut) || bi.debut, mf = par0 ? (par0.mois_debut || par0.mois_fin ? par0.mois_fin || "" : bi.finN) : bi.finN;
-  if (md < bi.debut) md = bi.debut;
-  var optDebut = listeDeb.map(function (m) { return '<option value="' + m + '"' + (m === md ? " selected" : "") + ">" + moisMaj(m) + "</option>"; }).join("");
-  var optFin = listeDeb.map(function (m) { return '<option value="' + m + '"' + (m === mf ? " selected" : "") + ">" + moisMaj(m) + "</option>"; }).join("") +
-    '<option value=""' + (mf === "" ? " selected" : "") + ">Sans limite</option>";
   var h = enTete("Import comptable", p, "") + etatCx + '<div id="imp-message"></div>' +
     '<h2 style="margin-bottom:12px">Import des données par l’API Pennylane</h2><div class="import-grille">' +
-    '<div class="cadre" id="imp-periode"><h3>Dates d’import</h3><div class="corps"><div class="duo"><div><span class="mini">Importer de</span><select id="imp-debut"' + (admin ? "" : " disabled") + ">" + optDebut + '</select></div>' +
-      '<div><span class="mini">à</span><select id="imp-fin"' + (admin ? "" : " disabled") + ">" + optFin + "</select></div></div>" +
-      '<p class="legende" style="margin:10px 0 0">Début au plus tôt : premier mois de l’exercice N-1' + (seul ? "" : " (le plus ancien des résidences du périmètre)") + '. Fin libre ; « Sans limite » reprend aussi les écritures passées d’avance.</p>' +
-      '<p class="legende" style="margin:6px 0 0">' + textePeriodeImport(p) + "</p></div></div>" +
+    '<div class="cadre" id="imp-periode"><h3>Période importée</h3><div class="corps"><p style="margin:0 0 6px"><b>Exercice précédent complet (N-1) + exercice en cours (N)</b>, jusqu’à la fin de N : les écritures passées d’avance sont reprises.</p>' +
+      '<p class="legende" style="margin:0">' + textePeriodeImport(p) + "</p></div></div>" +
     '<div class="cadre"><h3>Options</h3><div class="corps"><div class="options"><span>Masquer les écritures en brouillard <span class="info-ronde" title="Écritures dont la pièce est encore à valider ou à comptabiliser dans Pennylane">i</span></span>' +
       '<button class="bascule' + (masquer ? " on" : "") + '" id="imp-brouillard" aria-pressed="' + masquer + '"' + (admin ? ' title="Cliquer pour changer"' : ' disabled title="Réservé aux administrateurs"') + "></button><span></span></div>" +
       '<p class="legende" style="margin-top:10px">' + infoBr + "</p>" + (ant ? '<p class="legende" id="imp-anticipees">' + nb(ant) + " ligne(s) datée(s) après aujourd’hui (écritures anticipées), reprises dans les chiffres.</p>" : "") + "</div></div>" +
@@ -2449,8 +2271,7 @@ PAGES.pennylane = function (p) {
         "</td><td><code>" + esc(d) + "</code></td><td>" + (x.periode_importee ? "Du " + dateFr(x.periode_importee[0]) + " au " + dateFr(x.periode_importee[1]) : '<span class="mut">aucune écriture</span>') +
         '</td><td class="num">' + nb(x.ecritures) + '</td><td class="num mut">0</td><td class="c">' + (x.ecritures ? '<span class="coche" title="Données présentes">✓</span>' : '<span class="pastille att">à importer</span>') + "</td></tr>";
     }); });
-  el("contenu").innerHTML = h + blocConnexions(p) + t + '</tbody></table></div><p class="legende">Données budgétaires : à venir avec le module Budgets. Écritures comptées jusqu’au dernier mois importé du site (' + moisLong(D.meta.dernier_mois_importe) + ").</p></div>" + blocHistorique();
-  if (enLigne() && estAdmin()) brancherConnexions(p);
+  el("contenu").innerHTML = h + t + '</tbody></table></div><p class="legende">Données budgétaires : à venir avec le module Budgets. Écritures comptées jusqu’au dernier mois importé du site (' + moisLong(D.meta.dernier_mois_importe) + ").</p></div>" + blocHistorique();
   el("contenu").onclick = function (ev) { var b = ev.target.closest && ev.target.closest("[data-voir-plus]"); if (b && etat.page === "pennylane") { etat[b.dataset.voirPlus] = !etat[b.dataset.voirPlus]; var z = el("imp-historique"); if (z) z.outerHTML = blocHistorique(); } };
   if (admin) {
     el("imp-brouillard").onclick = function () { var on = !this.classList.contains("on"); this.classList.toggle("on", on); this.setAttribute("aria-pressed", on); };
@@ -4258,7 +4079,6 @@ function assemblerDonnees(commun, lignes, groupes, liens, profil) {
   X.enLigne = profil ? { email: profil.email, nom: profil.nom, role: profil.role } : null;
   return X;
 }
-var CX_COLONNES = "dossier, empreinte_cle, fin_jeton, duree, expire_le, etat, motif, societe_nom, societe_id, societe_attendue, droits, teste_le, enregistre_par, enregistre_le";
 function lireBase(requete) { return Promise.resolve(requete).then(function (r) { if (r.error) throw r.error; return r.data; }); }
 /* Tables du lot 18b : la page fonctionne avant l'application de la migration 007 (liste vide). */
 function lireFacultatif(requete) { return Promise.resolve(requete).then(function (r) { return r && !r.error ? r.data || [] : []; }, function () { return []; }); }
@@ -4287,14 +4107,12 @@ function chargerDonnees(client) {
     lireOuNull(client.from("residences").select("id, dossier_pennylane, code_mews")),
     lireTout(function () { return client.from("kpi_mois").select("*").order("dossier").order("mois"); }, true),
     lireFacultatif(client.from("depots_kpi").select("*").order("id")),
-    lireOuNull(client.from("connexions_pennylane").select(CX_COLONNES)),
-    lireFacultatif(client.from("cle_jetons").select("id, cle_publique, empreinte, creee_par, creee_le")),
     lireOuNull(client.from("kpi_catalogue").select("*").order("ordre")),
     lireOuNull(client.from("kpi_modeles").select("*").order("ordre")),
     lireOuNull(client.from("residence_modele").select("*")),
     lireFacultatif(client.from("kpi_journal").select("*").order("id", { ascending: false }).limit(1000))
   ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10],
-    resbase: r[11], kpimois: r[12], depots: r[13], cx: r[14], cle: r[15], cat: r[16], modeles: r[17], resmod: r[18], journalkpi: r[19] }; });
+    resbase: r[11], kpimois: r[12], depots: r[13], cat: r[14], modeles: r[15], resmod: r[16], journalkpi: r[17] }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -4306,10 +4124,10 @@ function demarrerAvecClient(client, profil) {
     D = assemblerDonnees(x.commun, x.lignes, x.groupes, x.liens, profil);
     D.ajustements = x.ajustements; D.comptes_simules = x.comptes; D.lissages = x.lissages; D.mesures_importees = x.mesures; D.comptes_bancaires = x.banques;
     D.parametres_import = x.parametres || []; D.synchronisations = x.synchros || [];
-    D.residences_base = x.resbase || []; D.kpi_mois = x.kpimois || []; D.depots_kpi = x.depots || []; D.connexions = x.cx; D.cle_jetons = x.cle || [];
+    D.residences_base = x.resbase || []; D.kpi_mois = x.kpimois || []; D.depots_kpi = x.depots || [];
     D.groupes_base = x.groupes; D.residence_groupe = x.liens;
     D.catalogue = x.cat || []; D.kpi_modeles = x.modeles || []; D.res_modeles = x.resmod || []; D.kpi_journal = x.journalkpi || [];
-    D.lot20 = x.cat !== null && x.modeles !== null && x.resmod !== null; D.lot19 = { migration: x.kpimois !== null && x.cx !== null };
+    D.lot20 = x.cat !== null && x.modeles !== null && x.resmod !== null; D.lot19 = { migration: x.kpimois !== null };
     lancerApplication();
     ZCLIENT = client;
     var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");

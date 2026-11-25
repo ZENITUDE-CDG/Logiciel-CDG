@@ -428,10 +428,9 @@ def _execution():
     return f"{s}/{r}/actions/runs/{i}" if s and r and i else None
 
 
-def _resultat_demande(demande, par, pennylane, connexions=None):
+def _resultat_demande(demande, par, pennylane):
     """Résultat par dossier demandé, sans montant (sauf le brouillard, destiné à la page)."""
     import source_pennylane
-    connectes = {c.get("dossier") for c in (connexions or []) if c.get("etat") == "connectee"}
     out = {}
     for d in demande.get("dossiers") or []:
         if d == source_pennylane.DOSSIER_TEST and pennylane is not None and d in par:
@@ -441,94 +440,9 @@ def _resultat_demande(demande, par, pennylane, connexions=None):
                       "anticipees": (r.get("anticipees") or {}).get("lignes", 0)}
         elif d == source_pennylane.DOSSIER_TEST:
             out[d] = {"statut": "échec", "motif": "lecture Pennylane impossible"}
-        elif d in connectes:
-            out[d] = {"statut": "non lue", "motif": "jeton valide ; lecture des dossiers réels pas encore autorisée "
-                                                   "(phase test, décision 0013, étape 2)"}
         else:
             out[d] = {"statut": "non connectée", "motif": "aucun jeton Pennylane pour ce dossier"}
     return out
-
-
-# ----------------------------------------------------------------------------- lot 19 : jetons par dossier
-
-def cle_privee_github():
-    """Clé privée du secret GitHub PENNYLANE_CLE_PRIVEE, ou None si le secret n'est pas renseigné."""
-    from zenitude.connecteurs import jetons
-    pem = os.environ.get("PENNYLANE_CLE_PRIVEE", "").strip()
-    return jetons.charger_cle_privee(pem) if pem else None
-
-
-def lire_connexions(base, cle, dossiers=None, envoyer=None):
-    """Connexions Pennylane (jetons chiffrés compris : clé secrète). None si la migration 011 manque."""
-    chemin = "connexions_pennylane?select=*"
-    if dossiers:
-        chemin += "&dossier=in.(" + ",".join(dossiers) + ")"
-    return lire_facultatif(base, cle, chemin, envoyer=envoyer, migration="011")
-
-
-def maj_connexion(base, cle, dossier, valeurs, envoyer=None):
-    envoyer = envoyer or requete
-    envoyer("PATCH", base + f"/rest/v1/connexions_pennylane?dossier=eq.{dossier}", cle, valeurs, "return=minimal")
-
-
-def jeton_stocke(base, cle, dossier, envoyer=None):
-    """Jeton du logiciel pour ce dossier (connexion « connectée », déchiffré avec la clé de GitHub), sinon None."""
-    from zenitude.connecteurs import jetons
-    try:
-        cp = cle_privee_github()
-    except jetons.ErreurCle as e:
-        print("avertissement : " + str(e) + " ; jeton du logiciel ignoré")
-        return None
-    if cp is None:
-        return None
-    c = next((x for x in (lire_connexions(base, cle, [dossier], envoyer=envoyer) or []) if x.get("etat") == "connectee"), None)
-    if not c or not c.get("jeton_chiffre") or c.get("empreinte_cle") != jetons.empreinte_publique(cp):
-        return None
-    try:
-        return jetons.dechiffrer(c["jeton_chiffre"], cp)
-    except jetons.ErreurCle as e:
-        print("avertissement : " + str(e))
-        return None
-
-
-def tester_demande(base, cle, demande, envoyer=None, client_de=None, aujourdhui=None):
-    """Demande de type « test » : teste le jeton de chaque dossier demandé et enregistre le résultat."""
-    from zenitude.connecteurs import jetons
-    envoyer = envoyer or requete
-    ident = demande["id"]
-    try:
-        cp = cle_privee_github()
-        if cp is None:
-            raise jetons.ErreurCle("secret GitHub PENNYLANE_CLE_PRIVEE absent : voir docs/lot19_mise_en_route.md")
-        cles = lire_facultatif(base, cle, "cle_jetons?select=empreinte", envoyer=envoyer, migration="011") or []
-        if not cles:
-            raise jetons.ErreurCle("aucune clé de chiffrement enregistrée dans le logiciel")
-        if cles[0]["empreinte"] != jetons.empreinte_publique(cp):
-            raise jetons.ErreurCle("la clé privée de GitHub ne correspond pas à la clé publique du logiciel : "
-                                   "recopiez la bonne clé dans le secret PENNYLANE_CLE_PRIVEE, ou créez une nouvelle clé")
-    except jetons.ErreurCle as e:
-        maj_demande(base, cle, ident, {"statut": "échec", "fin": _maintenant(), "message": str(e)[:300]}, envoyer=envoyer)
-        print("ERREUR : " + str(e), file=sys.stderr)
-        return 1
-    dossiers = demande.get("dossiers") or []
-    lignes = {c["dossier"]: c for c in (lire_connexions(base, cle, dossiers, envoyer=envoyer) or [])}
-    autres = {c["societe_attendue"]: c["dossier"] for c in
-              (lire_facultatif(base, cle, "connexions_pennylane?select=dossier,societe_attendue&societe_attendue=not.is.null",
-                               envoyer=envoyer, migration="011") or []) if c.get("societe_attendue")}
-    resultat = {}
-    for d in dossiers:
-        c = lignes.get(d)
-        if not c:
-            resultat[d] = {"statut": "non connectée", "motif": "aucun jeton enregistré"}
-            continue
-        r = jetons.tester(c, cp, autres, client_de=client_de, aujourdhui=aujourdhui)
-        maj_connexion(base, cle, d, r, envoyer=envoyer)
-        if r.get("etat") == "connectee":
-            autres[r["societe_attendue"]] = d
-        resultat[d] = {"statut": jetons.libelle_etat(r.get("etat")), "motif": r.get("motif"), "societe": r.get("societe_nom")}
-        print(f"{d} : {jetons.libelle_etat(r.get('etat'))}" + (f" ({r['motif']})" if r.get("motif") else ""))
-    maj_demande(base, cle, ident, {"statut": "terminée", "fin": _maintenant(), "resultat": resultat}, envoyer=envoyer)
-    return 0
 
 
 def main(argv):
@@ -566,8 +480,6 @@ def main(argv):
             demande = rep[0]
             maj_demande(base, cle, ident, {"statut": "en cours", "debut": _maintenant(), "execution": _execution()})
             print(f"Demande {ident} : {demande.get('perimetre') or ''} ({len(demande.get('dossiers') or [])} résidence(s))")
-            if demande.get("type") == "test":
-                return tester_demande(base, cle, demande)
         code = _publier_tout(argv, base, cle, demande)
     except Exception as e:  # la demande ne doit jamais rester « en cours »
         if demande is not None:
@@ -584,13 +496,8 @@ def _publier_tout(argv, base, cle, demande):
     from zenitude.connecteurs import pennylane as pl
     params = lire_facultatif(base, cle, "parametres_import?select=*") or []
     param = next((p for p in params if p.get("dossier") == source_pennylane.DOSSIER_TEST), None)
-    # Lot 19 : jeton enregistré dans le logiciel (chiffré) s'il est connecté, sinon le secret GitHub du lot 18.
-    jeton = jeton_stocke(base, cle, source_pennylane.DOSSIER_TEST)
-    origine_jeton = "jeton du logiciel"
-    if not jeton:
-        jeton, origine_jeton = os.environ.get("PENNYLANE_TOKEN_PILOTE", "").strip(), "secret GitHub PENNYLANE_TOKEN_PILOTE"
-    if jeton:
-        print("Jeton du dossier de test : " + origine_jeton)
+    # Jeton Pennylane en lecture seule, rangé dans les secrets GitHub du dépôt (décision 0017).
+    jeton = os.environ.get("PENNYLANE_TOKEN_PILOTE", "").strip()
     obligatoire = "--pennylane" in argv or demande is not None
     pennylane, erreur, debut_lecture = None, None, None
     if jeton:
@@ -622,12 +529,6 @@ def _publier_tout(argv, base, cle, demande):
             print(f"Durée de lecture Pennylane : {time.monotonic() - t1:.0f} s")
         except pl.ErreurPennylane as e:
             erreur = str(e)
-            if "401" in erreur and origine_jeton == "jeton du logiciel":
-                try:
-                    maj_connexion(base, cle, source_pennylane.DOSSIER_TEST,
-                                  {"etat": "a_renouveler", "motif": "jeton refusé par Pennylane lors d'une synchronisation"})
-                except PublicationRefusee:
-                    pass
             if obligatoire:
                 print("ERREUR Pennylane : " + erreur, file=sys.stderr)
             else:
@@ -680,8 +581,7 @@ def _publier_tout(argv, base, cle, demande):
             print("avertissement : lettrage non mémorisé (" + str(e)[:200] + ")")
     if demande is not None:
         maj_demande(base, cle, demande["id"], {"statut": "terminée", "fin": _maintenant(),
-                                               "resultat": _resultat_demande(demande, par, pennylane,
-                                                                                          lire_connexions(base, cle, demande.get("dossiers")))})
+                                               "resultat": _resultat_demande(demande, par, pennylane)})
     return 0
 
 

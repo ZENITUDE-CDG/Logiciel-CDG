@@ -26,10 +26,8 @@ Deno.test("refus", () => {
 Deno.test("périmètre tronqué à 120 caractères", () => {
   assertEquals(controler({ ...ok, perimetre: "x".repeat(300) }).demande?.perimetre.length, 120);
 });
-Deno.test("lot 19 : demande de test des jetons", () => {
-  assertEquals(controler({ type: "test", dossiers: ["PENNY-TEST", "D-2", "D-2"], perimetre: "Groupe" }).demande,
-    { type: "test", dossiers: ["PENNY-TEST", "D-2"], perimetre: "Groupe" });
+Deno.test("décision 0017 : plus de demande de test des jetons", () => {
+  assertEquals(controler({ ...ok, type: "test" }).erreur, "type de demande inconnu");
   assertEquals(controler({ ...ok, type: "inconnu" }).erreur, "type de demande inconnu");
-  assertEquals(controler({ type: "test", dossiers: [] }).erreur, "liste de résidences vide ou trop longue");
   assertEquals(controler({ ...ok, type: "synchro" }).demande?.masquer_brouillard, true);
 });

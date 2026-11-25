@@ -5,7 +5,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 
 ## Où en est-on (25 novembre 2026)
 
-- Phase : **test uniquement**. Données fictives. Pennylane : seul le dossier de test `PENNY-TEST` est lu, en lecture seule (lot 18, décision 0011) ; les jetons d'autres dossiers peuvent être enregistrés chiffrés et testés (identité de la société seulement, lot 19, décision 0013). Pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004, 0006, 0007) ; rien en local. Les chiffres sont calculés par GitHub Actions et publiés dans la base ; la page en ligne ne contient aucune donnée.
+- Phase : **test uniquement**. Données fictives. Pennylane : seul le dossier de test `PENNY-TEST` est lu, en lecture seule (lot 18, décision 0011) ; le jeton (lecture seule) est dans les secrets GitHub (lot 23, décision 0017). Pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004, 0006, 0007) ; rien en local. Les chiffres sont calculés par GitHub Actions et publiés dans la base ; la page en ligne ne contient aucune donnée.
 - Cadrage : ZENITUDE v0.8 approuvé pour la phase test (`docs/decisions/0001-approbation-cadrage-test.md`).
   Approbations DAF, contrôle de gestion et DSI : **non tracées**.
 - Équipe : deux personnes (porteur du projet et Benjamin), développement avec Claude Code.
@@ -34,7 +34,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 22 | Période d'import automatique : exercice N-1 complet + exercice N jusqu'à sa fin (écritures anticipées comprises), par dossier | 9 |
 | 21 | Arrivée sur Import comptable ; historiques à 5 lignes + « Voir plus » ; Données externes réduites au modèle du catalogue (consolidé et modèle du lot 15 retirés) ; modèle de suivi Mixte | 7 |
 | 20 | Suivi KPI paramétrable : catalogue de données et d'indicateurs (création, activation, ordre, seuils), modèles de suivi par activité, modèle Excel exporté puis redéposé, tableau de bord « Indicateurs suivis » | 16 |
-| 19 | Dépôt du consolidé KPI (onglet « Données KPI », périmètre groupe ou résidence, rattachement par code Mews, statuts des mois, groupes du fichier) ; jetons Pennylane par dossier chiffrés dans le navigateur et testés (lecture seule, une société par résidence) | 32 |
+| 19 | Dépôt du consolidé KPI (onglet « Données KPI », périmètre groupe ou résidence, rattachement par code Mews, statuts des mois, groupes du fichier)  (jetons chiffrés retirés au lot 23, décision 0017) | 32 |
 | 18b | Synchronisation lancée depuis la page Import comptable (résidence ou groupe), période d'import, masquage du brouillard, historique | 17 |
 | 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
@@ -57,7 +57,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Lot 22 (`docs/decisions/0016`) : période d'import = N-1 + N, calculée par dossier ; plus de choix de mois.
 - Lot 21 (`docs/decisions/0015`) : un seul chemin d'import des KPI (modèle du catalogue) ; modèle Mixte ; page d'arrivée Import comptable.
 - Lot 20 (`docs/decisions/0014`) : KPI paramétrables dans la page (administrateurs, effet immédiat, journal) ; données importées et indicateurs calculés séparés ; un modèle de suivi par résidence ; modèle Excel une feuille par modèle.
-- Lot 19 (`docs/decisions/0013`) : consolidé KPI déposé tel quel (valeurs aberrantes écartées et listées, ratios recalculés et contrôlés) ; un jeton Pennylane par dossier, chiffré dans le navigateur, clé privée dans le secret GitHub `PENNYLANE_CLE_PRIVEE`. Étape 2 (données réelles dans la base) à approuver par la DSI et la DAF.
+- Lot 19 (`docs/decisions/0013`) : consolidé KPI déposé tel quel (valeurs aberrantes écartées et listées, ratios recalculés et contrôlés) ; jetons Pennylane dans les secrets GitHub (décision 0017, qui remplace les jetons chiffrés). Étape 2 (données réelles dans la base) à approuver par la DSI et la DAF.
 - Lot 18b (`docs/decisions/0012`) : fonction serveur Supabase `lancer-synchro` (jeton GitHub limité aux Actions du dépôt, dans les secrets Supabase) ; tables `parametres_import` et `synchronisations`.
 - Lot 18 (`docs/decisions/0011`) : connexion Pennylane autorisée pour le seul dossier de test, lecture seule, liste blanche ; classement provisoire des comptes non classés du dossier de test ; aucune valeur dans les journaux.
 - Lot 13 (`docs/decisions/0007`) : publication par GitHub Actions avec la clé secrète dans les secrets GitHub ; ajustements partagés, actifs dès leur création, sans validation à deux personnes ; lissage ; base de test = huit résidences de démonstration (Benjamin : groupe GRP-SENIORS).

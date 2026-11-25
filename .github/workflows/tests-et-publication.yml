@@ -77,6 +77,4 @@ jobs:
           # période et le masquage du brouillard réglés dans la page (table parametres_import). En cas d'erreur
           # Pennylane, la démonstration est publiée seule.
           PENNYLANE_TOKEN_PILOTE: ${{ secrets.PENNYLANE_TOKEN_PILOTE }}
-          # Lot 19 (décision 0013) : clé privée qui déchiffre les jetons enregistrés dans le logiciel
-          PENNYLANE_CLE_PRIVEE: ${{ secrets.PENNYLANE_CLE_PRIVEE }}
         run: python interface/publier_supabase.py

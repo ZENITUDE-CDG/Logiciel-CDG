@@ -87,7 +87,8 @@ def test_residence_connectee(site):
     aller(pg, "PENNY-TEST")
     texte = pg.inner_text("#contenu")
     assert "Connexion Pennylane active (lecture seule)" in texte and "Écritures validées seulement" in texte
-    assert "Exercice précédent complet (N-1)" in pg.inner_text("#imp-periode")  # lot 22 : règle à la place des dates
+    assert "Dates d’import" in pg.inner_text("#imp-periode")  # lot 23 : retour au choix des mois
+    assert pg.input_value("#imp-debut") == "2026-01" and pg.input_value("#imp-fin") == "2026-04"  # mois enregistrés
     assert pg.get_attribute("#imp-brouillard", "aria-pressed") == "true"
     assert "2 ligne(s) en brouillard" in texte and "charges 50 €" in texte and "masquées" in texte
     assert "Analytique" not in texte and "Balances mensuelles" not in texte  # options retirées
@@ -103,7 +104,7 @@ def test_synchroniser_une_residence_et_suivre(site):
     pg.wait_for_function("appelsFonction.length === 1")
     appel = pg.evaluate("appelsFonction[0]")
     assert appel == {"nom": "lancer-synchro", "body": {"dossiers": ["PENNY-TEST"], "perimetre": "Dossier Pennylane de test",
-                                                        "mois_debut": None, "mois_fin": None, "masquer_brouillard": False}}
+                                                        "mois_debut": "2026-01", "mois_fin": "2026-04", "masquer_brouillard": False}}
     pg.wait_for_selector("#imp-historique")
     assert "Synchronisation n° 42 lancée" in pg.inner_text("#imp-message")
     assert "demandée" in pg.inner_text("#imp-historique")

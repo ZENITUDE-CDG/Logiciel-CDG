@@ -18,6 +18,7 @@ from datetime import date, datetime
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RACINE)
 
+from zenitude.comptabilite import fees  # noqa: E402
 from zenitude.comptes import pcg, tresorerie  # noqa: E402
 from zenitude.config import controles as c, couverture, formules, publication  # noqa: E402
 from zenitude.config.versions import Depot  # noqa: E402
@@ -700,6 +701,8 @@ def construire(demo=DEMO):
         # Lot 20 : catalogue de départ (démonstration locale ; en ligne, la page lit la base)
         "catalogue_defaut": catalogue_kpi.CATALOGUE, "modeles_defaut": catalogue_kpi.MODELES,
         "modele_par_activite": catalogue_kpi.MODELE_PAR_ACTIVITE,
+        # Lot 24 : rubriques et règles de FEES de départ (démonstration locale ; en ligne, la page lit la base)
+        "fees_depart": {"rubriques": fees.RUBRIQUES_DEPART, "regles": fees.REGLES_DEPART},
         "ebitda": ebitda,
         "lignes_sig": _lignes_exportees(LIGNES_SIG),
         "sig": sig, "imports": imports, "journaux": journaux, "plan": plan,

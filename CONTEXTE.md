@@ -35,6 +35,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 21 | Arrivée sur Import comptable ; historiques à 5 lignes + « Voir plus » ; Données externes réduites au modèle du catalogue (consolidé et modèle du lot 15 retirés) ; modèle de suivi Mixte | 7 |
 | 20 | Suivi KPI paramétrable : catalogue de données et d'indicateurs (création, activation, ordre, seuils), modèles de suivi par activité, modèle Excel exporté puis redéposé, tableau de bord « Indicateurs suivis » | 16 |
 | 19 | Dépôt du consolidé KPI (onglet « Données KPI », périmètre groupe ou résidence, rattachement par code Mews, statuts des mois, groupes du fichier)  (jetons chiffrés retirés au lot 23, décision 0017) | 32 |
+| 24 | Comptabilité du siège : CA par résidence (comptes 7 ou règle propre), paramétrage des FEES (rubriques, versions datées, journal), FEES à refacturer avec clôture figée ; trésorerie : prévisions, point bas, virements de compte à compte proposés, plafond | 17 |
 | 18b | Synchronisation lancée depuis la page Import comptable (résidence ou groupe), période d'import, masquage du brouillard, historique | 17 |
 | 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
@@ -54,6 +55,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Lot 17 (`docs/decisions/0010`) : menu latéral réordonné (Résidence en haut) ; export Excel de chaque page de données : tableaux, données des graphiques, détail des calculs et écritures comptables.
 - Lot 16 : ruban bleu en haut de chaque page (exercice de référence + résidence ou groupe) ; l'exercice fixe la période de la réglette, le périmètre quitte le menu latéral.
 - Lot 14 (`docs/decisions/0008`) : détail des écritures publié par résidence ; lissage comme Waibi (répartition possible sur l'exercice suivant, mois sans écriture compris).
+- Lot 24 (`docs/decisions/0018`) : section Comptabilité avant Trésorerie ; CA = comptes 7 par défaut, règle par résidence ; taux et montants en versions datées ; mois clôturés figés ; paramétrage et clôtures par les administrateurs ; virements proposés seulement à l'intérieur d'une résidence ; calcul dans la page comparé à `zenitude/comptabilite/fees.py`.
 - Lot 22 (`docs/decisions/0016`) : période d'import = N-1 + N, calculée par dossier ; plus de choix de mois.
 - Lot 21 (`docs/decisions/0015`) : un seul chemin d'import des KPI (modèle du catalogue) ; modèle Mixte ; page d'arrivée Import comptable.
 - Lot 20 (`docs/decisions/0014`) : KPI paramétrables dans la page (administrateurs, effet immédiat, journal) ; données importées et indicateurs calculés séparés ; un modèle de suivi par résidence ; modèle Excel une feuille par modèle.
@@ -86,7 +88,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 467 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
+python -m pytest            # 462 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
                             # sur GitHub : onglet Actions, lancé automatiquement à chaque dépôt
 sh demo.sh                  # démonstration complète
 python interface/generer_site.py   # régénère index.html (en ligne, sans données)

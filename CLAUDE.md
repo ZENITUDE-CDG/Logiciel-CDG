@@ -45,7 +45,7 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (467 tests au lot 22 ; détail historique : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15, 5 du lot 16, 5 du lot 17 ; les tests de page des lots 9, 11, 13 à 17 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
+- Tests : `python -m pytest` (462 tests au lot 24 ; détail historique : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15, 5 du lot 16, 5 du lot 17 ; les tests de page des lots 9, 11, 13 à 17 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
 - Tests et publication automatiques : `.github/workflows/tests-et-publication.yml`. À chaque dépôt, toute la suite tourne sur GitHub (onglet Actions) avec une base PostgreSQL temporaire créée depuis `migrations/` (aucun secret, Supabase jamais touché). Puis, sur main seulement et si les tests passent, `python interface/publier_supabase.py` publie les chiffres dans la base de test avec le secret GitHub `SUPABASE_SECRET_KEY` (décision 0007). Essai sans envoi : `python interface/publier_supabase.py --essai <dossier>`.
 - Installation de la base de test : `python scripts/assembler_installation.py` régénère `scripts/installation_supabase.sql` (remise à zéro + migrations + données de départ) ; un test vérifie qu'il est à jour.
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
@@ -298,3 +298,13 @@ Décision : `docs/decisions/0016-periode-d-import-n-1-et-n.md`. Mise en route : 
 - Page Import comptable : cadre « Période importée » (`textePeriodeImport`) à la place des mois ; écritures anticipées (cadre Options, colonne du tableau des résidences) ; historique « N-1 + N ».
 - Tests : `tests/test_lot22_periode.py` (6), `tests/test_lot22_page.py` (3) ; tests des lots 18b adaptés (menus de dates retirés).
 - Limites : frise du site bornée au jeu de démonstration (lignes antérieures comptées) ; écritures anticipées affichées dans les mois « projection » (dernier mois importé de la démonstration).
+
+## Lot 24 - STATUT : réalisé (comptabilité du siège, trésorerie prévisionnelle)
+Décision : `docs/decisions/0018-comptabilite-du-siege-et-tresorerie-previsionnelle.md`. Mise en route : `docs/lot24_mise_en_route.md`.
+- Référence : `zenitude/comptabilite/fees.py` (CA selon la règle de la résidence, du groupe ou tous les comptes 7 ; règles datées taux / montant / retour au groupe ; arrondi au centime demi loin de zéro ; répartition sur le montant arrondi ; instantané de clôture ; rubriques et règles de départ, `sql_amorce()` = amorce de la migration 015).
+- Page (section Comptabilité avant Trésorerie) : `cp_ca` (CA résidences × mois, au centime), `cp_parametrage` (règle de CA, rubriques, grille des versions, journal), `cp_fees` (tableau du mois, clôture, réouverture, CA modifié après clôture, CSV) ; détail des calculs `ca`, `fee`. Calcul dans la page comme la décision 0002 (`calculerFees`, `caMois`, `regleApplicable`, `appliquerTaux` en BigInt).
+- Trésorerie : `tr_previsions` (administrateurs) : solde comptable du jour, pièces ouvertes à l'échéance sur le compte principal, prévisions saisies, virements faits non comptabilisés, point bas, virements proposés dans une même résidence (minimum puis plafond) ; détail `tp`. Plafond `solde_max` dans Comptes bancaires.
+- Base : migration 015 (règles par ligne, journal par la base, clôture non modifiable, contrôles des rubriques) ; démonstration locale dans le navigateur (`zen-compta`, `zen-treso-prev`).
+- Tests : `tests/test_lot24_fees.py` (6), `tests/test_lot24_page.py` (4, dont page = Python sur toute la démonstration), `tests/test_lot24_page_en_ligne.py` (2), `tests/lot24/test_lot24_droits.py` (5) ; `test_lot17_page.py` adapté (menu).
+- Limites : solde comptable et non bancaire temps réel ; FEES non reportés en décaissements prévus ; pas d'écriture de refacturation vers Pennylane.
+

@@ -114,6 +114,14 @@ tr.lis-a td:first-child { box-shadow:3px 0 0 var(--orange) inset; }
 .bq-tab tr.bq-alerte td { background:rgba(222,114,51,.08); }
 .bq-tab tr.bq-total td { font-weight:600; border-top:1px solid var(--bord-fort); background:var(--fond); }
 .bq-tab tr.bq-grand td { font-weight:700; background:var(--cle); }
+/* Lot 24 : comptabilité (CA, paramétrage et FEES) */
+.cp-tab td:first-child, .cp-tab th:first-child { white-space:nowrap; }
+.cp-tab th small { font-weight:500; }
+.cp-tab tr.bq-total td { font-weight:600; border-top:1px solid var(--bord-fort); background:var(--fond); }
+.cp-tab tr.bq-grand td { font-weight:700; background:var(--cle); }
+.cp-tab td.cp-cel { cursor:pointer; }
+.tp-tab td:nth-child(-n+3) { white-space:nowrap; }
+.cp-tab td.cp-cel:hover { background:var(--selection); color:var(--bleu-clair); }
 .imp-etapes { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
 .imp-etapes p { margin:6px 0 10px; }
 .imp-resultat { margin-top:16px; border-top:1px solid var(--bord); padding-top:12px; }
@@ -676,18 +684,21 @@ var LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAACwCAYAAAAhZDhOAA
 <script type="text/plain" id="code-application">
 var SOUS = {
   tableaux: [["synthese", "Synthèse d’activité"], ["suivi", "Indicateurs suivis"], ["indicateurs", "Indicateurs hôteliers"], ["resultat", "Compte de résultat"], ["equilibre", "FRNG, BFR et TN"], ["controle", "Contrôle des données"]],
-  tresorerie: [["tr_position", "Position de trésorerie"], ["tr_banques", "Comptes bancaires"], ["tr_analyse", "Analyse du solde"], ["tr_creances", "Analyse des créances"], ["tr_dettes", "Analyse des dettes"]],
+  tresorerie: [["tr_position", "Position de trésorerie"], ["tr_banques", "Comptes bancaires"], ["tr_previsions", "Prévisions et virements"], ["tr_analyse", "Analyse du solde"], ["tr_creances", "Analyse des créances"], ["tr_dettes", "Analyse des dettes"]],
   ajustements: [["provisions", "Comptes et provisions"], ["lissage", "Lissage de postes"], ["ecarts", "Écarts Réel → Ajusté"]],
+  comptabilite: [["cp_ca", "Chiffre d’affaires"], ["cp_parametrage", "Paramétrage des FEES"], ["cp_fees", "FEES à refacturer"]],
   import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
   residence: [["residence", "Résidence"]],
   budgets: [["budgets", "Budgets"]], rapports: [["rapports", "Rapports"]]
 };
-/* Menu latéral : ordre, libellés et icônes (lot 10 ; ordre du lot 17 : Résidence, Import et paramètres, Tableaux de bord, Ajustements, Trésorerie, Budgets, Rapports) */
+/* Menu latéral : ordre, libellés et icônes (lot 10 ; ordre du lot 17 : Résidence, Import et paramètres, Tableaux de bord, Ajustements, Trésorerie, Budgets, Rapports ;
+   lot 24 : Comptabilité juste avant Trésorerie) */
 var MENU = [
   ["residence", "Résidence", "M4 17V4.5L10 3l6 1.5V17M2.5 17h15M8 7.5h1.5M11 7.5h1.5M8 11h1.5M11 11h1.5M9 17v-3h2v3"],
   ["import", "Import et paramètres", "M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M3.5 13.5v2A1.5 1.5 0 005 17h10a1.5 1.5 0 001.5-1.5v-2"],
   ["tableaux", "Tableaux de bord", "M3 3v14h14M7 13V9m4 4V6m4 7v-4"],
   ["ajustements", "Ajustements", "M4 5h7M15 5h1M4 10h2M10 10h6M4 15h9M17 15h-1M11 3.5v3M7 8.5v3M14 13.5v3"],
+  ["comptabilite", "Comptabilité", "M5.5 2.5h9a1 1 0 011 1v13a1 1 0 01-1 1h-9a1 1 0 01-1-1v-13a1 1 0 011-1zM7.5 5.5h5v2.5h-5zM7.5 11h1M11.5 11h1M7.5 14h1M11.5 14h1"],
   ["tresorerie", "Trésorerie", "M2.5 8L10 3.5 17.5 8M4.5 8.5v6M8 8.5v6M12 8.5v6M15.5 8.5v6M2.5 16.5h15"],
   ["budgets", "Budgets", "M3 6.5A1.5 1.5 0 014.5 5h11A1.5 1.5 0 0117 6.5v7a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 13.5zM3 8.5h14M6.5 12h2", true],
   ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6", true]
@@ -812,9 +823,10 @@ function fermerTiroir() { el("app").classList.remove("menu-ouvert"); }
 el("btn-reduire").addEventListener("click", function () { appliquerMenu(!el("app").classList.contains("reduit")); });
 el("btn-burger").addEventListener("click", function (e) { e.stopPropagation(); el("app").classList.add("menu-ouvert"); });
 el("lat-voile").addEventListener("click", fermerTiroir);
-/* Lot 15 : la vue des comptes bancaires est réservée aux administrateurs (en ligne). */
-function sousVisibles(sec) { return SOUS[sec].filter(function (x) { return x[0] !== "tr_banques" || !enLigne() || estAdmin(); }); }
-function allerA(section, page) { if (page === "tr_banques" && enLigne() && !estAdmin()) page = null; etat.section = section; etat.page = page || SOUS[section][0][0]; etat.brouillon = null; fermerTiroir(); rendre(); }
+/* Lot 15 : la vue des comptes bancaires est réservée aux administrateurs (en ligne) ; lot 24 : prévisions et virements aussi. */
+var PAGES_ADMIN = ["tr_banques", "tr_previsions"];
+function sousVisibles(sec) { return SOUS[sec].filter(function (x) { return PAGES_ADMIN.indexOf(x[0]) < 0 || !enLigne() || estAdmin(); }); }
+function allerA(section, page) { if (PAGES_ADMIN.indexOf(page) >= 0 && enLigne() && !estAdmin()) page = null; etat.section = section; etat.page = page || SOUS[section][0][0]; etat.brouillon = null; fermerTiroir(); rendre(); }
 function dessinerMenu() {
   var h = "";
   MENU.forEach(function (m) {
@@ -1356,8 +1368,8 @@ function libFenetre() {
   var f = fenetre(), a = moisCourt(f[0]), b = moisCourt(f[f.length - 1]);
   return f.length === 1 ? moisLong(f[0]) : a + " → " + b;
 }
-var PAGES_PERIODE = ["synthese", "suivi", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
-var PAGES_SANS_VUE = ["suivi", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_PERIODE = ["cp_ca", "synthese", "suivi", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_SANS_VUE = ["cp_ca", "suivi", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
 function raccourcis(p) {
   var iD = idxMois(D.meta.dernier_mois_importe), an = String(D.meta.annee), n = MOIS.length;
   var r = [["Dernier mois importé", iD, iD + 1], ["12 derniers mois", Math.max(0, iD - 11), iD + 1]];
@@ -2720,7 +2732,7 @@ var EXPORT_GR = [];
 function noterGraphe(titre, cats, series, genre) {
   EXPORT_GR.push({ titre: titre, genre: genre || "eur", cats: cats.slice(), series: series.map(function (x) { return { nom: x.nom, valeurs: x.valeurs.slice() }; }) });
 }
-function exportable() { return etat.section === "tableaux" || etat.section === "tresorerie" || etat.page === "ecarts"; }
+function exportable() { return etat.section === "tableaux" || etat.section === "tresorerie" || etat.section === "comptabilite" || etat.page === "ecarts"; }
 function boutonExport() {
   return exportable() ? '<button class="btn btn-ligne" id="btn-xlsx" title="Télécharger un classeur Excel : tableaux, données des graphiques, détail des calculs et écritures comptables">Exporter en Excel</button>' : "";
 }
@@ -3185,23 +3197,25 @@ function moisMoins12(m) { return (+m.slice(0, 4) - 1) + m.slice(4); }
 var BQP = {};
 function bqpCharger() {
   BQP = {};
-  if (enLigne()) (D.comptes_bancaires || []).forEach(function (x) { BQP[x.dossier + "|" + x.compte] = { libelle: x.libelle || "", role: x.role, solde_min: x.solde_min === null || x.solde_min === undefined ? null : +x.solde_min }; });
+  if (enLigne()) (D.comptes_bancaires || []).forEach(function (x) { BQP[x.dossier + "|" + x.compte] = { libelle: x.libelle || "", role: x.role, solde_min: x.solde_min === null || x.solde_min === undefined ? null : +x.solde_min, solde_max: x.solde_max === null || x.solde_max === undefined ? null : +x.solde_max }; });
   else try { BQP = JSON.parse(localStorage.getItem("zen-comptes-bancaires")) || {}; } catch (e) { BQP = {}; }
 }
 function banquesDe(d) { return Object.keys((TR.dossiers[d] || {}).banques || {}).sort(); }
 /* Rôle proposé quand il n'est pas paramétré : le compte qui a le plus de mouvements est le principal. */
 function paramBanque(d, c) {
   var p = BQP[d + "|" + c];
-  if (p) return { libelle: p.libelle, role: p.role, solde_min: p.solde_min, propose: false };
+  if (p) return { libelle: p.libelle, role: p.role, solde_min: p.solde_min, solde_max: p.solde_max === undefined ? null : p.solde_max, propose: false };
   var n = {}, max = null;
   banquesDe(d).forEach(function (x) { n[x] = (D.ecritures[d] || []).filter(function (r) { return r[4] === x; }).length; if (max === null || n[x] > n[max]) max = x; });
-  return { libelle: "", role: c === max ? "principal" : "secondaire", solde_min: null, propose: true };
+  return { libelle: "", role: c === max ? "principal" : "secondaire", solde_min: null, solde_max: null, propose: true };
 }
 var ROLES_BQ = { principal: "Principal", secondaire: "Secondaire", autre: "Autre" };
 function libBanque(d, c) { var p = paramBanque(d, c); return p.libelle || (C.libelles_comptes[c.slice(0, 3)] || "Banque") + " " + c; }
 function bqpEnregistrer(d, c, val) {
   if (!enLigne()) { BQP[d + "|" + c] = val; try { localStorage.setItem("zen-comptes-bancaires", JSON.stringify(BQP)); } catch (e) {} majContenu(); return Promise.resolve(); }
-  return sb(ZCLIENT.from("comptes_bancaires").upsert({ dossier: d, compte: c, libelle: val.libelle, role: val.role, solde_min: val.solde_min }, { onConflict: "dossier,compte" }).select("dossier"))
+  var ligne = { dossier: d, compte: c, libelle: val.libelle, role: val.role, solde_min: val.solde_min };
+  if (D.lot24) ligne.solde_max = val.solde_max; /* lot 24 : plafond (migration 015) */
+  return sb(ZCLIENT.from("comptes_bancaires").upsert(ligne, { onConflict: "dossier,compte" }).select("dossier"))
     .then(verifierTouche).then(function () { return sb(ZCLIENT.from("comptes_bancaires").select("*")); })
     .then(function (r) { D.comptes_bancaires = r || []; bqpCharger(); majContenu(); })
     .catch(function (e) { alert(messageErreur(e)); });
@@ -3236,7 +3250,7 @@ PAGES.tr_banques = function (p) {
   var filtre = !!etat.bqAlerte;
   h += '<div class="lis-barre"><label><input type="checkbox" id="bq-alerte"' + (filtre ? " checked" : "") + "> Seulement les résidences à rééquilibrer</label>" +
     '<button class="btn btn-ligne" id="bq-csv">Exporter le tableau (CSV)</button><span class="legende">Rôle et minimum : ' + (estAdmin() ? "cliquez sur Paramétrer." : "définis par un administrateur.") + " Rôle « proposé » : le compte le plus mouvementé est pris comme principal tant qu’il n’est pas paramétré.</span></div>";
-  h += '<div class="bloc"><div class="defile"><table class="tab bq-tab"><thead><tr><th>Résidence</th><th>Compte</th><th>Libellé</th><th>Rôle</th><th class="num">Solde au ' + esc(dateFr(finMoisIso(A))) + '</th><th class="num">Variation du mois</th><th class="num">Virements internes (reçus / émis)</th><th class="num">Solde N-1</th><th class="num">Minimum</th><th class="num">À alimenter</th><th></th></tr></thead><tbody>';
+  h += '<div class="bloc"><div class="defile"><table class="tab bq-tab"><thead><tr><th>Résidence</th><th>Compte</th><th>Libellé</th><th>Rôle</th><th class="num">Solde au ' + esc(dateFr(finMoisIso(A))) + '</th><th class="num">Variation du mois</th><th class="num">Virements internes (reçus / émis)</th><th class="num">Solde N-1</th><th class="num">Minimum</th><th class="num">Plafond</th><th class="num">À alimenter</th><th></th></tr></thead><tbody>';
   var csv = [["residence", "compte", "libelle", "role", "solde", "variation_mois", "solde_n_1", "minimum", "a_alimenter"].join(";")];
   lignes.forEach(function (L) {
     if (filtre && !L.besoin) return;
@@ -3245,20 +3259,21 @@ PAGES.tr_banques = function (p) {
       var sp = function (k, m, A2) { return xa({ t: "tr", k: k, d: [L.d], m: m || [], A: A2 || A, cpt: x.c }); };
       h += '<tr class="' + (x.manque ? "bq-alerte" : "") + '">' + (i ? "<td></td>" : '<td rowspan="1"><b>' + esc(nomResidence(L.d)) + "</b></td>") + "<td><code>" + esc(x.c) + "</code></td><td>" + esc(libBanque(L.d, x.c)) + "</td><td>" + ROLES_BQ[x.P.role] + (x.P.propose ? ' <span class="mut">(proposé)</span>' : "") + "</td>" +
         '<td class="num ' + (x.s < 0 ? "neg" : "") + '"' + sp("solde") + "><b>" + eurC(x.s) + '</b></td><td class="num">' + (x.var_ === null ? "–" : eurC(x.var_)) + '</td><td class="num"' + sp("vir", [A]) + ">" + eurC(x.vir[0]) + " / " + eurC(x.vir[1]) + "</td>" +
-        '<td class="num"' + (x.n1 === null ? ' title="Historique non importé"' : sp("solde", [], A1)) + ">" + (x.n1 === null ? "n.d." : eurC(x.n1)) + '</td><td class="num">' + (x.P.solde_min === null ? '<span class="mut">–</span>' : eurC(x.P.solde_min)) + '</td><td class="num">' + (x.manque ? '<b class="neg">' + eurC(x.manque) + "</b>" : "") + "</td>" +
+        '<td class="num"' + (x.n1 === null ? ' title="Historique non importé"' : sp("solde", [], A1)) + ">" + (x.n1 === null ? "n.d." : eurC(x.n1)) + '</td><td class="num">' + (x.P.solde_min === null ? '<span class="mut">–</span>' : eurC(x.P.solde_min)) + '</td><td class="num">' + (x.P.solde_max === null ? '<span class="mut">–</span>' : eurC(x.P.solde_max)) + '</td><td class="num">' + (x.manque ? '<b class="neg">' + eurC(x.manque) + "</b>" : "") + "</td>" +
         "<td>" + (estAdmin() ? '<button class="btn-petit" data-bq="' + esc(L.d + "|" + x.c) + '">Paramétrer</button>' : "") + "</td></tr>";
       csv.push([nomResidence(L.d), x.c, libBanque(L.d, x.c), x.P.role, (x.s / 100).toFixed(2), x.var_ === null ? "" : (x.var_ / 100).toFixed(2), x.n1 === null ? "" : (x.n1 / 100).toFixed(2), x.P.solde_min === null ? "" : (x.P.solde_min / 100).toFixed(2), (x.manque / 100).toFixed(2)].map(function (v) { return String(v).replace(".", ","); }).join(";"));
     });
-    h += '<tr class="bq-total"><td colspan="4">Total ' + esc(nomResidence(L.d)) + (vir ? ' <span class="pastille att">Virement conseillé : ' + eurC(vir) + " du principal vers le(s) secondaire(s)</span>" : L.besoin ? ' <span class="pastille ko">Besoin ' + eurC(L.besoin) + " sans excédent sur le principal</span>" : "") + '</td><td class="num"' + xa({ t: "tr", k: "solde", d: [L.d], m: [], A: A }) + "><b>" + eurC(L.solde) + '</b></td><td></td><td></td><td class="num">' + (L.n1ok ? eurC(L.n1) : "n.d.") + '</td><td></td><td class="num">' + (L.besoin ? eurC(L.besoin) : "") + "</td><td></td></tr>";
+    h += '<tr class="bq-total"><td colspan="4">Total ' + esc(nomResidence(L.d)) + (vir ? ' <span class="pastille att">Virement conseillé : ' + eurC(vir) + " du principal vers le(s) secondaire(s)</span>" : L.besoin ? ' <span class="pastille ko">Besoin ' + eurC(L.besoin) + " sans excédent sur le principal</span>" : "") + '</td><td class="num"' + xa({ t: "tr", k: "solde", d: [L.d], m: [], A: A }) + "><b>" + eurC(L.solde) + '</b></td><td></td><td></td><td class="num">' + (L.n1ok ? eurC(L.n1) : "n.d.") + '</td><td></td><td></td><td class="num">' + (L.besoin ? eurC(L.besoin) : "") + "</td><td></td></tr>";
   });
-  if (p.dossiers.length > 1) h += '<tr class="bq-total bq-grand"><td colspan="4">Total ' + esc(p.libelle) + '</td><td class="num"' + xa({ t: "tr", k: "solde", d: p.dossiers, m: [], A: A }) + "><b>" + eurC(tot.solde) + '</b></td><td></td><td></td><td class="num">' + (tot.n1ok ? eurC(tot.n1) : "n.d.") + '</td><td></td><td class="num">' + eurC(tot.besoin) + "</td><td></td></tr>";
+  if (p.dossiers.length > 1) h += '<tr class="bq-total bq-grand"><td colspan="4">Total ' + esc(p.libelle) + '</td><td class="num"' + xa({ t: "tr", k: "solde", d: p.dossiers, m: [], A: A }) + "><b>" + eurC(tot.solde) + '</b></td><td></td><td></td><td class="num">' + (tot.n1ok ? eurC(tot.n1) : "n.d.") + '</td><td></td><td></td><td class="num">' + eurC(tot.besoin) + "</td><td></td></tr>";
   h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Soldes comptables (débit − crédit), à-nouveaux compris, arrêtés au dernier jour du mois choisi avec la réglette (plafonné au dernier mois importé). Ce sont les soldes de la comptabilité, pas les soldes en banque : un écart vient des opérations non encore comptabilisées. Virement conseillé = le plus petit entre le besoin des comptes sous leur minimum et l’excédent du compte principal au-dessus du sien.</p></div>';
   if (etat.bqEdition) {
     var k = etat.bqEdition.split("|"), P = paramBanque(k[0], k[1]);
     h += '<div class="modale" id="modale-bq"><div class="modale-boite" style="width:min(560px,96vw)"><div class="modale-tete"><div><h2>Compte ' + esc(k[1]) + "</h2><p>" + esc(nomResidence(k[0])) + '</p></div></div><div class="aj-grille">' +
       '<label class="champ-aj large"><span>Libellé</span><input id="bq-lib" maxlength="80" value="' + esc(P.libelle) + '" placeholder="Banque principale"></label>' +
       '<label class="champ-aj"><span>Rôle</span><select id="bq-role">' + Object.keys(ROLES_BQ).map(function (r) { return '<option value="' + r + '"' + (r === P.role ? " selected" : "") + ">" + ROLES_BQ[r] + "</option>"; }).join("") + "</select></label>" +
-      '<label class="champ-aj"><span>Solde minimum (€)</span><input id="bq-min" type="number" min="0" step="100" value="' + (P.solde_min === null ? "" : P.solde_min / 100) + '" placeholder="vide = 0 (pas de découvert)"></label></div>' +
+      '<label class="champ-aj"><span>Solde minimum (€)</span><input id="bq-min" type="number" min="0" step="100" value="' + (P.solde_min === null ? "" : P.solde_min / 100) + '" placeholder="vide = 0 (pas de découvert)"></label>' +
+      (enLigne() && !D.lot24 ? "" : '<label class="champ-aj"><span>Plafond (€)</span><input id="bq-max" type="number" min="0" step="100" value="' + (P.solde_max === null ? "" : P.solde_max / 100) + '" placeholder="vide = aucun"></label>') + "</div>" +
       '<div class="erreur-form" id="bq-err"></div><div class="modale-pied" style="gap:8px"><button class="btn btn-ligne" id="bq-annuler">Annuler</button><button class="btn btn-principal" id="bq-ok">Enregistrer</button></div></div></div>';
   }
   el("contenu").innerHTML = h;
@@ -3268,10 +3283,11 @@ PAGES.tr_banques = function (p) {
   if (etat.bqEdition) {
     el("bq-annuler").addEventListener("click", function () { etat.bqEdition = null; majContenu(); });
     el("bq-ok").addEventListener("click", function () {
-      var mn = el("bq-min").value.trim(), k2 = etat.bqEdition.split("|");
+      var mn = el("bq-min").value.trim(), mx = el("bq-max") ? el("bq-max").value.trim() : "", k2 = etat.bqEdition.split("|");
       if (mn !== "" && (!isFinite(+mn) || +mn < 0)) { el("bq-err").textContent = "Solde minimum : un nombre positif ou nul, ou vide."; return; }
+      if (mx !== "" && (!isFinite(+mx) || +mx < 0 || (mn !== "" && +mx < +mn))) { el("bq-err").textContent = "Plafond : un nombre positif, au moins égal au minimum, ou vide."; return; }
       etat.bqEdition = null;
-      bqpEnregistrer(k2[0], k2[1], { libelle: el("bq-lib").value.trim(), role: el("bq-role").value, solde_min: mn === "" ? null : Math.round(+mn * 100) });
+      bqpEnregistrer(k2[0], k2[1], { libelle: el("bq-lib").value.trim(), role: el("bq-role").value, solde_min: mn === "" ? null : Math.round(+mn * 100), solde_max: mx === "" ? null : Math.round(+mx * 100) });
     });
   }
 };
@@ -3997,6 +4013,641 @@ function refusDepot(motif) {
 /* Lot 21 : « Voir plus » commun aux historiques (5 dernières lignes, puis tout). */
 function voirPlus(cle, n) { return n > 5 ? '<div class="aj-actions" style="margin-top:8px"><button class="btn-petit" data-voir-plus="' + cle + '">' + (etat[cle] ? "Réduire" : "Voir plus (" + n + ")") + "</button></div>" : ""; }
 
+/* ======================================================================================
+   Lot 24 (décision 0018) : comptabilité du siège et trésorerie prévisionnelle.
+   - Chiffre d'affaires par résidence et par mois, lu dans les écritures (Pennylane) selon la règle de CA
+     de chaque résidence (par défaut tous les comptes 7) : plus de saisie à la main.
+   - Paramétrage des FEES : rubriques (base CA ou répartition d'une rubrique), versions datées des taux et
+     montants bruts (groupe ou résidence), journal. Une nouvelle version ne touche que les mois à partir de son
+     effet, et un mois clôturé garde son instantané : l'historique n'est jamais réécrit.
+   - FEES à refacturer : tableau du mois, clôture et réouverture, écart signalé si le CA change après clôture.
+   - Trésorerie : soldes actualisés, encaissements et décaissements prévus (pièces ouvertes + prévisions
+     saisies), solde projeté et point bas, virements de compte à compte proposés dans chaque résidence.
+   Calculs : mêmes règles que zenitude/comptabilite/fees.py (comparés par tests/test_lot24_page.py).
+   ====================================================================================== */
+var CP = { rubriques: [], regles: [], ca_regles: [], clotures: [], journal: [] };
+var TP = { previsions: [], virements: [] };
+var CP_TOUS = "*", CP_LOCAL = "zen-compta", TP_LOCAL = "zen-treso-prev";
+var MODES_FEE = { taux: "Taux (%)", montant: "Montant brut mensuel (€)", groupe: "Revenir à la règle du groupe" };
+function cpMigration() { return !enLigne() || !!D.lot24; }
+function cpNormRegle(r) { return { id: r.id, rubrique: r.rubrique, dossier: r.dossier, mois_effet: r.mois_effet, mode: r.mode, valeur: r.valeur === null || r.valeur === undefined ? null : String(r.valeur), modifie_par: r.modifie_par, modifie_le: r.modifie_le }; }
+function cpCharger() {
+  if (enLigne()) {
+    CP.rubriques = (D.fees_rubriques || []).slice(); CP.regles = (D.fees_regles || []).map(cpNormRegle); CP.ca_regles = (D.ca_regles || []).slice();
+    CP.clotures = (D.fees_clotures || []).slice(); CP.journal = (D.compta_journal || []).slice();
+    TP.previsions = (D.tresorerie_previsions || []).slice(); TP.virements = (D.virements_suivis || []).slice();
+    return;
+  }
+  var x = null, y = null;
+  try { x = JSON.parse(localStorage.getItem(CP_LOCAL)); y = JSON.parse(localStorage.getItem(TP_LOCAL)); } catch (e) {}
+  var dep = D.fees_depart || { rubriques: [], regles: [] };
+  CP = x || { rubriques: dep.rubriques.map(function (r) { return Object.assign({ actif: true }, r); }), regles: dep.regles.map(cpNormRegle), ca_regles: [], clotures: [], journal: [] };
+  TP = y || { previsions: [], virements: [] };
+}
+function cpSauverLocal() { try { localStorage.setItem(CP_LOCAL, JSON.stringify(CP)); localStorage.setItem(TP_LOCAL, JSON.stringify(TP)); } catch (e) {} }
+function cpJournalLocal(objet, cle, action, avant, apres) { CP.journal.unshift({ id: Date.now() + Math.random(), objet: objet, cle: cle, action: action, avant: avant || null, apres: apres || null, par: etat.utilisateur ? etat.utilisateur.mail : "", le: new Date().toISOString() }); }
+function cpRecharger() {
+  if (!enLigne()) { cpSauverLocal(); return Promise.resolve(); }
+  return Promise.all([
+    lireOuNull(ZCLIENT.from("fees_rubriques").select("*").order("ordre")), lireOuNull(ZCLIENT.from("fees_regles").select("*").order("id")),
+    lireOuNull(ZCLIENT.from("ca_regles").select("*")), lireTout(function () { return ZCLIENT.from("fees_clotures").select("*").order("mois"); }, true),
+    lireFacultatif(ZCLIENT.from("compta_journal").select("*").order("id", { ascending: false }).limit(500)),
+    lireOuNull(ZCLIENT.from("tresorerie_previsions").select("*").order("id")), lireOuNull(ZCLIENT.from("virements_suivis").select("*").order("id")),
+    lireBase(ZCLIENT.from("comptes_bancaires").select("*"))
+  ]).then(function (r) {
+    D.fees_rubriques = r[0] || []; D.fees_regles = r[1] || []; D.ca_regles = r[2] || []; D.fees_clotures = r[3] || []; D.compta_journal = r[4] || [];
+    D.tresorerie_previsions = r[5] || []; D.virements_suivis = r[6] || []; D.comptes_bancaires = r[7] || [];
+    cpCharger(); bqpCharger();
+  });
+}
+/* Écriture : en ligne dans la base (elle seule juge des droits), puis relecture ; en local dans le navigateur. */
+function cpAgir(enBase, enLocal) {
+  var p = enLigne() ? Promise.resolve().then(enBase) : Promise.resolve().then(enLocal);
+  return p.then(cpRecharger).then(function () { majContenu(); }).catch(function (e) { alert(messageErreur(e)); return cpRecharger().catch(function () {}).then(function () { majContenu(); }); });
+}
+
+/* ---------- Règles de calcul (mêmes règles que zenitude/comptabilite/fees.py) ---------- */
+function cpRubrique(code) { return CP.rubriques.find(function (r) { return r.code === code; }); }
+function cpActives() { return CP.rubriques.filter(function (r) { return r.actif !== false; }).sort(function (a, b) { return a.ordre - b.ordre || (a.code < b.code ? -1 : 1); }); }
+function cpBaseCA() { return cpActives().filter(function (r) { return r.base === "CA"; }); }
+function cpRepartitions(parent) { return cpActives().filter(function (r) { return r.base === "RUBRIQUE" && (!parent || r.base_rubrique === parent); }); }
+function regleCa(d) {
+  var propre = CP.ca_regles.find(function (r) { return r.dossier === d; }), groupe = CP.ca_regles.find(function (r) { return r.dossier === CP_TOUS; }), r = propre || groupe || { inclus: ["7"], exclus: [] };
+  return { inclus: (r.inclus || []).slice(), exclus: (r.exclus || []).slice(), source: propre ? "résidence" : groupe ? "groupe" : "défaut" };
+}
+function compteRetenu(c, rc) { return rc.inclus.some(function (p) { return c.indexOf(p) === 0; }) && !rc.exclus.some(function (p) { return c.indexOf(p) === 0; }); }
+function texteRegleCa(rc) { return "comptes " + rc.inclus.join(", ") + (rc.exclus.length ? " sauf " + rc.exclus.join(", ") : ""); }
+function caMois(d, m) {
+  var X = (COMPTA[d] || {})[m]; if (!X) return null;
+  var rc = regleCa(d), t = 0; Object.keys(X).forEach(function (c) { if (compteRetenu(c, rc)) t += X[c]; }); return t;
+}
+function regleApplicable(rub, d, m) {
+  var derniere = function (dd) { var x = null; CP.regles.forEach(function (r) { if (r.rubrique === rub && r.dossier === dd && r.mois_effet <= m && (!x || r.mois_effet > x.mois_effet)) x = r; }); return x; };
+  var propre = derniere(d); if (propre && propre.mode !== "groupe") return propre;
+  return derniere(CP_TOUS);
+}
+function appliquerTaux(base, taux) {
+  var t = BigInt(Math.round(parseFloat(taux) * 10000)), p = BigInt(base) * t, U = BigInt(1000000), q = p / U, r = p % U;
+  if (r * BigInt(2) >= U) q += BigInt(1); else if (r * BigInt(2) <= -U) q -= BigInt(1);
+  return Number(q);
+}
+function centimes(v) { return Math.round(parseFloat(v) * 100); }
+function calculerFees(d, m, ca) {
+  if (ca === undefined) ca = caMois(d, m);
+  var memo = {}, total = 0, lignes = [];
+  var montant = function (rub) {
+    if (memo[rub.code]) return memo[rub.code];
+    var r = regleApplicable(rub.code, d, m), res;
+    if (!r) res = { montant: null, motif: "non paramétré", regle: null };
+    else if (r.mode === "montant") res = { montant: centimes(r.valeur), motif: null, regle: r };
+    else {
+      var base = null, motif;
+      if (rub.base === "CA") { base = ca; motif = "CA non calculable (aucune écriture ce mois)"; }
+      else { var par = cpRubrique(rub.base_rubrique); base = par && par.actif !== false ? montant(par).montant : null; motif = "base non calculable"; }
+      res = { montant: base === null ? null : appliquerTaux(base, r.valeur), motif: base === null ? motif : null, regle: r };
+    }
+    memo[rub.code] = res; return res;
+  };
+  cpActives().forEach(function (rub) {
+    var x = montant(rub), r = x.regle;
+    lignes.push({ code: rub.code, libelle: rub.libelle, base: rub.base, base_rubrique: rub.base_rubrique || null, mode: r ? r.mode : null, valeur: r && r.valeur !== null ? String(r.valeur) : null,
+      effet: r ? r.mois_effet : null, dossier_regle: r ? r.dossier : null, montant: x.montant, motif: x.motif });
+    if (rub.base === "CA" && x.montant !== null) total += x.montant;
+  });
+  return { ca: ca, lignes: lignes, total: total };
+}
+function instantaneFees(d, m) { var rc = regleCa(d), R = calculerFees(d, m); R.regle_ca = { inclus: rc.inclus, exclus: rc.exclus }; return R; }
+function cloture(d, m) { return CP.clotures.find(function (c) { return c.dossier === d && c.mois === m; }) || null; }
+/* Montants d'un mois : instantané figé si le mois est clôturé, sinon calcul du jour. */
+function feesDe(d, m) { var c = cloture(d, m); return c ? Object.assign({ cloture: c }, c.contenu) : calculerFees(d, m); }
+function ligneFee(R, code) { return R.lignes.find(function (l) { return l.code === code; }) || null; }
+function texteRegle(l) {
+  if (!l || !l.mode) return "non paramétré";
+  return (l.mode === "montant" ? eurCt(centimes(l.valeur)) + " par mois" : String(l.valeur).replace(".", ",") + " %") + (l.dossier_regle === CP_TOUS ? ", règle du groupe" : ", règle de la résidence") + " depuis " + moisLong(l.effet);
+}
+function valRegle(r) { return !r ? "–" : r.mode === "groupe" ? "groupe" : r.mode === "montant" ? eurCt(centimes(r.valeur)) : String(r.valeur).replace(".", ",") + " %"; }
+function moisCompta() { return fenetre(); }
+function blocMigration24() { return blocNC("Migration 015 non appliquée sur la base : collez migrations/015_comptabilite_et_tresorerie_previsionnelle.sql dans Supabase (SQL Editor), puis rechargez la page."); }
+
+/* ---------- Détail des calculs ---------- */
+EXPLIQUER.ca = function (s) {
+  var rows = [], tot = 0, moteur = 0, nc = true, cpt = {};
+  s.d.forEach(function (d) { var rc = regleCa(d);
+    s.m.forEach(function (m) { var v = caMois(d, m); if (v !== null) { moteur += v; nc = false; }
+      Object.keys((ECR[d] || {})[m] || {}).forEach(function (c) { if (!compteRetenu(c, rc)) return;
+        ECR[d][m][c].forEach(function (r) { rows.push([d].concat(r)); tot += r[6]; cpt[c] = (cpt[c] || 0) + r[6]; }); }); }); });
+  var regles = {}; s.d.forEach(function (d) { regles[texteRegleCa(regleCa(d))] = 1; });
+  var R = { titre: "Chiffre d’affaires", sous: libPerim(s.d) + ", " + libMois(s.m), valeur: nc ? "non calculable" : eurCt(moteur),
+    formule: "Somme en crédit − débit des " + Object.keys(regles).join(" ; ") + " (règle de CA de la résidence, sinon du groupe, sinon tous les comptes 7)",
+    partsTitre: "Comptes", parts: Object.keys(cpt).sort().map(function (c) { return { lib: c + " " + libelleCompte(c), val: eurCt(cpt[c]), spec: { t: "cpt", c: c, d: s.d, m: s.m, a: false } }; }), ecritures: rows };
+  if (nc) R.notes = ["Aucune écriture de classe 6 ou 7 ce mois : non calculable, jamais zéro."];
+  else R.controle = tot === moteur ? { ok: true, texte: "Les écritures redonnent exactement le CA calculé." } : { ok: false, texte: "Écart de " + eurCt(tot - moteur) + " avec le CA calculé." };
+  return R;
+};
+EXPLIQUER.fee = function (s) {
+  var m = s.m[0], rub = s.r === "_total" ? null : cpRubrique(s.r), lib = rub ? rub.libelle : "Total refacturé";
+  if (s.d.length > 1) {
+    var tot = 0, parts = [], vu = false;
+    s.d.forEach(function (d) { var R = feesDe(d, m), v = rub ? (ligneFee(R, s.r) || {}).montant : R.total; if (v !== null && v !== undefined) { tot += v; vu = true; }
+      parts.push({ lib: nomResidence(d), val: valCt(v === undefined ? null : v), spec: { t: "fee", d: [d], m: s.m, r: s.r } }); });
+    return { titre: lib, sous: libPerim(s.d) + ", " + moisLong(m), valeur: vu || !rub ? eurCt(tot) : "–", formule: "Somme des résidences (résidences non paramétrées ou non calculables exclues)", partsTitre: "Résidences", parts: parts };
+  }
+  var d = s.d[0], R = feesDe(d, m), notes = [];
+  if (R.cloture) { notes.push("Mois clôturé le " + dateHeureCourte(R.cloture.clos_le) + (R.cloture.clos_par ? " par " + R.cloture.clos_par : "") + " : montants figés."); var cj = caMois(d, m); if (cj !== R.ca) notes.push("CA du jour : " + valCt(cj) + " (écart " + (cj === null || R.ca === null ? "n.c." : eurCt(cj - R.ca)) + " depuis la clôture)."); }
+  if (!rub) return { titre: lib, sous: nomResidence(d) + ", " + moisLong(m), valeur: eurCt(R.total), formule: "Somme des rubriques calculées sur le CA (les répartitions détaillent une rubrique et ne s’y ajoutent pas)", partsTitre: "Rubriques",
+    parts: R.lignes.filter(function (l) { return l.base === "CA"; }).map(function (l) { return { lib: l.libelle + " (" + texteRegle(l) + ")", val: valCt(l.montant), spec: { t: "fee", d: [d], m: s.m, r: l.code } }; }), notes: notes };
+  var l = ligneFee(R, s.r);
+  if (!l) return { titre: lib, sous: nomResidence(d) + ", " + moisLong(m), valeur: "–", parts: [], notes: notes.concat(["Rubrique absente de ce mois (créée ou activée après la clôture, ou désactivée)."]) };
+  var parts = [], formule;
+  if (!l.mode) formule = "Aucune règle en vigueur (ni pour la résidence, ni pour le groupe) : non paramétré, pas zéro.";
+  else if (l.mode === "montant") formule = "Montant brut mensuel (" + texteRegle(l) + ")";
+  else {
+    var base = l.base === "CA" ? { lib: "CA du mois", v: R.ca, spec: { t: "ca", d: [d], m: s.m } } : (function () { var p = ligneFee(R, l.base_rubrique); return { lib: p ? p.libelle : l.base_rubrique, v: p ? p.montant : null, spec: { t: "fee", d: [d], m: s.m, r: l.base_rubrique } }; })();
+    formule = base.lib + " × " + String(l.valeur).replace(".", ",") + " %, arrondi au centime (" + texteRegle(l) + ")";
+    parts.push({ lib: base.lib, val: valCt(base.v), spec: base.spec }); parts.push({ lib: "Taux", val: String(l.valeur).replace(".", ",") + " %" });
+  }
+  if (l.motif && l.mode) notes.push("Non calculable : " + l.motif + ".");
+  return { titre: lib, sous: nomResidence(d) + ", " + moisLong(m), valeur: l.montant === null ? (l.mode ? "non calculable" : "–") : eurCt(l.montant), formule: formule, partsTitre: "Éléments", parts: parts, notes: notes };
+};
+/* Montants refacturés : au centime (eurC arrondit à l'euro). */
+function eurCt(c) { if (c === null || c === undefined) return "–"; return (c / 100).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\u202f|\u00a0/g, " ") + " €"; }
+function valCt(v) { return v === null || v === undefined ? "–" : eurCt(v); }
+function dateHeureCourte(iso) { if (!iso) return ""; try { return new Date(iso).toLocaleString("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return String(iso).slice(0, 16); } }
+
+/* ---------- Comptabilité : chiffre d'affaires ---------- */
+PAGES.cp_ca = function (p) {
+  var ms = moisCompta(), ds = p.dossiers;
+  var h = enTete("Chiffre d’affaires", p, "CA comptable par résidence et par mois, " + libMois(ms));
+  if (!cpMigration()) { el("contenu").innerHTML = h + blocMigration24(); return; }
+  if (!ms.length) { el("contenu").innerHTML = h + blocNC("Aucun mois sur la période choisie."); return; }
+  var totM = ms.map(function () { return null; }), totG = null, lignes = [];
+  ds.forEach(function (d) { var v = ms.map(function (m) { return caMois(d, m); }), t = null;
+    v.forEach(function (x, i) { if (x === null) return; t = (t || 0) + x; totM[i] = (totM[i] || 0) + x; }); if (t !== null) totG = (totG || 0) + t; lignes.push({ d: d, v: v, t: t }); });
+  var nc = lignes.reduce(function (n, l) { return n + l.v.filter(function (x) { return x === null; }).length; }, 0);
+  var der = ms.filter(function (m) { return !estProj(m); }), iDer = der.length ? ms.indexOf(der[der.length - 1]) : -1;
+  h += '<div class="ruban">' + [carte("CA de la période", valCt(totG), libMois(ms), totG === null, { t: "ca", d: ds, m: ms }),
+    iDer >= 0 ? carte("CA de " + moisLong(ms[iDer]), valCt(totM[iDer]), "Dernier mois importé de la période", totM[iDer] === null, { t: "ca", d: ds, m: [ms[iDer]] }) : "",
+    carte("Résidences", String(ds.length), lignes.filter(function (l) { return regleCa(l.d).source === "résidence"; }).length + " avec une règle de CA propre"),
+    carte("Mois non calculables", String(nc), "Résidence-mois sans écriture : jamais comptés comme zéro")].join("") + "</div>";
+  h += '<div class="graphes" style="grid-template-columns:minmax(0,1fr)">' + barres("CA mensuel du périmètre", ms.map(moisCourt), [{ nom: "CA", couleur: BLEU, valeurs: totM.map(function (v) { return v === null ? null : v / 100; }) }],
+    { specs: function (i) { return { t: "ca", d: ds, m: [ms[i]] }; }, hors: ms.map(estProj) }) + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par résidence</h2><span class="legende">Mois estompés : écritures postérieures au dernier mois importé (projection)</span></div><div class="defile"><table class="tab cp-tab"><thead><tr><th>Résidence</th><th>Comptes retenus</th>' +
+    ms.map(function (m) { return '<th class="num' + (estProj(m) ? " mut" : "") + '">' + esc(moisCourt(m)) + "</th>"; }).join("") + '<th class="num">Total</th></tr></thead><tbody>';
+  lignes.forEach(function (l) { var rc = regleCa(l.d);
+    h += "<tr><td><b>" + esc(nomResidence(l.d)) + "</b></td><td>" + esc(rc.inclus.join(", ") + (rc.exclus.length ? " sauf " + rc.exclus.join(", ") : "")) + (rc.source === "résidence" ? ' <span class="pastille att">propre</span>' : "") + "</td>" +
+      l.v.map(function (x, i) { return '<td class="num"' + (x === null ? ' title="Aucune écriture ce mois"' : xa({ t: "ca", d: [l.d], m: [ms[i]] })) + ">" + (x === null ? '<span class="nc-cell">n.c.</span>' : eurCt(x)) + "</td>"; }).join("") +
+      '<td class="num"' + (l.t === null ? "" : xa({ t: "ca", d: [l.d], m: ms })) + "><b>" + valCt(l.t) + "</b></td></tr>"; });
+  if (ds.length > 1) h += '<tr class="bq-total bq-grand"><td colspan="2">Total ' + esc(p.libelle) + "</td>" + totM.map(function (x, i) { return '<td class="num"' + (x === null ? "" : xa({ t: "ca", d: ds, m: [ms[i]] })) + "><b>" + valCt(x) + "</b></td>"; }).join("") +
+    '<td class="num"' + (totG === null ? "" : xa({ t: "ca", d: ds, m: ms })) + "><b>" + valCt(totG) + "</b></td></tr>";
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">CA = somme en crédit − débit des comptes retenus (par défaut tous les comptes 7 ; règle modifiable par résidence dans Paramétrage des FEES), lue dans les écritures importées de Pennylane. Cliquez un montant pour ses écritures.</p></div>';
+  el("contenu").innerHTML = h;
+};
+
+/* ---------- Comptabilité : paramétrage des FEES ---------- */
+function cpMoisRef() { var ms = moisCompta(), dm = D.meta.dernier_mois_importe, x = ms.filter(function (m) { return m <= dm; }); return etat.cpMois && MOIS.indexOf(etat.cpMois) >= 0 ? etat.cpMois : (x.length ? x[x.length - 1] : ms.length ? ms[ms.length - 1] : dm); }
+function selectMois(id, val) {
+  var dm = D.meta.dernier_mois_importe, ms = MOIS.filter(function (m) { return m <= dm || Object.keys(COMPTA).some(function (d) { return COMPTA[d][m]; }); });
+  if (ms.indexOf(val) < 0) ms.push(val); ms.sort();
+  return '<select id="' + id + '">' + ms.map(function (m) { return '<option value="' + m + '"' + (m === val ? " selected" : "") + ">" + esc(moisLong(m)) + "</option>"; }).join("") + "</select>";
+}
+PAGES.cp_parametrage = function (p) {
+  var M = cpMoisRef(), adm = estAdmin(), ds = p.dossiers;
+  var h = enTete("Paramétrage des FEES", p, "Règles en vigueur en " + moisLong(M), '<label for="cp-mois">Règles en vigueur en ' + selectMois("cp-mois", M) + "</label>");
+  if (!cpMigration()) { el("contenu").innerHTML = h + blocMigration24(); return; }
+  if (!adm) h += '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div>Lecture seule : seuls les administrateurs modifient le paramétrage.</div></div>';
+  /* Règle de CA */
+  var rg = regleCa(CP_TOUS);
+  h += '<div class="bloc" id="cp-bloc-ca"><div class="bloc-tete"><h2>Comptes retenus pour le CA</h2>' + (adm ? '<button class="btn-petit" data-ca="' + CP_TOUS + '">Modifier la règle du groupe</button>' : "") + "</div>" +
+    "<p>Règle du groupe : <b>" + esc(texteRegleCa(rg)) + "</b>" + (rg.source === "défaut" ? ' <span class="mut">(par défaut)</span>' : "") + ". Une résidence peut avoir sa propre règle.</p>";
+  var propres = ds.filter(function (d) { return CP.ca_regles.some(function (r) { return r.dossier === d; }); }), autres = ds.filter(function (d) { return propres.indexOf(d) < 0; });
+  h += propres.length ? '<div class="defile"><table class="tab"><thead><tr><th>Résidence avec une règle propre</th><th>Comptes retenus</th><th></th></tr></thead><tbody>' + propres.map(function (d) {
+    return "<tr><td>" + esc(nomResidence(d)) + "</td><td>" + esc(texteRegleCa(regleCa(d))) + "</td><td>" + (adm ? '<button class="btn-petit" data-ca="' + esc(d) + '">Modifier</button>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div>"
+    : '<p class="legende" style="margin:0">Aucune résidence du périmètre n’a de règle propre : toutes suivent la règle du groupe.</p>';
+  if (adm && autres.length) h += '<div class="lis-barre" style="margin:12px 0 0"><label for="cp-ca-res">Donner une règle propre à <select id="cp-ca-res">' + autres.map(function (d) { return '<option value="' + esc(d) + '">' + esc(nomResidence(d)) + "</option>"; }).join("") + '</select></label><button class="btn-petit" id="cp-ca-go">Définir</button></div>';
+  h += "</div>";
+  /* Rubriques */
+  var acts = cpActives();
+  h += '<div class="bloc" id="cp-bloc-rub"><div class="bloc-tete"><h2>Rubriques de refacturation</h2>' + (adm ? '<button class="btn btn-ligne" id="cp-rub-ajout">Ajouter une rubrique</button>' : "") + '</div><div class="defile"><table class="tab"><thead><tr><th>Ordre</th><th>Rubrique</th><th>Code</th><th>Calcul</th><th>État</th><th></th></tr></thead><tbody>' +
+    CP.rubriques.slice().sort(function (a, b) { return a.ordre - b.ordre; }).map(function (r) { var par = r.base_rubrique ? cpRubrique(r.base_rubrique) : null;
+      return "<tr><td>" + r.ordre + "</td><td><b>" + esc(r.libelle) + "</b></td><td><code>" + esc(r.code) + "</code></td><td>" + (r.base === "CA" ? "Sur le CA, comptée dans le total refacturé" : "Répartition de " + esc(par ? par.libelle : r.base_rubrique)) + "</td><td>" +
+        (r.actif === false ? '<span class="pastille ko">Désactivée</span>' : '<span class="pastille ok">Active</span>') + "</td><td>" + (adm ? '<button class="btn-petit" data-rub="' + esc(r.code) + '">Modifier</button>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+  cpBaseCA().forEach(function (par) { var enf = cpRepartitions(par.code); if (!enf.length) return;
+    var parts = enf.map(function (e) { var r = regleApplicable(e.code, CP_TOUS, M); return r && r.mode === "taux" ? parseFloat(r.valeur) : null; });
+    var somme = parts.every(function (x) { return x !== null; }) ? Math.round(parts.reduce(function (a, b) { return a + b; }, 0) * 10000) / 10000 : null;
+    h += '<p class="legende" style="margin:8px 0 0">Répartition de ' + esc(par.libelle) + " (règles du groupe en " + esc(moisLong(M)) + ") : " + (somme === null ? '<span class="pastille att">en partie en montants ou non paramétrée</span>' : somme === 100 ? '<span class="pastille ok">100 %</span>' : '<span class="pastille ko">' + String(somme).replace(".", ",") + " % au lieu de 100 %</span>") + "</p>"; });
+  h += "</div>";
+  /* Taux et montants */
+  h += '<div class="bloc" id="cp-bloc-taux"><div class="bloc-tete"><h2>Taux et montants en vigueur</h2><span class="legende">' + (adm ? "Cliquez une case pour ajouter une version datée (taux ou montant brut) : les mois antérieurs ne changent pas." : "Versions datées des règles.") + '</span></div><div class="defile"><table class="tab cp-tab"><thead><tr><th>Portée</th>' +
+    acts.map(function (r) { return '<th class="num">' + esc(r.libelle) + (r.base === "RUBRIQUE" ? '<br><small class="mut">% ' + esc((cpRubrique(r.base_rubrique) || {}).libelle || "") + "</small>" : '<br><small class="mut">% CA</small>') + "</th>"; }).join("") + "</tr></thead><tbody>";
+  var cellule = function (rub, d) {
+    var propre = null; CP.regles.forEach(function (r) { if (r.rubrique === rub.code && r.dossier === d && r.mois_effet <= M && (!propre || r.mois_effet > propre.mois_effet)) propre = r; });
+    var eff = regleApplicable(rub.code, d, M), txt = d === CP_TOUS ? valRegle(eff) : propre && propre.mode !== "groupe" ? "<b>" + valRegle(propre) + "</b>" : '<span class="mut">' + valRegle(eff) + "</span>";
+    return '<td class="num' + (adm ? " cp-cel" : "") + '"' + (adm ? ' data-cel="' + esc(rub.code + "|" + d) + '" tabindex="0" title="Ajouter une version"' : "") + ">" + txt + "</td>";
+  };
+  h += '<tr class="bq-total"><td>Groupe (par défaut)</td>' + acts.map(function (r) { return cellule(r, CP_TOUS); }).join("") + "</tr>";
+  ds.forEach(function (d) { h += "<tr><td>" + esc(nomResidence(d)) + "</td>" + acts.map(function (r) { return cellule(r, d); }).join("") + "</tr>"; });
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">En gras : règle propre à la résidence ; en gris : règle du groupe appliquée. – : aucune règle (non paramétré, jamais zéro).</p></div>';
+  /* Journal */
+  var J = CP.journal, nJ = etat.cpJournalTout ? J.length : Math.min(5, J.length);
+  h += '<div class="bloc" id="cp-journal"><div class="bloc-tete"><h2>Journal des modifications</h2></div>' + (J.length ? '<div class="defile"><table class="tab"><thead><tr><th>Date</th><th>Par</th><th>Objet</th><th>Action</th><th>Détail</th></tr></thead><tbody>' +
+    J.slice(0, nJ).map(function (j) { return "<tr><td>" + esc(dateHeureCourte(j.le)) + "</td><td>" + esc(j.par || "") + "</td><td>" + esc({ rubrique: "Rubrique", regle: "Règle", regle_ca: "Règle de CA", cloture: "Clôture" }[j.objet] || j.objet) + "</td><td>" + esc(j.action) + "</td><td>" + esc(texteJournal(j)) + "</td></tr>"; }).join("") +
+    "</tbody></table></div>" + (J.length > 5 ? '<div class="aj-actions" style="margin-top:8px"><button class="btn-petit" id="cp-journal-plus">' + (etat.cpJournalTout ? "Réduire" : "Voir plus (" + J.length + ")") + "</button></div>" : "") : (enLigne() && !estAdmin() ? '<p class="mut">Réservé aux administrateurs.</p>' : '<p class="mut">Aucune modification.</p>')) + "</div>";
+  h += modaleCompta();
+  el("contenu").innerHTML = h;
+  el("cp-mois").addEventListener("change", function () { etat.cpMois = this.value; majContenu(); });
+  var jp = el("cp-journal-plus"); if (jp) jp.addEventListener("click", function () { etat.cpJournalTout = !etat.cpJournalTout; majContenu(); });
+  el("contenu").querySelectorAll("[data-ca]").forEach(function (b) { b.addEventListener("click", function () { etat.cpModale = { type: "ca", dossier: b.dataset.ca }; majContenu(); }); });
+  var cg = el("cp-ca-go"); if (cg) cg.addEventListener("click", function () { etat.cpModale = { type: "ca", dossier: el("cp-ca-res").value }; majContenu(); });
+  el("contenu").querySelectorAll("[data-rub]").forEach(function (b) { b.addEventListener("click", function () { etat.cpModale = { type: "rub", code: b.dataset.rub }; majContenu(); }); });
+  var ra = el("cp-rub-ajout"); if (ra) ra.addEventListener("click", function () { etat.cpModale = { type: "rub", code: null }; majContenu(); });
+  el("contenu").querySelectorAll("[data-cel]").forEach(function (c) { var go = function () { var k = c.dataset.cel.split("|"); etat.cpModale = { type: "regle", rubrique: k[0], dossier: k[1] }; majContenu(); };
+    c.addEventListener("click", go); c.addEventListener("keydown", function (e) { if (e.key === "Enter") go(); }); });
+  brancherModaleCompta();
+};
+function texteJournal(j) {
+  var o = j.apres || j.avant || {};
+  if (j.objet === "regle") return o.rubrique + ", " + (o.dossier === CP_TOUS ? "groupe" : nomResidence(o.dossier)) + ", effet " + moisLong(o.mois_effet) + " : " + (o.mode === "groupe" ? "règle du groupe" : o.mode === "montant" ? eurCt(centimes(o.valeur)) : String(o.valeur).replace(".", ",") + " %") + (j.action === "modification" && j.avant ? " (avant : " + valRegle(cpNormRegle(j.avant)) + ")" : "");
+  if (j.objet === "regle_ca") return (o.dossier === CP_TOUS ? "Groupe" : nomResidence(o.dossier)) + " : " + (j.action === "suppression" ? "retour à la règle du groupe" : texteRegleCa({ inclus: o.inclus || [], exclus: o.exclus || [] }));
+  if (j.objet === "cloture") return nomResidence(o.dossier) + ", " + moisLong(o.mois) + (j.action === "suppression" ? " rouvert" : " clôturé");
+  return (o.libelle || o.code) + (o.actif === false ? " (désactivée)" : "");
+}
+function prefixesDe(txt) { return String(txt || "").split(/[\s,;]+/).filter(Boolean); }
+function modaleCompta() {
+  var x = etat.cpModale; if (!x) return "";
+  var tete = function (t, s) { return '<div class="modale" id="modale-cp"><div class="modale-boite" style="width:min(640px,96vw)"><div class="modale-tete"><div><h2>' + esc(t) + "</h2><p>" + esc(s || "") + '</p></div></div><div class="aj-grille">'; };
+  var pied = function (sup) { return '</div><div class="erreur-form" id="cp-err"></div><div class="modale-pied" style="gap:8px">' + (sup ? '<button class="btn btn-ligne" id="cp-sup" style="margin-right:auto">' + esc(sup) + "</button>" : "") + '<button class="btn btn-ligne" id="cp-annuler">Annuler</button><button class="btn btn-principal" id="cp-ok">Enregistrer</button></div></div></div>'; };
+  if (x.type === "ca") {
+    var propre = CP.ca_regles.find(function (r) { return r.dossier === x.dossier; }), rc = propre || (x.dossier === CP_TOUS ? { inclus: ["7"], exclus: [] } : regleCa(x.dossier));
+    return tete("Comptes retenus pour le CA", x.dossier === CP_TOUS ? "Règle du groupe (toutes les résidences sans règle propre)" : nomResidence(x.dossier)) +
+      '<label class="champ-aj large"><span>Préfixes de comptes inclus</span><input id="cp-inclus" value="' + esc(rc.inclus.join(", ")) + '" placeholder="7"></label>' +
+      '<label class="champ-aj large"><span>Préfixes exclus (facultatif)</span><input id="cp-exclus" value="' + esc(rc.exclus.join(", ")) + '" placeholder="ex. 791, 708"></label>' +
+      '<p class="legende" style="grid-column:1/-1">Un compte est retenu s’il commence par un préfixe inclus et par aucun préfixe exclu. Exemple : 7 sauf 79.</p>' +
+      pied(propre && x.dossier !== CP_TOUS ? "Revenir à la règle du groupe" : propre && x.dossier === CP_TOUS ? "Revenir à tous les comptes 7" : null);
+  }
+  if (x.type === "rub") {
+    var r = x.code ? cpRubrique(x.code) : { code: "", libelle: "", base: "CA", base_rubrique: null, ordre: (CP.rubriques.reduce(function (a, b) { return Math.max(a, b.ordre); }, 0) + 10), actif: true };
+    var parents = cpBaseCA().filter(function (y) { return y.code !== r.code; });
+    return tete(x.code ? "Rubrique " + r.libelle : "Nouvelle rubrique", "Une rubrique est une colonne du tableau des FEES") +
+      '<label class="champ-aj"><span>Libellé</span><input id="cp-rlib" maxlength="60" value="' + esc(r.libelle) + '"></label>' +
+      '<label class="champ-aj"><span>Code (stable)</span><input id="cp-rcode" maxlength="40" value="' + esc(r.code) + '"' + (x.code ? " disabled" : ' placeholder="ex. FORMATION"') + "></label>" +
+      '<label class="champ-aj"><span>Calcul</span><select id="cp-rbase"' + (x.code && CP.rubriques.some(function (y) { return y.base_rubrique === r.code; }) ? " disabled" : "") + '><option value="CA"' + (r.base === "CA" ? " selected" : "") + ">Sur le CA (compte dans le total)</option>" +
+      parents.map(function (y) { return '<option value="R:' + esc(y.code) + '"' + (r.base_rubrique === y.code ? " selected" : "") + ">Répartition de " + esc(y.libelle) + "</option>"; }).join("") + "</select></label>" +
+      '<label class="champ-aj"><span>Ordre d’affichage</span><input id="cp-rordre" type="number" step="1" value="' + r.ordre + '"></label>' +
+      '<label class="champ-aj"><span>État</span><select id="cp-ractif"><option value="1"' + (r.actif !== false ? " selected" : "") + '>Active</option><option value="0"' + (r.actif === false ? " selected" : "") + ">Désactivée (masquée des mois ouverts)</option></select></label>" + pied(null);
+  }
+  var rub = cpRubrique(x.rubrique), grp = x.dossier === CP_TOUS, hist = CP.regles.filter(function (r) { return r.rubrique === x.rubrique && r.dossier === x.dossier; }).sort(function (a, b) { return a.mois_effet < b.mois_effet ? 1 : -1; });
+  var M = cpMoisRef(), der = hist[0];
+  return tete("Nouvelle version : " + rub.libelle, grp ? "Règle du groupe" : nomResidence(x.dossier)) +
+    '<label class="champ-aj"><span>Mode</span><select id="cp-mode">' + Object.keys(MODES_FEE).filter(function (k) { return k !== "groupe" || !grp; }).map(function (k) { return '<option value="' + k + '"' + (der && der.mode === k ? " selected" : "") + ">" + MODES_FEE[k] + "</option>"; }).join("") + "</select></label>" +
+    '<label class="champ-aj"><span>Valeur</span><input id="cp-val" type="number" step="any" value="' + (der && der.valeur !== null ? esc(der.valeur) : "") + '" placeholder="ex. 8 ou 1200"></label>' +
+    '<label class="champ-aj"><span>À partir de</span><input id="cp-effet" type="month" value="' + M + '"></label>' +
+    '<p class="legende" style="grid-column:1/-1">' + (rub.base === "RUBRIQUE" ? "Taux en % de " + esc((cpRubrique(rub.base_rubrique) || {}).libelle || "") + ". " : "Taux en % du CA. ") + "La version s’applique à partir du mois choisi et jusqu’à la suivante. Les mois clôturés gardent leurs montants.</p>" +
+    '<div style="grid-column:1/-1"><h3 style="margin:6px 0">Versions</h3>' + (hist.length ? '<table class="tab"><thead><tr><th>Effet</th><th class="num">Valeur</th><th>Par</th><th></th></tr></thead><tbody>' +
+      hist.map(function (r) { return "<tr><td>" + esc(moisLong(r.mois_effet)) + '</td><td class="num">' + valRegle(r) + "</td><td>" + esc(r.modifie_par || "") + '</td><td><button class="btn-petit" data-supregle="' + esc(r.mois_effet) + '">Supprimer</button></td></tr>'; }).join("") + "</tbody></table>" : '<p class="mut">Aucune version' + (grp ? "" : " propre : la règle du groupe s’applique") + ".</p>") + "</div>" + pied(null);
+}
+function brancherModaleCompta() {
+  var x = etat.cpModale; if (!x || !el("cp-ok")) return;
+  var fermer = function () { etat.cpModale = null; }, err = function (t) { el("cp-err").textContent = t; };
+  el("cp-annuler").addEventListener("click", function () { fermer(); majContenu(); });
+  if (x.type === "ca") {
+    var sup = el("cp-sup");
+    if (sup) sup.addEventListener("click", function () { var d = x.dossier; fermer();
+      cpAgir(function () { return sb(ZCLIENT.from("ca_regles").delete().eq("dossier", d).select("dossier")).then(verifierTouche); },
+        function () { var av = CP.ca_regles.find(function (r) { return r.dossier === d; }); CP.ca_regles = CP.ca_regles.filter(function (r) { return r.dossier !== d; }); cpJournalLocal("regle_ca", d, "suppression", av, null); }); });
+    el("cp-ok").addEventListener("click", function () {
+      var inc = prefixesDe(el("cp-inclus").value), exc = prefixesDe(el("cp-exclus").value), ok = function (a) { return a.every(function (p) { return /^[0-9]{1,10}$/.test(p); }); };
+      if (!inc.length) return err("Indiquez au moins un préfixe inclus (ex. 7).");
+      if (!ok(inc) || !ok(exc)) return err("Préfixes : chiffres seulement (1 à 10), séparés par des virgules.");
+      var row = { dossier: x.dossier, inclus: inc, exclus: exc }; fermer();
+      cpAgir(function () { return sb(ZCLIENT.from("ca_regles").upsert(row, { onConflict: "dossier" }).select("dossier")).then(verifierTouche); },
+        function () { var av = CP.ca_regles.find(function (r) { return r.dossier === row.dossier; }); CP.ca_regles = CP.ca_regles.filter(function (r) { return r.dossier !== row.dossier; }).concat([row]); cpJournalLocal("regle_ca", row.dossier, av ? "modification" : "création", av, row); });
+    });
+    return;
+  }
+  if (x.type === "rub") {
+    el("cp-ok").addEventListener("click", function () {
+      var lib = el("cp-rlib").value.trim(), code = x.code || el("cp-rcode").value.trim().toUpperCase(), b = el("cp-rbase").value, ordre = parseInt(el("cp-rordre").value, 10), actif = el("cp-ractif").value === "1";
+      if (!lib) return err("Indiquez un libellé.");
+      if (!/^[A-Z0-9_]{2,40}$/.test(code)) return err("Code : 2 à 40 caractères, lettres majuscules, chiffres ou _ (ex. FORMATION).");
+      if (!x.code && cpRubrique(code)) return err("Ce code existe déjà.");
+      if (!isFinite(ordre)) return err("Ordre : un nombre entier.");
+      var row = { code: code, libelle: lib, base: b === "CA" ? "CA" : "RUBRIQUE", base_rubrique: b === "CA" ? null : b.slice(2), ordre: ordre, actif: actif };
+      if (x.code && el("cp-rbase").disabled) { row.base = cpRubrique(x.code).base; row.base_rubrique = cpRubrique(x.code).base_rubrique; }
+      fermer();
+      cpAgir(function () { return x.code ? sb(ZCLIENT.from("fees_rubriques").update({ libelle: row.libelle, base: row.base, base_rubrique: row.base_rubrique, ordre: row.ordre, actif: row.actif }).eq("code", x.code).select("code")).then(verifierTouche)
+          : sb(ZCLIENT.from("fees_rubriques").insert(row).select("code")).then(verifierTouche); },
+        function () { var av = cpRubrique(code); if (av) { var copie = JSON.parse(JSON.stringify(av)); Object.assign(av, row); cpJournalLocal("rubrique", code, "modification", copie, row); } else { CP.rubriques.push(row); cpJournalLocal("rubrique", code, "création", null, row); } });
+    });
+    return;
+  }
+  el("contenu").querySelectorAll("[data-supregle]").forEach(function (b) { b.addEventListener("click", function () {
+    var k = { rubrique: x.rubrique, dossier: x.dossier, mois_effet: b.dataset.supregle };
+    if (!confirm("Supprimer la version de " + moisLong(k.mois_effet) + " ? Les mois non clôturés concernés seront recalculés.")) return;
+    cpAgir(function () { return sb(ZCLIENT.from("fees_regles").delete().eq("rubrique", k.rubrique).eq("dossier", k.dossier).eq("mois_effet", k.mois_effet).select("id")).then(verifierTouche); },
+      function () { var av = CP.regles.find(function (r) { return r.rubrique === k.rubrique && r.dossier === k.dossier && r.mois_effet === k.mois_effet; }); CP.regles = CP.regles.filter(function (r) { return r !== av; }); cpJournalLocal("regle", k.rubrique + "|" + k.dossier + "|" + k.mois_effet, "suppression", av, null); });
+  }); });
+  var maj = function () { var g = el("cp-mode").value === "groupe"; el("cp-val").disabled = g; if (g) el("cp-val").value = ""; };
+  el("cp-mode").addEventListener("change", maj); maj();
+  el("cp-ok").addEventListener("click", function () {
+    var mode = el("cp-mode").value, v = el("cp-val").value.trim(), effet = el("cp-effet").value;
+    if (!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(effet)) return err("Choisissez le mois d’effet.");
+    if (mode !== "groupe") { if (v === "" || !isFinite(+v)) return err("Indiquez une valeur numérique.");
+      if (mode === "taux" && (Math.abs(+v) > 1000 || Math.round(+v * 10000) / 10000 !== +v)) return err("Taux : entre −1 000 et 1 000 %, 4 décimales au plus.");
+      if (mode === "montant" && Math.round(+v * 100) / 100 !== +v) return err("Montant : 2 décimales au plus."); }
+    var row = { rubrique: x.rubrique, dossier: x.dossier, mois_effet: effet, mode: mode, valeur: mode === "groupe" ? null : String(+v) };
+    var clos = CP.clotures.filter(function (c) { return c.mois >= effet && (x.dossier === CP_TOUS || c.dossier === x.dossier); }).length;
+    if (clos && !confirm(clos + " mois déjà clôturé(s) à partir de " + moisLong(effet) + " garderont leurs montants figés. Continuer ?")) return;
+    fermer();
+    cpAgir(function () { return sb(ZCLIENT.from("fees_regles").upsert({ rubrique: row.rubrique, dossier: row.dossier, mois_effet: row.mois_effet, mode: row.mode, valeur: row.valeur === null ? null : +row.valeur }, { onConflict: "rubrique,dossier,mois_effet" }).select("id")).then(verifierTouche); },
+      function () { var av = CP.regles.find(function (r) { return r.rubrique === row.rubrique && r.dossier === row.dossier && r.mois_effet === row.mois_effet; });
+        if (av) { var copie = JSON.parse(JSON.stringify(av)); Object.assign(av, row); cpJournalLocal("regle", row.rubrique + "|" + row.dossier + "|" + row.mois_effet, "modification", copie, row); }
+        else { CP.regles.push(row); cpJournalLocal("regle", row.rubrique + "|" + row.dossier + "|" + row.mois_effet, "création", null, row); } });
+  });
+}
+
+/* ---------- Comptabilité : FEES à refacturer ---------- */
+PAGES.cp_fees = function (p) {
+  var M = cpMoisRef(), ds = p.dossiers, adm = estAdmin();
+  var h = enTete("FEES à refacturer", p, "Refacturation de " + moisLong(M), '<label for="cp-mois">Mois ' + selectMois("cp-mois", M) + '</label><button class="btn btn-ligne" id="cp-csv">Exporter (CSV)</button>');
+  if (!cpMigration()) { el("contenu").innerHTML = h + blocMigration24(); return; }
+  var R = {}; ds.forEach(function (d) { R[d] = feesDe(d, M); });
+  /* Colonnes : rubriques des mois ouverts + celles figées dans les clôtures */
+  var codes = [], vus = {}, ajouter = function (l) { if (!vus[l.code]) { vus[l.code] = l; codes.push(l.code); } };
+  cpActives().forEach(function (r) { ajouter({ code: r.code, libelle: r.libelle, base: r.base, base_rubrique: r.base_rubrique || null }); });
+  ds.forEach(function (d) { R[d].lignes.forEach(ajouter); });
+  var colsCA = codes.filter(function (c) { return vus[c].base === "CA"; }), colsRep = codes.filter(function (c) { return vus[c].base === "RUBRIQUE"; });
+  var totCA = null, tot = {}, totF = 0, nbClos = 0, nbNP = 0, ecarts = 0;
+  ds.forEach(function (d) { var x = R[d]; if (x.ca !== null) totCA = (totCA || 0) + x.ca; totF += x.total; if (x.cloture) { nbClos++; if (caMois(d, M) !== x.ca) ecarts++; }
+    codes.forEach(function (c) { var l = ligneFee(x, c); if (l && l.montant !== null) tot[c] = (tot[c] || 0) + l.montant; });
+    if (x.lignes.some(function (l) { return l.base === "CA" && !l.mode; })) nbNP++; });
+  h += '<div class="ruban">' + [carte("CA du mois", valCt(totCA), "Comptes retenus de chaque résidence", totCA === null, { t: "ca", d: ds, m: [M] }),
+    carte("Total à refacturer", eurCt(totF), "Somme des rubriques calculées sur le CA", false, { t: "fee", d: ds, m: [M], r: "_total" }),
+    carte("Résidences clôturées", nbClos + " / " + ds.length, nbClos ? "Montants figés à la clôture" : "Aucune clôture ce mois"),
+    carte("Rubriques non paramétrées", String(nbNP), "Résidence(s) avec au moins une rubrique sans règle")].join("") + "</div>";
+  if (ecarts) h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>CA modifié après clôture.</b> ' + ecarts + " résidence(s) clôturée(s) ont un CA du jour différent du CA figé. Rouvrez puis clôturez de nouveau pour refacturer sur le nouveau CA.</div></div>";
+  h += '<div class="lis-barre">' + (adm ? '<button class="btn btn-principal" id="cp-clore-tout"' + (nbClos === ds.length ? " disabled" : "") + ">Clôturer " + moisLong(M) + " (" + (ds.length - nbClos) + " résidence" + (ds.length - nbClos > 1 ? "s" : "") + ")</button>" : "") +
+    '<span class="legende">Clôturer fige le CA, les règles et les montants du mois : un changement de taux ou de CA ne les modifie plus. Rouvrir supprime l’instantané.</span></div>';
+  var tete2 = function (c) { var l = vus[c], r = regleApplicable(c, CP_TOUS, M); return '<th class="num">' + esc(l.libelle) + '<br><small class="mut">' + (r ? valRegle(r) : "–") + "</small></th>"; };
+  h += '<div class="bloc"><div class="defile"><table class="tab cp-tab cp-fees"><thead><tr><th>Résidence</th><th>État</th><th class="num">CA<br><small class="mut">' + esc(moisCourt(M)) + "</small></th>" + colsCA.map(tete2).join("") + '<th class="num">Total refacturé</th>' +
+    (colsRep.length ? colsRep.map(tete2).join("") + "<th>Répartition</th>" : "") + "<th></th></tr></thead><tbody>";
+  var csv = [["residence", "dossier", "mois", "etat", "ca"].concat(codes.map(function (c) { return c.toLowerCase(); })).concat(["total_refacture"]).join(";")];
+  var n2 = function (v) { return v === null || v === undefined ? "" : (v / 100).toFixed(2).replace(".", ","); };
+  ds.forEach(function (d) {
+    var x = R[d], clos = !!x.cloture, cj = clos ? caMois(d, M) : null, ecart = clos && cj !== x.ca;
+    var cel = function (c) { var l = ligneFee(x, c); if (!l) return '<td class="num mut">–</td>';
+      var gl = regleApplicable(c, CP_TOUS, M), propre = l.dossier_regle && l.dossier_regle !== CP_TOUS, diff = propre || (gl && (gl.mode !== l.mode || String(gl.valeur) !== String(l.valeur)));
+      return '<td class="num"' + xa({ t: "fee", d: [d], m: [M], r: c }) + (l.montant === null ? ' title="' + esc(l.motif || "") + '"' : "") + ">" + (l.montant === null ? '<span class="nc-cell">' + (l.mode ? "n.c." : "–") + "</span>" : eurCt(l.montant)) +
+        (diff && l.mode ? '<br><small class="mut">' + esc(valRegle({ mode: l.mode, valeur: l.valeur })) + "</small>" : "") + "</td>"; };
+    var rep = ""; if (colsRep.length) { var ko = [];
+      colsCA.forEach(function (pc) { var enf = x.lignes.filter(function (l) { return l.base_rubrique === pc; }); if (!enf.length) return; var par = ligneFee(x, pc);
+        if (!par || par.montant === null || enf.some(function (l) { return l.montant === null; })) return ko.push("n.c.");
+        var s = enf.reduce(function (a, l) { return a + l.montant; }, 0); if (s !== par.montant) ko.push(eurCt(s - par.montant)); });
+      rep = "<td>" + (ko.length ? '<span class="pastille ' + (ko[0] === "n.c." ? "att" : "ko") + '" title="Somme des répartitions − rubrique répartie">' + (ko[0] === "n.c." ? "Incomplète" : "Écart " + ko.join(", ")) + "</span>" : '<span class="pastille ok">Équilibrée</span>') + "</td>"; }
+    h += "<tr><td><b>" + esc(nomResidence(d)) + "</b></td><td>" + (clos ? '<span class="pastille ok" title="Clôturé le ' + esc(dateHeureCourte(x.cloture.clos_le)) + '">Clôturé</span>' + (ecart ? ' <span class="pastille ko" title="CA du jour : ' + esc(valCt(cj)) + '">CA modifié</span>' : "") : '<span class="pastille att">Ouvert</span>') + "</td>" +
+      '<td class="num"' + (x.ca === null ? ' title="Aucune écriture ce mois"' : xa({ t: "ca", d: [d], m: [M] })) + ">" + (x.ca === null ? '<span class="nc-cell">n.c.</span>' : eurCt(x.ca)) + "</td>" + colsCA.map(cel).join("") +
+      '<td class="num"' + xa({ t: "fee", d: [d], m: [M], r: "_total" }) + "><b>" + eurCt(x.total) + "</b></td>" + (colsRep.length ? colsRep.map(cel).join("") + rep : "") +
+      "<td>" + (adm ? (clos ? '<button class="btn-petit" data-rouvrir="' + esc(d) + '">Rouvrir</button>' : '<button class="btn-petit" data-clore="' + esc(d) + '"' + (x.ca === null ? ' disabled title="CA non calculable"' : "") + ">Clôturer</button>") : "") + "</td></tr>";
+    csv.push([nomResidence(d), d, M, clos ? "cloture" : "ouvert", n2(x.ca)].concat(codes.map(function (c) { var l = ligneFee(x, c); return n2(l ? l.montant : null); })).concat([n2(x.total)]).join(";"));
+  });
+  if (ds.length > 1) h += '<tr class="bq-total bq-grand"><td colspan="2">Total ' + esc(p.libelle) + '</td><td class="num"' + xa({ t: "ca", d: ds, m: [M] }) + "><b>" + valCt(totCA) + "</b></td>" +
+    colsCA.map(function (c) { return '<td class="num"' + xa({ t: "fee", d: ds, m: [M], r: c }) + "><b>" + valCt(tot[c] === undefined ? null : tot[c]) + "</b></td>"; }).join("") + '<td class="num"' + xa({ t: "fee", d: ds, m: [M], r: "_total" }) + "><b>" + eurCt(totF) + "</b></td>" +
+    (colsRep.length ? colsRep.map(function (c) { return '<td class="num"' + xa({ t: "fee", d: ds, m: [M], r: c }) + "><b>" + valCt(tot[c] === undefined ? null : tot[c]) + "</b></td>"; }).join("") + "<td></td>" : "") + "<td></td></tr>";
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Sous chaque rubrique : règle du groupe du mois ; sous un montant : règle propre à la résidence quand elle diffère. – : non paramétré (jamais zéro) ; n.c. : base non calculable. Les répartitions détaillent leur rubrique sans s’ajouter au total. Cliquez un montant pour sa formule.</p></div>';
+  el("contenu").innerHTML = h;
+  el("cp-mois").addEventListener("change", function () { etat.cpMois = this.value; majContenu(); });
+  el("cp-csv").addEventListener("click", function () { telecharger("fees-" + M + ".csv", "\ufeff" + csv.join("\n"), "text/csv;charset=utf-8"); });
+  var clore = function (liste) {
+    var rows = liste.map(function (d) { return { dossier: d, mois: M, contenu: instantaneFees(d, M) }; });
+    /* Un mois déjà clôturé entre-temps (autre personne) est ignoré, jamais réécrit : la base refuse toute modification. */
+    cpAgir(function () { return sb(ZCLIENT.from("fees_clotures").upsert(rows, { onConflict: "dossier,mois", ignoreDuplicates: true }).select("dossier")).then(verifierTouche); },
+      function () { var qui = etat.utilisateur ? etat.utilisateur.mail : "", le = new Date().toISOString();
+        rows.forEach(function (r) { r.clos_par = qui; r.clos_le = le; CP.clotures.push(r); cpJournalLocal("cloture", r.dossier + "|" + M, "création", null, { dossier: r.dossier, mois: M }); }); });
+  };
+  var ct = el("cp-clore-tout"); if (ct) ct.addEventListener("click", function () {
+    var liste = ds.filter(function (d) { return !R[d].cloture && R[d].ca !== null; }), sans = ds.filter(function (d) { return !R[d].cloture && R[d].ca === null; }).length;
+    if (!liste.length) return alert("Aucune résidence à clôturer (CA non calculable ou déjà clôturée).");
+    if (!confirm("Clôturer " + moisLong(M) + " pour " + liste.length + " résidence(s) ?" + (sans ? " " + sans + " résidence(s) sans CA calculable restent ouvertes." : ""))) return;
+    clore(liste); });
+  el("contenu").querySelectorAll("[data-clore]").forEach(function (b) { b.addEventListener("click", function () { clore([b.dataset.clore]); }); });
+  el("contenu").querySelectorAll("[data-rouvrir]").forEach(function (b) { b.addEventListener("click", function () { var d = b.dataset.rouvrir;
+    if (!confirm("Rouvrir " + moisLong(M) + " pour " + nomResidence(d) + " ? Les montants seront recalculés avec les règles et le CA du jour.")) return;
+    cpAgir(function () { return sb(ZCLIENT.from("fees_clotures").delete().eq("dossier", d).eq("mois", M).select("dossier")).then(verifierTouche); },
+      function () { CP.clotures = CP.clotures.filter(function (c) { return !(c.dossier === d && c.mois === M); }); cpJournalLocal("cloture", d + "|" + M, "suppression", { dossier: d, mois: M }, null); }); }); });
+};
+
+/* ---------- Trésorerie : prévisions et virements de compte à compte ---------- */
+function isoJour(x) { return x.getFullYear() + "-" + ("0" + (x.getMonth() + 1)).slice(-2) + "-" + ("0" + x.getDate()).slice(-2); }
+function tpRef() { return etat.tpRef || isoJour(new Date()); }
+function tpHorizon() { return +(etat.tpHorizon || 30); }
+function finMoisJour(an, mo, jour) { var j = new Date(Date.UTC(an, mo, 0)).getUTCDate(); return an + "-" + ("0" + mo).slice(-2) + "-" + ("0" + Math.min(jour, j)).slice(-2); }
+/* Occurrences d'une prévision saisie entre la date de référence (incluse) et la fin de l'horizon (incluse). */
+function occurrences(pv, ref, fin) {
+  if (pv.actif === false) return [];
+  if (pv.recurrence !== "mensuelle") return pv.date_prevue >= ref && pv.date_prevue <= fin ? [pv.date_prevue] : [];
+  var out = [], an = +pv.date_prevue.slice(0, 4), mo = +pv.date_prevue.slice(5, 7), jour = +pv.date_prevue.slice(8, 10), lim = pv.jusqu_au && pv.jusqu_au < fin ? pv.jusqu_au : fin;
+  for (var i = 0; i < 400; i++) { var dt = finMoisJour(an, mo, jour); if (dt > lim) break; if (dt >= ref) out.push(dt); mo++; if (mo > 12) { mo = 1; an++; } }
+  return out;
+}
+function comptePrincipal(d) { var cs = banquesDe(d), p = cs.find(function (c) { return paramBanque(d, c).role === "principal"; }); return p || cs[0] || null; }
+/* Flux prévus d'une résidence sur l'horizon : pièces clients et fournisseurs ouvertes (sur le compte principal),
+   prévisions saisies, virements marqués faits et pas encore comptabilisés. */
+function fluxPrevus(d, ref, fin, mode, echues) {
+  var F = { items: [], ncTiers: [], echuesExclues: [0, 0], sansEcheance: [0, 0] }, princ = comptePrincipal(d);
+  [true, false].forEach(function (cre) {
+    var cle = cre ? "creances" : "dettes";
+    if (!(TR.dossiers[d] || {})[cle]) { F.ncTiers.push(cle); return; }
+    var P = piecesTiers(d, cre);
+    P.lignes.forEach(function (r) {
+      var mnt = cre ? (r[6] < 0 ? -r[6] : 0) : (r[6] > 0 ? r[6] : 0); if (!mnt || r[1] > ref) return;
+      var g = r[8] ? P.groupes[(r[7] || r[4]) + "|" + r[8]] : null; if (g && g.solde === 0) return;
+      var ech = mode === "piece" ? (r[9] || "") : ajouterJours(r[1], +mode), k = cre ? 0 : 1;
+      if (!ech) { F.sansEcheance[k] += mnt; return; }
+      var dt = ech;
+      if (ech < ref) { if (!echues) { F.echuesExclues[k] += mnt; return; } dt = ref; }
+      if (dt > fin || !princ) return;
+      F.items.push({ type: cre ? "client" : "fournisseur", compte: princ, date: dt, montant: cre ? mnt : -mnt, lib: (cre ? "Client " : "Fournisseur ") + (r[7] || r[4]) + ", pièce " + (r[3] || r[0]) + (ech < ref ? " (échue le " + dateFr(ech) + ")" : ""), ecriture: r });
+    });
+  });
+  TP.previsions.filter(function (pv) { return pv.dossier === d; }).forEach(function (pv) {
+    occurrences(pv, ref, fin).forEach(function (dt) { F.items.push({ type: "prevision", compte: pv.compte, date: dt, montant: pv.sens === "enc" ? +pv.montant : -pv.montant, lib: pv.libelle + (pv.recurrence === "mensuelle" ? " (mensuel)" : ""), id: pv.id }); });
+  });
+  TP.virements.filter(function (v) { return v.dossier === d; }).forEach(function (v) {
+    var der = derniereEcriture(d, v.compte_de); if (der && v.date_virement <= der) return; /* déjà comptabilisé (ou antérieur à la dernière écriture) */
+    F.items.push({ type: "virement", compte: v.compte_de, date: v.date_virement < ref ? ref : v.date_virement, montant: -v.montant, lib: "Virement fait vers " + v.compte_vers + ", pas encore comptabilisé", id: v.id });
+    F.items.push({ type: "virement", compte: v.compte_vers, date: v.date_virement < ref ? ref : v.date_virement, montant: +v.montant, lib: "Virement fait depuis " + v.compte_de + ", pas encore comptabilisé", id: v.id });
+  });
+  return F;
+}
+function derniereEcriture(d, c) { var x = null; (D.ecritures[d] || []).forEach(function (r) { if (r[4] === c && (!x || r[1] > x)) x = r[1]; }); return x; }
+function soldeAu(d, c, ref) { var s = 0; (D.ecritures[d] || []).forEach(function (r) { if (r[4] === c && r[1] <= ref) s += -r[6]; }); return s; }
+/* Projection d'un compte : solde de départ, flux jour par jour, point bas (montant et date). */
+function projection(s0, items, ref) {
+  var parJour = {}; items.forEach(function (x) { parJour[x.date] = (parJour[x.date] || 0) + x.montant; });
+  var s = s0, bas = s0, dateBas = ref, enc = 0, dec = 0, vir = 0;
+  items.forEach(function (x) { if (x.type === "virement") vir += x.montant; else if (x.montant > 0) enc += x.montant; else dec += -x.montant; });
+  Object.keys(parJour).sort().forEach(function (j) { s += parJour[j]; if (s < bas) { bas = s; dateBas = j; } });
+  return { fin: s, bas: bas, dateBas: dateBas, enc: enc, dec: dec, vir: vir };
+}
+/* Virements proposés dans une résidence : 1. combler les comptes dont le point bas passe sous le minimum, depuis le
+   principal puis les comptes les plus excédentaires (excédent = point bas − minimum) ; 2. remonter vers le principal
+   ce qui dépasse le plafond d'un autre compte. Jamais entre résidences. */
+function virementsProposes(d, comptes) {
+  var out = [], dispo = {}, besoin = [], princ = comptes.find(function (x) { return x.P.role === "principal"; });
+  comptes.forEach(function (x) { var mini = x.P.solde_min || 0; dispo[x.c] = Math.max(0, x.pr.bas - mini); if (x.pr.bas < mini) besoin.push({ c: x.c, v: Math.ceil((mini - x.pr.bas) / 100) * 100 }); });
+  besoin.sort(function (a, b) { return b.v - a.v; });
+  var nonCouvert = 0;
+  besoin.forEach(function (b) {
+    var reste = b.v, sources = comptes.filter(function (x) { return x.c !== b.c && dispo[x.c] > 0; }).sort(function (a, z) { return (z.P.role === "principal") - (a.P.role === "principal") || dispo[z.c] - dispo[a.c]; });
+    sources.forEach(function (s) { if (!reste) return; var v = Math.min(reste, Math.floor(dispo[s.c] / 100) * 100); if (v <= 0) return; dispo[s.c] -= v; reste -= v; out.push({ d: d, de: s.c, vers: b.c, montant: v, motif: "Point bas de " + b.c + " sous son minimum" }); });
+    nonCouvert += reste;
+  });
+  if (princ) comptes.forEach(function (x) {
+    if (x.c === princ.c || x.P.solde_max === null || x.P.solde_max === undefined) return;
+    var recu = out.filter(function (o) { return o.vers === x.c; }).reduce(function (a, o) { return a + o.montant; }, 0), part = out.filter(function (o) { return o.de === x.c; }).reduce(function (a, o) { return a + o.montant; }, 0);
+    var exc = x.pr.fin + recu - part - x.P.solde_max, v = Math.floor(Math.min(exc, dispo[x.c]) / 100) * 100;
+    if (v > 0) { dispo[x.c] -= v; out.push({ d: d, de: x.c, vers: princ.c, montant: v, motif: "Excédent de " + x.c + " au-dessus de son plafond" }); }
+  });
+  return { liste: out, nonCouvert: nonCouvert };
+}
+function calculTreso(p) {
+  var ref = tpRef(), H = tpHorizon(), fin = ajouterJours(ref, H), mode = etat.delai || "30", echues = !!etat.tpEchues, R = { ref: ref, fin: fin, residences: [], tot: { s: 0, enc: 0, dec: 0, fin: 0, vir: 0, nv: 0, nc: 0 }, nonConnus: [] };
+  p.dossiers.forEach(function (d) {
+    var F = fluxPrevus(d, ref, fin, mode, echues), comptes = banquesDe(d).map(function (c) {
+      var its = F.items.filter(function (x) { return x.compte === c; }), s0 = soldeAu(d, c, ref);
+      return { c: c, P: paramBanque(d, c), s0: s0, der: derniereEcriture(d, c), items: its, pr: projection(s0, its, ref) }; });
+    var V = virementsProposes(d, comptes);
+    R.residences.push({ d: d, comptes: comptes, F: F, V: V });
+    comptes.forEach(function (x) { R.tot.s += x.s0; R.tot.enc += x.pr.enc; R.tot.dec += x.pr.dec; R.tot.fin += x.pr.fin; });
+    R.tot.vir += V.liste.reduce(function (a, v) { return a + v.montant; }, 0); R.tot.nv += V.liste.length; R.tot.nc += V.nonCouvert;
+    if (F.ncTiers.length) R.nonConnus.push(d);
+  });
+  return R;
+}
+EXPLIQUER.tp = function (s) {
+  if (s.k === "solde") {
+    var ref = tpRef(), rs = [], som = 0, calc = 0;
+    s.d.forEach(function (d) { calc += soldeAu(d, s.cpt, ref); (D.ecritures[d] || []).forEach(function (r) { if (r[4] === s.cpt && r[1] <= ref) { rs.push([d].concat(r)); som += -r[6]; } }); });
+    return { titre: "Solde actuel · compte " + s.cpt, sous: libPerim(s.d) + ", au " + dateFr(ref), valeur: eurC(calc),
+      formule: "Solde (débit − crédit) du compte " + s.cpt + " : écritures importées datées jusqu’au " + dateFr(ref) + ", à-nouveaux compris", parts: [], ecritures: rs,
+      controle: som === calc ? { ok: true, texte: "Les écritures redonnent exactement le solde affiché." } : { ok: false, texte: "Écart de " + eurC(som - calc) + "." } };
+  }
+  var R = calculTreso({ dossiers: s.d }), parts = [], rows = [], tot = 0;
+  R.residences.forEach(function (x) { x.comptes.forEach(function (c) { if (s.cpt && c.c !== s.cpt) return;
+    c.items.forEach(function (it) { var garde = s.k === "enc" ? it.type !== "virement" && it.montant > 0 : s.k === "dec" ? it.type !== "virement" && it.montant < 0 : s.k === "vir" ? it.type === "virement" : true;
+      if (!garde) return; tot += s.k === "dec" ? -it.montant : it.montant; parts.push({ lib: dateFr(it.date) + " · " + (s.d.length > 1 ? nomResidence(x.d) + " · " : "") + it.lib, val: eurC(s.k === "dec" ? -it.montant : it.montant) }); if (it.ecriture) rows.push([x.d].concat(it.ecriture)); }); }); });
+  parts.sort(function (a, b) { return a.lib < b.lib ? -1 : 1; });
+  var lib = { enc: "Encaissements prévus", dec: "Décaissements prévus", vir: "Virements faits non comptabilisés" }[s.k];
+  return { titre: lib + (s.cpt ? " · compte " + s.cpt : ""), sous: libPerim(s.d) + ", du " + dateFr(R.ref) + " au " + dateFr(R.fin), valeur: eurC(tot),
+    formule: { enc: "Pièces clients ouvertes à échéance dans l’horizon (sur le compte principal) + prévisions d’encaissement saisies", dec: "Pièces fournisseurs ouvertes à échéance dans l’horizon (sur le compte principal) + prévisions de décaissement saisies", vir: "Virements marqués faits, datés après la dernière écriture du compte débité" }[s.k],
+    partsTitre: "Éléments (" + parts.length + ")", parts: parts, ecritures: rows.length ? rows : undefined };
+};
+PAGES.tr_previsions = function (p) {
+  var outils = '<label for="tp-h">Horizon <select id="tp-h">' + [7, 15, 30, 60, 90].map(function (n) { return '<option value="' + n + '"' + (n === tpHorizon() ? " selected" : "") + ">" + n + " jours</option>"; }).join("") + "</select></label>" +
+    '<label for="tr-delai">Échéance <select id="tr-delai">' + [["30", "Pièce + 30 jours"], ["45", "Pièce + 45 jours"], ["60", "Pièce + 60 jours"], ["piece", "Échéance de la pièce"]].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === (etat.delai || "30") ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>" +
+    '<label><input type="checkbox" id="tp-echues"' + (etat.tpEchues ? " checked" : "") + "> Inclure les pièces échues</label>";
+  var h = enTete("Prévisions et virements", p, "Soldes actualisés, flux prévus et virements de compte à compte", outils);
+  if (enLigne() && !estAdmin()) { el("contenu").innerHTML = h + blocNC("Vue réservée aux administrateurs."); return; }
+  if (!cpMigration()) { el("contenu").innerHTML = h + blocMigration24(); return; }
+  var R = calculTreso(p), ds = p.dossiers, adm = estAdmin();
+  var sx = function (k, d, c) { return xa({ t: "tp", k: k, d: d, cpt: c }); };
+  h += '<div class="ruban">' + [carte("Trésorerie actuelle", eurC(R.tot.s), "Soldes comptables au " + dateFr(R.ref) + " (écritures importées)"),
+    carte("Encaissements prévus", eurC(R.tot.enc), "Jusqu’au " + dateFr(R.fin), false, { t: "tp", k: "enc", d: ds }),
+    carte("Décaissements prévus", eurC(R.tot.dec), "Jusqu’au " + dateFr(R.fin), false, { t: "tp", k: "dec", d: ds }),
+    carte("Trésorerie projetée", eurC(R.tot.fin), "Au " + dateFr(R.fin)),
+    carte("Virements à faire", String(R.tot.nv), R.tot.nv ? eurC(R.tot.vir) + " entre comptes d’une même résidence" : "Aucun"),
+    carte("Besoin non couvert", eurC(R.tot.nc), R.tot.nc ? "Aucun excédent disponible dans la résidence" : "Tous les minimums sont tenus")].join("") + "</div>";
+  if (R.nonConnus.length) h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Pièces ouvertes inconnues</b> pour ' + esc(nomsDossiers(R.nonConnus)) + " (lettrage absent) : leurs encaissements et décaissements clients et fournisseurs ne sont pas prévus. Seules les prévisions saisies comptent.</div></div>";
+  /* Virements proposés */
+  var props = []; R.residences.forEach(function (x) { props = props.concat(x.V.liste); });
+  h += '<div class="bloc" id="tp-virements"><div class="bloc-tete"><h2>Virements de compte à compte à faire</h2><button class="btn-petit" id="tp-csv"' + (props.length ? "" : " disabled") + ">Exporter (CSV)</button></div>";
+  h += props.length ? '<div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Du compte</th><th>Vers le compte</th><th class="num">Montant</th><th>Motif</th><th></th></tr></thead><tbody>' + props.map(function (v, i) {
+      return "<tr><td><b>" + esc(nomResidence(v.d)) + "</b></td><td><code>" + esc(v.de) + "</code> " + esc(libBanque(v.d, v.de)) + "</td><td><code>" + esc(v.vers) + "</code> " + esc(libBanque(v.d, v.vers)) + '</td><td class="num"><b>' + eurC(v.montant) + "</b></td><td>" + esc(v.motif) + "</td><td>" + (adm ? '<button class="btn-petit" data-fait="' + i + '">Marquer fait</button>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div>"
+    : '<p class="mut">Aucun virement à faire sur l’horizon : chaque compte reste au-dessus de son minimum et sous son plafond.</p>';
+  R.residences.forEach(function (x) { if (x.V.nonCouvert) h += '<p class="legende"><span class="pastille ko">Besoin non couvert</span> ' + esc(nomResidence(x.d)) + " : " + eurC(x.V.nonCouvert) + " sans excédent disponible sur ses autres comptes (virements entre résidences exclus).</p>"; });
+  h += '<p class="legende" style="margin:10px 0 0">Proposition : on comble d’abord les comptes dont le point bas sur l’horizon passe sous le minimum, depuis le compte principal puis les plus excédentaires, sans faire passer la source sous son propre minimum ; puis on remonte vers le principal ce qui dépasse le plafond d’un autre compte. Montants arrondis à l’euro.</p></div>';
+  /* Comptes */
+  var filtre = !!etat.tpAlerte, aSuivre = function (x) { return x.V.liste.length || x.V.nonCouvert || x.comptes.some(function (c) { return c.pr.bas < (c.P.solde_min || 0); }); };
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Comptes bancaires du ' + esc(dateFr(R.ref)) + " au " + esc(dateFr(R.fin)) + '</h2><label class="legende"><input type="checkbox" id="tp-alerte"' + (filtre ? " checked" : "") + '> Seulement les résidences à rééquilibrer</label></div><div class="defile"><table class="tab bq-tab tp-tab"><thead><tr><th>Résidence</th><th>Compte</th><th>Rôle</th><th class="num">Solde actuel</th><th class="num">Encaissements prévus</th><th class="num">Décaissements prévus</th><th class="num">Virements faits non comptabilisés</th><th class="num">Solde projeté</th><th class="num">Point bas</th><th class="num">Minimum</th><th class="num">Plafond</th></tr></thead><tbody>';
+  R.residences.forEach(function (x) { if (filtre && !aSuivre(x)) return; x.comptes.forEach(function (c, i) { var mini = c.P.solde_min, sous = c.pr.bas < (mini || 0);
+    h += '<tr class="' + (sous ? "bq-alerte" : "") + '">' + (i ? "<td></td>" : "<td><b>" + esc(nomResidence(x.d)) + "</b></td>") + "<td><code>" + esc(c.c) + "</code> " + esc(libBanque(x.d, c.c)) + '<br><small class="mut">' + (c.der ? "dernière écriture " + esc(dateFr(c.der)) : "aucune écriture") + "</small></td><td>" + ROLES_BQ[c.P.role] + (c.P.propose ? ' <span class="mut">(proposé)</span>' : "") + "</td>" +
+      '<td class="num"' + xa({ t: "tp", k: "solde", d: [x.d], cpt: c.c }) + "><b>" + eurC(c.s0) + "</b></td>" +
+      '<td class="num"' + sx("enc", [x.d], c.c) + ">" + eurC(c.pr.enc) + '</td><td class="num"' + sx("dec", [x.d], c.c) + ">" + eurC(c.pr.dec) + '</td><td class="num"' + sx("vir", [x.d], c.c) + ">" + eurC(c.pr.vir) + "</td>" +
+      '<td class="num ' + (c.pr.fin < 0 ? "neg" : "") + '"><b>' + eurC(c.pr.fin) + '</b></td><td class="num ' + (sous ? "neg" : "") + '">' + eurC(c.pr.bas) + '<br><small class="mut">' + esc(dateFr(c.pr.dateBas)) + "</small></td>" +
+      '<td class="num">' + (mini === null ? '<span class="mut">–</span>' : eurC(mini)) + '</td><td class="num">' + (c.P.solde_max === null || c.P.solde_max === undefined ? '<span class="mut">–</span>' : eurC(c.P.solde_max)) + "</td></tr>"; });
+    if (x.F.echuesExclues[0] || x.F.echuesExclues[1] || x.F.sansEcheance[0] || x.F.sansEcheance[1]) h += '<tr><td></td><td colspan="10" class="legende">' + [x.F.echuesExclues[0] ? "créances échues non reprises : " + eurC(x.F.echuesExclues[0]) : "", x.F.echuesExclues[1] ? "dettes échues non reprises : " + eurC(x.F.echuesExclues[1]) : "",
+      x.F.sansEcheance[0] ? "créances sans échéance : " + eurC(x.F.sansEcheance[0]) : "", x.F.sansEcheance[1] ? "dettes sans échéance : " + eurC(x.F.sansEcheance[1]) : ""].filter(Boolean).join(" ; ") + "</td></tr>"; });
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Solde actuel = solde comptable (débit − crédit) des écritures importées jusqu’au ' + esc(dateFr(R.ref)) + ", à-nouveaux compris : un écart avec la banque vient des opérations pas encore comptabilisées. Pièces clients et fournisseurs ouvertes : sur le compte principal, à leur échéance (pièces échues : ignorées ou, si coché, prévues aujourd’hui). Minimum et plafond : page Comptes bancaires.</p></div>";
+  /* Prévisions saisies */
+  var pvs = TP.previsions.filter(function (x) { return ds.indexOf(x.dossier) >= 0; }).sort(function (a, b) { return a.date_prevue < b.date_prevue ? -1 : 1; });
+  h += '<div class="bloc" id="tp-prev"><div class="bloc-tete"><h2>Prévisions saisies</h2>' + (adm ? '<button class="btn btn-ligne" id="tp-ajout">Ajouter une prévision</button>' : "") + "</div>" + (pvs.length ? '<div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Compte</th><th>Libellé</th><th>Sens</th><th class="num">Montant</th><th>Date</th><th>Récurrence</th><th></th></tr></thead><tbody>' +
+    pvs.map(function (x) { return "<tr" + (x.actif === false ? ' class="mut"' : "") + "><td>" + esc(nomResidence(x.dossier)) + "</td><td><code>" + esc(x.compte) + "</code></td><td>" + esc(x.libelle) + "</td><td>" + (x.sens === "enc" ? "Encaissement" : "Décaissement") + '</td><td class="num">' + eurC(+x.montant) + "</td><td>" + esc(dateFr(x.date_prevue)) + "</td><td>" +
+      (x.recurrence === "mensuelle" ? "Mensuelle" + (x.jusqu_au ? " jusqu’au " + esc(dateFr(x.jusqu_au)) : "") : "Ponctuelle") + "</td><td>" + (adm ? '<button class="btn-petit" data-pv="' + esc(x.id) + '">Modifier</button>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div>"
+    : '<p class="mut">Aucune prévision saisie. Ajoutez les flux connus qui ne sont pas encore des factures dans Pennylane : salaires, loyers, échéances d’emprunt, TVA…</p>') + "</div>";
+  /* Virements marqués faits */
+  var faits = TP.virements.filter(function (v) { return ds.indexOf(v.dossier) >= 0; }).sort(function (a, b) { return a.date_virement < b.date_virement ? 1 : -1; }), nF = etat.tpFaitsTout ? faits.length : Math.min(5, faits.length);
+  h += '<div class="bloc" id="tp-faits"><div class="bloc-tete"><h2>Virements marqués faits</h2></div>' + (faits.length ? '<div class="defile"><table class="tab"><thead><tr><th>Date</th><th>Résidence</th><th>Du compte</th><th>Vers</th><th class="num">Montant</th><th>Par</th><th>Comptabilisé</th><th></th></tr></thead><tbody>' +
+    faits.slice(0, nF).map(function (v) { var der = derniereEcriture(v.dossier, v.compte_de), compta = der && v.date_virement <= der;
+      return "<tr><td>" + esc(dateFr(v.date_virement)) + "</td><td>" + esc(nomResidence(v.dossier)) + "</td><td><code>" + esc(v.compte_de) + "</code></td><td><code>" + esc(v.compte_vers) + '</code></td><td class="num">' + eurC(+v.montant) + "</td><td>" + esc(v.fait_par || "") + "</td><td>" + (compta ? '<span class="pastille ok">Oui, supposé</span>' : '<span class="pastille att">Pas encore</span>') + "</td><td>" + (adm ? '<button class="btn-petit" data-annuler-vir="' + esc(v.id) + '">Annuler</button>' : "") + "</td></tr>"; }).join("") +
+    "</tbody></table></div>" + (faits.length > 5 ? '<div class="aj-actions" style="margin-top:8px"><button class="btn-petit" id="tp-faits-plus">' + (etat.tpFaitsTout ? "Réduire" : "Voir plus (" + faits.length + ")") + "</button></div>" : "") + '<p class="legende" style="margin:8px 0 0">Un virement est supposé comptabilisé quand une écriture du compte débité est datée du même jour ou après.</p>'
+    : '<p class="mut">Aucun virement marqué fait.</p>') + "</div>";
+  h += modalePrevision(p);
+  el("contenu").innerHTML = h;
+  el("tp-h").addEventListener("change", function () { etat.tpHorizon = this.value; majContenu(); });
+  el("tr-delai").addEventListener("change", function () { etat.delai = this.value; majContenu(); });
+  el("tp-echues").addEventListener("change", function () { etat.tpEchues = this.checked; majContenu(); });
+  el("tp-alerte").addEventListener("change", function () { etat.tpAlerte = this.checked; majContenu(); });
+  var fp = el("tp-faits-plus"); if (fp) fp.addEventListener("click", function () { etat.tpFaitsTout = !etat.tpFaitsTout; majContenu(); });
+  el("tp-csv").addEventListener("click", function () { telecharger("virements-" + R.ref + ".csv", "\ufeff" + [["residence", "dossier", "du_compte", "vers_compte", "montant", "motif"].join(";")].concat(props.map(function (v) { return [nomResidence(v.d), v.d, v.de, v.vers, (v.montant / 100).toFixed(2).replace(".", ","), v.motif].join(";"); })).join("\n"), "text/csv;charset=utf-8"); });
+  el("contenu").querySelectorAll("[data-fait]").forEach(function (b) { b.addEventListener("click", function () { var v = props[+b.dataset.fait];
+    var row = { dossier: v.d, compte_de: v.de, compte_vers: v.vers, montant: v.montant, date_virement: R.ref, note: v.motif };
+    cpAgir(function () { return sb(ZCLIENT.from("virements_suivis").insert(row).select("id")).then(verifierTouche); },
+      function () { row.id = Date.now(); row.fait_par = etat.utilisateur ? etat.utilisateur.mail : ""; row.fait_le = new Date().toISOString(); TP.virements.push(row); }); }); });
+  el("contenu").querySelectorAll("[data-annuler-vir]").forEach(function (b) { b.addEventListener("click", function () { var id = b.dataset.annulerVir;
+    if (!confirm("Annuler ce virement marqué fait ?")) return;
+    cpAgir(function () { return sb(ZCLIENT.from("virements_suivis").delete().eq("id", +id).select("id")).then(verifierTouche); },
+      function () { TP.virements = TP.virements.filter(function (v) { return String(v.id) !== String(id); }); }); }); });
+  var aj = el("tp-ajout"); if (aj) aj.addEventListener("click", function () { etat.tpModale = { id: null }; majContenu(); });
+  el("contenu").querySelectorAll("[data-pv]").forEach(function (b) { b.addEventListener("click", function () { etat.tpModale = { id: b.dataset.pv }; majContenu(); }); });
+  brancherModalePrevision(p);
+};
+function modalePrevision(p) {
+  var x = etat.tpModale; if (!x) return "";
+  var pv = x.id ? TP.previsions.find(function (y) { return String(y.id) === String(x.id); }) : null, d0 = pv ? pv.dossier : (x.dossier || p.dossiers[0]);
+  var comptes = banquesDe(d0);
+  return '<div class="modale" id="modale-tp"><div class="modale-boite" style="width:min(640px,96vw)"><div class="modale-tete"><div><h2>' + (pv ? "Modifier la prévision" : "Nouvelle prévision") + '</h2><p>Flux attendu sur un compte bancaire d’une résidence</p></div></div><div class="aj-grille">' +
+    '<label class="champ-aj"><span>Résidence</span><select id="tp-d"' + (pv ? " disabled" : "") + ">" + p.dossiers.map(function (d) { return '<option value="' + esc(d) + '"' + (d === d0 ? " selected" : "") + ">" + esc(nomResidence(d)) + "</option>"; }).join("") + "</select></label>" +
+    '<label class="champ-aj"><span>Compte</span><select id="tp-c">' + comptes.map(function (c) { return '<option value="' + esc(c) + '"' + (pv && pv.compte === c || !pv && c === comptePrincipal(d0) ? " selected" : "") + ">" + esc(c + " " + libBanque(d0, c)) + "</option>"; }).join("") + "</select></label>" +
+    '<label class="champ-aj large"><span>Libellé</span><input id="tp-lib" maxlength="80" value="' + esc(pv ? pv.libelle : "") + '" placeholder="Salaires, loyer, échéance d’emprunt…"></label>' +
+    '<label class="champ-aj"><span>Sens</span><select id="tp-sens"><option value="dec"' + (!pv || pv.sens === "dec" ? " selected" : "") + '>Décaissement</option><option value="enc"' + (pv && pv.sens === "enc" ? " selected" : "") + ">Encaissement</option></select></label>" +
+    '<label class="champ-aj"><span>Montant (€)</span><input id="tp-mnt" type="number" min="0" step="0.01" value="' + (pv ? (+pv.montant / 100) : "") + '"></label>' +
+    '<label class="champ-aj"><span>Date</span><input id="tp-date" type="date" value="' + esc(pv ? pv.date_prevue : tpRef()) + '"></label>' +
+    '<label class="champ-aj"><span>Récurrence</span><select id="tp-rec"><option value="aucune"' + (!pv || pv.recurrence !== "mensuelle" ? " selected" : "") + '>Ponctuelle</option><option value="mensuelle"' + (pv && pv.recurrence === "mensuelle" ? " selected" : "") + ">Chaque mois, même jour</option></select></label>" +
+    '<label class="champ-aj"><span>Jusqu’au (facultatif)</span><input id="tp-jusqu" type="date" value="' + esc(pv && pv.jusqu_au ? pv.jusqu_au : "") + '"></label>' +
+    '<label class="champ-aj"><span>État</span><select id="tp-actif"><option value="1"' + (!pv || pv.actif !== false ? " selected" : "") + '>Prise en compte</option><option value="0"' + (pv && pv.actif === false ? " selected" : "") + ">Ignorée</option></select></label>" +
+    '</div><div class="erreur-form" id="tp-err"></div><div class="modale-pied" style="gap:8px">' + (pv ? '<button class="btn btn-ligne" id="tp-sup" style="margin-right:auto">Supprimer</button>' : "") + '<button class="btn btn-ligne" id="tp-annuler">Annuler</button><button class="btn btn-principal" id="tp-ok">Enregistrer</button></div></div></div>';
+}
+function brancherModalePrevision(p) {
+  var x = etat.tpModale; if (!x || !el("tp-ok")) return;
+  var pv = x.id ? TP.previsions.find(function (y) { return String(y.id) === String(x.id); }) : null;
+  el("tp-annuler").addEventListener("click", function () { etat.tpModale = null; majContenu(); });
+  el("tp-d").addEventListener("change", function () { etat.tpModale = { id: null, dossier: this.value }; majContenu(); });
+  var sup = el("tp-sup"); if (sup) sup.addEventListener("click", function () { if (!confirm("Supprimer cette prévision ?")) return; etat.tpModale = null;
+    cpAgir(function () { return sb(ZCLIENT.from("tresorerie_previsions").delete().eq("id", +pv.id).select("id")).then(verifierTouche); },
+      function () { TP.previsions = TP.previsions.filter(function (y) { return y !== pv; }); }); });
+  el("tp-ok").addEventListener("click", function () {
+    var err = function (t) { el("tp-err").textContent = t; }, lib = el("tp-lib").value.trim(), mnt = el("tp-mnt").value.trim(), dt = el("tp-date").value, rec = el("tp-rec").value, jq = el("tp-jusqu").value, c = el("tp-c").value;
+    if (!c) return err("Cette résidence n’a aucun compte bancaire mouvementé.");
+    if (!lib) return err("Indiquez un libellé.");
+    if (!mnt || !isFinite(+mnt) || +mnt <= 0) return err("Montant : un nombre positif.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dt)) return err("Choisissez une date.");
+    if (jq && (rec !== "mensuelle" || jq < dt)) return err("« Jusqu’au » : seulement pour une prévision mensuelle, après la date.");
+    var row = { dossier: pv ? pv.dossier : el("tp-d").value, compte: c, libelle: lib, sens: el("tp-sens").value, montant: Math.round(+mnt * 100), date_prevue: dt, recurrence: rec, jusqu_au: jq || null, actif: el("tp-actif").value === "1" };
+    etat.tpModale = null;
+    cpAgir(function () { return pv ? sb(ZCLIENT.from("tresorerie_previsions").update(row).eq("id", +pv.id).select("id")).then(verifierTouche) : sb(ZCLIENT.from("tresorerie_previsions").insert(row).select("id")).then(verifierTouche); },
+      function () { if (pv) Object.assign(pv, row); else { row.id = Date.now(); TP.previsions.push(row); } });
+  });
+}
+
 /* ---------- Thème d'affichage ---------- */
 function themeChoisi() { try { return localStorage.getItem("zen-theme") || "light"; } catch (e) { return "light"; } }
 var THEMES = { light: ["☀", "Thème clair (blanc). Cliquer pour passer au thème sombre."], dark: ["☾", "Thème sombre. Cliquer pour passer au réglage automatique."], auto: ["Auto", "Suit le réglage de l’ordinateur. Cliquer pour passer au thème clair."] };
@@ -4012,6 +4663,7 @@ appliquerTheme(themeChoisi());
 ajCharger();
 lisCharger();
 bqpCharger();
+cpCharger();
 mesuresImporteesCharger();
 catCharger();
 appliquerMesures();
@@ -4128,9 +4780,18 @@ function chargerDonnees(client) {
     lireOuNull(client.from("kpi_catalogue").select("*").order("ordre")),
     lireOuNull(client.from("kpi_modeles").select("*").order("ordre")),
     lireOuNull(client.from("residence_modele").select("*")),
-    lireFacultatif(client.from("kpi_journal").select("*").order("id", { ascending: false }).limit(1000))
+    lireFacultatif(client.from("kpi_journal").select("*").order("id", { ascending: false }).limit(1000)),
+    /* Lot 24 : null quand la migration 015 manque */
+    lireOuNull(client.from("fees_rubriques").select("*").order("ordre")),
+    lireOuNull(client.from("fees_regles").select("*").order("id")),
+    lireOuNull(client.from("ca_regles").select("*")),
+    lireTout(function () { return client.from("fees_clotures").select("*").order("mois"); }, true),
+    lireFacultatif(client.from("compta_journal").select("*").order("id", { ascending: false }).limit(500)),
+    lireOuNull(client.from("tresorerie_previsions").select("*").order("id")),
+    lireOuNull(client.from("virements_suivis").select("*").order("id"))
   ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10],
-    resbase: r[11], kpimois: r[12], depots: r[13], cat: r[14], modeles: r[15], resmod: r[16], journalkpi: r[17] }; });
+    resbase: r[11], kpimois: r[12], depots: r[13], cat: r[14], modeles: r[15], resmod: r[16], journalkpi: r[17],
+    lot24: { rubriques: r[18], regles: r[19], ca: r[20], clotures: r[21], journal: r[22], previsions: r[23], virements: r[24] } }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -4146,6 +4807,9 @@ function demarrerAvecClient(client, profil) {
     D.groupes_base = x.groupes; D.residence_groupe = x.liens;
     D.catalogue = x.cat || []; D.kpi_modeles = x.modeles || []; D.res_modeles = x.resmod || []; D.kpi_journal = x.journalkpi || [];
     D.lot20 = x.cat !== null && x.modeles !== null && x.resmod !== null; D.lot19 = { migration: x.kpimois !== null };
+    var L24 = x.lot24; D.lot24 = L24.rubriques !== null && L24.regles !== null && L24.ca !== null && L24.clotures !== null && L24.previsions !== null && L24.virements !== null;
+    D.fees_rubriques = L24.rubriques || []; D.fees_regles = L24.regles || []; D.ca_regles = L24.ca || []; D.fees_clotures = L24.clotures || []; D.compta_journal = L24.journal || [];
+    D.tresorerie_previsions = L24.previsions || []; D.virements_suivis = L24.virements || [];
     lancerApplication();
     ZCLIENT = client;
     var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");

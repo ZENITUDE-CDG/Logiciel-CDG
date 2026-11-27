@@ -27,8 +27,18 @@ MOIS = [f"{a}-{m:02d}" for a, m in [(2025, 10), (2025, 11), (2025, 12)] + [(2026
 ECART = ("DEMO-2003", "2026-06", Decimal("1234.56"))
 MANQUANT = ("DEMO-2005", "2026-02")
 REMPLACE = ("DEMO-2008", "2026-05")
+SMIC_BAS = ("DEMO-2004", 3)  # salaire de base sous le SMIC (contrôle de paie)
+BAISSE = ("DEMO-2001", "2026-07")  # base d'un salarié présent de juin à août en baisse de 35 % en juillet
+BAISSE_SAL = {}
 SANS_QUOTITE = ("DEMO-2007", "2026-03")
 MOTIFS_FIN = ["059", "031", "043", "034", "020", "039"]
+# Postes fictifs (convention HCR, IDCC 1979) : libellé DSN, salaire de base mensuel temps plein, niveau, statut
+# conventionnel, cadre, poids dans l'effectif. Deux libellés différents pour la réception (référentiel des postes).
+POSTES = [("DIRECTEUR D'EXPLOITATION", 4200, "N5E1", "04", True, 0), ("ASSISTANT DE DIRECTION", 2650, "N4E1", "05", False, 1),
+          ("RECEPTIONNISTE", 2010, "N2E2", "06", False, 5), ("Réceptionniste  h/f", 2010, "N2E1", "06", False, 2),
+          ("RECEPTIONNISTE DE NUIT", 2150, "N2E3", "06", False, 2), ("GOUVERNANTE", 2320, "N3E1", "05", False, 1),
+          ("FEMME DE CHAMBRE", 1900, "N1E2", "06", False, 8), ("AGENT DE MAINTENANCE", 2180, "N2E2", "07", False, 2),
+          ("SERVEUR", 1960, "N1E3", "06", False, 2), ("AUXILIAIRE DE VIE", 2020, "N2E1", "06", False, 3)]
 
 
 def siret(dossier):
@@ -72,6 +82,21 @@ class Salarie:
         self.fin, self.motif_fin = None, None
         self.arrets = []  # (dernier jour travaillé, motif, fin prévue, reprise)
         self.dossier = dossier
+        if self.nature == "02" and self.debut < dt.date(2025, 1, 1):
+            self.debut = dt.date(2025, rng.randint(1, 8), rng.randint(1, 28))  # CDD récents
+        if n == 1:
+            self.poste = POSTES[0]
+            self.nature, self.dispositif, self.cadre, self.quotite = "01", "99", "01", "151.67"
+            self.debut = min(self.debut, dt.date(2016, 3, 1))
+        else:
+            self.poste = rng.choices(POSTES[1:], weights=[x[5] for x in POSTES[1:]])[0]
+            self.cadre = "01" if self.poste[4] else "04"
+
+    def base(self):
+        """Poids de rémunération : salaire de base × ancienneté (1 % par an, plafond 15 %) × quotité ; apprentis à 60 %."""
+        ans = max(0, (dt.date(2026, 1, 1) - self.debut).days // 365)
+        b = Decimal(self.poste[1]) * (Decimal(1) + Decimal(min(ans, 15)) / 100) * Decimal(self.quotite) / Decimal("151.67")
+        return b * (Decimal("0.6") if self.dispositif == "64" else 1)
 
 
 def roster(rng, dossier, brut_moyen):
@@ -110,25 +135,41 @@ def roster(rng, dossier, brut_moyen):
     return sal
 
 
-def lignes_declaration(rng, dossier, m, s641, sal, type_decl):
+def concernes_du_mois(sal, m):
     L, F = fin_mois(m), debut_mois(m)
-    concernes = [s for s in sal if s.debut <= L and (s.fin is None or s.fin >= F)]
-    payes = concernes
-    poids = [Decimal(s.quotite) for s in payes]
-    tot = sum(poids)
+    return [s for s in sal if s.debut <= L and (s.fin is None or s.fin >= F)]
+
+
+def lignes_declaration(rng, dossier, m, s641, sal, type_decl, k):
+    """Salaire de base stable (grille × k), complément jusqu'au compte 641 en heures supplémentaires et primes."""
+    L, F = fin_mois(m), debut_mois(m)
+    payes = concernes_du_mois(sal, m)
     brut = s641 - (ECART[2] if (dossier, m) == ECART[:2] else Decimal(0))
-    parts, reste = [], brut
-    for i, p in enumerate(poids):
-        v = (brut * p / tot).quantize(Decimal("0.01")) if i < len(poids) - 1 else reste
-        reste -= v
-        parts.append(v)
+    bases = []
+    for s in payes:
+        b = (s.base() * k).quantize(Decimal("0.01"))
+        if (dossier, s.n) == SMIC_BAS:
+            b = (Decimal("1650") * Decimal(s.quotite) / Decimal("151.67")).quantize(Decimal("0.01"))
+        if (dossier, m) == BAISSE[:2] and s is BAISSE_SAL.get(dossier):
+            b = (b * Decimal("0.65")).quantize(Decimal("0.01"))
+        bases.append(b)
+    if sum(bases) > brut:
+        f = brut / sum(bases)
+        bases = [(b * f).quantize(Decimal("0.01")) for b in bases]
+    reste = brut - sum(bases)
+    tot = sum(bases)
+    extras = []
+    for i, b in enumerate(bases):
+        v = (reste * b / tot).quantize(Decimal("0.01")) if i < len(bases) - 1 else reste - sum(extras)
+        extras.append(v)
+    parts = [b + e for b, e in zip(bases, extras)]
     L_ = [("S20.G00.05.001", "01"), ("S20.G00.05.002", type_decl), ("S20.G00.05.003", "11"),
           ("S20.G00.05.004", f"{dossier}-{m}"), ("S20.G00.05.005", "01" + F.strftime("%m%Y")), ("S20.G00.05.007", jjmmaaaa(L)),
           ("S20.G00.05.010", "01")]
     sir = siret(dossier)
     L_ += [("S21.G00.06.001", sir[:9]), ("S21.G00.06.002", sir[9:]), ("S21.G00.06.003", "5510Z"),
            ("S21.G00.06.004", "1 RUE FICTIVE"), ("S21.G00.06.005", "75001"), ("S21.G00.06.006", "PARIS")]
-    presents = [s for s in concernes if s.fin is None or s.fin >= L]
+    presents = [s for s in payes if s.fin is None or s.fin >= L]
     L_ += [("S21.G00.11.001", sir[9:]), ("S21.G00.11.002", "5510Z"), ("S21.G00.11.003", "1 RUE FICTIVE"),
            ("S21.G00.11.004", "75001"), ("S21.G00.11.005", "PARIS"), ("S21.G00.11.008", str(len(presents)))]
     cotis = (brut * Decimal("0.62")).quantize(Decimal("0.01"))
@@ -136,17 +177,18 @@ def lignes_declaration(rng, dossier, m, s641, sal, type_decl):
            ("S21.G00.20.010", "05"),
            ("S21.G00.20.001", "P0942"), ("S21.G00.20.005", f"{cotis - (cotis * Decimal('0.7')).quantize(Decimal('0.01')):.2f}"),
            ("S21.G00.20.010", "05")]
-    for s, b in zip(payes, parts):
+    for s, b, ext in zip(payes, parts, extras):
         L_ += [("S21.G00.30.001", s.nir), ("S21.G00.30.002", "FICTIF"), ("S21.G00.30.004", f"SALARIE {s.n:03d}"),
                ("S21.G00.30.005", s.sexe), ("S21.G00.30.006", jjmmaaaa(s.naissance)), ("S21.G00.30.019", f"M{s.n:04d}")]
         q = s.quotite
-        L_ += [("S21.G00.40.001", jjmmaaaa(s.debut)), ("S21.G00.40.002", "90"), ("S21.G00.40.003", s.cadre),
-               ("S21.G00.40.004", "463a"), ("S21.G00.40.006", "EMPLOI FICTIF"), ("S21.G00.40.007", s.nature),
+        L_ += [("S21.G00.40.001", jjmmaaaa(s.debut)), ("S21.G00.40.002", s.poste[3]), ("S21.G00.40.003", s.cadre),
+               ("S21.G00.40.004", "463a"), ("S21.G00.40.006", s.poste[0]), ("S21.G00.40.007", s.nature),
                ("S21.G00.40.008", s.dispositif), ("S21.G00.40.009", f"C{s.n:04d}"), ("S21.G00.40.011", "10"),
                ("S21.G00.40.012", "151.67")]
-        if not ((dossier, m) == SANS_QUOTITE[:2] and s.n == 2):
+        if not ((dossier, m) == SANS_QUOTITE[:2] and s is next(x for x in payes if x.n >= 2)):
             L_.append(("S21.G00.40.013", q))
         L_.append(("S21.G00.40.014", "10" if q == "151.67" else "20"))
+        L_ += [("S21.G00.40.017", "1979"), ("S21.G00.40.041", s.poste[2])]
         for dernier, motif, prevue, reprise in s.arrets:
             debut_abs = dernier + dt.timedelta(days=1)
             mois_debut = f"{debut_abs.year}-{debut_abs.month:02d}"
@@ -166,12 +208,15 @@ def lignes_declaration(rng, dossier, m, s641, sal, type_decl):
                ("S21.G00.51.011", "001"), ("S21.G00.51.013", f"{b:.2f}")]
         L_ += [("S21.G00.51.001", jjmmaaaa(F)), ("S21.G00.51.002", jjmmaaaa(L)), ("S21.G00.51.010", f"C{s.n:04d}"),
                ("S21.G00.51.011", "002"), ("S21.G00.51.012", f"{heures:.2f}"), ("S21.G00.51.013", f"{b:.2f}")]
-        if rng.random() < 0.25:
+        hs_m = Decimal(0)
+        if rng.random() < 0.3:
             hs = Decimal(rng.choice(["4.00", "7.50", "12.25"]))
-            L_ += [("S21.G00.51.001", jjmmaaaa(F)), ("S21.G00.51.002", jjmmaaaa(L)), ("S21.G00.51.010", f"C{s.n:04d}"),
-                   ("S21.G00.51.011", "017"), ("S21.G00.51.012", f"{hs:.2f}"), ("S21.G00.51.013", f"{hs * Decimal('14.10'):.2f}")]
-        if rng.random() < 0.2:
-            L_ += [("S21.G00.52.001", "026"), ("S21.G00.52.002", f"{Decimal(rng.choice(['50', '120', '300'])):.2f}")]
+            hs_m = min(ext, (hs * Decimal("14.10")).quantize(Decimal("0.01")))
+            if hs_m > 0:
+                L_ += [("S21.G00.51.001", jjmmaaaa(F)), ("S21.G00.51.002", jjmmaaaa(L)), ("S21.G00.51.010", f"C{s.n:04d}"),
+                       ("S21.G00.51.011", "017"), ("S21.G00.51.012", f"{hs:.2f}"), ("S21.G00.51.013", f"{hs_m:.2f}")]
+        if ext - hs_m > 0:
+            L_ += [("S21.G00.52.001", "026"), ("S21.G00.52.002", f"{ext - hs_m:.2f}")]
         L_ += [("S21.G00.78.001", "03"), ("S21.G00.78.002", jjmmaaaa(F)), ("S21.G00.78.003", jjmmaaaa(L)),
                ("S21.G00.78.004", f"{b:.2f}")]
     return L_
@@ -183,14 +228,21 @@ def generer(sortie):
     bruts = bruts_641()
     dossiers = sorted({d for d, _ in bruts})
     rng = random.Random(26)
-    rosters = {d: roster(rng, d, sum(v for (dd, _), v in bruts.items() if dd == d) / 15) for d in dossiers}
+    rosters = {d: roster(rng, d, min(v for (dd, _), v in bruts.items() if dd == d) * Decimal("0.85")) for d in dossiers}
+    BAISSE_SAL[BAISSE[0]] = next(s for s in rosters[BAISSE[0]] if s.n >= 2 and s.debut < dt.date(2026, 6, 1)
+                                 and (s.fin is None or s.fin > dt.date(2026, 8, 31)) and s.dispositif != "64")
+    # Grille × k (entre 1 et 1,25, proche de la médiane des mois) ; le complément jusqu'au 641 passe en heures sup. et primes.
+    ks = {}
+    for d in dossiers:
+        r = sorted(bruts[(d, m)] / sum(s.base() for s in concernes_du_mois(rosters[d], m)) for m in MOIS)
+        ks[d] = min(Decimal("1.25"), max(Decimal(1), r[len(r) // 2] * Decimal("0.9")))
     fichiers = []
     for m in MOIS:
         corps = []
         for d in dossiers:
             if (d, m) == MANQUANT:
                 continue
-            corps += lignes_declaration(rng, d, m, bruts[(d, m)], rosters[d], "03" if (d, m) == REMPLACE else "01")
+            corps += lignes_declaration(rng, d, m, bruts[(d, m)], rosters[d], "03" if (d, m) == REMPLACE else "01", ks[d])
         tete = [("S10.G00.00.001", "LOGICIEL PAIE FICTIF"), ("S10.G00.00.002", "EDITEUR FICTIF"), ("S10.G00.00.003", "1.0"),
                 ("S10.G00.00.005", "02"), ("S10.G00.00.006", "P26V01"), ("S10.G00.00.008", "01"),
                 ("S10.G00.01.001", "999000001"), ("S10.G00.01.002", "00011"), ("S10.G00.01.003", "ZENITUDE FICTIF")]

@@ -30,7 +30,7 @@ import hashlib
 import json
 import re
 
-VERSION = 1
+VERSION = 2
 RE_LIGNE = re.compile(r"^(S[0-9]{2}\.G[0-9]{2}\.[0-9]{2})\.([0-9]{3}),'(.*)'$")
 RE_MONTANT = re.compile(r"^-?[0-9]{1,12}(\.[0-9]{1,2})?$")
 RE_SIRET = re.compile(r"^[0-9]{14}$")
@@ -144,6 +144,25 @@ def cle_arret(siret, dernier, motif, naissance, sexe):
     """Clé anonyme d'un arrêt : relie ses déclarations successives sans nom ni NIR."""
     texte = f"{siret}|{dernier}|{motif}|{naissance}|{sexe}"
     return hashlib.sha256(texte.encode("utf-8")).hexdigest()[:16]
+
+
+def pseudonyme(siren, r, rang):
+    """Identifiant stable d'un salarié dans une société, sans nom ni NIR (empreinte tronquée)."""
+    ident = ("N:" + r["001"]) if r.get("001") else ("M:" + r["019"]) if r.get("019") else f"I:{rang}"
+    return hashlib.sha256(f"SAL|{siren}|{ident}".encode("utf-8")).hexdigest()[:12]
+
+
+RE_BLANCS = re.compile(r"[ \t\n\r\f\v]+")
+
+
+def normaliser_emploi(v):
+    """Libellé d'emploi : espaces réduits, majuscules (sert de clé au référentiel des postes)."""
+    return RE_BLANCS.sub(" ", v or "").strip(" ").upper()
+
+
+def mois_entre(a, b):
+    """Mois révolus de a à b."""
+    return (b.year - a.year) * 12 + (b.month - a.month) - (1 if b.day < a.day else 0)
 
 
 def iso(d):
@@ -269,15 +288,19 @@ def agreger(decl, siret, mois) -> dict:
         "entrees": {k: 0 for k in CATEGORIES}, "sorties": {k: 0 for k in MOTIFS_SORTIE},
         "brut": 0, "net_verse": 0, "pas": 0, "primes": 0, "cotisations_organismes": 0,
         "heures_payees": 0, "hs_heures": 0, "hs_montant": 0, "salaries_payes": 0,
-        "arrets": [], "alertes": [],
+        "arrets": [], "alertes": [], "salaries": [],
     }
+    siren = decl["s06"].get("001") or ""
     sans_debut = 0
     for o in decl["ops"]:
         R["cotisations_organismes"] += entier_echelle(o.get("005"), "versement à un organisme") or 0
     arrets = {}
-    for ind in decl["individus"]:
+    for rang, ind in enumerate(decl["individus"]):
         r = ind["r"]
         sexe, naissance = r.get("005"), date_dsn(r.get("006"))
+        sid = pseudonyme(siren, r, rang)
+        etp_ind, entree, sortie = None, False, None
+        S = {"brut": 0, "heures": 0, "hs_heures": 0, "hs_montant": 0, "primes": 0, "net": 0}
         cs = []
         for c in ind["contrats"]:
             debut = date_dsn(c["r"].get("001"))
@@ -314,7 +337,8 @@ def agreger(decl, siret, mois) -> dict:
                     continue
                 milli += min(1000, (2 * 1000 * q + ref) // (2 * ref))
             if complet:
-                R["etp_milli"] += min(1000, milli)
+                etp_ind = min(1000, milli)
+                R["etp_milli"] += etp_ind
             else:
                 R["etp_incomplet"] += 1
         elif any(c["debut"] <= L and (c["fin"] is None or c["fin"] >= L) for c in cs if c["r"].get("007") == "29"):
@@ -322,26 +346,34 @@ def agreger(decl, siret, mois) -> dict:
         for c in utiles:
             if F <= c["debut"] <= L and not any(o["debut"] < c["debut"] for o in utiles if o is not c):
                 R["entrees"][categorie_contrat(c["r"])] += 1
+                entree = True
         if not presents:
             finis = [c for c in utiles if c["fin"] is not None and F <= c["fin"] <= L]
             if finis:
-                R["sorties"][motif_sortie(max(finis, key=lambda c: c["fin"])["motif_fin"])] += 1
+                sortie = motif_sortie(max(finis, key=lambda c: c["fin"])["motif_fin"])
+                R["sorties"][sortie] += 1
         for rem in ind["remunerations"]:
             t = rem.get("011")
             mt = entier_echelle(rem.get("013"), "rémunération") or 0
             h = entier_echelle(rem.get("012"), "nombre d’heures") or 0
             if t == "001":
-                R["brut"] += mt
+                S["brut"] += mt
             elif t == "002":
-                R["heures_payees"] += h
+                S["heures"] += h
             elif t in ("017", "018"):
-                R["hs_heures"] += h
-                R["hs_montant"] += mt
+                S["hs_heures"] += h
+                S["hs_montant"] += mt
         for p in ind["primes"]:
-            R["primes"] += entier_echelle(p.get("002"), "prime") or 0
+            S["primes"] += entier_echelle(p.get("002"), "prime") or 0
         for v in ind["versements"]:
-            R["net_verse"] += entier_echelle(v.get("004"), "net versé") or 0
+            S["net"] += entier_echelle(v.get("004"), "net versé") or 0
             R["pas"] += entier_echelle(v.get("009"), "prélèvement à la source") or 0
+        R["brut"] += S["brut"]
+        R["heures_payees"] += S["heures"]
+        R["hs_heures"] += S["hs_heures"]
+        R["hs_montant"] += S["hs_montant"]
+        R["primes"] += S["primes"]
+        R["net_verse"] += S["net"]
         if ind["versements"]:
             R["salaries_payes"] += 1
         for c in utiles:
@@ -353,9 +385,24 @@ def agreger(decl, siret, mois) -> dict:
                 motif = a.get("001") or ""
                 cle = cle_arret(siret, iso(dernier), motif, iso(naissance) or "", sexe or "")
                 x = {"cle": cle, "motif": motif, "debut": iso(dernier + dt.timedelta(days=1)),
-                     "fin_prevue": iso(date_dsn(a.get("003"))), "reprise": iso(date_dsn(a.get("010")))}
+                     "fin_prevue": iso(date_dsn(a.get("003"))), "reprise": iso(date_dsn(a.get("010"))), "sal": sid}
                 if cle not in arrets or (x["reprise"] and not arrets[cle]["reprise"]):
                     arrets[cle] = x
+        if utiles:
+            if presents:
+                ref_c = min(presents, key=lambda c: c["debut"])
+            else:
+                avec_fin = [c for c in utiles if c["fin"] is not None]
+                ref_c = max(avec_fin, key=lambda c: c["fin"]) if avec_fin else min(utiles, key=lambda c: c["debut"])
+            rc = ref_c["r"]
+            R["salaries"].append({
+                "id": sid, "emploi": normaliser_emploi(rc.get("006")), "pcs": rc.get("004") or "", "statut": rc.get("002") or "",
+                "niveau": (rc.get("041") or "").strip(), "idcc": rc.get("017") or "", "cadre": rc.get("003") in ("01", "02"),
+                "contrat": categorie_contrat(rc), "sexe": "F" if sexe == "02" else "H" if sexe == "01" else "",
+                "age": annees_entre(naissance, L) if naissance and naissance <= L else None,
+                "anc_mois": mois_entre(min(c["debut"] for c in utiles), L),
+                "present": bool(presents), "complet": any(c["debut"] <= F for c in presents),
+                "entree": entree, "sortie": sortie, "etp_milli": etp_ind, **S})
     R["arrets"] = sorted(arrets.values(), key=lambda x: (x["debut"], x["cle"]))
     if sans_debut:
         R["alertes"].append(f"{sans_debut} contrat(s) sans date de début : ignoré(s)")

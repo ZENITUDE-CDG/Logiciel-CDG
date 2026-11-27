@@ -44,3 +44,26 @@ Les codes ci-dessous suivent la norme NEODeS ; **à confirmer sur le premier fic
 - Charges de personnel : comptes 64 (règle `DSN_REGLE_CHARGES`). Charges / CA, coût mensuel par ETP, charges par
   nuitée vendue (LN_VENDUES).
 - Turnover = ((entrées + sorties) ÷ 2) ÷ effectif moyen de la période.
+
+## Détail par salarié (lot 27, décision 0021)
+- Une ligne par individu ayant un contrat hors stage et mandat : `id` (SHA-256 de « SAL|SIREN|N:NIR », à défaut
+  « M:matricule », tronqué à 12 caractères), `emploi` (S21.G00.40.006, espaces réduits, majuscules), `pcs` (.004),
+  `statut` (.002), `niveau` (.041), `idcc` (.017), `cadre` (.003 = 01 ou 02), `contrat`, `sexe`, `age`, `anc_mois`
+  (depuis le plus ancien contrat déclaré), `present`, `complet` (contrat en cours du premier au dernier jour),
+  `entree`, `sortie` (motif), `etp_milli`, `brut`, `heures`, `hs_heures`, `hs_montant`, `primes`, `net`.
+- Contrat de référence : contrat en cours le plus ancien ; à défaut, le dernier terminé ; à défaut, le plus ancien.
+- Arrêts : la clé de l'arrêt porte en plus l'identifiant du salarié (`sal`).
+
+## Indicateurs du lot 27
+- Salaire brut temps plein d'un groupe = Σ brut ÷ Σ ETP (salariés présents tout le mois, ETP connu, brut > 0).
+  Part fixe = brut − heures supplémentaires − primes. Taux horaire = (brut − heures sup.) ÷ heures rémunérées.
+  Minimum, médiane, maximum : sur les salaires moyens individuels de la période.
+- Coût employeur = brut × (1 + comptes 645 et 647 ÷ comptes 641) de la résidence et du mois.
+- Productivité (par résidence et total) : CA, EBITDA, valeur ajoutée et comptes 64 par ETP (annualisés × 12),
+  charges de personnel / CA et / VA, nuitées par ETP, heures payées par nuitée, CA par heure payée.
+- Contrôles de paie : taux horaire hors heures sup. et primes sous le SMIC du mois (alternants exclus, tolérance
+  0,5 %) ; variation du salaire de base temps plein de plus de 25 % d'un mois sur l'autre ; plus de 20 h
+  supplémentaires ; CDD depuis 18 mois ou plus ; quotité sous 24 h par semaine ; contrat en cours sans brut ni net ;
+  arrêt de plus de 90 jours en cours.
+- Base budget : par résidence et par poste, effectif et ETP fin de période, base mensuelle par ETP, variables
+  mensuels par ETP, taux de charges réel, coût mensuel et annuel chargé.

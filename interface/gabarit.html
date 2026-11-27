@@ -689,8 +689,8 @@ var SOUS = {
   tresorerie: [["tr_position", "Position de trésorerie"], ["tr_banques", "Comptes bancaires"], ["tr_previsions", "Prévisions et virements"], ["tr_analyse", "Analyse du solde"], ["tr_creances", "Analyse des créances"], ["tr_dettes", "Analyse des dettes"]],
   ajustements: [["provisions", "Comptes et provisions"], ["lissage", "Lissage de postes"], ["ecarts", "Écarts Réel → Ajusté"]],
   comptabilite: [["cp_ca", "Chiffre d’affaires"], ["cp_parametrage", "Paramétrage des FEES"], ["cp_fees", "FEES à refacturer"]],
-  social: [["so_synthese", "Tableau de bord social"], ["so_effectifs", "Effectifs et mouvements"], ["so_absences", "Absentéisme"], ["so_controle", "Paie et comptabilité"]],
-  import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["so_import", "Import DSN"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
+  social: [["so_synthese", "Tableau de bord social"], ["so_effectifs", "Effectifs et mouvements"], ["so_remun", "Rémunérations"], ["so_absences", "Absentéisme"], ["so_productivite", "Productivité"], ["so_paie", "Contrôles de paie"], ["so_controle", "Paie et comptabilité"], ["so_budget", "Base budget"]],
+  import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["so_import", "Import DSN"], ["so_postes", "Référentiel des postes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
   residence: [["residence", "Résidence"]],
   budgets: [["budgets", "Budgets"]], rapports: [["claude", "Paquet pour Claude"], ["missions", "Missions Claude"], ["rapports", "Plaquettes"]]
 };
@@ -828,7 +828,7 @@ el("btn-reduire").addEventListener("click", function () { appliquerMenu(!el("app
 el("btn-burger").addEventListener("click", function (e) { e.stopPropagation(); el("app").classList.add("menu-ouvert"); });
 el("lat-voile").addEventListener("click", fermerTiroir);
 /* Lot 15 : la vue des comptes bancaires est réservée aux administrateurs (en ligne) ; lot 24 : prévisions et virements aussi. */
-var PAGES_ADMIN = ["tr_banques", "tr_previsions", "so_synthese", "so_effectifs", "so_absences", "so_controle", "so_import"]; /* lot 26 : données de paie */
+var PAGES_ADMIN = ["tr_banques", "tr_previsions", "so_synthese", "so_effectifs", "so_absences", "so_controle", "so_import", "so_remun", "so_productivite", "so_paie", "so_budget", "so_postes"]; /* lots 26 et 27 : données de paie */
 function sousVisibles(sec) { return SOUS[sec].filter(function (x) { return PAGES_ADMIN.indexOf(x[0]) < 0 || !enLigne() || estAdmin(); }); }
 function allerA(section, page) { if (PAGES_ADMIN.indexOf(page) >= 0 && enLigne() && !estAdmin()) page = null; etat.section = section; etat.page = page || SOUS[section][0][0]; etat.brouillon = null; fermerTiroir(); rendre(); }
 function dessinerMenu() {
@@ -1373,8 +1373,8 @@ function libFenetre() {
   var f = fenetre(), a = moisCourt(f[0]), b = moisCourt(f[f.length - 1]);
   return f.length === 1 ? moisLong(f[0]) : a + " → " + b;
 }
-var PAGES_PERIODE = ["so_synthese", "so_effectifs", "so_absences", "so_controle", "claude", "cp_ca", "synthese", "suivi", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
-var PAGES_SANS_VUE = ["so_synthese", "so_effectifs", "so_absences", "so_controle", "so_import", "claude", "cp_ca", "suivi", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_PERIODE = ["so_remun", "so_productivite", "so_paie", "so_budget", "so_synthese", "so_effectifs", "so_absences", "so_controle", "claude", "cp_ca", "synthese", "suivi", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_SANS_VUE = ["so_remun", "so_productivite", "so_paie", "so_budget", "so_postes", "so_synthese", "so_effectifs", "so_absences", "so_controle", "so_import", "claude", "cp_ca", "suivi", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
 function raccourcis(p) {
   var iD = idxMois(D.meta.dernier_mois_importe), an = String(D.meta.annee), n = MOIS.length;
   var r = [["Dernier mois importé", iD, iD + 1], ["12 derniers mois", Math.max(0, iD - 11), iD + 1]];
@@ -4568,6 +4568,9 @@ function dsnMotifSortie(c) {
   return "AUTRE";
 }
 function dsnMotifArret(c) { return c === "01" ? "MALADIE" : c === "04" || c === "05" || c === "06" ? "AT_MP" : c === "02" || c === "03" ? "PARENTALITE" : "AUTRE"; }
+function dsnPseudonyme(siren, r, rang) { var ident = r["001"] ? "N:" + r["001"] : r["019"] ? "M:" + r["019"] : "I:" + rang; return socleSha256(new TextEncoder().encode("SAL|" + siren + "|" + ident)).slice(0, 12); }
+function dsnNormEmploi(v) { return String(v || "").replace(/[ \t\n\r\f\v]+/g, " ").replace(/^ +| +$/g, "").toUpperCase(); }
+function dsnMoisEntre(a, b) { return (b.y - a.y) * 12 + (b.m - a.m) - (b.d < a.d ? 1 : 0); }
 function dsnCleArret(siret, dernier, motif, naissance, sexe) { return socleSha256(new TextEncoder().encode(siret + "|" + dernier + "|" + motif + "|" + naissance + "|" + sexe)).slice(0, 16); }
 function dsnLire(texte) {
   var decls = [], avert = [], cur = null, indiv = null, contrat = null, occ = null, precBloc = null, precRub = 0, nLignes = 0, total = {};
@@ -4624,15 +4627,16 @@ function dsnEntete(decl) {
 function dsnZeros(ks) { var o = {}; ks.forEach(function (k) { o[k] = 0; }); return o; }
 function dsnAgreger(decl, siret, mois) {
   var an = +mois.slice(0, 4), mo = +mois.slice(5), F = dsnJour(an, mo, 1), L = dsnFinMois(mois), effD = decl.s11["008"];
-  var R = { version: 1, nature: decl.s20["001"] === undefined ? null : decl.s20["001"], type: decl.s20["002"] === undefined ? null : decl.s20["002"],
+  var R = { version: 2, nature: decl.s20["001"] === undefined ? null : decl.s20["001"], type: decl.s20["002"] === undefined ? null : decl.s20["002"],
     effectif_declare: effD && DSN_RE_CHIFFRES.test(effD) ? parseInt(effD, 10) : null, effectif_fin: 0, stagiaires_fin: 0,
     categories: dsnZeros(DSN_CATEGORIES), femmes: 0, hommes: 0, cadres: 0, age_somme: 0, age_nb: 0, tranches_age: dsnZeros(DSN_TRANCHES_AGE),
     anciennete: dsnZeros(DSN_TRANCHES_ANC), etp_milli: 0, etp_incomplet: 0, entrees: dsnZeros(DSN_CATEGORIES), sorties: dsnZeros(DSN_MOTIFS_SORTIE),
-    brut: 0, net_verse: 0, pas: 0, primes: 0, cotisations_organismes: 0, heures_payees: 0, hs_heures: 0, hs_montant: 0, salaries_payes: 0, arrets: [], alertes: [] };
-  var sansDebut = 0, arrets = {}, ordre = [];
+    brut: 0, net_verse: 0, pas: 0, primes: 0, cotisations_organismes: 0, heures_payees: 0, hs_heures: 0, hs_montant: 0, salaries_payes: 0, arrets: [], alertes: [], salaries: [] };
+  var sansDebut = 0, arrets = {}, ordre = [], siren = decl.s06["001"] || "";
   decl.ops.forEach(function (o) { R.cotisations_organismes += dsnEntier(o["005"], "versement à un organisme") || 0; });
-  decl.individus.forEach(function (ind) {
-    var r = ind.r, sexe = r["005"], naissance = dsnDate(r["006"]), cs = [];
+  decl.individus.forEach(function (ind, rang) {
+    var r = ind.r, sexe = r["005"], naissance = dsnDate(r["006"]), cs = [], sid = dsnPseudonyme(siren, r, rang), etpInd = null, entree = false, sortie = null;
+    var S = { brut: 0, heures: 0, hs_heures: 0, hs_montant: 0, primes: 0, net: 0 };
     ind.contrats.forEach(function (c) {
       var debut = dsnDate(c.r["001"]); if (debut === null) { sansDebut += 1; return; }
       cs.push({ r: c.r, debut: debut, fin: c.fin ? dsnDate(c.fin["001"]) : null, motifFin: c.fin ? c.fin["002"] : undefined, arrets: c.arrets, hors: c.r["007"] === "29" || c.r["007"] === "80" });
@@ -4654,31 +4658,44 @@ function dsnAgreger(decl, siret, mois) {
         if (q === null || ref === null || ref <= 0 || q < 0) { complet = false; return; }
         milli += Math.min(1000, Math.floor((2 * 1000 * q + ref) / (2 * ref)));
       });
-      if (complet) R.etp_milli += Math.min(1000, milli); else R.etp_incomplet += 1;
+      if (complet) { etpInd = Math.min(1000, milli); R.etp_milli += etpInd; } else R.etp_incomplet += 1;
     } else if (cs.some(function (c) { return c.r["007"] === "29" && enCours(c); })) R.stagiaires_fin += 1;
     utiles.forEach(function (c) {
-      if (F.n <= c.debut.n && c.debut.n <= L.n && !utiles.some(function (o) { return o !== c && o.debut.n < c.debut.n; })) R.entrees[dsnCategorie(c.r)] += 1;
+      if (F.n <= c.debut.n && c.debut.n <= L.n && !utiles.some(function (o) { return o !== c && o.debut.n < c.debut.n; })) { R.entrees[dsnCategorie(c.r)] += 1; entree = true; }
     });
     if (!presents.length) {
       var finis = utiles.filter(function (c) { return c.fin !== null && F.n <= c.fin.n && c.fin.n <= L.n; });
-      if (finis.length) { var der = finis[0]; finis.forEach(function (c) { if (c.fin.n > der.fin.n) der = c; }); R.sorties[dsnMotifSortie(der.motifFin)] += 1; }
+      if (finis.length) { var der = finis[0]; finis.forEach(function (c) { if (c.fin.n > der.fin.n) der = c; }); sortie = dsnMotifSortie(der.motifFin); R.sorties[sortie] += 1; }
     }
     ind.remunerations.forEach(function (x) {
       var t = x["011"], mt = dsnEntier(x["013"], "rémunération") || 0, h = dsnEntier(x["012"], "nombre d’heures") || 0;
-      if (t === "001") R.brut += mt; else if (t === "002") R.heures_payees += h; else if (t === "017" || t === "018") { R.hs_heures += h; R.hs_montant += mt; }
+      if (t === "001") S.brut += mt; else if (t === "002") S.heures += h; else if (t === "017" || t === "018") { S.hs_heures += h; S.hs_montant += mt; }
     });
-    ind.primes.forEach(function (x) { R.primes += dsnEntier(x["002"], "prime") || 0; });
-    ind.versements.forEach(function (x) { R.net_verse += dsnEntier(x["004"], "net versé") || 0; R.pas += dsnEntier(x["009"], "prélèvement à la source") || 0; });
+    ind.primes.forEach(function (x) { S.primes += dsnEntier(x["002"], "prime") || 0; });
+    ind.versements.forEach(function (x) { S.net += dsnEntier(x["004"], "net versé") || 0; R.pas += dsnEntier(x["009"], "prélèvement à la source") || 0; });
+    R.brut += S.brut; R.heures_payees += S.heures; R.hs_heures += S.hs_heures; R.hs_montant += S.hs_montant; R.primes += S.primes; R.net_verse += S.net;
     if (ind.versements.length) R.salaries_payes += 1;
     utiles.forEach(function (c) {
       c.arrets.forEach(function (a) {
         var dernier = dsnDate(a["002"]);
         if (dernier === null) { R.alertes.push("arrêt de travail sans date du dernier jour travaillé : ignoré"); return; }
         var motif = a["001"] || "", cle = dsnCleArret(siret, dsnIso(dernier), motif, dsnIso(naissance) || "", sexe || "");
-        var x = { cle: cle, motif: motif, debut: dsnIso(dsnDeN(dernier.n + 1)), fin_prevue: dsnIso(dsnDate(a["003"])), reprise: dsnIso(dsnDate(a["010"])) };
+        var x = { cle: cle, motif: motif, debut: dsnIso(dsnDeN(dernier.n + 1)), fin_prevue: dsnIso(dsnDate(a["003"])), reprise: dsnIso(dsnDate(a["010"])), sal: sid };
         if (!arrets[cle]) { arrets[cle] = x; ordre.push(cle); } else if (x.reprise && !arrets[cle].reprise) arrets[cle] = x;
       });
     });
+    if (utiles.length) {
+      var refc;
+      if (presents.length) { refc = presents[0]; presents.forEach(function (c) { if (c.debut.n < refc.debut.n) refc = c; }); }
+      else { var af = utiles.filter(function (c) { return c.fin !== null; });
+        if (af.length) { refc = af[0]; af.forEach(function (c) { if (c.fin.n > refc.fin.n) refc = c; }); } else { refc = utiles[0]; utiles.forEach(function (c) { if (c.debut.n < refc.debut.n) refc = c; }); } }
+      var rc = refc.r, pr = utiles[0]; utiles.forEach(function (c) { if (c.debut.n < pr.debut.n) pr = c; });
+      R.salaries.push({ id: sid, emploi: dsnNormEmploi(rc["006"]), pcs: rc["004"] || "", statut: rc["002"] || "", niveau: (rc["041"] || "").replace(DSN_ESPACES, ""), idcc: rc["017"] || "",
+        cadre: rc["003"] === "01" || rc["003"] === "02", contrat: dsnCategorie(rc), sexe: sexe === "02" ? "F" : sexe === "01" ? "H" : "",
+        age: naissance && naissance.n <= L.n ? dsnAnnees(naissance, L) : null, anc_mois: dsnMoisEntre(pr.debut, L), present: presents.length > 0,
+        complet: presents.some(function (c) { return c.debut.n <= F.n; }), entree: entree, sortie: sortie, etp_milli: etpInd,
+        brut: S.brut, heures: S.heures, hs_heures: S.hs_heures, hs_montant: S.hs_montant, primes: S.primes, net: S.net });
+    }
   });
   R.arrets = ordre.map(function (k) { return arrets[k]; }).sort(function (a, b) { return a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.cle < b.cle ? -1 : a.cle > b.cle ? 1 : 0; });
   if (sansDebut) R.alertes.push(sansDebut + " contrat(s) sans date de début : ignoré(s)");
@@ -4719,18 +4736,18 @@ function dsnJoursArret(contenus, mois) {
 /* ---------- Stockage : en ligne dans la base (administrateurs), en local dans ce navigateur ---------- */
 function dsnMigration() { return !enLigne() || !!D.lot26; }
 function dsnCharger() {
-  if (enLigne()) DSN = { etablissements: (D.dsn_etablissements || []).slice(), mois: (D.dsn_mois || []).slice(), journal: (D.dsn_journal || []).slice() };
-  else { var x = null; try { x = JSON.parse(localStorage.getItem(DSN_LOCAL)); } catch (e) {} DSN = x || { etablissements: [], mois: [], journal: [] }; }
-  DSN_CACHE = null; DSN_COUPLES = {};
+  if (enLigne()) DSN = { etablissements: (D.dsn_etablissements || []).slice(), mois: (D.dsn_mois || []).slice(), journal: (D.dsn_journal || []).slice(), postes: (D.dsn_postes || []).slice() };
+  else { var x = null; try { x = JSON.parse(localStorage.getItem(DSN_LOCAL)); } catch (e) {} DSN = x || { etablissements: [], mois: [], journal: [], postes: [] }; DSN.postes = DSN.postes || []; }
+  DSN_CACHE = null; DSN_COUPLES = {}; DSN_OBS = {};
 }
 function dsnSauverLocal() { try { localStorage.setItem(DSN_LOCAL, JSON.stringify(DSN)); } catch (e) { throw new Error("Stockage du navigateur plein : la démonstration locale ne peut pas garder ces DSN."); } }
 function dsnJournalLocal(action, siret, mois, dossier, detail) { DSN.journal.unshift({ id: Date.now() + Math.random(), action: action, siret: siret, mois: mois || null, dossier: dossier || null, detail: detail || "", par: etat.utilisateur ? etat.utilisateur.mail : "", le: new Date().toISOString() }); }
 function dsnRecharger() {
-  if (!enLigne()) { dsnSauverLocal(); DSN_CACHE = null; DSN_COUPLES = {}; return Promise.resolve(); }
+  if (!enLigne()) { dsnSauverLocal(); DSN_CACHE = null; DSN_COUPLES = {}; DSN_OBS = {}; return Promise.resolve(); }
   return Promise.all([lireOuNull(ZCLIENT.from("dsn_etablissements").select("*").order("siret")),
     lireTout(function () { return ZCLIENT.from("dsn_mois").select("*").order("siret").order("mois"); }, true),
-    lireFacultatif(ZCLIENT.from("dsn_journal").select("*").order("id", { ascending: false }).limit(500))]).then(function (r) {
-    D.lot26 = r[0] !== null && r[1] !== null; D.dsn_etablissements = r[0] || []; D.dsn_mois = r[1] || []; D.dsn_journal = r[2] || []; dsnCharger();
+    lireFacultatif(ZCLIENT.from("dsn_journal").select("*").order("id", { ascending: false }).limit(500)), lireOuNull(ZCLIENT.from("dsn_postes").select("*").order("emploi"))]).then(function (r) {
+    D.lot26 = r[0] !== null && r[1] !== null; D.dsn_etablissements = r[0] || []; D.dsn_mois = r[1] || []; D.dsn_journal = r[2] || []; D.lot27 = r[3] !== null; D.dsn_postes = r[3] || []; dsnCharger();
   });
 }
 function dsnAgir(enBase, enLocal) {
@@ -5133,6 +5150,330 @@ PAGES.so_import = function (p) {
   var g = el("so-enregistrer"); if (g) g.addEventListener("click", dsnEnregistrer);
   var s = el("so-sup-go"); if (s) s.addEventListener("click", function () { var v = el("so-sup").value.split("|"); if (confirm("Supprimer la DSN de " + moisLong(v[1]) + " (SIRET " + v[0] + ") ?")) dsnSupprimer(v[0], v[1]); });
   el("contenu").querySelectorAll("[data-voir-plus]").forEach(function (b) { b.addEventListener("click", function () { etat[b.dataset.voirPlus] = !etat[b.dataset.voirPlus]; majContenu(); }); });
+};
+
+/* ======================================================================================
+   Lot 27 (décision 0021) : analyse détaillée des salaires et indicateurs de pilotage.
+   Chaque DSN importée garde, en plus des totaux, une ligne pseudonymisée par salarié (identifiant tronqué, sans
+   nom, NIR ni date de naissance) : emploi, niveau, statut, contrat, âge, ancienneté, ETP, brut, heures, primes.
+   - Référentiel des postes : libellés d'emploi Silae -> poste standard et famille (administrateurs).
+   - Rémunérations : salaire mensuel brut ramené au temps plein par poste, famille, niveau, statut ou contrat,
+     croisé avec l'ancienneté, le niveau ou la résidence ; égalité femmes-hommes ; nuage salaire / ancienneté.
+   - Productivité : CA, EBITDA et valeur ajoutée par ETP, charges de personnel / VA, heures par nuitée.
+   - Contrôles de paie : SMIC, variations, heures supplémentaires, CDD longs, temps partiel, salariés non payés.
+   - Base budget : masse salariale réelle par résidence et par poste (aucune hypothèse), point de départ du budget.
+   ====================================================================================== */
+var DSN_FAMILLES = ["Direction", "Réception", "Hébergement et ménage", "Restauration", "Maintenance", "Soins et animation", "Commercial", "Administratif", "Autre"];
+var DSN_FAMILLE_MOTS = [["DIRECT", "Direction"], ["GERANT", "Direction"], ["RECEP", "Réception"], ["VEILL", "Réception"], ["CHAMBRE", "Hébergement et ménage"], ["MENAG", "Hébergement et ménage"],
+  ["GOUVERN", "Hébergement et ménage"], ["LINGE", "Hébergement et ménage"], ["ENTRETIEN", "Hébergement et ménage"], ["MAINT", "Maintenance"], ["TECHNI", "Maintenance"], ["SERVEU", "Restauration"],
+  ["CUISIN", "Restauration"], ["PLONG", "Restauration"], ["BARMAN", "Restauration"], ["RESTAU", "Restauration"], ["COMMIS", "Restauration"], ["VIE", "Soins et animation"], ["SOIN", "Soins et animation"],
+  ["ANIMAT", "Soins et animation"], ["AIDE", "Soins et animation"], ["COMMERC", "Commercial"], ["VENTE", "Commercial"], ["COMPTA", "Administratif"], ["ASSIST", "Administratif"], ["ADMIN", "Administratif"]];
+var DSN_STATUTS_CONV = { "01": "Cadre dirigeant", "02": "Autre cadre (art. 4 et 4 bis)", "03": "Cadre (art. 36)", "04": "Autre cadre (convention)", "05": "Profession intermédiaire", "06": "Employé administratif", "07": "Ouvrier qualifié", "08": "Ouvrier non qualifié", "09": "Agriculture", "10": "Autre", "90": "Pas de statut" };
+/* SMIC horaire brut (métropole) en centimes, par date d'effet. Sources : service-public.gouv.fr, info.gouv.fr (à tenir à jour). */
+var DSN_SMIC = [["2024-01", 1165], ["2024-11", 1188], ["2026-01", 1202], ["2026-06", 1231]];
+var DSN_SEUILS = { variation: 0.25, hs_heures: 2000, cdd_mois: 18, temps_partiel_heures: 10400, arret_jours: 90 };
+var DSN_CHARGES_SOCIALES = { inclus: ["645", "647"], exclus: [] };
+var DSN_TRANCHES_ANC_MOIS = [["<1", 0, 12], ["1-3", 12, 36], ["3-10", 36, 120], ["10+", 120, 1e9]];
+
+function dsnSansAccents(t) { return String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+/* Poste et famille d'un libellé d'emploi : référentiel, sinon proposition automatique (accents et « H/F » retirés). */
+function dsnPoste(emploi) {
+  var x = (DSN.postes || []).find(function (p) { return p.emploi === emploi; });
+  if (x) return { poste: x.poste, famille: x.famille, regle: true };
+  var p = dsnSansAccents(emploi).replace(/\s*\(?\bH\s*\/\s*F\b\)?\s*/g, " ").replace(/\s+/g, " ").trim() || "SANS LIBELLE", f = "Autre";
+  for (var i = 0; i < DSN_FAMILLE_MOTS.length; i++) if (p.indexOf(DSN_FAMILLE_MOTS[i][0]) >= 0) { f = DSN_FAMILLE_MOTS[i][1]; break; }
+  return { poste: p, famille: f, regle: false };
+}
+function dsnSmic(m) { var v = null; DSN_SMIC.forEach(function (x) { if (x[0] <= m) v = x[1]; }); return v; }
+function dsnTrancheAncMois(n) { var t = DSN_TRANCHES_ANC_MOIS.find(function (x) { return n >= x[1] && n < x[2]; }); return t ? t[0] : "10+"; }
+
+/* ---------- Observations salarié-mois ---------- */
+var DSN_OBS = {};
+function dsnObs(ds, ms) {
+  var cle = ds.join(",") + "|" + ms.join(",") + "|" + (DSN.postes || []).length; if (DSN_OBS[cle]) return DSN_OBS[cle];
+  var out = [];
+  ds.forEach(function (d) { ms.forEach(function (m) { var c = dsnCouple(d, m); if (!c) return;
+    c.lignes.forEach(function (r) { (r.contenu.salaries || []).forEach(function (s) { var P = dsnPoste(s.emploi); out.push({ d: d, m: m, siret: r.siret, s: s, poste: P.poste, famille: P.famille }); }); }); }); });
+  return (DSN_OBS[cle] = out);
+}
+function dsnDetailManquant(ds, ms) { var n = 0; ds.forEach(function (d) { ms.forEach(function (m) { var c = dsnCouple(d, m); if (c) c.lignes.forEach(function (r) { if (!r.contenu.salaries) n++; }); }); }); return n; }
+function dsnTauxCharges(d, m) { var a = dsnCompta(d, m, DSN_CHARGES_SOCIALES), b = dsnCompta(d, m, DSN_REGLE_BRUT); return a === null || !b ? null : a / b; }
+var DSN_DIMS = { poste: ["Poste", function (o) { return o.poste; }], famille: ["Famille", function (o) { return o.famille; }],
+  niveau: ["Niveau", function (o) { return o.s.niveau || "non déclaré"; }], statut: ["Statut", function (o) { return DSN_STATUTS_CONV[o.s.statut] || (o.s.statut ? "Statut " + o.s.statut : "non déclaré"); }],
+  contrat: ["Contrat", function (o) { return DSN_LIB[o.s.contrat] || o.s.contrat; }], anciennete: ["Ancienneté", function (o) { return DSN_LIB[dsnTrancheAncMois(o.s.anc_mois)]; }],
+  residence: ["Résidence", function (o) { return nomResidence(o.d); }] };
+/* Statistiques d'un groupe : salariés présents tout le mois, ETP connu (salaire ramené au temps plein). */
+function dsnStats(obs) {
+  var R = { n: 0, obs: 0, brut: 0, fixe: 0, etp: 0, heures: 0, brutH: 0, hs: 0, charge: 0, brutCharge: 0, ancSomme: 0, ageSomme: 0, ageN: 0, f: 0, femmes: { b: 0, e: 0 }, hommes: { b: 0, e: 0 }, parSal: {} };
+  obs.forEach(function (o) {
+    var s = o.s; if (!s.complet || !s.etp_milli || s.brut <= 0) return;
+    var e = s.etp_milli / 1000; R.obs++; R.brut += s.brut; R.fixe += s.brut - s.hs_montant - s.primes; R.etp += e; R.hs += s.hs_heures;
+    if (s.heures > 0) { R.heures += s.heures; R.brutH += s.brut - s.hs_montant; }
+    var t = dsnTauxCharges(o.d, o.m); if (t !== null) { R.charge += s.brut * (1 + t); R.brutCharge += s.brut; }
+    var x = R.parSal[s.id]; if (!x) { x = R.parSal[s.id] = { b: 0, e: 0, anc: s.anc_mois, age: s.age, sexe: s.sexe, d: o.d, niveau: s.niveau, poste: o.poste, contrat: s.contrat, h: 0, hs: 0, n: 0 }; }
+    x.b += s.brut; x.e += e; x.anc = s.anc_mois; x.age = s.age; x.h += s.heures; x.hs += s.hs_heures; x.n++;
+    var g = s.sexe === "F" ? R.femmes : s.sexe === "H" ? R.hommes : null; if (g) { g.b += s.brut; g.e += e; }
+  });
+  var sal = Object.keys(R.parSal).map(function (k) { var x = R.parSal[k]; x.id = k; x.moy = x.b / x.e; return x; });
+  R.n = sal.length; R.sal = sal;
+  if (!R.n) return R;
+  var v = sal.map(function (x) { return x.moy; }).sort(function (a, b) { return a - b; });
+  var q = function (p) { var i = (v.length - 1) * p, a = Math.floor(i), b = Math.ceil(i); return v[a] + (v[b] - v[a]) * (i - a); };
+  R.moy = R.brut / R.etp; R.fixeMoy = R.fixe / R.etp; R.med = q(0.5); R.min = v[0]; R.max = v[v.length - 1]; R.p10 = q(0.1); R.p90 = q(0.9);
+  R.horaire = R.heures ? R.brutH / (R.heures / 100) : null; R.hsEtp = R.hs / R.etp;
+  sal.forEach(function (x) { R.ancSomme += x.anc; if (x.age !== null) { R.ageSomme += x.age; R.ageN++; } if (x.sexe === "F") R.f++; });
+  R.anc = R.ancSomme / R.n / 12; R.age = R.ageN ? R.ageSomme / R.ageN : null; R.partF = R.f / R.n;
+  R.coutMoy = R.brutCharge ? R.moy * (R.charge / R.brutCharge) : null;
+  R.ecartFH = R.femmes.e && R.hommes.e ? (R.femmes.b / R.femmes.e) / (R.hommes.b / R.hommes.e) - 1 : null;
+  return R;
+}
+function dsnGrouper(obs, dim) { var g = {}, f = DSN_DIMS[dim][1]; obs.forEach(function (o) { var k = f(o); (g[k] = g[k] || []).push(o); }); return g; }
+function dsnEur(c) { return c === null || c === undefined || !isFinite(c) ? "–" : eurC(Math.round(c)); }
+function dsnEur2(c) { return c === null || c === undefined || !isFinite(c) ? "–" : (c / 100).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\u202f|\u00a0/g, " ") + " €"; }
+function dsnBlocDetail(ds, ms) {
+  var n = dsnDetailManquant(ds, ms);
+  return n ? '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div>' + n + " DSN importée" + (n > 1 ? "s" : "") + " avant le lot 27 n’ont pas le détail par salarié : réimportez-les (Import DSN) pour les inclure.</div></div>" : "";
+}
+
+/* ---------- Rémunérations ---------- */
+function dsnSelect(id, val, opts) { return '<select id="' + id + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === val ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select>"; }
+PAGES.so_remun = function (p) {
+  var ms = fenetre(), ds = p.dossiers, dim = etat.soDim || "poste", col = etat.soCol || "anciennete";
+  var outils = '<label for="so-dim">Regrouper par ' + dsnSelect("so-dim", dim, [["poste", "Poste"], ["famille", "Famille"], ["niveau", "Niveau"], ["statut", "Statut"], ["contrat", "Contrat"]]) + "</label>";
+  var h = enTete("Rémunérations", p, "Salaires bruts mensuels ramenés au temps plein, " + libMois(ms), outils);
+  if (!dsnPrealables(h, ds)) return;
+  h += dsnBlocDetail(ds, ms);
+  var obs = dsnObs(ds, ms), T = dsnStats(obs), G = dsnGrouper(obs, dim);
+  if (!T.n) { el("contenu").innerHTML = h + blocNC("Aucun salarié présent tout le mois avec une quotité connue sur la période."); dsnBrancherRemun(); return; }
+  h += '<div class="ruban">' + [carte("Salaire brut moyen (temps plein)", dsnEur(T.moy), "Brut ÷ ETP, salariés présents tout le mois, " + nb(T.n) + " salariés", false, { t: "sal", dim: "tous", v: "", d: ds, m: ms }),
+    carte("Salaire médian", dsnEur(T.med), "Médiane des salaires moyens individuels ramenés au temps plein"),
+    carte("Part fixe", dsnEur(T.fixeMoy), "Brut hors heures supplémentaires et primes, par ETP"),
+    carte("Taux horaire moyen", dsnEur2(T.horaire), "Brut hors heures supplémentaires ÷ heures rémunérées"),
+    carte("Coût employeur moyen", dsnEur(T.coutMoy), "Brut × (1 + comptes 645 et 647 ÷ comptes 641 de la résidence et du mois)", T.coutMoy === null),
+    carte("Écart femmes-hommes", T.ecartFH === null ? "" : (T.ecartFH >= 0 ? "+" : "") + pct1(T.ecartFH), "Salaire moyen temps plein des femmes comparé à celui des hommes, tous postes confondus (effet de structure compris)", T.ecartFH === null)].join("") + "</div>";
+  var cles = Object.keys(G).map(function (k) { return { k: k, S: dsnStats(G[k]) }; }).filter(function (x) { return x.S.n; }).sort(function (a, b) { return b.S.moy - a.S.moy; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par ' + esc(DSN_DIMS[dim][0].toLowerCase()) + '</h2><span class="legende">Cliquez une ligne pour les salariés (pseudonymes)</span></div><div class="defile"><table class="tab"><thead><tr><th>' + esc(DSN_DIMS[dim][0]) +
+    '</th><th class="num">Salariés</th><th class="num">ETP moyen</th><th class="num">Brut moyen</th><th class="num">Part fixe</th><th class="num">Min</th><th class="num">Médiane</th><th class="num">Max</th><th class="num">Taux horaire</th><th class="num">H. sup. / ETP / mois</th><th class="num">Ancienneté</th><th class="num">Âge</th><th class="num">Femmes</th><th class="num">Coût employeur</th></tr></thead><tbody>';
+  var ligne = function (lib, S, spec, total) {
+    return "<tr" + (total ? ' class="bq-total bq-grand"' : "") + (spec ? xa(spec) : "") + "><td><b>" + esc(lib) + '</b></td><td class="num">' + nb(S.n) + '</td><td class="num">' + dsnFmt("dec1", S.etp / Math.max(1, ms.filter(function (m) { return dsnMoisAvec(ds, [m]).length; }).length)) +
+      '</td><td class="num"><b>' + dsnEur(S.moy) + '</b></td><td class="num">' + dsnEur(S.fixeMoy) + '</td><td class="num">' + dsnEur(S.min) + '</td><td class="num">' + dsnEur(S.med) + '</td><td class="num">' + dsnEur(S.max) + '</td><td class="num">' + dsnEur2(S.horaire) +
+      '</td><td class="num">' + dsnFmt("dec1", S.hsEtp / 100) + ' h</td><td class="num">' + dsnFmt("dec1", S.anc) + ' ans</td><td class="num">' + (S.age === null ? "–" : dsnFmt("dec1", S.age)) + '</td><td class="num">' + pct1(S.partF) + '</td><td class="num">' + dsnEur(S.coutMoy) + "</td></tr>";
+  };
+  cles.forEach(function (x) { h += ligne(x.k, x.S, { t: "sal", dim: dim, v: x.k, d: ds, m: ms }); });
+  h += ligne("Ensemble", T, { t: "sal", dim: "tous", v: "", d: ds, m: ms }, true);
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Brut moyen = somme des bruts ÷ somme des ETP (salariés présents tout le mois, mois par mois). Minimum, médiane et maximum : salaires moyens individuels ramenés au temps plein. Coût employeur : taux de charges réel de la résidence et du mois (comptes 645 et 647 ÷ 641 dans Pennylane).</p></div>';
+  /* Matrice */
+  var colonnes = col === "anciennete" ? DSN_TRANCHES_ANC.map(function (k) { return DSN_LIB[k]; }) : Object.keys(dsnGrouper(obs, col)).sort();
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Salaire brut moyen temps plein : ' + esc(DSN_DIMS[dim][0].toLowerCase()) + " × " + '<span style="font-weight:400">' + dsnSelect("so-col", col, [["anciennete", "ancienneté"], ["niveau", "niveau"], ["residence", "résidence"], ["contrat", "contrat"]]) +
+    '</span></h2><span class="legende">Entre parenthèses : nombre de salariés</span></div><div class="defile"><table class="tab"><thead><tr><th>' + esc(DSN_DIMS[dim][0]) + "</th>" + colonnes.map(function (c) { return '<th class="num">' + esc(c) + "</th>"; }).join("") + "</tr></thead><tbody>";
+  cles.forEach(function (x) { var sous = dsnGrouper(G[x.k], col);
+    h += "<tr><td><b>" + esc(x.k) + "</b></td>" + colonnes.map(function (c) { var S = sous[c] ? dsnStats(sous[c]) : null;
+      return '<td class="num"' + (S && S.n ? xa({ t: "sal", dim: dim, v: x.k, dim2: col, v2: c, d: ds, m: ms }) : "") + ">" + (S && S.n ? dsnEur(S.moy) + ' <span class="mut">(' + S.n + ")</span>" : '<span class="mut">–</span>') + "</td>"; }).join("") + "</tr>"; });
+  h += "</tbody></table></div></div>";
+  /* Égalité femmes-hommes par groupe */
+  var eg = cles.filter(function (x) { return x.S.ecartFH !== null; });
+  if (eg.length) h += '<div class="bloc"><div class="bloc-tete"><h2>Égalité femmes-hommes</h2><span class="legende">Groupes comptant des femmes et des hommes</span></div><div class="defile"><table class="tab"><thead><tr><th>' + esc(DSN_DIMS[dim][0]) + '</th><th class="num">Femmes</th><th class="num">Brut moyen femmes</th><th class="num">Hommes</th><th class="num">Brut moyen hommes</th><th class="num">Écart</th></tr></thead><tbody>' +
+    eg.map(function (x) { var S = x.S, nf = S.sal.filter(function (s) { return s.sexe === "F"; }).length, nh = S.sal.filter(function (s) { return s.sexe === "H"; }).length;
+      return "<tr><td>" + esc(x.k) + '</td><td class="num">' + nf + '</td><td class="num">' + dsnEur(S.femmes.b / S.femmes.e) + '</td><td class="num">' + nh + '</td><td class="num">' + dsnEur(S.hommes.b / S.hommes.e) + '</td><td class="num">' +
+        '<span class="pastille ' + (Math.abs(S.ecartFH) > 0.05 ? "att" : "ok") + '">' + (S.ecartFH >= 0 ? "+" : "") + pct1(S.ecartFH) + "</span></td></tr>"; }).join("") + "</tbody></table></div></div>";
+  /* Nuage salaire / ancienneté */
+  var sel = etat.soNuage && G[etat.soNuage] ? etat.soNuage : cles[0].k, Sn = dsnStats(G[sel]);
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Salaire et ancienneté</h2><label for="so-nuage">' + dsnSelect("so-nuage", sel, cles.map(function (x) { return [x.k, x.k]; })) + "</label></div>" + dsnNuage(Sn.sal) +
+    '<p class="legende" style="margin:6px 0 0"><i class="case" style="background:' + ORANGE + '"></i> Femmes &nbsp; <i class="case" style="background:' + BLEU + '"></i> Hommes. Chaque point est un salarié (salaire moyen temps plein de la période).</p></div>';
+  el("contenu").innerHTML = h;
+  dsnBrancherRemun();
+};
+function dsnBrancherRemun() {
+  [["so-dim", "soDim"], ["so-col", "soCol"], ["so-nuage", "soNuage"]].forEach(function (x) { var s = el(x[0]); if (s) s.addEventListener("change", function () { etat[x[1]] = s.value; majContenu(); }); });
+}
+function dsnNuage(sal) {
+  if (!sal.length) return '<p class="legende">Aucun salarié.</p>';
+  var W = 640, H = 260, g = 56, d = 12, hh = 12, b = 30, xs = sal.map(function (x) { return x.anc / 12; }), ys = sal.map(function (x) { return x.moy / 100; });
+  var xM = Math.max(1, Math.max.apply(null, xs)) * 1.05, yMin = Math.min.apply(null, ys) * 0.95, yMax = Math.max.apply(null, ys) * 1.05; if (yMax === yMin) yMax = yMin + 1;
+  var X = function (v) { return g + (W - g - d) * v / xM; }, Y = function (v) { return hh + (H - hh - b) * (1 - (v - yMin) / (yMax - yMin)); };
+  var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Salaire et ancienneté" style="width:100%;max-width:760px">';
+  for (var t = 0; t <= 3; t++) { var vv = yMin + (yMax - yMin) * t / 3; s += '<line x1="' + g + '" x2="' + (W - d) + '" y1="' + Y(vv) + '" y2="' + Y(vv) + '" stroke="var(--bord)" stroke-dasharray="2 3"/><text x="' + (g - 6) + '" y="' + (Y(vv) + 3) + '" font-size="9" text-anchor="end" fill="var(--faible)">' + kEur(vv) + " €</text>"; }
+  for (t = 0; t <= 4; t++) { var xv = xM * t / 4; s += '<text x="' + X(xv) + '" y="' + (H - 12) + '" font-size="9" text-anchor="middle" fill="var(--faible)">' + Math.round(xv) + " an" + (Math.round(xv) > 1 ? "s" : "") + "</text>"; }
+  sal.forEach(function (x, i) { s += '<circle cx="' + X(xs[i]).toFixed(1) + '" cy="' + Y(ys[i]).toFixed(1) + '" r="4" fill="' + (x.sexe === "F" ? ORANGE : BLEU) + '" fill-opacity="0.75"><title>' + esc(x.id.slice(0, 6) + " · " + nomResidence(x.d) + " · " + dsnFmt("dec1", xs[i]) + " ans · " + eur(ys[i]) + (x.niveau ? " · " + x.niveau : "")) + "</title></circle>"; });
+  return s + "</svg>";
+}
+EXPLIQUER.sal = function (s) {
+  var obs = dsnObs(s.d, s.m);
+  if (s.dim !== "tous") obs = obs.filter(function (o) { return DSN_DIMS[s.dim][1](o) === s.v; });
+  if (s.dim2) obs = obs.filter(function (o) { return DSN_DIMS[s.dim2][1](o) === s.v2; });
+  var S = dsnStats(obs), lib = s.dim === "tous" ? "Ensemble des salariés" : s.v + (s.dim2 ? " · " + s.v2 : "");
+  return { titre: "Salaire brut moyen temps plein", sous: lib + ", " + libPerim(s.d) + ", " + libMois(s.m), valeur: S.n ? dsnEur(S.moy) : "non calculable",
+    formule: "Somme des bruts ÷ somme des ETP, salariés présents tout le mois (" + nb(S.obs) + " salarié-mois)", partsTitre: "Salariés (pseudonymes)",
+    parts: S.n ? S.sal.sort(function (a, b) { return b.moy - a.moy; }).map(function (x) { return { lib: x.id.slice(0, 6) + " · " + nomResidence(x.d) + " · " + x.poste + (x.niveau ? " · " + x.niveau : "") + " · " + DSN_LIB[x.contrat] + " · " + dsnFmt("dec1", x.anc / 12) + " ans d’ancienneté · " + x.n + " mois", val: dsnEur(x.moy) }; }) : [],
+    notes: ["Identifiants pseudonymes : ils relient les mois d’un même salarié sans révéler son identité. Le nom se retrouve dans Silae si besoin."] };
+};
+
+/* ---------- Productivité ---------- */
+function dsnTab(d, m, vue, code) {
+  if (!(COMPTA[d] || {})[m]) return null;
+  var V = vue === "sig" ? D.lignes_sig : D.lignes_ebitda, v = tableauJS(V, [d], [m], false, vue === "sig" ? VUES_FIN.sig.ratio : VUES_FIN.ebitda.ratio).total[code];
+  return v === NC || v === null || v === undefined ? null : v;
+}
+function dsnRatioEtp(k, ds, ms) {
+  var num = 0, den = 0, n = 0, f = { ca: function (d, m) { return dsnValeur("ca", d, m); }, ebitda: function (d, m) { return dsnTab(d, m, "ebitda", "EBITDA"); }, va: function (d, m) { return dsnTab(d, m, "sig", "VA"); },
+    ms64: function (d, m) { return dsnValeur("ms64", d, m); }, nuitees: function (d, m) { return dsnNuitees(d, m); } }[k];
+  ds.forEach(function (d) { ms.forEach(function (m) { var e = dsnValeur("etp", d, m), v = f(d, m); if (e === null || v === null || !e) return; num += v; den += e / 1000; n++; }); });
+  return n && den ? num / den : null;
+}
+function dsnRatioSimple(fa, fb, ds, ms) { var a = 0, b = 0, n = 0; ds.forEach(function (d) { ms.forEach(function (m) { var x = fa(d, m), y = fb(d, m); if (x === null || y === null) return; a += x; b += y; n++; }); }); return n && b ? a / b : null; }
+function dsnProdLigne(ds, ms) {
+  var R = {};
+  R.etpMoy = (function () { var t = 0, n = 0; ds.forEach(function (d) { var s = 0, k = 0; ms.forEach(function (m) { var e = dsnValeur("etp", d, m); if (e !== null) { s += e; k++; } }); if (k) { t += s / k / 1000; n++; } }); return n ? t : null; })();
+  R.caEtp = dsnRatioEtp("ca", ds, ms); R.ebitdaEtp = dsnRatioEtp("ebitda", ds, ms); R.vaEtp = dsnRatioEtp("va", ds, ms); R.coutEtp = dsnRatioEtp("ms64", ds, ms); R.nuitEtp = dsnRatioEtp("nuitees", ds, ms);
+  R.msVa = dsnRatioSimple(function (d, m) { return dsnValeur("ms64", d, m); }, function (d, m) { return dsnTab(d, m, "sig", "VA"); }, ds, ms);
+  R.msCa = dsnRatioSimple(function (d, m) { return dsnValeur("ms64", d, m); }, function (d, m) { return dsnValeur("ca", d, m); }, ds, ms);
+  R.hNuit = dsnRatioSimple(function (d, m) { var c = dsnCouple(d, m); return c ? c.heures_payees / 100 : null; }, function (d, m) { var v = dsnNuitees(d, m); return v ? v : null; }, ds, ms);
+  R.caHeure = dsnRatioSimple(function (d, m) { return dsnValeur("ca", d, m); }, function (d, m) { var c = dsnCouple(d, m); return c && c.heures_payees ? c.heures_payees / 100 : null; }, ds, ms);
+  return R;
+}
+var DSN_PROD = { etpMoy: ["ETP moyen", "Moyenne des ETP fin de mois importés, par résidence, additionnée"], caEtp: ["CA par ETP (annuel)", "Chiffre d’affaires ÷ ETP fin de mois, sommés sur les mois où les deux existent, × 12"],
+  ebitdaEtp: ["EBITDA par ETP (annuel)", "EBITDA ÷ ETP, sommés sur les mois où les deux existent, × 12"], vaEtp: ["Valeur ajoutée par ETP (annuelle)", "Valeur ajoutée (SIG) ÷ ETP, × 12"],
+  coutEtp: ["Coût de personnel par ETP (annuel)", "Comptes 64 ÷ ETP, × 12"], msCa: ["Charges de personnel / CA", "Comptes 64 ÷ chiffre d’affaires"], msVa: ["Charges de personnel / VA", "Comptes 64 ÷ valeur ajoutée"],
+  nuitEtp: ["Nuitées vendues par ETP et par mois", "Nuitées vendues ÷ ETP"], hNuit: ["Heures payées par nuitée vendue", "Heures rémunérées (DSN) ÷ nuitées vendues"], caHeure: ["CA par heure payée", "Chiffre d’affaires ÷ heures rémunérées (DSN)"] };
+function dsnProdFmt(k, v) { return ["caEtp", "ebitdaEtp", "vaEtp", "coutEtp"].indexOf(k) >= 0 ? dsnEur(v * 12) : k === "msCa" || k === "msVa" ? pct1(v) : k === "caHeure" ? dsnEur2(v) : k === "hNuit" ? dsnFmt("dec1", v) + " h" : dsnFmt("dec1", v); }
+EXPLIQUER.prod = function (s) {
+  var v = dsnProdLigne(s.d, s.m)[s.k], parts = [];
+  if (s.d.length > 1) s.d.forEach(function (d) { var x = dsnProdLigne([d], s.m)[s.k]; parts.push({ lib: nomResidence(d), val: x === null ? "–" : dsnProdFmt(s.k, x), spec: x === null ? null : { t: "prod", k: s.k, d: [d], m: s.m } }); });
+  else if (s.m.length > 1 && s.k !== "etpMoy") s.m.forEach(function (m) { var x = dsnProdLigne(s.d, [m])[s.k]; parts.push({ lib: moisLong(m), val: x === null ? "–" : dsnProdFmt(s.k, x), spec: x === null ? null : { t: "prod", k: s.k, d: s.d, m: [m] } }); });
+  return { titre: DSN_PROD[s.k][0], sous: libPerim(s.d) + ", " + libMois(s.m), valeur: v === null ? "non calculable" : dsnProdFmt(s.k, v), formule: DSN_PROD[s.k][1], partsTitre: s.d.length > 1 ? "Résidences" : "Mois", parts: parts,
+    notes: ["Ratio de sommes sur les seuls mois où les deux termes existent : le total n’est pas la moyenne des lignes."] };
+};
+PAGES.so_productivite = function (p) {
+  var ms = fenetre(), ds = p.dossiers, h = enTete("Productivité", p, "Activité et résultat rapportés aux effectifs DSN, " + libMois(ms));
+  if (!dsnPrealables(h, ds)) return;
+  var T = dsnProdLigne(ds, ms), an = function (v) { return v === null ? "" : dsnEur(v * 12); };
+  h += '<div class="ruban">' + [carte("CA par ETP", an(T.caEtp), "Par an : chiffre d’affaires ÷ ETP fin de mois, sommés sur les mois où les deux existent, × 12", T.caEtp === null),
+    carte("EBITDA par ETP", an(T.ebitdaEtp), "Par an : EBITDA (compte de résultat de gestion) ÷ ETP, × 12", T.ebitdaEtp === null),
+    carte("Valeur ajoutée par ETP", an(T.vaEtp), "Par an : valeur ajoutée (soldes intermédiaires de gestion) ÷ ETP, × 12", T.vaEtp === null),
+    carte("Coût de personnel par ETP", an(T.coutEtp), "Par an : comptes 64 ÷ ETP, × 12", T.coutEtp === null),
+    carte("Charges de personnel / VA", T.msVa === null ? "" : pct1(T.msVa), "Part de la valeur ajoutée absorbée par le personnel", T.msVa === null),
+    carte("Heures payées par nuitée vendue", T.hNuit === null ? "" : dsnFmt("dec1", T.hNuit) + " h", "Heures rémunérées (DSN) ÷ nuitées vendues", T.hNuit === null),
+    carte("CA par heure payée", T.caHeure === null ? "" : dsnEur2(T.caHeure), "Chiffre d’affaires ÷ heures rémunérées (DSN)", T.caHeure === null)].join("") + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par résidence</h2><span class="legende">Montants par ETP : annualisés (× 12)</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">ETP moyen</th><th class="num">CA / ETP</th><th class="num">EBITDA / ETP</th><th class="num">VA / ETP</th><th class="num">Coût / ETP</th><th class="num">Personnel / CA</th><th class="num">Personnel / VA</th><th class="num">Nuitées / ETP / mois</th><th class="num">Heures / nuitée</th><th class="num">CA / heure</th></tr></thead><tbody>';
+  var ligne = function (lib, R, tot, dd) { var f = function (k) { var v = R[k]; return '<td class="num"' + (v === null ? "" : xa({ t: "prod", k: k, d: dd, m: ms })) + ">" + (v === null ? '<span class="nc-cell">n.c.</span>' : dsnProdFmt(k, v)) + "</td>"; };
+    return "<tr" + (tot ? ' class="bq-total bq-grand"' : "") + "><td><b>" + esc(lib) + "</b></td>" + ["etpMoy", "caEtp", "ebitdaEtp", "vaEtp", "coutEtp", "msCa", "msVa", "nuitEtp", "hNuit", "caHeure"].map(f).join("") + "</tr>"; };
+  var lignes = ds.map(function (d) { return { d: d, R: dsnProdLigne([d], ms) }; }).sort(function (a, b) { return (b.R.ebitdaEtp === null ? -1e15 : b.R.ebitdaEtp) - (a.R.ebitdaEtp === null ? -1e15 : a.R.ebitdaEtp); });
+  lignes.forEach(function (x) { h += ligne(nomResidence(x.d), x.R, false, [x.d]); });
+  if (ds.length > 1) h += ligne("Total " + p.libelle, T, true, ds);
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Classement par EBITDA par ETP. Chaque ratio est une somme de numérateurs ÷ somme de dénominateurs, sur les seuls mois où les deux existent (jamais une moyenne de ratios). ETP : DSN ; CA, EBITDA, VA, comptes 64 : Pennylane ; nuitées : exploitation.</p></div>';
+  el("contenu").innerHTML = h;
+};
+
+/* ---------- Contrôles de paie ---------- */
+var DSN_CTRL = { smic: "Taux horaire sous le SMIC", variation: "Variation du salaire de base", hs: "Heures supplémentaires élevées", cdd: "CDD de longue durée", partiel: "Temps partiel sous 24 h par semaine",
+  impaye: "Présent sans rémunération", arret: "Arrêt de longue durée" };
+function dsnControles(ds, ms) {
+  var obs = dsnObs(ds, ms.concat()), A = [], prec = {};
+  var tous = dsnObs(ds, MOIS.filter(function (m) { return m <= ms[ms.length - 1]; }));
+  tous.forEach(function (o) { (prec[o.s.id] = prec[o.s.id] || {})[o.m] = o; });
+  obs.forEach(function (o) {
+    var s = o.s, base = { d: o.d, m: o.m, id: s.id, poste: o.poste };
+    if (s.heures > 0 && s.contrat !== "ALTERNANCE") { var th = (s.brut - s.hs_montant - s.primes) / (s.heures / 100), sm = dsnSmic(o.m);
+      if (sm && th < sm * 0.995) A.push(Object.assign({ k: "smic", txt: "Taux horaire hors heures sup. et primes " + dsnEur2(th) + " pour un SMIC de " + dsnEur2(sm) }, base)); }
+    if (s.complet && s.etp_milli) { var mp = MOIS[MOIS.indexOf(o.m) - 1], q = mp && prec[s.id] ? prec[s.id][mp] : null;
+      if (q && q.s.complet && q.s.etp_milli) { var a = (s.brut - s.hs_montant - s.primes) / s.etp_milli, b = (q.s.brut - q.s.hs_montant - q.s.primes) / q.s.etp_milli;
+        if (b > 0 && Math.abs(a / b - 1) > DSN_SEUILS.variation) A.push(Object.assign({ k: "variation", txt: "Base temps plein " + dsnEur(b * 1000) + " → " + dsnEur(a * 1000) + " (" + (a > b ? "+" : "") + pct1(a / b - 1) + ")" }, base)); } }
+    if (s.hs_heures > DSN_SEUILS.hs_heures) A.push(Object.assign({ k: "hs", txt: dsnFmt("dec1", s.hs_heures / 100) + " h dans le mois" }, base));
+    if (s.contrat === "CDD" && s.present && s.anc_mois >= DSN_SEUILS.cdd_mois) A.push(Object.assign({ k: "cdd", txt: "CDD depuis " + s.anc_mois + " mois" }, base));
+    if (s.present && s.etp_milli && s.etp_milli * 151.67 < DSN_SEUILS.temps_partiel_heures && s.contrat !== "ALTERNANCE") A.push(Object.assign({ k: "partiel", txt: "Quotité d’environ " + dsnFmt("dec1", s.etp_milli * 151.67 / 1000 * 12 / 52) + " h par semaine" }, base));
+    if (s.present && s.complet && s.brut === 0 && s.net === 0) A.push(Object.assign({ k: "impaye", txt: "Contrat en cours tout le mois, aucun brut ni net déclaré (absence non rémunérée ?)" }, base));
+  });
+  var derCdd = {}; A.forEach(function (a) { if (a.k === "cdd" && (!derCdd[a.id] || a.m > derCdd[a.id])) derCdd[a.id] = a.m; });
+  A = A.filter(function (a) { return a.k !== "cdd" || a.m === derCdd[a.id]; });
+  /* arrêts longs en cours à la fin de la période */
+  var fin = ms[ms.length - 1];
+  ds.forEach(function (d) { var c = dsnCouple(d, fin); if (!c) return; c.lignes.forEach(function (r) {
+    var con = dsnIdx().siret[r.siret], vus = {}, finConnue = dsnFinMois(Object.keys(con).sort().pop()), L = dsnFinMois(fin);
+    Object.keys(con).sort().forEach(function (m) { (con[m].arrets || []).forEach(function (a) { var x = vus[a.cle] = vus[a.cle] || { a: a }; if (a.reprise) x.reprise = a.reprise; if (a.fin_prevue) x.fin = a.fin_prevue; }); });
+    Object.keys(vus).forEach(function (k) { var x = vus[k], deb = dsnDeIso(x.a.debut), f = x.reprise ? dsnDeN(dsnDeIso(x.reprise).n - 1) : x.fin ? dsnDeIso(x.fin) : finConnue;
+      if (deb.n <= L.n && f.n >= L.n && L.n - deb.n + 1 > DSN_SEUILS.arret_jours) A.push({ k: "arret", d: d, m: fin, id: x.a.sal || "", poste: "", txt: DSN_LIB[dsnMotifArret(x.a.motif)] + " depuis le " + dateFr(x.a.debut) + " (" + (L.n - deb.n + 1) + " jours au " + dateFr(dsnIso(L)) + ")" }); });
+  }); });
+  return A;
+}
+PAGES.so_paie = function (p) {
+  var ms = fenetre(), ds = p.dossiers, h = enTete("Contrôles de paie", p, "Points à vérifier dans la paie, " + libMois(ms));
+  if (!dsnPrealables(h, ds)) return;
+  h += dsnBlocDetail(ds, ms);
+  var A = dsnControles(ds, ms), filtre = etat.soCtrl || "", nbK = {};
+  A.forEach(function (a) { nbK[a.k] = (nbK[a.k] || 0) + 1; });
+  h += '<div class="ruban">' + Object.keys(DSN_CTRL).map(function (k) { return '<div class="indic' + (filtre === k ? " actif" : "") + '" data-so-ctrl="' + k + '" style="cursor:pointer"><div class="nom">' + esc(DSN_CTRL[k]) + '</div><div class="val">' + nb(nbK[k] || 0) + "</div></div>"; }).join("") + "</div>";
+  var L = A.filter(function (a) { return !filtre || a.k === filtre; }).sort(function (a, b) { return a.m < b.m ? 1 : a.m > b.m ? -1 : a.d < b.d ? -1 : 1; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>' + (filtre ? esc(DSN_CTRL[filtre]) : "Tous les contrôles") + " (" + L.length + ")</h2>" + (filtre ? '<button class="btn-petit" data-so-ctrl="">Tout afficher</button>' : "") + "</div>" +
+    (L.length ? '<div class="defile"><table class="tab"><thead><tr><th>Mois</th><th>Résidence</th><th>Salarié</th><th>Poste</th><th>Contrôle</th><th>Détail</th></tr></thead><tbody>' +
+      L.slice(0, etat.soCtrlTout ? L.length : 25).map(function (a) { return "<tr><td>" + esc(moisCourt(a.m)) + "</td><td>" + esc(nomResidence(a.d)) + "</td><td><code>" + esc(a.id.slice(0, 6)) + "</code></td><td>" + esc(a.poste) + "</td><td>" + esc(DSN_CTRL[a.k]) + "</td><td>" + esc(a.txt) + "</td></tr>"; }).join("") +
+      "</tbody></table></div>" + (L.length > 25 ? '<div class="aj-actions" style="margin-top:8px"><button class="btn-petit" data-voir-plus="soCtrlTout">' + (etat.soCtrlTout ? "Réduire" : "Voir tout (" + L.length + ")") + "</button></div>" : "")
+      : '<p class="legende" style="margin:0">Aucun point à vérifier.</p>') + "</div>";
+  h += '<p class="legende">Seuils : SMIC horaire en vigueur le mois (' + DSN_SMIC.map(function (x) { return dsnEur2(x[1]) + " depuis " + moisCourt(x[0]); }).join(", ") + ", alternants exclus, tolérance 0,5 %) ; variation du salaire de base temps plein de plus de " + pct1(DSN_SEUILS.variation) +
+    " d’un mois sur l’autre ; plus de " + DSN_SEUILS.hs_heures / 100 + " h supplémentaires dans le mois ; CDD depuis " + DSN_SEUILS.cdd_mois + " mois ou plus ; quotité sous 24 h par semaine (dérogations possibles) ; arrêt de plus de " + DSN_SEUILS.arret_jours + " jours en cours. Les identifiants sont des pseudonymes : le salarié se retrouve dans Silae.</p>";
+  el("contenu").innerHTML = h;
+  el("contenu").querySelectorAll("[data-so-ctrl]").forEach(function (b) { b.addEventListener("click", function () { etat.soCtrl = b.dataset.soCtrl; majContenu(); }); });
+  el("contenu").querySelectorAll("[data-voir-plus]").forEach(function (b) { b.addEventListener("click", function () { etat[b.dataset.voirPlus] = !etat[b.dataset.voirPlus]; majContenu(); }); });
+};
+
+/* ---------- Base budget ---------- */
+PAGES.so_budget = function (p) {
+  var ms = fenetre(), ds = p.dossiers, ref = dsnDernier(ds, ms);
+  var h = enTete("Base budget de la masse salariale", p, ref ? "Situation réelle fin " + moisLong(ref) + ", variables sur " + libMois(ms) : "");
+  if (!dsnPrealables(h, ds)) return;
+  h += dsnBlocDetail(ds, ms);
+  var obsRef = dsnObs(ds, [ref]).filter(function (o) { return o.s.present; }), obsPer = dsnObs(ds, ms), grand = { etp: 0, eff: 0, mens: 0, an: 0 }, lignesTot = [];
+  h += '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div>Chiffres <b>réels uniquement</b> : effectifs présents fin ' + esc(moisLong(ref)) + ", salaire de base du mois, variables moyens de la période, taux de charges réel. Les hypothèses (augmentations, créations ou suppressions de postes, SMIC à venir) se posent ensuite dans le budget ou dans une mission Claude.</div></div>";
+  var parRes = {}; obsRef.forEach(function (o) { (parRes[o.d] = parRes[o.d] || []).push(o); });
+  var corps = "";
+  ds.filter(function (d) { return parRes[d]; }).forEach(function (d) {
+    var tc = dsnRatioSimple(function (dd, m) { return dsnCompta(dd, m, DSN_CHARGES_SOCIALES); }, function (dd, m) { return dsnCompta(dd, m, DSN_REGLE_BRUT); }, [d], ms);
+    var G = {}; parRes[d].forEach(function (o) { (G[o.poste] = G[o.poste] || []).push(o); });
+    var sous = { etp: 0, eff: 0, mens: 0 };
+    Object.keys(G).sort().forEach(function (poste) {
+      var os = G[poste], ids = {}, etp = 0, fixe = 0; os.forEach(function (o) { ids[o.s.id] = 1; etp += (o.s.etp_milli || 0) / 1000; fixe += o.s.complet ? o.s.brut - o.s.hs_montant - o.s.primes : 0; });
+      var etpComplet = os.reduce(function (t, o) { return t + (o.s.complet ? (o.s.etp_milli || 0) / 1000 : 0); }, 0), fixeEtp = etpComplet ? fixe / etpComplet : null;
+      var vb = 0, ve = 0; obsPer.forEach(function (o) { if (o.d === d && o.poste === poste && o.s.complet && o.s.etp_milli) { vb += o.s.hs_montant + o.s.primes; ve += o.s.etp_milli / 1000; } });
+      var varEtp = ve ? vb / ve : 0, mens = fixeEtp === null ? null : (fixeEtp + varEtp) * etp, charge = mens === null || tc === null ? null : mens * (1 + tc);
+      sous.etp += etp; sous.eff += Object.keys(ids).length; if (charge !== null) sous.mens += charge;
+      corps += "<tr><td>" + esc(nomResidence(d)) + "</td><td>" + esc(poste) + '</td><td class="num">' + nb(Object.keys(ids).length) + '</td><td class="num">' + dsnFmt("dec1", etp) + '</td><td class="num">' + dsnEur(fixeEtp) + '</td><td class="num">' + dsnEur(varEtp) +
+        '</td><td class="num">' + (tc === null ? "–" : pct1(tc)) + '</td><td class="num">' + dsnEur(charge) + '</td><td class="num"><b>' + dsnEur(charge === null ? null : charge * 12) + "</b></td></tr>";
+    });
+    corps += '<tr class="bq-total"><td colspan="2">Total ' + esc(nomResidence(d)) + '</td><td class="num">' + nb(sous.eff) + '</td><td class="num">' + dsnFmt("dec1", sous.etp) + '</td><td></td><td></td><td></td><td class="num">' + dsnEur(sous.mens) + '</td><td class="num"><b>' + dsnEur(sous.mens * 12) + "</b></td></tr>";
+    grand.etp += sous.etp; grand.eff += sous.eff; grand.mens += sous.mens;
+  });
+  h += '<div class="ruban">' + [carte("Effectif présent", nb(grand.eff), "Salariés en contrat fin " + moisLong(ref)), carte("ETP", dsnFmt("dec1", grand.etp), "Quotités des contrats en cours"),
+    carte("Masse salariale chargée mensuelle", dsnEur(grand.mens), "Base + variables moyens, × (1 + taux de charges réel)"), carte("Masse salariale chargée annuelle", dsnEur(grand.mens * 12), "Mensuel × 12, à effectifs et salaires constants")].join("") + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par résidence et par poste</h2></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Poste</th><th class="num">Effectif</th><th class="num">ETP</th><th class="num">Base mensuelle / ETP</th><th class="num">Variables / ETP / mois</th><th class="num">Taux de charges</th><th class="num">Coût mensuel chargé</th><th class="num">Coût annuel chargé</th></tr></thead><tbody>' + corps +
+    '<tr class="bq-total bq-grand"><td colspan="2">Total ' + esc(p.libelle) + '</td><td class="num">' + nb(grand.eff) + '</td><td class="num">' + dsnFmt("dec1", grand.etp) + '</td><td></td><td></td><td></td><td class="num">' + dsnEur(grand.mens) + '</td><td class="num"><b>' + dsnEur(grand.mens * 12) + "</b></td></tr></tbody></table></div>" +
+    '<p class="legende" style="margin:10px 0 0">Base / ETP : brut hors heures supplémentaires et primes des salariés présents tout le mois de référence, ramené au temps plein. Variables : heures supplémentaires et primes moyennes par ETP sur la période. Taux de charges : comptes 645 et 647 ÷ comptes 641 de la résidence sur la période (Pennylane). Exportez la page en Excel pour la reprendre dans le budget.</p></div>';
+  el("contenu").innerHTML = h;
+};
+
+/* ---------- Référentiel des postes ---------- */
+PAGES.so_postes = function (p) {
+  var h = enTete("Référentiel des postes", p, "Libellés d’emploi de la paie → poste standard et famille"), adm = estAdmin();
+  if (!dsnMigration()) { el("contenu").innerHTML = h + blocMigration26(); return; }
+  if (enLigne() && !D.lot27) { el("contenu").innerHTML = h + blocNC("Migration 018 non appliquée sur la base : collez migrations/018_dsn_detail_salaries.sql dans Supabase (SQL Editor), puis rechargez la page."); return; }
+  var vus = {}; DSN.mois.forEach(function (r) { (r.contenu.salaries || []).forEach(function (s) { var x = vus[s.emploi] = vus[s.emploi] || { n: {}, res: {} }; x.n[s.id] = 1; x.res[r.dossier] = 1; }); });
+  (DSN.postes || []).forEach(function (q) { vus[q.emploi] = vus[q.emploi] || { n: {}, res: {} }; });
+  var em = Object.keys(vus).sort(function (a, b) { return dsnPoste(a).poste < dsnPoste(b).poste ? -1 : dsnPoste(a).poste > dsnPoste(b).poste ? 1 : a < b ? -1 : 1; });
+  var postes = {}; em.forEach(function (e) { postes[dsnPoste(e).poste] = 1; });
+  h += '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div>Un même poste peut avoir plusieurs libellés dans la paie (accents, « H/F », variantes). Rattachez-les au même poste pour comparer les salaires entre résidences. Sans règle, le poste proposé est le libellé sans accents ni « H/F », et la famille est déduite de mots-clés.</div></div>';
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Libellés rencontrés (' + em.length + ')</h2><span class="legende">' + Object.keys(postes).length + ' postes</span></div><datalist id="so-postes-liste">' + Object.keys(postes).sort().map(function (x) { return '<option value="' + esc(x) + '">'; }).join("") + "</datalist>" +
+    '<div class="defile"><table class="tab"><thead><tr><th>Libellé dans la paie</th><th class="num">Salariés</th><th class="num">Résidences</th><th>Poste standard</th><th>Famille</th><th>Origine</th>' + (adm ? "<th></th>" : "") + "</tr></thead><tbody>" +
+    em.map(function (e, i) { var P = dsnPoste(e);
+      return "<tr><td><code>" + esc(e || "(vide)") + '</code></td><td class="num">' + nb(Object.keys(vus[e].n).length) + '</td><td class="num">' + nb(Object.keys(vus[e].res).length) + "</td><td>" +
+        (adm ? '<input data-so-poste="' + i + '" list="so-postes-liste" value="' + esc(P.poste) + '" style="min-width:220px">' : esc(P.poste)) + "</td><td>" +
+        (adm ? '<select data-so-famille="' + i + '">' + DSN_FAMILLES.map(function (f) { return '<option' + (f === P.famille ? " selected" : "") + ">" + esc(f) + "</option>"; }).join("") + "</select>" : esc(P.famille)) + "</td><td>" +
+        (P.regle ? '<span class="pastille ok">Règle</span>' : '<span class="pastille">Proposé</span>') + "</td>" + (adm ? '<td><button class="btn-petit" data-so-enr="' + i + '">Enregistrer</button></td>' : "") + "</tr>"; }).join("") + "</tbody></table></div></div>";
+  el("contenu").innerHTML = h;
+  el("contenu").querySelectorAll("[data-so-enr]").forEach(function (b) { b.addEventListener("click", function () {
+    var i = +b.dataset.soEnr, e = em[i], poste = el("contenu").querySelector('[data-so-poste="' + i + '"]').value.replace(/\s+/g, " ").trim().toUpperCase(), fam = el("contenu").querySelector('[data-so-famille="' + i + '"]').value;
+    if (!poste) { alert("Le poste standard est obligatoire."); return; }
+    dsnAgir(function () { return sb(ZCLIENT.from("dsn_postes").upsert({ emploi: e, poste: poste, famille: fam }, { onConflict: "emploi" })); }, function () {
+      DSN.postes = DSN.postes || []; var x = DSN.postes.find(function (q) { return q.emploi === e; });
+      if (x) { x.poste = poste; x.famille = fam; } else DSN.postes.push({ emploi: e, poste: poste, famille: fam }); dsnJournalLocal("référentiel", "-", null, null, e + " → " + poste + " (" + fam + ")"); });
+  }); });
 };
 
 /* ======================================================================================
@@ -5919,11 +6260,13 @@ function chargerDonnees(client) {
     /* Lot 26 : null quand la migration 017 manque ; vide hors administrateurs (règles par ligne) */
     lireOuNull(client.from("dsn_etablissements").select("*").order("siret")),
     lireTout(function () { return client.from("dsn_mois").select("*").order("siret").order("mois"); }, true),
-    lireFacultatif(client.from("dsn_journal").select("*").order("id", { ascending: false }).limit(500))
+    lireFacultatif(client.from("dsn_journal").select("*").order("id", { ascending: false }).limit(500)),
+    /* Lot 27 : null quand la migration 018 manque */
+    lireOuNull(client.from("dsn_postes").select("*").order("emploi"))
   ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10],
     resbase: r[11], kpimois: r[12], depots: r[13], cat: r[14], modeles: r[15], resmod: r[16], journalkpi: r[17],
     lot24: { rubriques: r[18], regles: r[19], ca: r[20], clotures: r[21], journal: r[22], previsions: r[23], virements: r[24] },
-    lot25: { missions: r[25], paquets: r[26], versions: r[27] }, lot26: { etablissements: r[28], mois: r[29], journal: r[30] } }; });
+    lot25: { missions: r[25], paquets: r[26], versions: r[27] }, lot26: { etablissements: r[28], mois: r[29], journal: r[30], postes: r[31] } }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -5943,7 +6286,7 @@ function demarrerAvecClient(client, profil) {
     D.fees_rubriques = L24.rubriques || []; D.fees_regles = L24.regles || []; D.ca_regles = L24.ca || []; D.fees_clotures = L24.clotures || []; D.compta_journal = L24.journal || [];
     D.tresorerie_previsions = L24.previsions || []; D.virements_suivis = L24.virements || [];
     D.lot25 = x.lot25.missions !== null; D.missions = x.lot25.missions || []; D.paquets = x.lot25.paquets || []; D.missions_versions = x.lot25.versions || [];
-    D.lot26 = x.lot26.etablissements !== null && x.lot26.mois !== null; D.dsn_etablissements = x.lot26.etablissements || []; D.dsn_mois = x.lot26.mois || []; D.dsn_journal = x.lot26.journal || [];
+    D.lot26 = x.lot26.etablissements !== null && x.lot26.mois !== null; D.dsn_etablissements = x.lot26.etablissements || []; D.dsn_mois = x.lot26.mois || []; D.dsn_journal = x.lot26.journal || []; D.lot27 = x.lot26.postes !== null; D.dsn_postes = x.lot26.postes || [];
     lancerApplication();
     ZCLIENT = client;
     var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");

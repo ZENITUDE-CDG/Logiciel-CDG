@@ -574,6 +574,8 @@ dl.fiche dt { color:var(--mut); } dl.fiche dd { margin:0; color:var(--txt); font
 .kpi-mini div { background:var(--entete); border-radius:8px; padding:10px 12px; }
 .kpi-mini .n { display:block; font-size:11.5px; color:var(--mut); } .kpi-mini .v { display:block; font-size:17px; font-weight:600; color:var(--titre); margin-top:2px; }
 .kpi-mini .nc .v { font-size:12.5px; color:var(--mut); font-weight:500; }
+/* Lot 25 : consignes d'une mission Claude */
+.socle-txt { width: 100%; min-height: 260px; box-sizing: border-box; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding: 10px; border: 1px solid var(--bord-fort); border-radius: 8px; background: var(--surface); color: inherit; resize: vertical; }
 </style>
 </head>
 <body>
@@ -689,7 +691,7 @@ var SOUS = {
   comptabilite: [["cp_ca", "Chiffre d’affaires"], ["cp_parametrage", "Paramétrage des FEES"], ["cp_fees", "FEES à refacturer"]],
   import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
   residence: [["residence", "Résidence"]],
-  budgets: [["budgets", "Budgets"]], rapports: [["rapports", "Rapports"]]
+  budgets: [["budgets", "Budgets"]], rapports: [["claude", "Paquet pour Claude"], ["missions", "Missions Claude"], ["rapports", "Plaquettes"]]
 };
 /* Menu latéral : ordre, libellés et icônes (lot 10 ; ordre du lot 17 : Résidence, Import et paramètres, Tableaux de bord, Ajustements, Trésorerie, Budgets, Rapports ;
    lot 24 : Comptabilité juste avant Trésorerie) */
@@ -701,7 +703,7 @@ var MENU = [
   ["comptabilite", "Comptabilité", "M5.5 2.5h9a1 1 0 011 1v13a1 1 0 01-1 1h-9a1 1 0 01-1-1v-13a1 1 0 011-1zM7.5 5.5h5v2.5h-5zM7.5 11h1M11.5 11h1M7.5 14h1M11.5 14h1"],
   ["tresorerie", "Trésorerie", "M2.5 8L10 3.5 17.5 8M4.5 8.5v6M8 8.5v6M12 8.5v6M15.5 8.5v6M2.5 16.5h15"],
   ["budgets", "Budgets", "M3 6.5A1.5 1.5 0 014.5 5h11A1.5 1.5 0 0117 6.5v7a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 13.5zM3 8.5h14M6.5 12h2", true],
-  ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6", true]
+  ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6"]
 ];
 var iDefaut = D.calcul.mois.indexOf(D.meta.periode_defaut);
 var etat = { utilisateur: null, perim: null, exercice: "N", section: "import", page: "pennylane", lo: iDefaut, hi: iDefaut + 1, vue: "ajuste", vueFin: "ebitda", brouillon: null, delai: "30", crSel: null, crPerim: null, crTous: false };
@@ -1368,8 +1370,8 @@ function libFenetre() {
   var f = fenetre(), a = moisCourt(f[0]), b = moisCourt(f[f.length - 1]);
   return f.length === 1 ? moisLong(f[0]) : a + " → " + b;
 }
-var PAGES_PERIODE = ["cp_ca", "synthese", "suivi", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
-var PAGES_SANS_VUE = ["cp_ca", "suivi", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_PERIODE = ["claude", "cp_ca", "synthese", "suivi", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_SANS_VUE = ["claude", "cp_ca", "suivi", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
 function raccourcis(p) {
   var iD = idxMois(D.meta.dernier_mois_importe), an = String(D.meta.annee), n = MOIS.length;
   var r = [["Dernier mois importé", iD, iD + 1], ["12 derniers mois", Math.max(0, iD - 11), iD + 1]];
@@ -2390,7 +2392,487 @@ PAGES.residence = function (p) {
 };
 
 PAGES.budgets = function (p) { el("contenu").innerHTML = enTete("Budgets", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Saisie et import des budgets par résidence. Il alimentera les colonnes Projection des tableaux EBITDA et SIG.</p></div>'; };
-PAGES.rapports = function (p) { el("contenu").innerHTML = enTete("Rapports", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Plaquettes PDF et présentations par résidence ou par groupe.</p></div>'; };
+PAGES.rapports = function (p) { el("contenu").innerHTML = enTete("Plaquettes", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Plaquettes PDF et présentations par résidence ou par groupe.</p></div>'; };
+
+/* ======================================================================================
+   Lot 25 : socle de données pour Claude (décision 0019).
+   Le logiciel fournit les chiffres réels, complets et standardisés, d'une résidence ou d'un groupe, dans un
+   paquet (.zip) à joindre à Claude ; Claude ne va plus les chercher dans Pennylane. Les hypothèses, scénarios
+   et retraitements restent dans les missions (prompts), jamais dans le paquet.
+   socleConstruire produit exactement les mêmes fichiers que la référence Python zenitude/socle/paquet.py
+   (tests/test_lot25_page.py). Montants en centimes entiers, aucune formule interprétée, aucun ajustement.
+   ====================================================================================== */
+var SOC = { complet: null, mission: "", cle: null };
+function socleEuros(c) { if (c === null || c === undefined) return ""; var s = c < 0 ? "-" : "", a = Math.abs(c); return s + Math.floor(a / 100) + "." + String(a % 100).padStart(2, "0"); }
+function socleNombre(v) { var x = +v; return Number.isInteger(x) && Math.abs(x) < 1e15 ? String(x) : String(x); }
+function socleChamp(v) { var s = v === null || v === undefined ? "" : String(v); return /[,"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function socleCsv(colonnes, lignes) { return [colonnes.join(",")].concat(lignes.map(function (l) { return l.map(socleChamp).join(","); })).join("\n") + "\n"; }
+function socleFinMois(m) { var a = +m.slice(0, 4), mo = +m.slice(5, 7), d = new Date(Date.UTC(a, mo, 0)); return d.toISOString().slice(0, 10); }
+function socleMoinsDouze(m) { return String(+m.slice(0, 4) - 1).padStart(4, "0") + "-" + m.slice(5, 7); }
+function socleEcartJours(a, b) { var f = function (x) { return Date.UTC(+x.slice(0, 4), +x.slice(5, 7) - 1, +x.slice(8, 10)); }; return Math.abs(f(a) - f(b)) / 864e5; }
+function socleMd(entetes, lignes) {
+  return ["| " + entetes.join(" | ") + " |", "|" + entetes.map(function () { return " --- "; }).join("|") + "|"]
+    .concat(lignes.map(function (l) { return "| " + l.map(function (x) { return String(x).replace(/\|/g, "/"); }).join(" | ") + " |"; })).join("\n");
+}
+function socleCle() { return Array.prototype.join.call(arguments, "\u0000"); }
+function socleTri(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
+function socleLibCompte(c) { for (var i = c.length; i >= 3; i--) { if (C.libelles_comptes[c.slice(0, i)]) return C.libelles_comptes[c.slice(0, i)]; } return ""; }
+var RE_TAXE_SEJOUR = /taxe\s*(de\s*)?s[eéEÉ]jour/i;
+function socleCalcLignes(brut) { var r = calcLignes(D.lignes_ebitda, brut); var o = {}; D.lignes_ebitda.forEach(function (l) { o[l.code] = r[l.code] === undefined ? null : r[l.code]; }); return o; }
+function socleTexteMission(m, reference, emp) {
+  var t = "# Mission : " + m.titre + "\n\n- Code : " + (m.code || "—") + " ; version " + (m.version || 1) + "\n- Référence du paquet : " + (reference || "—") + " ; empreinte des données : " + (emp || "—") + "\n\n";
+  t += D.socle.entete_mission + "\n\n## Consignes\n\n" + String(m.consignes || "").replace(/\n+$/, "") + "\n";
+  if (String(m.livrables || "").trim()) t += "\n## Livrables attendus\n\n" + String(m.livrables).replace(/\n+$/, "") + "\n";
+  return t;
+}
+/* SHA-256 synchrone (mêmes octets UTF-8 que hashlib en Python) : empreinte des données d'un paquet. */
+function socleSha256(octets) {
+  var K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+  var H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  var n = octets.length, total = ((n + 9 + 63) >> 6) << 6, m = new Uint8Array(total), W = new Int32Array(64), dv;
+  m.set(octets); m[n] = 0x80; dv = new DataView(m.buffer);
+  dv.setUint32(total - 8, Math.floor(n / 0x20000000)); dv.setUint32(total - 4, (n * 8) >>> 0);
+  var r = function (x, k) { return (x >>> k) | (x << (32 - k)); };
+  for (var o = 0; o < total; o += 64) {
+    for (var i = 0; i < 16; i++) W[i] = dv.getInt32(o + i * 4);
+    for (i = 16; i < 64; i++) { var s0 = r(W[i - 15], 7) ^ r(W[i - 15], 18) ^ (W[i - 15] >>> 3), s1 = r(W[i - 2], 17) ^ r(W[i - 2], 19) ^ (W[i - 2] >>> 10); W[i] = (W[i - 16] + s0 + W[i - 7] + s1) | 0; }
+    var a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (i = 0; i < 64; i++) {
+      var t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) | 0, t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0; H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+  return H.map(function (x) { return (x >>> 0).toString(16).padStart(8, "0"); }).join("");
+}
+function socleEmpreinte(fichiers) {
+  var enc = new TextEncoder(), parts = fichiers.map(function (f) { return enc.encode(f.nom + "\n" + f.texte); }), n = parts.reduce(function (s, x) { return s + x.length; }, 0), u = new Uint8Array(n), i = 0;
+  parts.forEach(function (x) { u.set(x, i); i += x.length; });
+  return socleSha256(u);
+}
+
+/* Fichiers du paquet : { fichiers: [{nom, texte}], t: tables brutes (pour le classeur), nb: lignes par fichier }. */
+function socleConstruire(dossiers, debut, fin, complet, o) {
+  o = o || {};
+  var mois = MOIS.filter(function (m) { return m >= debut && m <= fin; });
+  if (!mois.length) throw new Error("période vide");
+  var dateFin = socleFinMois(mois[mois.length - 1]), dateDebut = mois[0] + "-01";
+  dossiers = dossiers.slice().filter(function (d, i, a) { return a.indexOf(d) === i; }).sort(socleTri);
+  dossiers.forEach(function (d) { if (!residence(d)) throw new Error("dossier inconnu : " + d); });
+  var groupe = dossiers.length > 1, L = D.lignes_ebitda, CTRL = D.socle.controles;
+  var t = { residences: [], cr_m: [], cr_p: [], bal_m: [], bal_f: [], tiers: [], fourn: [], banque: [], kpi: [], controles: [], ecritures: [], bq_mvt: [] };
+  var crPer = {}, nbCtrl = {};
+  dossiers.forEach(function (d) {
+    var r = residence(d), ecr = D.ecritures[d] || [];
+    var couverts = (C.couverts[d] || []).slice().sort(socleTri), cset = {};
+    couverts.forEach(function (m) { cset[m] = 1; });
+    var couvertsP = mois.filter(function (m) { return cset[m]; });
+    var groupes = D.perimetres.filter(function (p) { return (p.type === "groupe-cree" || p.type === "region" || p.type === "activite") && p.dossiers.indexOf(d) >= 0; }).map(function (p) { return p.libelle; });
+    var ex = r.exercice || ["", ""], v0 = function (x) { return x === null || x === undefined ? "" : x; };
+    t.residences.push([d, v0(r.code), v0(r.nom), v0(r.societe), v0(r.activite), v0(r.region), v0(r.marque), v0(r.ouverture), v0(r.statut),
+      ex[0] || "", ex[1] || "", groupes.join(" | "), couvertsP.length, couverts.length ? couverts[0] : "", couverts.length ? couverts[couverts.length - 1] : ""]);
+
+    /* Compte de résultat de gestion : soldes réels (sans ajustement), mêmes règles que les tableaux de bord */
+    var S = soldes(d, false).v;
+    var brutDe = function (ms) { var b = {}; ms.forEach(function (m) { var cs = S[m] || {}; Object.keys(cs).forEach(function (c) { var l = ligneDuCompte(c, L); if (l === null) return; b[l] = (b[l] || 0) + cs[c]; }); }); return b; };
+    mois.forEach(function (m) { var v = socleCalcLignes(brutDe([m])); L.forEach(function (l) { if (v[l.code] !== null) t.cr_m.push([d, l.code, l.libelle, l.niveau, m, socleEuros(v[l.code])]); }); });
+    var per = socleCalcLignes(brutDe(mois)), m1 = mois.map(socleMoinsDouze);
+    var n1 = m1.every(function (m) { return MOIS.indexOf(m) >= 0; }) ? socleCalcLignes(brutDe(m1)) : null;
+    crPer[d] = [per, n1];
+    L.forEach(function (l) { var v = per[l.code], w = n1 ? n1[l.code] : null; if (v === null && w === null) return;
+      t.cr_p.push([d, l.code, l.libelle, l.niveau, socleEuros(v), socleEuros(w), v !== null && w !== null ? socleEuros(v - w) : ""]); });
+
+    var dans = ecr.filter(function (e) { return e[1] >= dateDebut && e[1] <= dateFin; }), jusqua = ecr.filter(function (e) { return e[1] <= dateFin; });
+    var pieces = {}; ecr.forEach(function (e) { (pieces[e[3]] = pieces[e[3]] || []).push(e); });
+
+    var bm = {}; dans.forEach(function (e) { var k = socleCle(e[4], e[1].slice(0, 7)), x = bm[k] = bm[k] || [0, 0, e[4], e[1].slice(0, 7)]; if (e[6] < 0) x[0] += -e[6]; else x[1] += e[6]; });
+    Object.keys(bm).sort(socleTri).forEach(function (k) { var x = bm[k]; t.bal_m.push([d, x[2], socleLibCompte(x[2]), x[3], socleEuros(x[0]), socleEuros(x[1])]); });
+    var bf = {}; jusqua.forEach(function (e) { var x = bf[e[4]] = bf[e[4]] || [0, 0]; if (e[6] < 0) x[0] += -e[6]; else x[1] += e[6]; });
+    var bfCles = Object.keys(bf).sort(socleTri);
+    bfCles.forEach(function (c) { var x = bf[c]; t.bal_f.push([d, c, socleLibCompte(c), socleEuros(x[0]), socleEuros(x[1]), socleEuros(x[0] - x[1])]); });
+
+    var ctl = [];
+    var ctrl = function (code, compte, tiers, m, montant, detail) {
+      var lib = CTRL.find(function (x) { return x[0] === code; })[1];
+      ctl.push([d, code, lib, compte || "", tiers || "", m || "", socleEuros(montant === undefined ? null : montant), detail || ""]);
+    };
+
+    var ti = {}; jusqua.forEach(function (e) {
+      if (!(e[4].indexOf("40") === 0 || e[4].indexOf("41") === 0) || !e[7]) return;
+      var k = socleCle(e[4], e[7]), x = ti[k] = ti[k] || [0, 0, 0, "", e[4], e[7]];
+      if (e[6] < 0) x[0] += -e[6]; else x[1] += e[6];
+      if (!e[8]) x[2] += -e[6];
+      if (e[1] > x[3]) x[3] = e[1];
+    });
+    var tiCles = Object.keys(ti).sort(socleTri);
+    tiCles.forEach(function (k) { var x = ti[k], solde = x[0] - x[1]; if (solde === 0 && x[2] === 0) return;
+      t.tiers.push([d, x[4], x[5], socleEuros(x[0]), socleEuros(x[1]), socleEuros(solde), socleEuros(x[2]), x[3]]); });
+
+    var fo = {};
+    Object.keys(pieces).sort(socleTri).forEach(function (p) {
+      var ls = pieces[p]; if (!(ls[0][1] >= dateDebut && ls[0][1] <= dateFin)) return;
+      var f40 = ls.find(function (e) { return e[4].indexOf("40") === 0 && e[7]; }), ch = ls.filter(function (e) { return e[4].charAt(0) === "6"; });
+      if (!f40 || !ch.length) return;
+      var k = socleCle(f40[7], ls[0][1].slice(0, 7)), x = fo[k] = fo[k] || [0, 0, {}, f40[7], ls[0][1].slice(0, 7)];
+      ch.forEach(function (e) { x[0] += -e[6]; x[2][e[4]] = 1; }); x[1]++;
+    });
+    var foCles = Object.keys(fo).sort(socleTri);
+    foCles.forEach(function (k) { var x = fo[k]; t.fourn.push([d, x[3], x[4], socleEuros(x[0]), x[1], Object.keys(x[2]).sort(socleTri).join("|")]); });
+
+    var cbq = {}; jusqua.forEach(function (e) { if (e[4].indexOf("512") === 0) cbq[e[4]] = 1; });
+    Object.keys(cbq).sort(socleTri).forEach(function (c) {
+      var lc = ecr.filter(function (e) { return e[4] === c; });
+      mois.forEach(function (m) { var fm = socleFinMois(m), enc = 0, dec = 0, solde = 0;
+        lc.forEach(function (e) { if (e[1].slice(0, 7) === m && e[2] !== "AN") { if (e[6] < 0) enc += -e[6]; else if (e[6] > 0) dec += e[6]; } if (e[1] <= fm) solde += -e[6]; });
+        t.banque.push([d, c, m, socleEuros(enc), socleEuros(dec), socleEuros(solde)]); });
+    });
+
+    var exD = EXPL[d] || {};
+    mois.forEach(function (m) { var x = exD[m] || {}; Object.keys(x).sort(socleTri).forEach(function (k) { var v = x[k]; if (v === null || v === undefined || v === "" || !isFinite(+v)) return; t.kpi.push([d, m, k, socleNombre(v)]); }); });
+
+    mois.forEach(function (m) { if (!cset[m]) ctrl("C01", "", "", m, null, "aucune donnée comptable synchronisée pour ce mois"); });
+    var mAvec = {}; dans.forEach(function (e) { var s = mAvec[e[1].slice(0, 7)] = mAvec[e[1].slice(0, 7)] || {}; s[e[4].indexOf("641") === 0 ? "641" : e[4].charAt(0)] = 1; });
+    couvertsP.forEach(function (m) { if (!(mAvec[m] || {})["7"]) ctrl("C02", "", "", m, null, "aucune écriture de classe 7"); });
+    if (dans.some(function (e) { return e[4].indexOf("641") === 0; })) couvertsP.forEach(function (m) { if (!(mAvec[m] || {})["641"]) ctrl("C03", "641", "", m, null, "aucune écriture 641 ce mois"); });
+
+    var n = couvertsP.length;
+    if (n >= 3) {
+      var parT = {}; foCles.forEach(function (k) { var x = fo[k]; if (cset[x[4]] && mois.indexOf(x[4]) >= 0) (parT[x[3]] = parT[x[3]] || {})[x[4]] = x[0]; });
+      var seuil = Math.max(3, Math.floor((n + 1) / 2));
+      Object.keys(parT).sort(socleTri).forEach(function (tr) {
+        var ms = parT[tr], k = Object.keys(ms).length; if (k < seuil || k >= n) return;
+        var vals = Object.keys(ms).map(function (m) { return ms[m]; }).sort(function (a, b) { return a - b; }), med = vals[Math.floor((k - 1) / 2)];
+        couvertsP.forEach(function (m) { if (!(m in ms)) ctrl("C04", "", tr, m, med, "facturé " + k + " mois sur " + n + " ; montant = médiane des mois facturés"); });
+      });
+    }
+
+    var grp = {}; ecr.forEach(function (e) { if (e[4].indexOf("40") === 0 && e[7] && e[6] > 0 && e[2] !== "AN" && e[1] <= dateFin) { var k = socleCle(e[7], e[6]); (grp[k] = grp[k] || { tr: e[7], mt: e[6], ls: [] }).ls.push(e); } });
+    Object.keys(grp).map(function (k) { return grp[k]; }).sort(function (a, b) { return socleTri(a.tr, b.tr) || a.mt - b.mt; }).forEach(function (g) {
+      var ls = g.ls.slice().sort(function (a, b) { return socleTri(a[1], b[1]) || socleTri(a[3], b[3]); });
+      for (var i = 1; i < ls.length; i++) { var a = ls[i - 1], b = ls[i];
+        if (a[3] !== b[3] && socleEcartJours(a[1], b[1]) <= 5 && b[1] >= dateDebut) ctrl("C05", b[4], g.tr, b[1].slice(0, 7), g.mt, "pièces " + a[3] + " (" + a[1] + ") et " + b[3] + " (" + b[1] + ")"); }
+    });
+
+    var mFin = mois[mois.length - 1];
+    tiCles.forEach(function (k) { var x = ti[k], solde = x[0] - x[1];
+      if (x[4].indexOf("40") === 0 && solde > 0) ctrl("C06", x[4], x[5], mFin, solde, "solde débiteur à la fin de la période");
+      if (x[4].indexOf("41") === 0 && solde < 0) ctrl("C07", x[4], x[5], mFin, solde, "solde créditeur à la fin de la période"); });
+    bfCles.forEach(function (c) { var solde = bf[c][0] - bf[c][1];
+      if (solde !== 0 && c.indexOf("47") === 0) ctrl("C08", c, "", mFin, solde, "solde débiteur (négatif = créditeur) à la fin de la période");
+      if (solde !== 0 && c.indexOf("58") === 0) ctrl("C09", c, "", mFin, solde, "solde débiteur (négatif = créditeur) à la fin de la période"); });
+
+    var ts = {}; dans.forEach(function (e) { if (e[4].charAt(0) === "7" && (RE_TAXE_SEJOUR.test(e[5] || "") || RE_TAXE_SEJOUR.test(socleLibCompte(e[4])))) {
+      var k = socleCle(e[4], e[1].slice(0, 7)), x = ts[k] = ts[k] || [0, e[4], e[1].slice(0, 7)]; x[0] += e[6]; } });
+    Object.keys(ts).sort(socleTri).forEach(function (k) { var x = ts[k]; ctrl("C10", x[1], "", x[2], x[0], "montant crédit − débit des écritures concernées"); });
+
+    t.controles = t.controles.concat(ctl); nbCtrl[d] = ctl.length;
+
+    if (complet) {
+      dans.forEach(function (e) { t.ecritures.push([d, e[1], e[2], e[3], e[0], e[4], socleLibCompte(e[4]), e[5], e[7], e[8], e[9], socleEuros(e[6] < 0 ? -e[6] : 0), socleEuros(e[6] > 0 ? e[6] : 0)]); });
+      dans.forEach(function (e) { if (e[4].indexOf("512") !== 0) return; var autres = pieces[e[3]].filter(function (x) { return x[0] !== e[0]; }), cs = {}, trs = {};
+        autres.forEach(function (x) { cs[x[4]] = 1; if (x[7]) trs[x[7]] = 1; });
+        t.bq_mvt.push([d, e[4], e[1], e[3], e[5], socleEuros(-e[6]), Object.keys(cs).sort(socleTri).join("|"), Object.keys(trs).sort(socleTri).join("|")]); });
+    }
+  });
+
+  var defs = {}; D.socle.fichiers.forEach(function (f) { defs[f.nom] = f; });
+  var out = [], nb = {};
+  var ecrire = function (nom, lignes, cols) { out.push({ nom: nom, texte: socleCsv(cols || defs[nom].colonnes, lignes) }); nb[nom] = lignes.length; };
+  ecrire("residences.csv", t.residences); ecrire("cr_gestion_mensuel.csv", t.cr_m); ecrire("cr_gestion_periode.csv", t.cr_p);
+  var principales = L.filter(function (l) { return l.niveau <= 1; });
+  if (groupe) {
+    var g = [];
+    L.forEach(function (l) {
+      var vs = dossiers.map(function (d) { return crPer[d][0][l.code]; }), ws = dossiers.map(function (d) { return crPer[d][1] ? crPer[d][1][l.code] : null; });
+      var n1ok = dossiers.every(function (d) { return crPer[d][1] !== null; });
+      var v = vs.every(function (x) { return x === null; }) ? null : vs.reduce(function (s, x) { return s + (x || 0); }, 0);
+      var w = !n1ok || ws.every(function (x) { return x === null; }) ? null : ws.reduce(function (s, x) { return s + (x || 0); }, 0);
+      if (v === null && w === null) return;
+      g.push([l.code, l.libelle, l.niveau, socleEuros(v), socleEuros(w), v !== null && w !== null ? socleEuros(v - w) : "", vs.filter(function (x) { return x !== null; }).length]);
+    });
+    ecrire("groupe_cr_gestion.csv", g);
+    ecrire("groupe_residences.csv", dossiers.map(function (d) { var r = residence(d); return [d, r.nom || "", r.activite || ""].concat(principales.map(function (l) { return socleEuros(crPer[d][0][l.code]); })).concat([nbCtrl[d]]); }),
+      ["dossier", "nom", "activite"].concat(principales.map(function (l) { return l.code; })).concat(["nb_controles"]));
+  }
+  [["balance_mensuelle.csv", "bal_m"], ["balance_fin.csv", "bal_f"], ["tiers_soldes.csv", "tiers"], ["fournisseurs_mensuel.csv", "fourn"], ["banque_mensuel.csv", "banque"], ["kpi_mensuel.csv", "kpi"], ["controles.csv", "controles"]]
+    .forEach(function (x) { ecrire(x[0], t[x[1]]); });
+  if (complet) { ecrire("ecritures.csv", t.ecritures); ecrire("banque_mouvements.csv", t.bq_mvt); }
+
+  var cpt = {}; t.controles.forEach(function (x) { cpt[x[1]] = (cpt[x[1]] || 0) + 1; });
+  var val = {
+    perimetre: o.perimetre || (groupe ? "Sélection" : (residence(dossiers[0]).nom || dossiers[0])), nb_residences: String(dossiers.length), debut: mois[0], fin: mois[mois.length - 1],
+    niveau: complet ? "complet (avec écritures et mouvements bancaires)" : "synthèse (sans le détail des écritures)",
+    genere_le: o.genere_le || "", auteur: o.auteur || "—", version_config: String(D.meta.version_config || ""), dernier_mois: String(D.meta.dernier_mois_importe || ""),
+    reference: o.reference || "—", empreinte: socleEmpreinte(out),
+    fichiers: socleMd(["Fichier", "Lignes", "Contenu"], D.socle.fichiers.filter(function (f) { return f.nom in nb; }).map(function (f) { return [f.nom, nb[f.nom], f.description]; })),
+    residences: socleMd(["Dossier", "Résidence", "Activité", "Mois couverts", "Contrôles"], t.residences.map(function (x) { return [x[0], x[2], x[4], x[12] + " / " + mois.length, nbCtrl[x[0]]]; })),
+    controles: socleMd(["Code", "Contrôle", "Nombre", "Définition"], CTRL.map(function (c) { return [c[0], c[1], cpt[c[0]] || 0, c[2]]; }))
+  };
+  var P = { donnees: out, val: val, t: t, nb: nb, mois: mois, dossiers: dossiers, crPer: crPer, principales: principales, cpt: cpt, empreinte: val.empreinte };
+  return socleFinaliser(P, o.reference, o.mission);
+}
+/* LISEZ-MOI.md et MISSION.md : écrits après les données, pour y porter la référence du paquet (connue une fois
+   le paquet inscrit au journal) sans reconstruire les fichiers de données. */
+function socleFinaliser(P, reference, mission) {
+  P.val.reference = reference || "—"; P.reference = P.val.reference;
+  var texte = D.socle.lisez_moi;
+  Object.keys(P.val).forEach(function (k) { texte = texte.split("{{" + k + "}}").join(P.val[k]); });
+  var entetes = [{ nom: "LISEZ-MOI.md", texte: texte }];
+  if (mission) entetes.push({ nom: "MISSION.md", texte: socleTexteMission(mission, P.val.reference, P.empreinte) });
+  P.fichiers = entetes.concat(P.donnees);
+  return P;
+}
+
+/* ---------- Classeur de lecture humaine joint au paquet (synthese.xlsx) ---------- */
+function socleClasseur(P, perimLib) {
+  var eur = function (s) { return s === "" ? "" : { v: +s, k: "eur2" }; }, H = function (x) { return { v: x, e: "entete" }; };
+  var feuilles = [];
+  feuilles.push({ nom: "Lisez-moi", lignes: [[{ v: "Paquet de données pour Claude : " + perimLib, e: "titre" }], [{ v: "Les fichiers CSV du paquet sont la référence ; ce classeur n’en reprend qu’une partie, pour lecture.", e: "note" }]]
+    .concat(P.fichiers[0].texte.split("\n").map(function (l) { return [l]; })) });
+  feuilles.push({ nom: "Résidences", gel: 1, filtre: 1, lignes: [D.socle.fichiers[0].colonnes.map(H)].concat(P.t.residences) });
+  if (P.dossiers.length > 1) {
+    var lg = [[H("Ligne"), H("Libellé")].concat(P.dossiers.map(function (d) { return H(residence(d).nom || d); })).concat([H("Total")])];
+    D.lignes_ebitda.forEach(function (l) {
+      var vs = P.dossiers.map(function (d) { return P.crPer[d][0][l.code]; }); if (vs.every(function (x) { return x === null; })) return;
+      lg.push([l.code, { v: l.libelle, b: l.niveau <= 1 }].concat(vs.map(function (x) { return x === null ? "" : { v: x / 100, k: "eur2" }; })).concat([{ v: vs.reduce(function (s, x) { return s + (x || 0); }, 0) / 100, k: "eur2", b: true }]));
+    });
+    feuilles.push({ nom: "CR de gestion", gel: 1, lignes: lg });
+  } else {
+    feuilles.push({ nom: "CR de gestion", gel: 1, lignes: [["Ligne", "Libellé", "Période", "N-1", "Écart"].map(H)].concat(P.t.cr_p.map(function (x) { return [x[1], { v: x[2], b: x[3] <= 1 }, eur(x[4]), eur(x[5]), eur(x[6])]; })) });
+  }
+  feuilles.push({ nom: "Contrôles", gel: 1, filtre: 1, lignes: [["Dossier", "Code", "Contrôle", "Compte", "Tiers", "Mois", "Montant", "Détail"].map(H)].concat(P.t.controles.map(function (x) { return x.slice(0, 6).concat([eur(x[6]), x[7]]); })) });
+  return feuilles;
+}
+
+/* ---------- Missions : cahiers des charges réutilisables (méthode, hypothèses, livrables), sans chiffre réel ----------
+   Autant de missions que nécessaire, rangées par catégorie, identifiées par un code stable et versionnées : chaque
+   modification crée une nouvelle version, les anciennes restent consultables. Un paquet garde la mission et la
+   version utilisées : tout document produit par Claude est rattaché à sa référence de paquet (historique). */
+var MISSIONS_DEMO = [{ id: "demo-1", code: "LECTURE-RESIDENCE", categorie: "Analyse", titre: "Exemple : lecture d’une résidence", description: "Mission d’exemple (démonstration locale).", actif: true, version: 1, versions: [],
+  consignes: "Pour chaque résidence du paquet :\n1. Présente le compte de résultat de gestion de la période et l’écart avec N-1 (cr_gestion_periode.csv).\n2. Qualifie chaque ligne de controles.csv : anomalie probable, normal, à vérifier, avec la pièce en cause.\n3. Termine par trois points d’attention.\nHypothèses de la mission : aucune.",
+  livrables: "Une note Markdown par résidence : Note_<dossier>.md, puis une synthèse du périmètre." }];
+var RE_CODE_MISSION = /^[A-Z0-9_-]{2,40}$/;
+function missionsListe() {
+  if (enLigne()) return (D.missions || []).map(function (m) { return { id: String(m.id), code: m.code, categorie: m.categorie || "", titre: m.titre, description: m.description || "", consignes: m.consignes,
+    livrables: m.livrables || "", actif: !!m.actif, version: m.version || 1, par: m.modifie_par || "", le: m.modifie_le || "" }; });
+  try { var x = JSON.parse(localStorage.getItem("zen-missions")); if (Array.isArray(x)) return x; } catch (e) {}
+  return JSON.parse(JSON.stringify(MISSIONS_DEMO));
+}
+function missionVersions(m) {
+  if (enLigne()) return (D.missions_versions || []).filter(function (v) { return String(v.mission_id) === m.id; }).map(function (v) {
+    return { version: v.version, titre: v.titre, consignes: v.consignes, livrables: v.livrables || "", code: m.code, par: v.modifie_par || "", le: v.modifie_le || "" }; }).sort(function (a, b) { return b.version - a.version; });
+  return (m.versions || []).slice().sort(function (a, b) { return b.version - a.version; });
+}
+function missionsPeutModifier() { return !enLigne() || estAdmin(); }
+function missionErreurs(m, liste) {
+  var e = [];
+  if (!RE_CODE_MISSION.test(m.code || "")) e.push("Code : 2 à 40 caractères, majuscules, chiffres, tiret ou souligné (exemple NORMATIF-BUDGET).");
+  else if (liste.some(function (x) { return x.code === m.code && x.id !== m.id; })) e.push("Ce code est déjà utilisé par une autre mission.");
+  if (!m.titre || !m.titre.trim() || m.titre.length > 120) e.push("Le titre est obligatoire (120 caractères au plus).");
+  if ((m.categorie || "").length > 60) e.push("La catégorie fait 60 caractères au plus.");
+  if (!m.consignes || !m.consignes.trim() || m.consignes.length > 60000) e.push("Les consignes sont obligatoires (60 000 caractères au plus).");
+  if ((m.livrables || "").length > 10000) e.push("Les livrables font 10 000 caractères au plus.");
+  return e;
+}
+function missionEnregistrer(m) {
+  var l = missionsListe(), err = missionErreurs(m, l);
+  if (err.length) return Promise.reject({ message: err.join(" ") });
+  if (!enLigne()) {
+    var i = l.findIndex(function (x) { return x.id === m.id; });
+    if (i >= 0) {
+      var a = l[i];
+      if (a.titre !== m.titre || a.consignes !== m.consignes || (a.livrables || "") !== (m.livrables || "")) {
+        m.versions = (a.versions || []).concat([{ version: a.version || 1, titre: a.titre, consignes: a.consignes, livrables: a.livrables || "", code: a.code, par: a.par || "", le: a.le || "" }]);
+        m.version = (a.version || 1) + 1;
+      }
+      m.le = new Date().toISOString(); l[i] = m;
+    } else { m.id = "loc-" + Date.now(); m.version = 1; m.versions = []; m.le = new Date().toISOString(); l.push(m); }
+    try { localStorage.setItem("zen-missions", JSON.stringify(l)); } catch (e) {}
+    return Promise.resolve();
+  }
+  var ligne = { code: m.code, categorie: (m.categorie || "").trim(), titre: m.titre.trim(), description: (m.description || "").trim(), consignes: m.consignes, livrables: m.livrables || "", actif: m.actif !== false };
+  var req = m.id ? ZCLIENT.from("missions_claude").update(ligne).eq("id", +m.id).select("id") : ZCLIENT.from("missions_claude").insert(ligne).select("id");
+  return sb(req).then(verifierTouche).then(missionsRecharger);
+}
+function missionsRecharger() {
+  return Promise.all([sb(ZCLIENT.from("missions_claude").select("*").order("categorie").order("code")), sb(ZCLIENT.from("missions_versions").select("*").order("id"))])
+    .then(function (r) { D.missions = r[0] || []; D.missions_versions = r[1] || []; });
+}
+
+/* ---------- Journal des paquets : référence citée dans chaque document, document produit noté ensuite ---------- */
+function paquetsListe() {
+  if (enLigne()) return D.paquets || [];
+  try { var x = JSON.parse(localStorage.getItem("zen-paquets")); if (Array.isArray(x)) return x; } catch (e) {}
+  return [];
+}
+function paquetInscrire(p, P, m) {
+  var ligne = { perimetre: String(p.libelle).slice(0, 200), dossiers: P.dossiers, du: P.mois[0], au: P.mois[P.mois.length - 1], niveau: SOC.complet ? "complet" : "synthese",
+    mission_id: m && /^\d+$/.test(m.id) ? +m.id : null, mission_code: m ? m.code : null, mission_version: m ? m.version || 1 : null, nb_fichiers: P.donnees.length + (m ? 3 : 2), empreinte: P.empreinte };
+  if (!enLigne()) {
+    var l = paquetsListe(), id = l.length + 1;
+    var x = Object.assign({ id: id, reference: "LOCAL-" + String(id).padStart(6, "0"), cree_par: (etat.utilisateur && etat.utilisateur.mail) || "", cree_le: new Date().toISOString(), resultat: "", resultat_note: "" }, ligne);
+    l.unshift(x); try { localStorage.setItem("zen-paquets", JSON.stringify(l)); } catch (e) {}
+    return Promise.resolve(x.reference);
+  }
+  return sb(ZCLIENT.from("paquets_claude").insert(ligne).select("*")).then(verifierTouche).then(function (r) { D.paquets = r.concat(D.paquets || []); return r[0].reference; });
+}
+function paquetNoterResultat(id, resultat, note) {
+  if ((resultat || "").length > 300 || (note || "").length > 1000) return Promise.reject({ message: "Document : 300 caractères au plus ; note : 1 000 au plus." });
+  if (!enLigne()) {
+    var l = paquetsListe(); l.forEach(function (x) { if (x.id === id) { x.resultat = resultat; x.resultat_note = note; x.resultat_le = new Date().toISOString(); } });
+    try { localStorage.setItem("zen-paquets", JSON.stringify(l)); } catch (e) {}
+    return Promise.resolve();
+  }
+  return sb(ZCLIENT.from("paquets_claude").update({ resultat: resultat, resultat_note: note }).eq("id", id).select("*")).then(verifierTouche)
+    .then(function (r) { D.paquets = (D.paquets || []).map(function (x) { return x.id === id ? r[0] : x; }); });
+}
+function peutNoter(j) { return !enLigne() || estAdmin() || j.cree_par === (D.enLigne && D.enLigne.email); }
+function lienOuTexte(s) { s = String(s || ""); return /^https:\/\/[^\s"<>]+$/.test(s) ? '<a href="' + esc(s) + '" target="_blank" rel="noopener">' + esc(s.length > 50 ? s.slice(0, 47) + "…" : s) + "</a>" : esc(s); }
+function socleBlocHistorique(liste, titre) {
+  return '<div class="bloc"><div class="bloc-tete"><h2>' + esc(titre) + '</h2><span class="legende">Chaque document produit par Claude cite la référence de son paquet</span></div>' + (liste.length ?
+    '<div class="defile"><table class="tab"><thead><tr><th>Référence</th><th>Date</th><th>Par</th><th>Périmètre</th><th>Période</th><th>Mission</th><th>Document produit</th><th></th></tr></thead><tbody>' + liste.map(function (j) {
+      return "<tr><td><code>" + esc(j.reference) + '</code></td><td>' + esc(String(j.cree_le || "").slice(0, 16).replace("T", " ")) + "</td><td>" + esc(j.cree_par || "") + "</td><td>" + esc(j.perimetre) + "</td><td>" + esc(j.du + " → " + j.au) +
+        "</td><td>" + esc(j.mission_code ? j.mission_code + " v" + j.mission_version : "") + "</td><td>" + lienOuTexte(j.resultat) + (j.resultat_note ? '<div class="legende">' + esc(j.resultat_note) + "</div>" : "") + "</td><td>" +
+        (peutNoter(j) ? '<button class="btn-petit" data-noter="' + esc(j.id) + '">' + (j.resultat ? "Modifier" : "Noter le document") + "</button>" : "") + "</td></tr>";
+    }).join("") + "</tbody></table></div>" : '<p class="mut">Aucun paquet préparé pour l’instant.</p>') + '<p class="legende" id="hist-etat"></p></div>';
+}
+function socleBrancherHistorique() {
+  el("contenu").querySelectorAll("[data-noter]").forEach(function (b) { b.addEventListener("click", function () {
+    var id = /^\d+$/.test(b.dataset.noter) ? +b.dataset.noter : b.dataset.noter, j = paquetsListe().find(function (x) { return String(x.id) === String(id); });
+    var doc = window.prompt("Document produit à partir du paquet " + j.reference + " (lien SharePoint ou nom du fichier) :", j.resultat || "");
+    if (doc === null) return;
+    var note = window.prompt("Note (facultatif) :", j.resultat_note || "");
+    paquetNoterResultat(id, doc.trim(), (note || "").trim()).then(rendre, function (e) { el("hist-etat").textContent = messageErreur(e); });
+  }); });
+}
+
+PAGES.claude = function (p) {
+  var f = fenetre(), n = p.dossiers.length, missions = missionsListe().filter(function (m) { return m.actif; });
+  if (SOC.cle !== p.id) { SOC.complet = n <= 10; SOC.cle = p.id; }
+  if (SOC.mission && !missions.some(function (m) { return m.id === SOC.mission; })) SOC.mission = "";
+  var P;
+  try { P = socleConstruire(p.dossiers, f[0], f[f.length - 1], SOC.complet, { perimetre: p.libelle }); }
+  catch (e) { el("contenu").innerHTML = enTete("Paquet pour Claude", p, "") + '<div class="bloc"><p class="erreur-form">' + esc(e.message || e) + "</p></div>"; return; }
+  var cats = {}; missions.forEach(function (m) { (cats[m.categorie || "Sans catégorie"] = cats[m.categorie || "Sans catégorie"] || []).push(m); });
+  var h = enTete("Paquet pour Claude", p, "Chiffres réels de la période, prêts à joindre à Claude") +
+    '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div>Le paquet contient <b>uniquement des chiffres réels</b> (écritures Pennylane synchronisées, données d’exploitation importées), sans ajustement ni hypothèse. ' +
+    "Joignez le fichier .zip à Claude avec une mission : Claude n’a plus besoin d’aller chercher les données dans Pennylane. Chaque paquet reçoit une référence, citée dans les documents produits.</div></div>" +
+    '<div class="bloc"><div class="bloc-tete"><h2>Préparer le paquet</h2><span class="legende">Périmètre et période : ruban et réglette en haut de page</span></div><div class="aj-grille">' +
+    '<label class="champ-aj"><span>Niveau de détail</span><select id="soc-niveau"><option value="complet"' + (SOC.complet ? " selected" : "") + ">Complet : avec toutes les écritures et les mouvements bancaires</option>" +
+    '<option value="synthese"' + (SOC.complet ? "" : " selected") + ">Synthèse : balances, tiers, fournisseurs, banque, KPI, contrôles</option></select></label>" +
+    '<label class="champ-aj"><span>Mission jointe (facultatif)</span><select id="soc-mission"><option value="">Aucune : je donnerai la mission dans le message</option>' +
+    Object.keys(cats).sort(socleTri).map(function (c) { return '<optgroup label="' + esc(c) + '">' + cats[c].map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === SOC.mission ? " selected" : "") + ">" + esc(m.titre + " (" + m.code + ", v" + m.version + ")") + "</option>"; }).join("") + "</optgroup>"; }).join("") +
+    "</select></label></div>" +
+    '<p class="legende">' + n + " résidence" + (n > 1 ? "s" : "") + ", " + esc(libFenetre()) + ". Empreinte des données : <code>" + P.empreinte.slice(0, 16) + "…</code>. " + (n > 10 && SOC.complet ? "Attention : le niveau complet sur un grand périmètre produit un paquet volumineux ; la synthèse suffit en général pour un groupe." : "") + "</p>" +
+    '<div class="aj-actions"><button class="btn btn-principal" id="soc-telecharger">Télécharger le paquet (.zip)</button><button class="btn btn-ligne" id="soc-copier">Copier le message pour Claude</button></div><p class="legende" id="soc-etat"></p></div>';
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Contenu</h2><span class="legende">Fichiers CSV (virgule, point décimal), LISEZ-MOI.md, MISSION.md si une mission est jointe, et un classeur synthese.xlsx pour lecture</span></div><div class="defile"><table class="tab"><thead><tr><th>Fichier</th><th class="num">Lignes</th><th>Contenu</th></tr></thead><tbody>' +
+    D.socle.fichiers.filter(function (x) { return x.nom in P.nb; }).map(function (x) { return "<tr><td><code>" + esc(x.nom) + '</code></td><td class="num">' + nb(P.nb[x.nom]) + "</td><td>" + esc(x.description) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Contrôles automatiques</h2><span class="legende">Constats, pas des corrections : la mission dit comment les traiter</span></div><div class="defile"><table class="tab"><thead><tr><th>Code</th><th>Contrôle</th><th class="num">Nombre</th><th>Définition</th></tr></thead><tbody>' +
+    D.socle.controles.map(function (c) { var k = P.cpt[c[0]] || 0; return "<tr><td>" + c[0] + "</td><td>" + esc(c[1]) + '</td><td class="num">' + (k ? '<span class="pastille att">' + k + "</span>" : '<span class="pastille ok">0</span>') + '</td><td class="mut">' + esc(c[2]) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  h += socleBlocHistorique(paquetsListe().slice(0, 20), "Historique des paquets et documents");
+  el("contenu").innerHTML = h;
+  el("soc-niveau").addEventListener("change", function (e) { SOC.complet = e.target.value === "complet"; rendre(); });
+  el("soc-mission").addEventListener("change", function (e) { SOC.mission = e.target.value; });
+  el("soc-copier").addEventListener("click", function () {
+    var m = missions.find(function (x) { return x.id === SOC.mission; });
+    socleCopier(m ? socleTexteMission(m) : D.socle.entete_mission + "\n\n## Consignes\n\n", el("soc-etat"));
+  });
+  el("soc-telecharger").addEventListener("click", function () { socleTelecharger(p, el("soc-telecharger"), el("soc-etat")); });
+  socleBrancherHistorique();
+};
+function socleCopier(texte, cible) {
+  var ok = function () { if (cible) cible.textContent = "Message copié : collez-le dans Claude avec le paquet en pièce jointe."; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texte).then(ok, function () { if (cible) cible.textContent = "Copie impossible dans ce navigateur."; });
+  else if (cible) cible.textContent = "Copie impossible dans ce navigateur.";
+}
+function socleNomFichier(p, P) {
+  var net = function (s) { return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); };
+  return "Paquet_Claude_" + net(P.reference) + "_" + net(p.libelle).slice(0, 40) + "_" + P.mois[0] + "_" + P.mois[P.mois.length - 1] + ".zip";
+}
+/* Ordre : données, inscription au journal (la référence en revient), LISEZ-MOI et MISSION avec la référence, téléchargement.
+   En ligne, un paquet non inscrit n'est pas téléchargé : un document sans référence ne serait pas traçable. */
+function socleTelecharger(p, btn, cible) {
+  var f = fenetre(), m = missionsListe().find(function (x) { return x.id === SOC.mission; }) || null;
+  var u = D.enLigne ? D.enLigne.email || "" : (etat.utilisateur && etat.utilisateur.mail) || "";
+  btn.disabled = true; if (cible) cible.textContent = "Préparation du paquet…";
+  setTimeout(function () {
+    var P;
+    try { P = socleConstruire(p.dossiers, f[0], f[f.length - 1], SOC.complet, { perimetre: p.libelle, auteur: u, genere_le: new Date().toLocaleString("fr-FR", { timeZone: "Europe/Paris" }) }); }
+    catch (e) { btn.disabled = false; if (cible) cible.textContent = "Erreur : " + (e.message || e); return; }
+    paquetInscrire(p, P, m).then(function (ref) {
+      socleFinaliser(P, ref, m);
+      return ecrireXlsx(socleClasseur(P, p.libelle)).then(function (blob) { return blob.arrayBuffer(); });
+    }).then(function (xl) {
+      return zipper(P.fichiers.concat([{ nom: "synthese.xlsx", octets: new Uint8Array(xl) }]), "application/zip");
+    }).then(function (zip) {
+      telechargerXl(zip, socleNomFichier(p, P));
+      rendre();
+      if (el("soc-etat")) el("soc-etat").textContent = "Paquet " + P.reference + " téléchargé. Joignez-le à Claude" + (m ? " : la mission est dans MISSION.md." : " avec votre mission.") + " Notez ensuite le document produit dans l’historique.";
+    }).catch(function (e) { btn.disabled = false; if (cible) cible.textContent = messageErreur(e); });
+  }, 30);
+}
+
+PAGES.missions = function (p) {
+  var toutes = missionsListe(), mod = missionsPeutModifier(), edit = SOC.edition, q = (SOC.recherche || "").toLowerCase(), cat = SOC.categorie || "";
+  var categories = toutes.map(function (m) { return m.categorie || ""; }).filter(function (c, i, a) { return c && a.indexOf(c) === i; }).sort(socleTri);
+  var l = toutes.filter(function (m) { return (!cat || (m.categorie || "") === cat) && (!q || (m.code + " " + m.titre + " " + (m.description || "") + " " + (m.categorie || "")).toLowerCase().indexOf(q) >= 0); })
+    .sort(function (a, b) { return socleTri(a.categorie || "~", b.categorie || "~") || socleTri(a.code, b.code); });
+  var h = enTete("Missions Claude", p, "Cahiers des charges réutilisables : méthode, hypothèses, livrables. Jamais de chiffre réel : ils viennent du paquet") +
+    '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div>Une mission décrit un document standard : ce que Claude doit analyser, avec quelles hypothèses (taux, scénarios, règles de retraitement) et quels livrables. ' +
+    "Les chiffres réels viennent du paquet ; chaque document cite la référence du paquet et la version de la mission. Une même mission sert pour une résidence ou pour tout un groupe.</div></div>";
+  if (edit) {
+    h += '<div class="bloc"><div class="bloc-tete"><h2>' + (edit.id ? "Modifier la mission " + esc(edit.code) + " (v" + edit.version + " ; l’enregistrement crée une nouvelle version)" : "Nouvelle mission") + '</h2></div><div class="aj-grille">' +
+      '<label class="champ-aj"><span>Code (stable)</span><input id="mi-code" maxlength="40" value="' + esc(edit.code || "") + '" placeholder="NORMATIF-BUDGET"></label>' +
+      '<label class="champ-aj"><span>Catégorie</span><input id="mi-cat" maxlength="60" list="mi-cats" value="' + esc(edit.categorie || "") + '" placeholder="Budget, Analyse, Négociation…"><datalist id="mi-cats">' + categories.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + "</datalist></label>" +
+      '<label class="champ-aj large"><span>Titre</span><input id="mi-titre" maxlength="120" value="' + esc(edit.titre || "") + '"></label>' +
+      '<label class="champ-aj large"><span>Description courte</span><input id="mi-desc" maxlength="300" value="' + esc(edit.description || "") + '"></label></div>' +
+      '<label class="champ-aj large" style="display:block"><span>Consignes : méthode et hypothèses (taux, scénarios, règles de retraitement)</span><textarea id="mi-consignes" class="socle-txt" maxlength="60000">' + esc(edit.consignes || "") + "</textarea></label>" +
+      '<label class="champ-aj large" style="display:block"><span>Livrables attendus : documents, noms de fichiers, plan type</span><textarea id="mi-livrables" class="socle-txt" style="min-height:120px" maxlength="10000">' + esc(edit.livrables || "") + "</textarea></label>" +
+      '<p class="erreur-form" id="mi-erreur"></p><div class="aj-actions"><button class="btn btn-principal" id="mi-ok">Enregistrer</button><button class="btn btn-ligne" id="mi-annuler">Annuler</button></div></div>';
+  }
+  if (SOC.versions) {
+    var mv = toutes.find(function (x) { return x.id === SOC.versions; });
+    if (mv) h += '<div class="bloc"><div class="bloc-tete"><h2>Versions de ' + esc(mv.code) + '</h2><button class="btn btn-ligne" id="mi-vfermer">Fermer</button></div><div class="defile"><table class="tab"><thead><tr><th>Version</th><th>Titre</th><th>Modifiée par</th><th>Le</th><th></th></tr></thead><tbody>' +
+      '<tr><td><b>v' + mv.version + ' (en cours)</b></td><td>' + esc(mv.titre) + "</td><td>" + esc(mv.par || "") + "</td><td>" + esc(String(mv.le || "").slice(0, 16).replace("T", " ") || "") + '</td><td><button class="btn-petit" data-v-copier="' + mv.version + '">Copier</button></td></tr>' +
+      missionVersions(mv).map(function (v) { return "<tr><td>v" + v.version + "</td><td>" + esc(v.titre) + "</td><td>" + esc(v.par) + "</td><td>" + esc(String(v.le).slice(0, 16).replace("T", " ")) + '</td><td><button class="btn-petit" data-v-copier="' + v.version + '">Copier</button></td></tr>'; }).join("") +
+      "</tbody></table></div></div>";
+  }
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Missions (' + l.length + " sur " + toutes.length + ")</h2>" + (mod && !edit ? '<button class="btn btn-ligne" id="mi-nouvelle">Nouvelle mission</button>' : '<span class="legende">Modifiables par les administrateurs</span>') + "</div>" +
+    '<div class="aj-grille"><label class="champ-aj"><span>Rechercher</span><input id="mi-rech" value="' + esc(SOC.recherche || "") + '" placeholder="Code, titre, description"></label>' +
+    '<label class="champ-aj"><span>Catégorie</span><select id="mi-fcat"><option value="">Toutes</option>' + categories.map(function (c) { return '<option' + (c === cat ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") + "</select></label></div>" +
+    (l.length ? '<div class="defile"><table class="tab"><thead><tr><th>Code</th><th>Mission</th><th>Catégorie</th><th class="num">Version</th><th>État</th><th></th></tr></thead><tbody>' + l.map(function (m) {
+      return "<tr><td><code>" + esc(m.code) + "</code></td><td><b>" + esc(m.titre) + "</b>" + (m.description ? '<div class="legende">' + esc(m.description) + "</div>" : "") + "</td><td>" + esc(m.categorie || "") + '</td><td class="num">v' + m.version + "</td><td>" +
+        (m.actif ? '<span class="pastille ok">active</span>' : '<span class="pastille ko">archivée</span>') + '</td><td class="aj-actions">' +
+        '<button class="btn-petit" data-mi-copier="' + esc(m.id) + '">Copier pour Claude</button><button class="btn-petit" data-mi-versions="' + esc(m.id) + '">Versions</button>' +
+        (mod ? '<button class="btn-petit" data-mi-modifier="' + esc(m.id) + '">Modifier</button><button class="btn-petit" data-mi-archiver="' + esc(m.id) + '">' + (m.actif ? "Archiver" : "Réactiver") + "</button>" : "") + "</td></tr>";
+    }).join("") + "</tbody></table></div>" : '<p class="mut">Aucune mission ne correspond.</p>') + '<p class="legende" id="mi-etat"></p></div>';
+  el("contenu").innerHTML = h;
+  var trouve = function (id) { return missionsListe().find(function (x) { return x.id === id; }); };
+  el("mi-rech").addEventListener("change", function (e) { SOC.recherche = e.target.value; rendre(); });
+  el("mi-fcat").addEventListener("change", function (e) { SOC.categorie = e.target.value; rendre(); });
+  el("contenu").querySelectorAll("[data-mi-copier]").forEach(function (b) { b.addEventListener("click", function () { socleCopier(socleTexteMission(trouve(b.dataset.miCopier)), el("mi-etat")); }); });
+  el("contenu").querySelectorAll("[data-mi-versions]").forEach(function (b) { b.addEventListener("click", function () { SOC.versions = b.dataset.miVersions; rendre(); }); });
+  el("contenu").querySelectorAll("[data-mi-modifier]").forEach(function (b) { b.addEventListener("click", function () { SOC.edition = Object.assign({}, trouve(b.dataset.miModifier)); rendre(); }); });
+  el("contenu").querySelectorAll("[data-mi-archiver]").forEach(function (b) { b.addEventListener("click", function () {
+    var m = Object.assign({}, trouve(b.dataset.miArchiver)); m.actif = !m.actif;
+    missionEnregistrer(m).then(rendre, function (e) { el("mi-etat").textContent = messageErreur(e); }); }); });
+  if (el("mi-vfermer")) el("mi-vfermer").addEventListener("click", function () { SOC.versions = null; rendre(); });
+  el("contenu").querySelectorAll("[data-v-copier]").forEach(function (b) { b.addEventListener("click", function () {
+    var mv = trouve(SOC.versions), v = +b.dataset.vCopier, x = v === mv.version ? mv : Object.assign({}, mv, missionVersions(mv).find(function (y) { return y.version === v; }));
+    socleCopier(socleTexteMission(x), el("mi-etat")); }); });
+  if (el("mi-nouvelle")) el("mi-nouvelle").addEventListener("click", function () { SOC.edition = { code: "", categorie: cat, titre: "", description: "", consignes: "", livrables: "", actif: true, version: 1 }; rendre(); });
+  if (edit) {
+    el("mi-annuler").addEventListener("click", function () { SOC.edition = null; rendre(); });
+    el("mi-ok").addEventListener("click", function () {
+      var m = Object.assign({}, edit, { code: el("mi-code").value.trim().toUpperCase(), categorie: el("mi-cat").value.trim(), titre: el("mi-titre").value, description: el("mi-desc").value,
+        consignes: el("mi-consignes").value, livrables: el("mi-livrables").value });
+      missionEnregistrer(m).then(function () { SOC.edition = null; rendre(); }, function (e) { el("mi-erreur").textContent = messageErreur(e); });
+    });
+  }
+};
 
 /* ======================================================================================
    Lot 14 : détail des calculs. Un clic sur un montant (tableau, carte, graphique) ouvre un panneau qui
@@ -2800,13 +3282,13 @@ function compresser(u8) {
   try { return new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer().then(function (b) { return { data: new Uint8Array(b), methode: 8 }; }, function () { return { data: u8, methode: 0 }; }); }
   catch (e) { return Promise.resolve({ data: u8, methode: 0 }); }
 }
-function zipper(fichiers) {
+function zipper(fichiers, type) {
   var enc = new TextEncoder(), parts = [], central = [], decalage = 0, d = new Date();
   var heure = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), jour = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
   var u16 = function (v) { return [v & 255, (v >>> 8) & 255]; }, u32 = function (v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; };
   var suite = Promise.resolve();
   fichiers.forEach(function (f) {
-    suite = suite.then(function () { var brut = enc.encode(f.texte); return compresser(brut).then(function (z) {
+    suite = suite.then(function () { var brut = f.octets || enc.encode(f.texte); return compresser(brut).then(function (z) {
       var nom = enc.encode(f.nom), crc = crc32(brut);
       var entete = new Uint8Array([0x50, 0x4B, 3, 4].concat(u16(20), u16(0x0800), u16(z.methode), u16(heure), u16(jour), u32(crc), u32(z.data.length), u32(brut.length), u16(nom.length), u16(0)));
       parts.push(entete, nom, z.data);
@@ -2817,7 +3299,7 @@ function zipper(fichiers) {
   return suite.then(function () {
     var tailleCentral = central.reduce(function (s, x) { return s + x.length; }, 0);
     var fin = new Uint8Array([0x50, 0x4B, 5, 6].concat(u16(0), u16(0), u16(fichiers.length), u16(fichiers.length), u32(tailleCentral), u32(decalage), u16(0)));
-    return new Blob(parts.concat(central, [fin]), { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    return new Blob(parts.concat(central, [fin]), { type: type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   });
 }
 function ecrireXlsx(feuilles) {
@@ -4788,10 +5270,15 @@ function chargerDonnees(client) {
     lireTout(function () { return client.from("fees_clotures").select("*").order("mois"); }, true),
     lireFacultatif(client.from("compta_journal").select("*").order("id", { ascending: false }).limit(500)),
     lireOuNull(client.from("tresorerie_previsions").select("*").order("id")),
-    lireOuNull(client.from("virements_suivis").select("*").order("id"))
+    lireOuNull(client.from("virements_suivis").select("*").order("id")),
+    /* Lot 25 : null quand la migration 016 manque */
+    lireOuNull(client.from("missions_claude").select("*").order("categorie").order("code")),
+    lireFacultatif(client.from("paquets_claude").select("*").order("id", { ascending: false }).limit(200)),
+    lireFacultatif(client.from("missions_versions").select("*").order("id"))
   ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10],
     resbase: r[11], kpimois: r[12], depots: r[13], cat: r[14], modeles: r[15], resmod: r[16], journalkpi: r[17],
-    lot24: { rubriques: r[18], regles: r[19], ca: r[20], clotures: r[21], journal: r[22], previsions: r[23], virements: r[24] } }; });
+    lot24: { rubriques: r[18], regles: r[19], ca: r[20], clotures: r[21], journal: r[22], previsions: r[23], virements: r[24] },
+    lot25: { missions: r[25], paquets: r[26], versions: r[27] } }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -4810,6 +5297,7 @@ function demarrerAvecClient(client, profil) {
     var L24 = x.lot24; D.lot24 = L24.rubriques !== null && L24.regles !== null && L24.ca !== null && L24.clotures !== null && L24.previsions !== null && L24.virements !== null;
     D.fees_rubriques = L24.rubriques || []; D.fees_regles = L24.regles || []; D.ca_regles = L24.ca || []; D.fees_clotures = L24.clotures || []; D.compta_journal = L24.journal || [];
     D.tresorerie_previsions = L24.previsions || []; D.virements_suivis = L24.virements || [];
+    D.lot25 = x.lot25.missions !== null; D.missions = x.lot25.missions || []; D.paquets = x.lot25.paquets || []; D.missions_versions = x.lot25.versions || [];
     lancerApplication();
     ZCLIENT = client;
     var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");

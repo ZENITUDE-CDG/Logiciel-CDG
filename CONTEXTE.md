@@ -3,7 +3,7 @@
 Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouveau contributeur.
 À lire avant CLAUDE.md.
 
-## Où en est-on (25 novembre 2026)
+## Où en est-on (27 novembre 2026)
 
 - Phase : **test uniquement**. Données fictives. Pennylane : seul le dossier de test `PENNY-TEST` est lu, en lecture seule (lot 18, décision 0011) ; le jeton (lecture seule) est dans les secrets GitHub (lot 23, décision 0017). Pas d'envoi de mail. Site GitHub Pages et base de test Supabase (décisions 0004, 0006, 0007) ; rien en local. Les chiffres sont calculés par GitHub Actions et publiés dans la base ; la page en ligne ne contient aucune donnée.
 - Cadrage : ZENITUDE v0.8 approuvé pour la phase test (`docs/decisions/0001-approbation-cadrage-test.md`).
@@ -36,6 +36,7 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 20 | Suivi KPI paramétrable : catalogue de données et d'indicateurs (création, activation, ordre, seuils), modèles de suivi par activité, modèle Excel exporté puis redéposé, tableau de bord « Indicateurs suivis » | 16 |
 | 19 | Dépôt du consolidé KPI (onglet « Données KPI », périmètre groupe ou résidence, rattachement par code Mews, statuts des mois, groupes du fichier)  (jetons chiffrés retirés au lot 23, décision 0017) | 32 |
 | 24 | Comptabilité du siège : CA par résidence (comptes 7 ou règle propre), paramétrage des FEES (rubriques, versions datées, journal), FEES à refacturer avec clôture figée ; trésorerie : prévisions, point bas, virements de compte à compte proposés, plafond | 17 |
+| 25 | Socle de données pour Claude : paquet standard (résidence ou groupe) de chiffres réels, contrôles C01 à C10, référence et empreinte ; missions versionnées par catégorie ; historique des paquets et documents produits | 21 |
 | 18b | Synchronisation lancée depuis la page Import comptable (résidence ou groupe), période d'import, masquage du brouillard, historique | 17 |
 | 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
@@ -55,6 +56,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 - Lot 17 (`docs/decisions/0010`) : menu latéral réordonné (Résidence en haut) ; export Excel de chaque page de données : tableaux, données des graphiques, détail des calculs et écritures comptables.
 - Lot 16 : ruban bleu en haut de chaque page (exercice de référence + résidence ou groupe) ; l'exercice fixe la période de la réglette, le périmètre quitte le menu latéral.
 - Lot 14 (`docs/decisions/0008`) : détail des écritures publié par résidence ; lissage comme Waibi (répartition possible sur l'exercice suivant, mois sans écriture compris).
+- Lot 25 (`docs/decisions/0019`) : le logiciel fournit les chiffres réels standardisés, Claude analyse, les hypothèses restent dans les missions ; paquet construit dans la page, jamais stocké ; référence PQ et empreinte citées dans chaque document ; missions dans la base (jamais dans le dépôt), versionnées.
 - Lot 24 (`docs/decisions/0018`) : section Comptabilité avant Trésorerie ; CA = comptes 7 par défaut, règle par résidence ; taux et montants en versions datées ; mois clôturés figés ; paramétrage et clôtures par les administrateurs ; virements proposés seulement à l'intérieur d'une résidence ; calcul dans la page comparé à `zenitude/comptabilite/fees.py`.
 - Lot 22 (`docs/decisions/0016`) : période d'import = N-1 + N, calculée par dossier ; plus de choix de mois.
 - Lot 21 (`docs/decisions/0015`) : un seul chemin d'import des KPI (modèle du catalogue) ; modèle Mixte ; page d'arrivée Import comptable.
@@ -82,13 +84,14 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 14. Lot 11 : rattachements PCG provisoires (708, 709, 608, 648, 649) et comptes non classés (643, 644, 646, 681 sans subdivision, 697, 768) à valider par la direction financière ; règlement ANC 2026-03 (titre V du PCG) à analyser ; exercice N-1 à importer pour remplir la colonne N-1.
 10. Charte graphique : appliquée au lot 8. Présentation EBITDA à valider par le contrôle de gestion.
 
+17. Lot 25 : envoi de données réelles à Claude (paquet) à faire approuver par la DSI et la DAF ; connecteur Claude en lecture seule sur le logiciel à étudier.
 16. Lot 19, étape 2 : données réelles dans la base (résidences réelles, contrainte « fictif », lecture des dossiers connectés, synchronisation de plusieurs dossiers) : décision DSI et DAF.
 
 ## Comment reprendre
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 462 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
+python -m pytest            # 483 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
                             # sur GitHub : onglet Actions, lancé automatiquement à chaque dépôt
 sh demo.sh                  # démonstration complète
 python interface/generer_site.py   # régénère index.html (en ligne, sans données)

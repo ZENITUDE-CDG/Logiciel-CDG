@@ -23,6 +23,7 @@ from zenitude.comptes import pcg, tresorerie  # noqa: E402
 from zenitude.config import controles as c, couverture, formules, publication  # noqa: E402
 from zenitude.config.versions import Depot  # noqa: E402
 from zenitude.kpi import moteur  # noqa: E402
+from zenitude import socle  # noqa: E402  (lot 25)
 from zenitude.kpi.mesures import Source, bornes, charger_exploitation, liste_mois, libelle_mois  # noqa: E402
 
 date_min = date.min
@@ -709,6 +710,8 @@ def construire(demo=DEMO):
         "calcul": _donnees_calcul(ecritures, exploitation, f.get("Rubriques", []), residences),
         "ecritures": _ecritures_detail(ecritures, residences),
         "versions": statut["versions"], "journal": statut["journal"],
+        # Lot 25 : définition du paquet pour Claude (fichiers, contrôles, modèles de texte), commune à toutes les résidences
+        "socle": socle.definition(),
     }
 
 

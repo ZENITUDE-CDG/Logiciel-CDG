@@ -1,17 +1,17 @@
--- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 30). À coller en une fois dans SQL Editor.
+-- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 31). À coller en une fois dans SQL Editor.
 -- Fichier assemblé par scripts/assembler_installation.py : remise à zéro + migrations + données de départ.
 -- Remet la base de test à zéro : données fictives uniquement. Ne jamais exécuter sur une base réelle.
 -- Après l'avoir lancé, relancer la publication des données (GitHub, Actions, « Run workflow »).
 
 -- ===================== scripts/reinitialiser_base_test.sql =====================
 -- Remise à zéro de la BASE DE TEST Supabase (données fictives uniquement).
--- Supprime les tableaux et fonctions des lots 12 à 30, y compris ceux d'une version précédente.
+-- Supprime les tableaux et fonctions des lots 12 à 31, y compris ceux d'une version précédente.
 -- Ne jamais exécuter sur une base contenant des données réelles.
 
-DROP TABLE IF EXISTS ecarts_journal, ecarts_suivi, analyse_parametres, dsn_postes, dsn_journal, dsn_mois, dsn_etablissements, paquets_claude, missions_versions, missions_claude, virements_suivis, tresorerie_previsions, compta_journal, fees_clotures, ca_regles, fees_regles, fees_rubriques, residence_modele, kpi_journal, kpi_catalogue, kpi_modeles, connexions_pennylane, cle_jetons, depots_kpi, kpi_mois, pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
+DROP TABLE IF EXISTS societes_journal, residence_identifiants, classements, ecarts_journal, ecarts_suivi, analyse_parametres, dsn_postes, dsn_journal, dsn_mois, dsn_etablissements, paquets_claude, missions_versions, missions_claude, virements_suivis, tresorerie_previsions, compta_journal, fees_clotures, ca_regles, fees_regles, fees_rubriques, residence_modele, kpi_journal, kpi_catalogue, kpi_modeles, connexions_pennylane, cle_jetons, depots_kpi, kpi_mois, pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
   parcs, residence_groupe, groupes, residences, profils CASCADE;
 
-DROP FUNCTION IF EXISTS trace_ecart_suivi(), journal_ecart_suivi(), trace_analyse_parametres(), trace_dsn_poste(), trace_dsn_etablissement(), suivre_dsn_etablissement(), trace_dsn_mois(), journal_dsn_mois(), trace_mission_claude(), trace_paquet_claude(), controle_fees_rubrique(), trace_compta(), garde_cloture(), trace_virement(), journal_compta(), controle_kpi_catalogue(), journal_kpi_catalogue(), trace_residence_modele(), controle_signe_mesure(), trace_connexion_pennylane(), trace_cle_jetons(), trace_kpi(), garde_code_mews(), trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
+DROP FUNCTION IF EXISTS trace_societe(), trace_auteur(), garde_groupe_parc(), controle_classement_exclusif(), controle_groupe_classement(), journal_societes(), trace_ecart_suivi(), journal_ecart_suivi(), trace_analyse_parametres(), trace_dsn_poste(), trace_dsn_etablissement(), suivre_dsn_etablissement(), trace_dsn_mois(), journal_dsn_mois(), trace_mission_claude(), trace_paquet_claude(), controle_fees_rubrique(), trace_compta(), garde_cloture(), trace_virement(), journal_compta(), controle_kpi_catalogue(), journal_kpi_catalogue(), trace_residence_modele(), controle_signe_mesure(), trace_connexion_pennylane(), trace_cle_jetons(), trace_kpi(), garde_code_mews(), trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
   modifie_dossier(text), voit_dossier(text), ajustements_trace(),
   voit_groupe(text), voit_residence(text), modifie_residence(text),
   est_administrateur(), role_courant(), email_courant(), utilisateur_courant() CASCADE;
@@ -1939,6 +1939,258 @@ GRANT SELECT, UPDATE ON analyse_parametres TO authenticated;
 -- Paquet d'écarts pour Claude : même journal que les paquets du socle (référence PQ, empreinte).
 ALTER TABLE paquets_claude DROP CONSTRAINT IF EXISTS paquets_claude_niveau_check;
 ALTER TABLE paquets_claude ADD CONSTRAINT paquets_claude_niveau_check CHECK (niveau IN ('complet', 'synthese', 'ecarts'));
+
+-- ===================== migrations/020_societes.sql =====================
+-- Migration 020 : sociétés, identifiants, classements et groupes modifiables (lot 31, décision 0023).
+-- SQL standard PostgreSQL, rejouable. S'ajoute aux migrations 001 à 019 sans remise à zéro.
+--
+-- La page « Résidence » devient « Société ». Une société reste une ligne de residences (un dossier Pennylane).
+--
+-- residences            : fiche modifiable dans la page (nom d'usage, raison sociale, SIREN, activité, région,
+--                         marque, ouverture) et archivage. Une colonne vide garde la valeur de la configuration
+--                         publiée. Archivage, dossier Pennylane, code et statut fictif : administrateurs seulement.
+--                         Les autres champs : administrateur ou collaborateur sur une société de son parc (lot 12).
+-- residence_identifiants: les noms et codes de la société dans les autres outils (Pennylane « YTR », Mews « TRT »...).
+--                         Un même code d'un même outil ne désigne qu'une seule société.
+-- classements           : regroupements propres à Zenitude (RM, gamme, propriétaire...). Exclusif : une société
+--                         n'est que dans un seul groupe du classement.
+-- groupes               : rangés dans un classement (sans classement : groupes libres). Un groupe attribué dans le
+--                         parc d'un utilisateur ne se supprime pas (le retirer d'abord dans Administration).
+-- societes_journal      : chaque création, modification, archivage ou suppression, écrit par la base.
+
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS nom text CHECK (nom IS NULL OR length(btrim(nom)) BETWEEN 1 AND 120);
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS raison_sociale text CHECK (raison_sociale IS NULL OR length(raison_sociale) <= 200);
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS siren text CHECK (siren IS NULL OR siren ~ '^[0-9]{9}$');
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS activite text CHECK (activite IS NULL OR length(btrim(activite)) BETWEEN 1 AND 60);
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS region text CHECK (region IS NULL OR length(btrim(region)) BETWEEN 1 AND 60);
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS marque text CHECK (marque IS NULL OR length(marque) <= 60);
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS ouverture date;
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS archivee boolean NOT NULL DEFAULT false;
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS archivee_le timestamptz;
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS archivee_par text;
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS cree_par text;
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS cree_le timestamptz NOT NULL DEFAULT now();
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS modifie_par text;
+ALTER TABLE residences ADD COLUMN IF NOT EXISTS modifie_le timestamptz NOT NULL DEFAULT now();
+
+CREATE TABLE IF NOT EXISTS residence_identifiants (
+    id           bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    residence_id text NOT NULL REFERENCES residences(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    libelle      text NOT NULL CHECK (libelle = btrim(libelle) AND length(libelle) BETWEEN 1 AND 60),
+    code         text NOT NULL CHECK (code = btrim(code) AND length(code) BETWEEN 1 AND 120),
+    cree_par     text,
+    cree_le      timestamptz NOT NULL DEFAULT now(),
+    modifie_par  text,
+    modifie_le   timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS residence_identifiants_unique ON residence_identifiants (lower(libelle), lower(code));
+CREATE INDEX IF NOT EXISTS residence_identifiants_residence ON residence_identifiants (residence_id);
+
+CREATE TABLE IF NOT EXISTS classements (
+    id          text PRIMARY KEY CHECK (id ~ '^[A-Z0-9_-]+$'),
+    libelle     text NOT NULL UNIQUE CHECK (libelle = btrim(libelle) AND length(libelle) BETWEEN 1 AND 80),
+    exclusif    boolean NOT NULL DEFAULT true,
+    ordre       integer NOT NULL DEFAULT 100,
+    cree_par    text,
+    cree_le     timestamptz NOT NULL DEFAULT now(),
+    modifie_par text,
+    modifie_le  timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE groupes ADD COLUMN IF NOT EXISTS classement_id text REFERENCES classements(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE groupes ADD COLUMN IF NOT EXISTS cree_par text;
+ALTER TABLE groupes ADD COLUMN IF NOT EXISTS cree_le timestamptz NOT NULL DEFAULT now();
+ALTER TABLE groupes ADD COLUMN IF NOT EXISTS modifie_par text;
+ALTER TABLE groupes ADD COLUMN IF NOT EXISTS modifie_le timestamptz NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS groupes_classement_idx ON groupes (classement_id);
+
+CREATE TABLE IF NOT EXISTS societes_journal (
+    id           bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    objet        text NOT NULL CHECK (objet IN ('societe', 'identifiant', 'classement', 'groupe', 'appartenance')),
+    action       text NOT NULL,
+    residence_id text,
+    groupe_id    text,
+    detail       jsonb NOT NULL DEFAULT '{}'::jsonb,
+    par          text,
+    le           timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS societes_journal_residence ON societes_journal (residence_id);
+
+-- ------------------------------------------------------------------ traces posées par la base
+CREATE OR REPLACE FUNCTION trace_societe() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  IF current_user IN ('authenticated', 'anon') AND NOT est_administrateur() AND (
+       TG_OP = 'INSERT'
+       OR (NEW.id, NEW.dossier_pennylane, NEW.fictif, NEW.archivee)
+          IS DISTINCT FROM (OLD.id, OLD.dossier_pennylane, OLD.fictif, OLD.archivee)) THEN
+    RAISE EXCEPTION 'Création, archivage, code et dossier Pennylane d’une société : administrateurs seulement.' USING ERRCODE = '42501';
+  END IF;
+  IF TG_OP = 'INSERT' THEN
+    NEW.cree_par := coalesce(email_courant(), NEW.cree_par);
+    NEW.cree_le := now();
+  ELSE
+    NEW.cree_par := OLD.cree_par;
+    NEW.cree_le := OLD.cree_le;
+  END IF;
+  IF NEW.archivee AND (TG_OP = 'INSERT' OR NOT OLD.archivee) THEN
+    NEW.archivee_le := now(); NEW.archivee_par := email_courant();
+  ELSIF NOT NEW.archivee THEN
+    NEW.archivee_le := NULL; NEW.archivee_par := NULL;
+  ELSE
+    NEW.archivee_le := OLD.archivee_le; NEW.archivee_par := OLD.archivee_par;
+  END IF;
+  NEW.nom := nullif(btrim(NEW.nom), '');
+  NEW.modifie_par := coalesce(email_courant(), NEW.modifie_par);
+  NEW.modifie_le := now();
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS residences_trace_societe ON residences;
+CREATE TRIGGER residences_trace_societe BEFORE INSERT OR UPDATE ON residences FOR EACH ROW EXECUTE FUNCTION trace_societe();
+
+CREATE OR REPLACE FUNCTION trace_auteur() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    NEW.cree_par := coalesce(email_courant(), NEW.cree_par);
+    NEW.cree_le := now();
+  ELSE
+    NEW.cree_par := OLD.cree_par;
+    NEW.cree_le := OLD.cree_le;
+  END IF;
+  NEW.modifie_par := coalesce(email_courant(), NEW.modifie_par);
+  NEW.modifie_le := now();
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS residence_identifiants_trace ON residence_identifiants;
+CREATE TRIGGER residence_identifiants_trace BEFORE INSERT OR UPDATE ON residence_identifiants FOR EACH ROW EXECUTE FUNCTION trace_auteur();
+DROP TRIGGER IF EXISTS classements_trace ON classements;
+CREATE TRIGGER classements_trace BEFORE INSERT OR UPDATE ON classements FOR EACH ROW EXECUTE FUNCTION trace_auteur();
+DROP TRIGGER IF EXISTS groupes_trace ON groupes;
+CREATE TRIGGER groupes_trace BEFORE INSERT OR UPDATE ON groupes FOR EACH ROW EXECUTE FUNCTION trace_auteur();
+
+-- Un groupe présent dans le parc d'un utilisateur ne se supprime pas (sinon l'utilisateur perd ses accès sans le voir).
+CREATE OR REPLACE FUNCTION garde_groupe_parc() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE n integer;
+BEGIN
+  SELECT count(*) INTO n FROM parcs WHERE groupe_id = OLD.id;
+  IF n > 0 THEN
+    RAISE EXCEPTION 'Groupe % attribué dans le parc de % utilisateur(s) : retirez-le d’abord dans Administration.', OLD.id, n USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN OLD;
+END
+$$;
+DROP TRIGGER IF EXISTS groupes_garde_parc ON groupes;
+CREATE TRIGGER groupes_garde_parc BEFORE DELETE ON groupes FOR EACH ROW EXECUTE FUNCTION garde_groupe_parc();
+
+-- Classement exclusif : une société dans un seul groupe du classement.
+CREATE OR REPLACE FUNCTION controle_classement_exclusif() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE c text; autre text;
+BEGIN
+  SELECT g.classement_id INTO c FROM groupes g JOIN classements k ON k.id = g.classement_id
+   WHERE g.id = NEW.groupe_id AND k.exclusif;
+  IF c IS NULL THEN RETURN NEW; END IF;
+  SELECT rg.groupe_id INTO autre FROM residence_groupe rg JOIN groupes g ON g.id = rg.groupe_id
+   WHERE rg.residence_id = NEW.residence_id AND g.classement_id = c AND rg.groupe_id <> NEW.groupe_id LIMIT 1;
+  IF autre IS NOT NULL THEN
+    RAISE EXCEPTION 'La société % est déjà dans le groupe % de ce classement (un seul groupe par société).', NEW.residence_id, autre USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS residence_groupe_exclusif ON residence_groupe;
+CREATE TRIGGER residence_groupe_exclusif BEFORE INSERT OR UPDATE ON residence_groupe FOR EACH ROW EXECUTE FUNCTION controle_classement_exclusif();
+
+CREATE OR REPLACE FUNCTION controle_groupe_classement() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NEW.classement_id IS NOT NULL AND (TG_OP = 'INSERT' OR NEW.classement_id IS DISTINCT FROM OLD.classement_id)
+     AND EXISTS (SELECT 1 FROM classements WHERE id = NEW.classement_id AND exclusif)
+     AND EXISTS (SELECT 1 FROM residence_groupe a JOIN residence_groupe b ON b.residence_id = a.residence_id
+                   JOIN groupes g ON g.id = b.groupe_id
+                  WHERE a.groupe_id = NEW.id AND g.classement_id = NEW.classement_id AND g.id <> NEW.id) THEN
+    RAISE EXCEPTION 'Des sociétés de ce groupe sont déjà dans un autre groupe du classement.' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS groupes_classement ON groupes;
+CREATE TRIGGER groupes_classement BEFORE INSERT OR UPDATE ON groupes FOR EACH ROW EXECUTE FUNCTION controle_groupe_classement();
+
+-- ------------------------------------------------------------------ journal écrit par la base
+CREATE OR REPLACE FUNCTION journal_societes() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  avant jsonb := CASE WHEN TG_OP <> 'INSERT' THEN to_jsonb(OLD) ELSE '{}'::jsonb END;
+  apres jsonb := CASE WHEN TG_OP <> 'DELETE' THEN to_jsonb(NEW) ELSE '{}'::jsonb END;
+  ligne jsonb := CASE WHEN TG_OP = 'DELETE' THEN avant ELSE apres END;
+  diff jsonb := '{}'::jsonb; k text; obj text; act text := lower(TG_OP);
+BEGIN
+  FOR k IN SELECT jsonb_object_keys(avant || apres) LOOP
+    IF k NOT IN ('cree_par', 'cree_le', 'modifie_par', 'modifie_le', 'archivee_le', 'archivee_par')
+       AND (avant -> k) IS DISTINCT FROM (apres -> k) THEN
+      diff := diff || jsonb_build_object(k, jsonb_build_array(avant -> k, apres -> k));
+    END IF;
+  END LOOP;
+  IF TG_OP = 'UPDATE' AND diff = '{}'::jsonb THEN RETURN NEW; END IF;
+  obj := CASE TG_TABLE_NAME WHEN 'residences' THEN 'societe' WHEN 'residence_identifiants' THEN 'identifiant'
+         WHEN 'classements' THEN 'classement' WHEN 'groupes' THEN 'groupe' ELSE 'appartenance' END;
+  IF obj = 'societe' AND TG_OP = 'UPDATE' AND diff ? 'archivee' THEN
+    act := CASE WHEN (apres ->> 'archivee')::boolean THEN 'archivage' ELSE 'restauration' END;
+  END IF;
+  INSERT INTO societes_journal (objet, action, residence_id, groupe_id, detail, par)
+  VALUES (obj, act,
+          CASE obj WHEN 'societe' THEN ligne ->> 'id' WHEN 'identifiant' THEN ligne ->> 'residence_id'
+                   WHEN 'appartenance' THEN ligne ->> 'residence_id' END,
+          CASE obj WHEN 'groupe' THEN ligne ->> 'id' WHEN 'appartenance' THEN ligne ->> 'groupe_id' END,
+          CASE WHEN TG_OP = 'UPDATE' THEN diff ELSE ligne - 'cree_par' - 'cree_le' - 'modifie_par' - 'modifie_le' END,
+          email_courant());
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END
+$$;
+DROP TRIGGER IF EXISTS residences_journal ON residences;
+CREATE TRIGGER residences_journal AFTER INSERT OR UPDATE OR DELETE ON residences FOR EACH ROW EXECUTE FUNCTION journal_societes();
+DROP TRIGGER IF EXISTS residence_identifiants_journal ON residence_identifiants;
+CREATE TRIGGER residence_identifiants_journal AFTER INSERT OR UPDATE OR DELETE ON residence_identifiants FOR EACH ROW EXECUTE FUNCTION journal_societes();
+DROP TRIGGER IF EXISTS classements_journal ON classements;
+CREATE TRIGGER classements_journal AFTER INSERT OR UPDATE OR DELETE ON classements FOR EACH ROW EXECUTE FUNCTION journal_societes();
+DROP TRIGGER IF EXISTS groupes_journal ON groupes;
+CREATE TRIGGER groupes_journal AFTER INSERT OR UPDATE OR DELETE ON groupes FOR EACH ROW EXECUTE FUNCTION journal_societes();
+DROP TRIGGER IF EXISTS residence_groupe_journal ON residence_groupe;
+CREATE TRIGGER residence_groupe_journal AFTER INSERT OR UPDATE OR DELETE ON residence_groupe FOR EACH ROW EXECUTE FUNCTION journal_societes();
+
+-- ------------------------------------------------------------------ droits
+ALTER TABLE residence_identifiants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE classements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE societes_journal ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS residence_identifiants_lecture ON residence_identifiants;
+CREATE POLICY residence_identifiants_lecture ON residence_identifiants FOR SELECT TO authenticated
+  USING (voit_residence(residence_id));
+DROP POLICY IF EXISTS residence_identifiants_ecriture ON residence_identifiants;
+CREATE POLICY residence_identifiants_ecriture ON residence_identifiants FOR ALL TO authenticated
+  USING (modifie_residence(residence_id)) WITH CHECK (modifie_residence(residence_id));
+
+DROP POLICY IF EXISTS classements_lecture ON classements;
+CREATE POLICY classements_lecture ON classements FOR SELECT TO authenticated
+  USING (role_courant() IS NOT NULL);
+DROP POLICY IF EXISTS classements_admin ON classements;
+CREATE POLICY classements_admin ON classements FOR ALL TO authenticated
+  USING (est_administrateur()) WITH CHECK (est_administrateur());
+
+DROP POLICY IF EXISTS societes_journal_lecture ON societes_journal;
+CREATE POLICY societes_journal_lecture ON societes_journal FOR SELECT TO authenticated
+  USING (est_administrateur() OR (residence_id IS NOT NULL AND voit_residence(residence_id))
+         OR (residence_id IS NULL AND groupe_id IS NOT NULL AND voit_groupe(groupe_id)));
+
+REVOKE ALL ON residence_identifiants, classements, societes_journal FROM anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON residence_identifiants, classements TO authenticated;
+GRANT SELECT ON societes_journal TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE residence_identifiants_id_seq TO authenticated;
 
 -- ===================== scripts/donnees_test.sql =====================
 -- Données de départ de la phase test (lots 12 et 13). Tout est fictif sauf les deux adresses

@@ -10,7 +10,7 @@ import pathlib
 RACINE = pathlib.Path(__file__).resolve().parent.parent
 SORTIE = RACINE / "scripts" / "installation_supabase.sql"
 
-ENTETE = """-- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 30). À coller en une fois dans SQL Editor.
+ENTETE = """-- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 31). À coller en une fois dans SQL Editor.
 -- Fichier assemblé par scripts/assembler_installation.py : remise à zéro + migrations + données de départ.
 -- Remet la base de test à zéro : données fictives uniquement. Ne jamais exécuter sur une base réelle.
 -- Après l'avoir lancé, relancer la publication des données (GitHub, Actions, « Run workflow »).

@@ -52,7 +52,7 @@ def test_ruban_exercice_et_perimetre(site):
     assert pg.locator("#lateral #btn-perim").count() == 0
     assert pg.locator("#rub-haut #btn-exercice").count() == 1 and pg.locator("#rub-haut #btn-perim").count() == 1
     assert "Exercice N, en cours" in pg.inner_text("#btn-exercice")
-    assert "Campus Rive Gauche" in pg.inner_text("#btn-perim") and "Résidence" in pg.inner_text("#btn-perim")
+    assert "Campus Rive Gauche" in pg.inner_text("#btn-perim") and "Société" in pg.inner_text("#btn-perim")
     # Le ruban est bleu (charte) et la période de la réglette est celle de l'exercice.
     assert pg.evaluate("getComputedStyle(document.getElementById('rub-haut')).backgroundColor") == "rgb(15, 80, 108)"
     assert pg.inner_text("#reg-lib") == pg.inner_text("#exercice-dates")

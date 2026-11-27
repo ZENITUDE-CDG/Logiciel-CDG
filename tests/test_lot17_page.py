@@ -59,7 +59,7 @@ def test_ordre_du_menu_lateral(site):
     noms = [t.split("\n")[0] for t in pg.locator(".lat-item").all_inner_texts()]
     # Lot 24 : Comptabilité juste avant Trésorerie ; lot 26 : Social juste après Comptabilité (administrateurs) ;
     # lots 28 à 30 : Analyse des écarts juste après Tableaux de bord
-    assert noms == ["Résidence", "Import et paramètres", "Tableaux de bord", "Analyse des écarts", "Ajustements", "Comptabilité", "Social", "Trésorerie", "Budgets", "Rapports"]
+    assert noms == ["Société", "Import et paramètres", "Tableaux de bord", "Analyse des écarts", "Ajustements", "Comptabilité", "Social", "Trésorerie", "Budgets", "Rapports"]
     assert not erreurs
 
 

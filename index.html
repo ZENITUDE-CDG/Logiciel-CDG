@@ -569,6 +569,20 @@ dl.fiche dt { color:var(--mut); } dl.fiche dd { margin:0; color:var(--txt); font
 .puces { display:flex; flex-wrap:wrap; gap:6px; }
 .puce { font-size:12px; padding:3px 10px; border-radius:20px; background:var(--entete); color:var(--txt); border:1px solid var(--bord); }
 .puce small { color:var(--mut); margin-left:4px; }
+/* Lot 31 : sociétés */
+.soc-sous { font-size:12.5px; font-weight:600; color:var(--titre); margin:18px 0 10px; padding-top:14px; border-top:1px solid var(--bord); }
+.soc-id-ajout { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-top:12px; } .soc-id-ajout .mini-champ input, .soc-id-ajout .mini-champ select { padding:6px 9px; }
+.soc-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 16px; margin-top:14px; } .soc-form input:disabled { background:var(--entete); color:var(--mut); }
+@media (max-width:640px) { .soc-form { grid-template-columns:1fr; } }
+.soc-outils { display:flex; gap:12px; align-items:center; flex-wrap:wrap; } .soc-outils input[type=search] { min-width:280px; padding:7px 10px; border:1px solid var(--bord-fort); border-radius:8px; background:var(--surface); color:var(--txt); }
+.soc-case { display:inline-flex; gap:6px; align-items:center; font-size:12.5px; color:var(--txt); }
+.soc-code { display:inline-block; font-size:11.5px; padding:1px 7px; margin:1px 2px; border-radius:6px; background:var(--entete); border:1px solid var(--bord); white-space:nowrap; }
+.soc-arch { background:var(--attente-fond); color:var(--attente); }
+tr.soc-courant td { background:var(--selection); } tr.soc-courant .puce { white-space:nowrap; } .soc-liste td:nth-child(2) { white-space:nowrap; } tr.soc-absent td { color:var(--mut); }
+.soc-classement { margin-top:16px; } .soc-classement h3 { font-size:13px; margin:0; display:flex; gap:8px; align-items:center; } .soc-membres { color:var(--mut); font-size:12px; }
+.soc-nv-classement { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-top:18px; padding-top:14px; border-top:1px solid var(--bord); }
+.soc-retirer { border:0; background:none; color:var(--mut); cursor:pointer; padding:0 0 0 4px; font-size:11px; } .soc-retirer:hover { color:var(--erreur); }
+dl.fiche dd .btn-petit { margin-left:6px; padding:0 7px; }
 .tab tr.clic { cursor:pointer; } .tab tr.clic:hover td { background:var(--survol); }
 .kpi-mini { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .kpi-mini div { background:var(--entete); border-radius:8px; padding:10px 12px; }
@@ -691,13 +705,13 @@ var SOUS = {
   comptabilite: [["cp_ca", "Chiffre d’affaires"], ["cp_parametrage", "Paramétrage des FEES"], ["cp_fees", "FEES à refacturer"]],
   social: [["so_synthese", "Tableau de bord social"], ["so_effectifs", "Effectifs et mouvements"], ["so_remun", "Rémunérations"], ["so_absences", "Absentéisme"], ["so_productivite", "Productivité"], ["so_paie", "Contrôles de paie"], ["so_controle", "Paie et comptabilité"], ["so_budget", "Base budget"]],
   import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["so_import", "Import DSN"], ["so_postes", "Référentiel des postes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
-  residence: [["residence", "Résidence"]],
+  residence: [["residence", "Société"]],
   budgets: [["budgets", "Budgets"]], rapports: [["claude", "Paquet pour Claude"], ["missions", "Missions Claude"], ["rapports", "Plaquettes"]]
 };
 /* Menu latéral : ordre, libellés et icônes (lot 10 ; ordre du lot 17 : Résidence, Import et paramètres, Tableaux de bord, Ajustements, Trésorerie, Budgets, Rapports ;
    lot 24 : Comptabilité juste avant Trésorerie ; lot 26 : Social juste après Comptabilité, réservé aux administrateurs) */
 var MENU = [
-  ["residence", "Résidence", "M4 17V4.5L10 3l6 1.5V17M2.5 17h15M8 7.5h1.5M11 7.5h1.5M8 11h1.5M11 11h1.5M9 17v-3h2v3"],
+  ["residence", "Société", "M4 17V4.5L10 3l6 1.5V17M2.5 17h15M8 7.5h1.5M11 7.5h1.5M8 11h1.5M11 11h1.5M9 17v-3h2v3"],
   ["import", "Import et paramètres", "M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M3.5 13.5v2A1.5 1.5 0 005 17h10a1.5 1.5 0 001.5-1.5v-2"],
   ["tableaux", "Tableaux de bord", "M3 3v14h14M7 13V9m4 4V6m4 7v-4"],
   ["ajustements", "Ajustements", "M4 5h7M15 5h1M4 10h2M10 10h6M4 15h9M17 15h-1M11 3.5v3M7 8.5v3M14 13.5v3"],
@@ -712,7 +726,7 @@ var etat = { utilisateur: null, perim: null, exercice: "N", section: "import", p
 var principaux = D.kpi.filter(function (k) { return k.principal; });
 var MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 var MOIS_COURT = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
-var TYPES = { groupe: "Groupe", activite: "Activité", region: "Région", "groupe-cree": "Groupe créé", residence: "Résidence" };
+var TYPES = { groupe: "Groupe", activite: "Activité", region: "Région", "groupe-cree": "Groupe créé", residence: "Société" };
 
 function el(id) { return document.getElementById(id); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -784,17 +798,18 @@ function remplirUtilisateur() {
 function correspond(p, q) {
   if (!q) return true; q = q.toLowerCase();
   var r = p.type === "residence" ? residence(p.id) : null;
-  return [p.libelle, p.id, TYPES[p.type], r && r.activite, r && r.region].join(" ").toLowerCase().indexOf(q) >= 0;
+  var codes = r && SOC ? SOC.ids.filter(function (i) { return i.residence_id === r.soc_id || i.residence_id === r.code; }).map(function (i) { return i.code; }).join(" ") : ""; /* lot 31 : noms et codes des autres outils */
+  return [p.libelle, p.id, TYPES[p.type], p.classement, r && r.activite, r && r.region, codes].join(" ").toLowerCase().indexOf(q) >= 0;
 }
 function ouvrirChoix() { montrer("ecran-choix"); el("choix-rech").value = ""; dessinerChoix(); el("choix-rech").focus(); }
 function dessinerChoix() {
   var q = el("choix-rech").value.trim();
   var gr = D.perimetres.filter(function (p) { return p.type !== "residence" && correspond(p, q); });
-  var rs = D.perimetres.filter(function (p) { return p.type === "residence" && correspond(p, q); });
+  var rs = D.perimetres.filter(function (p) { return p.type === "residence" && !residence(p.id).archivee && correspond(p, q); }); /* lot 31 : sociétés archivées hors du choix */
   el("nb-groupes").textContent = gr.length; el("nb-res").textContent = rs.length;
   el("choix-groupes").innerHTML = gr.map(function (p) {
     return '<button class="carte-groupe' + (p.type === "groupe" ? " principal" : "") + '" data-p="' + esc(p.id) + '"><b>' + esc(p.libelle) + "</b><span>" +
-      esc(TYPES[p.type]) + ", " + p.dossiers.length + " résidence" + (p.dossiers.length > 1 ? "s" : "") + "</span></button>";
+      esc(p.classement || TYPES[p.type]) + ", " + p.dossiers.length + " résidence" + (p.dossiers.length > 1 ? "s" : "") + "</span></button>";
   }).join("") || '<div class="vide">Aucun groupe ne correspond.</div>';
   el("choix-res").innerHTML = '<button class="tete" tabindex="-1"><span>Résidence</span><span>Activité</span><span>Région</span><span>Dossier Pennylane</span></button>' +
     (rs.map(function (p) { var r = residence(p.id);
@@ -870,7 +885,7 @@ function dessinerDeroulant() {
   var q = el("der-rech").value.trim(), html = "", courant = null;
   var ordre = ["groupe", "groupe-cree", "activite", "region", "residence"], titres = { groupe: "Groupe", "groupe-cree": "Groupes créés", activite: "Par activité", region: "Par région", residence: "Résidences" };
   ordre.forEach(function (t) {
-    var ps = D.perimetres.filter(function (p) { return p.type === t && correspond(p, q); });
+    var ps = D.perimetres.filter(function (p) { return p.type === t && !(t === "residence" && residence(p.id).archivee) && correspond(p, q); });
     if (!ps.length) return;
     html += '<div class="grp">' + titres[t] + "</div>" + ps.map(function (p) {
       return '<button class="opt' + (p.id === etat.perim ? " actif" : "") + '" data-p="' + esc(p.id) + '"><span>' + esc(p.libelle) + "</span><small>" +
@@ -1057,7 +1072,7 @@ function lisCharger() {
 }
 function lisSauver() { ajVider(); if (enLigne()) return; try { localStorage.setItem("zen-lissages", JSON.stringify(LIS)); } catch (e) {} }
 function lisDepuisBase(l) { return { cle: l.id, dossier: l.dossier, ecriture: l.ecriture, compte: l.compte, montant: +l.montant, date: String(l.date_ecriture).slice(0, 10),
-  du: l.du, au: l.au, actif: !!l.actif, rev: l.rev || 1, auteur: l.cree_par || "", modifie_par: l.modifie_par || "" }; }
+  du: l.du, au: l.au, actif: !!l.actif, rev: l.rev || 1, auteur: l.cree_par || "", modifie_par: l.modifie_par || "", modifie_le: l.modifie_le || "" }; }
 /* État d'un lissage : { ok, r (écriture), mois (mois de répartition) } ou { ok: false, motif }. */
 function lisEtat(l) {
   var r = (ECR_ID[l.dossier] || {})[l.ecriture];
@@ -1761,6 +1776,7 @@ function brancherFormulaire() {
       return;
     }
     if (nouveau) AJ.comptes.push(nouveau);
+    a.modifie_le = new Date().toISOString(); a.modifie_par = socQui(); if (!b.edition) a.auteur = a.modifie_par; /* lot 31 : date et auteur en démonstration locale */
     if (b.edition) { a.rev = (b.rev || 1) + 1; AJ.liste = AJ.liste.map(function (x) { return x.id === a.id ? a : x; }); }
     else { a.id = prochainId(); a.rev = 1; AJ.liste.push(a); }
     ajSauver(); etat.brouillon = null; PAGES.provisions(perimetre(etat.perim)); majReglette();
@@ -1844,7 +1860,7 @@ PAGES.provisions = function (p) {
   document.querySelectorAll(".aj-actif").forEach(function (c) { c.addEventListener("change", function () {
     var a = trouver(c.dataset.id);
     if (enLigne()) { c.disabled = true; ajEnLigne(function () { return BASE.activer(a, c.checked); }); return; }
-    a.actif = c.checked; ajSauver(); PAGES.provisions(p); majReglette(); }); });
+    a.actif = c.checked; a.modifie_le = new Date().toISOString(); a.modifie_par = socQui(); ajSauver(); PAGES.provisions(p); majReglette(); }); });
   document.querySelectorAll(".aj-edit").forEach(function (bt) { bt.addEventListener("click", function () {
     var a = JSON.parse(JSON.stringify(trouver(bt.dataset.id)));
     etat.brouillon = { id: a.id, cle: a.cle, edition: true, rev: a.rev, actif: a.actif, type: a.type, libelle: a.libelle, compte: a.compte, mode: a.mode, portee: a.portee || "tous", du: a.du || "", au: a.au || "",
@@ -2338,30 +2354,515 @@ PAGES.parametres = function (p) {
   el("contenu").innerHTML = enTete("Paramètres KPI", p, "Catalogue des données et indicateurs suivis, modèles de suivi") + blocsCatalogue(p);
   if (catDispo()) brancherCatalogue(p);
 };
-/* ---------- Résidence (lot 10) : fiche complète d'une résidence ---------- */
+/* ---------- Société (lot 10 ; lot 31 : sociétés modifiables) : fiche complète ---------- */
 function ligneFiche(lib, val) { return "<dt>" + esc(lib) + "</dt><dd>" + (val ? esc(val) : '<span class="mut">Non renseigné</span>') + "</dd>"; }
+/* ---------- Sociétés (lot 31, décision 0023) ----------
+   La page « Résidence » devient « Société » : liste, création, modification et archivage des sociétés ; noms et codes
+   de la société dans les autres outils (Pennylane, Mews...) ; classements et groupes modifiables. En ligne, la base
+   vérifie les droits et tient le journal (migration 020) ; démonstration locale : navigateur (zen-societes).
+   Un champ vide de la fiche garde la valeur de la configuration publiée. */
+var SOC_LOCAL = "zen-societes", SOC = null, SOC_ORIG = {}, SOC_CONFIG = [], SOC_VUE = { archives: false, q: "", exTous: false };
+var SOC_CHAMPS = [["nom", "Nom"], ["raison_sociale", "Raison sociale"], ["siren", "SIREN"], ["activite", "Activité"], ["region", "Région"], ["marque", "Marque"], ["ouverture", "Date d’ouverture"]];
+var SOC_ORIG_CHAMP = { nom: "nom", raison_sociale: "societe", activite: "activite", region: "region", marque: "marque", ouverture: "ouverture" };
+var SOC_SOURCES = ["Pennylane", "Mews", "Silae", "Zeendoc", "Banque", "Nom commercial", "Ancien nom"];
+var RE_ID = /^[A-Z0-9_-]+$/;
+function socQui() { return enLigne() ? D.enLigne.email : (etat.utilisateur ? etat.utilisateur.mail : "démonstration locale"); }
+function socDispo() { return !enLigne() || !!D.lot31; }
+function socAdmin() { return socDispo() && estAdmin(); }
+function socEditeur() { return socDispo() && (estAdmin() || roleEnLigne() === "collaborateur"); }
+function socErreur(m) { return { message: m }; }
+function socMaintenant() { return new Date().toISOString(); }
+function socSlug(t, prefixe, existe) {
+  var s = String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30) || "X";
+  var id = prefixe + s, i = 2; while (existe(id)) id = prefixe + s + "-" + i++;
+  return id;
+}
+function socGraine() {
+  var res = D.residences.map(function (r) { return { id: r.code || r.dossier, libelle: r.nom, dossier_pennylane: r.dossier, nom: null, raison_sociale: null, siren: null, activite: null, region: null, marque: null, ouverture: null, archivee: false, code_mews: null }; });
+  var grp = [], liens = [];
+  D.perimetres.forEach(function (p) {
+    if (p.type !== "groupe-cree") return;
+    grp.push({ id: p.id, libelle: p.libelle, classement_id: null });
+    p.dossiers.forEach(function (d) { var r = residence(d); liens.push({ residence_id: r ? r.code || d : d, groupe_id: p.id }); });
+  });
+  return { res: res, ids: [], cls: [], grp: grp, liens: liens, journal: [] };
+}
+function socCharger() {
+  var local = false;
+  if (enLigne()) SOC = { res: D.residences_base || [], ids: D.soc_identifiants || [], cls: D.soc_classements || [], grp: D.groupes_base || [], liens: D.residence_groupe || [], journal: D.soc_journal || [] };
+  else { var x = catLocal(SOC_LOCAL, null); local = !!(x && x.res); SOC = local ? x : socGraine(); }
+  if (!Object.keys(SOC_ORIG).length) {
+    D.residences.forEach(function (r) { SOC_ORIG[r.dossier] = { nom: r.nom, societe: r.societe, activite: r.activite, region: r.region, marque: r.marque, ouverture: r.ouverture }; });
+    var ids = SOC.grp.map(function (g) { return g.id; });
+    SOC_CONFIG = D.perimetres.filter(function (p) { return p.type === "groupe-cree" && (enLigne() ? ids.indexOf(p.id) < 0 : false); }).map(function (p) { return JSON.parse(JSON.stringify(p)); });
+  }
+  var perso = local || SOC.cls.length || SOC.res.some(function (b) { return b.archivee || SOC_CHAMPS.some(function (c) { return b[c[0]]; }); });
+  if (perso) socAppliquer();
+}
+function socRes(d) { return SOC.res.find(function (b) { return b.dossier_pennylane === d; }); }
+function socResId(id) { return SOC.res.find(function (b) { return b.id === id; }); }
+function socDossier(id) { var b = socResId(id); return b ? b.dossier_pennylane : null; }
+function socClassement(id) { return SOC.cls.find(function (c) { return c.id === id; }); }
+function socGroupesDe(resId) { return SOC.liens.filter(function (l) { return l.residence_id === resId; }).map(function (l) { return SOC.grp.find(function (g) { return g.id === l.groupe_id; }); }).filter(Boolean); }
+function socMembres(grpId) { return SOC.liens.filter(function (l) { return l.groupe_id === grpId; }).map(function (l) { return l.residence_id; }); }
+function socNom(resId) { var b = socResId(resId); if (!b) return resId; var r = b.dossier_pennylane && residence(b.dossier_pennylane); return r ? r.nom : b.nom || b.libelle || resId; }
+/* Applique la fiche de la base aux résidences publiées, puis recompose les périmètres (mêmes règles que assemblerDonnees). */
+function socAppliquer() {
+  D.residences.forEach(function (r) {
+    var o = SOC_ORIG[r.dossier] || {}, b = socRes(r.dossier) || {};
+    r.nom = b.nom || o.nom; r.societe = b.raison_sociale || o.societe; r.activite = b.activite || o.activite; r.region = b.region || o.region;
+    r.marque = b.marque || o.marque; r.ouverture = b.ouverture ? String(b.ouverture).slice(0, 10) : o.ouverture;
+    r.siren = b.siren || ""; r.archivee = !!b.archivee; r.archivee_le = b.archivee_le || ""; r.archivee_par = b.archivee_par || ""; r.soc_id = b.id || r.code;
+  });
+  D.residences.sort(function (a, b) { return a.nom < b.nom ? -1 : a.nom > b.nom ? 1 : 0; });
+  var G = perimetre("GROUPE"), tous = D.residences.map(function (r) { return r.dossier; });
+  var uniques = function (champ) { var v = {}; D.residences.forEach(function (r) { if (r[champ]) v[r[champ]] = 1; }); return Object.keys(v).sort(); };
+  var de = function (champ, val) { return D.residences.filter(function (r) { return r[champ] === val; }).map(function (r) { return r.dossier; }); };
+  var P = [{ id: "GROUPE", libelle: G ? G.libelle : "Groupe Zenitude", type: "groupe", dossiers: tous }];
+  uniques("activite").forEach(function (a) { P.push({ id: "ACT-" + a.toUpperCase(), libelle: "Activité " + a, type: "activite", dossiers: de("activite", a) }); });
+  uniques("region").forEach(function (g) { P.push({ id: "REG-" + g.toUpperCase().split(" ").join("-"), libelle: g, type: "region", dossiers: de("region", g) }); });
+  SOC_CONFIG.forEach(function (p) { P.push(JSON.parse(JSON.stringify(p))); });
+  SOC.grp.slice().sort(function (a, b) { return a.libelle < b.libelle ? -1 : a.libelle > b.libelle ? 1 : 0; }).forEach(function (g) {
+    if (P.some(function (x) { return x.id === g.id; })) return;
+    var ds = socMembres(g.id).map(socDossier).filter(function (d) { return d && residence(d); }).sort();
+    var c = socClassement(g.classement_id);
+    if (!ds.length) return;
+    var x = { id: g.id, libelle: g.libelle, type: "groupe-cree", dossiers: ds }; if (c) x.classement = c.libelle; P.push(x);
+  });
+  D.residences.forEach(function (r) { P.push({ id: r.dossier, libelle: r.nom, type: "residence", dossiers: [r.dossier] }); });
+  D.perimetres = P;
+  if (etat.perim && !perimetre(etat.perim)) { etat.perim = "GROUPE"; session("perim", "GROUPE"); }
+  ajVider();
+}
+function socRecharger() {
+  if (!enLigne()) { try { localStorage.setItem(SOC_LOCAL, JSON.stringify(SOC)); } catch (e) {} return Promise.resolve(); }
+  return Promise.all([sb(ZCLIENT.from("residences").select("*").order("id")), sb(ZCLIENT.from("residence_identifiants").select("*").order("id")),
+    sb(ZCLIENT.from("classements").select("*").order("ordre").order("libelle")), sb(ZCLIENT.from("groupes").select("*").order("id")),
+    sb(ZCLIENT.from("residence_groupe").select("residence_id, groupe_id")), lireFacultatif(ZCLIENT.from("societes_journal").select("*").order("id", { ascending: false }).limit(500))])
+    .then(function (r) { D.residences_base = r[0] || []; D.soc_identifiants = r[1] || []; D.soc_classements = r[2] || []; D.groupes_base = r[3] || []; D.residence_groupe = r[4] || []; D.soc_journal = r[5] || []; socCharger(); });
+}
+/* Contrôles de la page, identiques à ceux de la base (migration 020) : la base reste seule juge en ligne. */
+function socControle(op, a) {
+  var e = [];
+  if (op === "societe") {
+    var x = a.champs;
+    if (a.nouveau) {
+      if (!RE_ID.test(a.id || "")) e.push("Code interne : lettres majuscules, chiffres, tiret ou souligné (exemple RES-012).");
+      else if (socResId(a.id)) e.push("Le code interne " + a.id + " existe déjà.");
+      if (!x.nom) e.push("Le nom est obligatoire.");
+    }
+    if (x.nom && x.nom.length > 120) e.push("Nom : 120 caractères au plus.");
+    if (x.siren && !/^[0-9]{9}$/.test(x.siren)) e.push("SIREN : 9 chiffres.");
+    if (x.dossier_pennylane !== undefined && x.dossier_pennylane !== null) {
+      if (!RE_ID.test(x.dossier_pennylane)) e.push("Dossier Pennylane : lettres majuscules, chiffres, tiret ou souligné.");
+      else if (SOC.res.some(function (b) { return b.id !== a.id && b.dossier_pennylane === x.dossier_pennylane; })) e.push("Ce dossier Pennylane est déjà rattaché à une autre société.");
+    }
+    if (x.code_mews && !/^[A-Z0-9_-]{1,40}$/.test(x.code_mews)) e.push("Code Mews : lettres majuscules, chiffres, tiret ou souligné.");
+    else if (x.code_mews && SOC.res.some(function (b) { return b.id !== a.id && b.code_mews === x.code_mews; })) e.push("Ce code Mews est déjà rattaché à une autre société.");
+  } else if (op === "identifiant") {
+    if (!a.libelle) e.push("Indiquez l’outil ou le libellé (exemple Pennylane, Mews).");
+    if (!a.code) e.push("Indiquez le code ou le nom utilisé dans cet outil.");
+    if (a.libelle.length > 60 || a.code.length > 120) e.push("Libellé : 60 caractères au plus ; code : 120.");
+    var dbl = SOC.ids.find(function (i) { return i.libelle.toLowerCase() === a.libelle.toLowerCase() && i.code.toLowerCase() === a.code.toLowerCase(); });
+    if (dbl) e.push(a.libelle + " « " + a.code + " » est déjà attribué à " + socNom(dbl.residence_id) + ".");
+  } else if (op === "classement") {
+    if (!a.libelle) e.push("Le nom du classement est obligatoire.");
+    if (SOC.cls.some(function (c) { return c.id !== a.id && c.libelle.toLowerCase() === a.libelle.toLowerCase(); })) e.push("Un classement porte déjà ce nom.");
+    if (a.exclusif && a.id) {
+      var gs = SOC.grp.filter(function (g) { return g.classement_id === a.id; }).map(function (g) { return g.id; }), vu = {};
+      SOC.liens.forEach(function (l) { if (gs.indexOf(l.groupe_id) >= 0) { if (vu[l.residence_id]) e.push(socNom(l.residence_id) + " est dans plusieurs groupes de ce classement."); vu[l.residence_id] = 1; } });
+    }
+  } else if (op === "groupe") {
+    if (!a.libelle) e.push("Le nom du groupe est obligatoire.");
+    if (a.libelle.length > 120) e.push("Nom du groupe : 120 caractères au plus.");
+    var c = socClassement(a.classement_id);
+    if (c && c.exclusif && a.id) {
+      var autres = SOC.grp.filter(function (g) { return g.classement_id === c.id && g.id !== a.id; }).map(function (g) { return g.id; });
+      if (socMembres(a.id).some(function (r) { return SOC.liens.some(function (l) { return l.residence_id === r && autres.indexOf(l.groupe_id) >= 0; }); })) e.push("Des sociétés de ce groupe sont déjà dans un autre groupe du classement « " + c.libelle + " ».");
+    }
+  } else if (op === "lien") {
+    var g = SOC.grp.find(function (x) { return x.id === a.groupe_id; }), k = g && socClassement(g.classement_id);
+    if (!g) e.push("Groupe inconnu.");
+    else if (k && k.exclusif) {
+      var deja = socGroupesDe(a.residence_id).find(function (x) { return x.classement_id === k.id && x.id !== g.id; });
+      if (deja) e.push(socNom(a.residence_id) + " est déjà dans « " + deja.libelle + " » (classement « " + k.libelle + " », un seul groupe par société).");
+    }
+  }
+  return e;
+}
+function socJournal(objet, action, resId, grpId, detail) {
+  SOC.journal.unshift({ id: Date.now() + Math.random(), objet: objet, action: action, residence_id: resId || null, groupe_id: grpId || null, detail: detail || {}, par: socQui(), le: socMaintenant() });
+  SOC.journal = SOC.journal.slice(0, 500);
+}
+function socDiff(avant, apres) { var d = {}; Object.keys(apres).forEach(function (k) { if ((avant[k] || null) !== (apres[k] || null)) d[k] = [avant[k] || null, apres[k] || null]; }); return d; }
+/* Une opération : contrôle, puis écriture locale ou dans la base, rechargement et nouveau dessin. */
+var SOC_OPS = {
+  societe: function (a) {
+    if (!enLigne()) {
+      var b = socResId(a.id);
+      if (a.nouveau) { b = Object.assign({ id: a.id, libelle: a.champs.nom, dossier_pennylane: null, archivee: false, code_mews: null }, a.champs); SOC.res.push(b); socJournal("societe", "insert", a.id, null, a.champs); }
+      else { var d = socDiff(b, a.champs); Object.assign(b, a.champs); if (Object.keys(d).length) socJournal("societe", "update", a.id, null, d); }
+      return Promise.resolve();
+    }
+    var q = a.nouveau ? ZCLIENT.from("residences").insert(Object.assign({ id: a.id, libelle: a.champs.nom, fictif: true }, a.champs)) : ZCLIENT.from("residences").update(a.champs).eq("id", a.id);
+    return sb(q.select("id")).then(verifierTouche);
+  },
+  archiver: function (a) {
+    if (!enLigne()) { var b = socResId(a.id); b.archivee = a.archivee; b.archivee_le = a.archivee ? socMaintenant() : null; b.archivee_par = a.archivee ? socQui() : null; socJournal("societe", a.archivee ? "archivage" : "restauration", a.id, null, {}); return Promise.resolve(); }
+    return sb(ZCLIENT.from("residences").update({ archivee: a.archivee }).eq("id", a.id).select("id")).then(verifierTouche);
+  },
+  identifiant: function (a) {
+    if (!enLigne()) { var x = { id: Date.now(), residence_id: a.residence_id, libelle: a.libelle, code: a.code, modifie_par: socQui(), modifie_le: socMaintenant() }; SOC.ids.push(x); socJournal("identifiant", "insert", a.residence_id, null, { libelle: a.libelle, code: a.code }); return Promise.resolve(); }
+    return sb(ZCLIENT.from("residence_identifiants").insert({ residence_id: a.residence_id, libelle: a.libelle, code: a.code }).select("id")).then(verifierTouche);
+  },
+  identifiantSuppr: function (a) {
+    if (!enLigne()) { var x = SOC.ids.find(function (i) { return String(i.id) === String(a.id); }); SOC.ids = SOC.ids.filter(function (i) { return i !== x; }); if (x) socJournal("identifiant", "delete", x.residence_id, null, { libelle: x.libelle, code: x.code }); return Promise.resolve(); }
+    return sb(ZCLIENT.from("residence_identifiants").delete().eq("id", a.id).select("id")).then(verifierTouche);
+  },
+  classement: function (a) {
+    if (!enLigne()) {
+      var c = socClassement(a.id);
+      if (!c) { c = { id: a.id, libelle: a.libelle, exclusif: a.exclusif, ordre: 100 }; SOC.cls.push(c); socJournal("classement", "insert", null, null, { id: a.id, libelle: a.libelle }); }
+      else { var d = socDiff(c, { libelle: a.libelle, exclusif: a.exclusif }); c.libelle = a.libelle; c.exclusif = a.exclusif; socJournal("classement", "update", null, null, Object.assign({ id: a.id }, d)); }
+      return Promise.resolve();
+    }
+    var q = a.nouveau ? ZCLIENT.from("classements").insert({ id: a.id, libelle: a.libelle, exclusif: a.exclusif }) : ZCLIENT.from("classements").update({ libelle: a.libelle, exclusif: a.exclusif }).eq("id", a.id);
+    return sb(q.select("id")).then(verifierTouche);
+  },
+  classementSuppr: function (a) {
+    if (!enLigne()) { SOC.cls = SOC.cls.filter(function (c) { return c.id !== a.id; }); SOC.grp.forEach(function (g) { if (g.classement_id === a.id) g.classement_id = null; }); socJournal("classement", "delete", null, null, { id: a.id }); return Promise.resolve(); }
+    return sb(ZCLIENT.from("classements").delete().eq("id", a.id).select("id")).then(verifierTouche);
+  },
+  groupe: function (a) {
+    if (!enLigne()) {
+      var g = SOC.grp.find(function (x) { return x.id === a.id; });
+      if (!g) { SOC.grp.push({ id: a.id, libelle: a.libelle, classement_id: a.classement_id || null }); socJournal("groupe", "insert", null, a.id, { libelle: a.libelle, classement_id: a.classement_id || null }); }
+      else { var d = socDiff(g, { libelle: a.libelle, classement_id: a.classement_id || null }); g.libelle = a.libelle; g.classement_id = a.classement_id || null; socJournal("groupe", "update", null, a.id, d); }
+      return Promise.resolve();
+    }
+    var q = a.nouveau ? ZCLIENT.from("groupes").insert({ id: a.id, libelle: a.libelle, classement_id: a.classement_id || null, fictif: true }) : ZCLIENT.from("groupes").update({ libelle: a.libelle, classement_id: a.classement_id || null }).eq("id", a.id);
+    return sb(q.select("id")).then(verifierTouche);
+  },
+  groupeSuppr: function (a) {
+    if (!enLigne()) { SOC.grp = SOC.grp.filter(function (g) { return g.id !== a.id; }); SOC.liens = SOC.liens.filter(function (l) { return l.groupe_id !== a.id; }); socJournal("groupe", "delete", null, a.id, {}); return Promise.resolve(); }
+    return sb(ZCLIENT.from("groupes").delete().eq("id", a.id).select("id")).then(verifierTouche);
+  },
+  lien: function (a) {
+    if (!enLigne()) { SOC.liens.push({ residence_id: a.residence_id, groupe_id: a.groupe_id }); socJournal("appartenance", "insert", a.residence_id, a.groupe_id, {}); return Promise.resolve(); }
+    return sb(ZCLIENT.from("residence_groupe").insert({ residence_id: a.residence_id, groupe_id: a.groupe_id }).select("groupe_id")).then(verifierTouche);
+  },
+  lienSuppr: function (a) {
+    if (!enLigne()) { SOC.liens = SOC.liens.filter(function (l) { return !(l.residence_id === a.residence_id && l.groupe_id === a.groupe_id); }); socJournal("appartenance", "delete", a.residence_id, a.groupe_id, {}); return Promise.resolve(); }
+    return sb(ZCLIENT.from("residence_groupe").delete().eq("residence_id", a.residence_id).eq("groupe_id", a.groupe_id).select("groupe_id")).then(verifierTouche);
+  }
+};
+var SOC_CONTROLE_OP = { societe: "societe", identifiant: "identifiant", classement: "classement", groupe: "groupe", lien: "lien" };
+function socExecuter(op, a) {
+  var e = SOC_CONTROLE_OP[op] ? socControle(SOC_CONTROLE_OP[op], a) : [];
+  if (e.length) return Promise.reject(socErreur(e.join(" ")));
+  return Promise.resolve().then(function () { return SOC_OPS[op](a); }).then(socRecharger).then(function () { socAppliquer(); rendre(); })
+    .catch(function (err) { return socRecharger().catch(function () {}).then(function () { socAppliquer(); rendre(); throw socErreur(err && err.message && !enLigne() ? err.message : messageErreur(err)); }); });
+}
+function socAlerte(p) { return p.catch(function (e) { alert(e.message || e); }); }
+
+/* ---------- Fiche : identité et noms / codes dans les autres outils ---------- */
+function socIdentHtml(resId, edit) {
+  var ids = SOC.ids.filter(function (i) { return i.residence_id === resId; }).sort(function (a, b) { return a.libelle.localeCompare(b.libelle, "fr") || a.code.localeCompare(b.code, "fr"); });
+  var b = socResId(resId) || {};
+  var h = (b.code_mews ? "<dt>Mews (rattachement KPI)</dt><dd><code>" + esc(b.code_mews) + "</code></dd>" : "") +
+    ids.map(function (i) { return "<dt>" + esc(i.libelle) + "</dt><dd>" + esc(i.code) + (edit ? ' <button class="btn-petit soc-id-suppr" data-id="' + esc(i.id) + '" title="Retirer ce code" aria-label="Retirer ' + esc(i.libelle + " " + i.code) + '">✕</button>' : "") + "</dd>"; }).join("");
+  if (!h) h = '<dt class="mut">Aucun</dt><dd><span class="mut">Noms ou codes utilisés dans Pennylane, Mews, la banque…</span></dd>';
+  var f = edit ? '<div class="soc-id-ajout" data-res="' + esc(resId) + '"><label class="mini-champ"><span>Outil ou libellé</span><input class="soc-id-lib" list="soc-sources" maxlength="60" placeholder="Pennylane"></label>' +
+    '<label class="mini-champ large"><span>Code ou nom dans cet outil</span><input class="soc-id-code" maxlength="120" placeholder="YTR"></label><button class="btn btn-principal soc-id-ok">Ajouter</button></div>' +
+    '<p class="legende soc-id-err" style="color:var(--erreur)"></p><datalist id="soc-sources">' + SOC_SOURCES.concat(SOC.ids.map(function (i) { return i.libelle; })).filter(function (x, i, t) { return t.indexOf(x) === i; }).map(function (x) { return '<option value="' + esc(x) + '">'; }).join("") + "</datalist>" : "";
+  return '<h3 class="soc-sous">Noms et codes dans les autres outils</h3><dl class="fiche">' + h + "</dl>" + f;
+}
+function socBrancherIdent(racine) {
+  racine.querySelectorAll(".soc-id-suppr").forEach(function (bt) { bt.addEventListener("click", function () {
+    var x = SOC.ids.find(function (i) { return String(i.id) === bt.dataset.id; }); if (!x) return;
+    if (confirm("Retirer " + x.libelle + " « " + x.code + " » ?")) socAlerte(socExecuter("identifiantSuppr", { id: x.id }));
+  }); });
+  racine.querySelectorAll(".soc-id-ajout").forEach(function (z) {
+    var ok = z.querySelector(".soc-id-ok"), err = z.nextElementSibling;
+    var envoyer = function () {
+      var a = { residence_id: z.dataset.res, libelle: z.querySelector(".soc-id-lib").value.trim(), code: z.querySelector(".soc-id-code").value.trim() };
+      ok.disabled = true; err.textContent = "";
+      socExecuter("identifiant", a).catch(function (e) { ok.disabled = false; err.textContent = e.message; });
+    };
+    ok.addEventListener("click", envoyer);
+    z.querySelectorAll("input").forEach(function (i) { i.addEventListener("keydown", function (e) { if (e.key === "Enter") envoyer(); }); });
+  });
+}
+
+/* ---------- Modale : créer ou modifier une société ---------- */
+function socModale(resId) {
+  var nouveau = !resId, b = nouveau ? {} : socResId(resId) || {}, r = b.dossier_pennylane ? residence(b.dossier_pennylane) : null, o = r ? SOC_ORIG[r.dossier] || {} : {};
+  var val = function (k) { if (nouveau) return ""; if (k === "siren") return b.siren || ""; if (b[k]) return String(b[k]).slice(0, k === "ouverture" ? 10 : 200); var oc = SOC_ORIG_CHAMP[k]; return oc && o[oc] ? o[oc] : k === "nom" ? b.libelle || "" : ""; };
+  var liste = function (champ) { var v = {}; D.residences.forEach(function (x) { if (x[champ]) v[x[champ]] = 1; }); return Object.keys(v).sort().map(function (x) { return '<option value="' + esc(x) + '">'; }).join(""); };
+  var prochain = function () { var n = 1; while (socResId("RES-" + String(n).padStart(3, "0"))) n++; return "RES-" + String(n).padStart(3, "0"); };
+  var adm = socAdmin(), champ = function (id, lib, v, attr) { return '<label class="champ-aj"><span>' + esc(lib) + '</span><input id="' + id + '" value="' + esc(v) + '"' + (attr || "") + "></label>"; };
+  var m = document.createElement("div"); m.className = "modale"; m.id = "soc-modale";
+  m.innerHTML = '<div class="modale-boite" style="width:min(760px,96vw)" role="dialog" aria-modal="true" aria-labelledby="soc-mod-titre"><div class="modale-tete"><div><h2 id="soc-mod-titre">' + (nouveau ? "Nouvelle société" : "Modifier " + esc(socNom(resId))) + "</h2><p>" +
+    (nouveau ? "Ses chiffres apparaîtront après la prochaine publication, une fois le dossier Pennylane rattaché." : "Un champ vidé reprend la valeur de la configuration publiée.") + '</p></div><button class="btn-petit" id="soc-mod-x" aria-label="Fermer">✕</button></div>' +
+    '<div class="soc-form">' +
+    champ("soc-f-id", "Code interne", nouveau ? prochain() : resId, nouveau ? ' maxlength="40"' : " disabled") + champ("soc-f-nom", "Nom", val("nom"), ' maxlength="120"') +
+    champ("soc-f-raison_sociale", "Raison sociale", val("raison_sociale"), ' maxlength="200"') + champ("soc-f-siren", "SIREN", val("siren"), ' maxlength="11" inputmode="numeric"') +
+    champ("soc-f-activite", "Activité", val("activite"), ' list="soc-l-act" maxlength="60"') + champ("soc-f-region", "Région", val("region"), ' list="soc-l-reg" maxlength="60"') +
+    champ("soc-f-marque", "Marque", val("marque"), ' maxlength="60"') + champ("soc-f-ouverture", "Date d’ouverture", val("ouverture"), ' type="date"') +
+    champ("soc-f-dossier", "Dossier Pennylane", nouveau ? "" : b.dossier_pennylane || "", adm ? ' maxlength="40"' : " disabled") + champ("soc-f-mews", "Code Mews (rattachement KPI)", nouveau ? "" : b.code_mews || "", adm ? ' maxlength="40"' : " disabled") +
+    '</div><datalist id="soc-l-act">' + liste("activite") + '</datalist><datalist id="soc-l-reg">' + liste("region") + "</datalist>" +
+    (nouveau ? "" : '<div id="soc-mod-ids">' + socIdentHtml(resId, socEditeur()) + "</div>") +
+    '<p class="legende" id="soc-mod-err" style="color:var(--erreur)"></p><div class="modale-pied" style="gap:8px"><button class="btn-petit" id="soc-mod-annuler">Annuler</button><button class="btn btn-principal" id="soc-mod-ok">' + (nouveau ? "Créer la société" : "Enregistrer") + "</button></div></div>";
+  document.body.appendChild(m);
+  var fermer = function () { m.remove(); };
+  el("soc-mod-annuler").addEventListener("click", fermer); el("soc-mod-x").addEventListener("click", fermer);
+  m.addEventListener("click", function (e) { if (e.target === m) fermer(); });
+  if (!nouveau) socBrancherIdent(el("soc-mod-ids"));
+  el("soc-f-nom").focus();
+  el("soc-mod-ok").addEventListener("click", function () {
+    var champs = {}, lire = function (k) { return el("soc-f-" + k).value.trim(); };
+    SOC_CHAMPS.forEach(function (c) {
+      var v = c[0] === "siren" ? lire("siren").replace(/\s+/g, "") : lire(c[0]), oc = SOC_ORIG_CHAMP[c[0]];
+      if (!nouveau && oc && v && o[oc] && v === String(o[oc])) v = ""; /* identique à la configuration publiée : rien à stocker */
+      champs[c[0]] = v || null;
+    });
+    if (adm) { champs.dossier_pennylane = lire("dossier").toUpperCase() || null; champs.code_mews = lire("mews").toUpperCase() || null; }
+    var id = nouveau ? lire("id").toUpperCase() : resId;
+    el("soc-mod-ok").disabled = true; el("soc-mod-err").textContent = "";
+    socExecuter("societe", { id: id, nouveau: nouveau, champs: champs }).then(fermer).catch(function (e) { var b2 = el("soc-mod-ok"); if (b2) b2.disabled = false; var z = el("soc-mod-err"); if (z) z.textContent = e.message; });
+  });
+}
+function socArchiver(resId, archiver) {
+  var n = socNom(resId);
+  if (!confirm(archiver ? "Archiver « " + n + " » ? Elle disparaît des listes de choix ; ses chiffres et son historique sont conservés." : "Restaurer « " + n + " » ?")) return;
+  socAlerte(socExecuter("archiver", { id: resId, archivee: archiver }));
+}
+
+/* ---------- Groupes et classements ---------- */
+function socClassementsTries() { return SOC.cls.slice().sort(function (a, b) { return (a.ordre || 100) - (b.ordre || 100) || a.libelle.localeCompare(b.libelle, "fr"); }); }
+function socGestionHtml() {
+  var adm = socAdmin(), nb = function (n) { return n + " société" + (n > 1 ? "s" : ""); };
+  var ligneGrp = function (g) {
+    var ms = socMembres(g.id);
+    return '<tr><td><b>' + esc(g.libelle) + "</b> <code>" + esc(g.id) + '</code></td><td class="num">' + ms.length + '</td><td class="soc-membres">' + ms.map(socNom).sort().map(esc).join(", ") + "</td>" +
+      (adm ? '<td class="aj-lig-actions"><button class="btn-petit soc-g-mod" data-g="' + esc(g.id) + '">Modifier</button><button class="btn-petit soc-g-sup" data-g="' + esc(g.id) + '">Supprimer</button></td>' : "") + "</tr>";
+  };
+  var table = function (gs) { return gs.length ? '<div class="defile"><table class="tab"><thead><tr><th>Groupe</th><th class="num">Sociétés</th><th>Membres</th>' + (adm ? "<th></th>" : "") + "</tr></thead><tbody>" + gs.map(ligneGrp).join("") + "</tbody></table></div>" : '<p class="mut">Aucun groupe.</p>'; };
+  var h = '<p class="legende">Activité et région : classements tirés des fiches (' + nb(D.residences.length) + "). Les autres classements sont créés ici. Un classement exclusif place chaque société dans un seul de ses groupes.</p>";
+  socClassementsTries().forEach(function (c) {
+    var gs = SOC.grp.filter(function (g) { return g.classement_id === c.id; }).sort(function (a, b) { return a.libelle.localeCompare(b.libelle, "fr"); });
+    h += '<div class="soc-classement"><div class="bloc-tete"><h3>' + esc(c.libelle) + ' <span class="puce">' + (c.exclusif ? "exclusif" : "multiple") + "</span></h3>" +
+      (adm ? '<div><button class="btn-petit soc-g-nouv" data-c="' + esc(c.id) + '">+ Groupe</button> <button class="btn-petit soc-c-mod" data-c="' + esc(c.id) + '">Modifier</button> <button class="btn-petit soc-c-sup" data-c="' + esc(c.id) + '">Supprimer</button></div>' : "") + "</div>" + table(gs) + "</div>";
+  });
+  var libres = SOC.grp.filter(function (g) { return !socClassement(g.classement_id); }).sort(function (a, b) { return a.libelle.localeCompare(b.libelle, "fr"); });
+  h += '<div class="soc-classement"><div class="bloc-tete"><h3>Groupes sans classement</h3>' + (adm ? '<div><button class="btn-petit soc-g-nouv" data-c="">+ Groupe</button></div>' : "") + "</div>" + table(libres) + "</div>";
+  if (SOC_CONFIG.length) h += '<p class="legende">Groupes de la configuration publiée (non modifiables ici) : ' + SOC_CONFIG.map(function (p) { return esc(p.libelle); }).join(", ") + ".</p>";
+  if (adm) h += '<div class="soc-nv-classement"><label class="mini-champ large"><span>Nouveau classement</span><input id="soc-c-lib" maxlength="80" placeholder="Exemple : RM, Gamme, Propriétaire"></label>' +
+    '<label class="soc-case"><input type="checkbox" id="soc-c-excl" checked> Exclusif</label><button class="btn btn-principal" id="soc-c-ok">Créer le classement</button></div><p class="legende" id="soc-c-err" style="color:var(--erreur)"></p>';
+  return h;
+}
+function socModaleGroupe(grpId, classementId) {
+  var g = grpId ? SOC.grp.find(function (x) { return x.id === grpId; }) : null, nouveau = !g;
+  var membres = g ? socMembres(g.id) : [];
+  var m = document.createElement("div"); m.className = "modale"; m.id = "soc-modale-g";
+  m.innerHTML = '<div class="modale-boite" style="width:min(640px,96vw)" role="dialog" aria-modal="true" aria-labelledby="soc-g-titre"><div class="modale-tete"><div><h2 id="soc-g-titre">' + (nouveau ? "Nouveau groupe" : "Modifier le groupe") + "</h2><p>Cochez les sociétés du groupe.</p></div></div>" +
+    '<div class="soc-form"><label class="champ-aj"><span>Nom du groupe</span><input id="soc-g-lib" maxlength="120" value="' + esc(g ? g.libelle : "") + '"></label><label class="champ-aj"><span>Classement</span><select id="soc-g-cls"><option value="">Sans classement</option>' +
+    socClassementsTries().map(function (c) { var s = (g ? g.classement_id : classementId) === c.id; return '<option value="' + esc(c.id) + '"' + (s ? " selected" : "") + ">" + esc(c.libelle) + "</option>"; }).join("") + "</select></label></div>" +
+    '<div class="aj-res soc-g-res">' + SOC.res.filter(function (b) { return !b.archivee || membres.indexOf(b.id) >= 0; }).map(function (b) { return { id: b.id, nom: socNom(b.id) }; }).sort(function (a, b) { return a.nom.localeCompare(b.nom, "fr"); })
+      .map(function (x) { return '<label><input type="checkbox" class="soc-g-m" value="' + esc(x.id) + '"' + (membres.indexOf(x.id) >= 0 ? " checked" : "") + "> " + esc(x.nom) + "</label>"; }).join("") + "</div>" +
+    '<p class="legende" id="soc-g-err" style="color:var(--erreur)"></p><div class="modale-pied" style="gap:8px"><button class="btn-petit" id="soc-g-annuler">Annuler</button><button class="btn btn-principal" id="soc-g-ok">Enregistrer</button></div></div>';
+  document.body.appendChild(m);
+  var fermer = function () { m.remove(); };
+  el("soc-g-annuler").addEventListener("click", fermer); m.addEventListener("click", function (e) { if (e.target === m) fermer(); });
+  el("soc-g-lib").focus();
+  el("soc-g-ok").addEventListener("click", function () {
+    var lib = el("soc-g-lib").value.trim(), cls = el("soc-g-cls").value || null;
+    var id = g ? g.id : socSlug(lib, "GRP-", function (x) { return SOC.grp.some(function (y) { return y.id === x; }) || SOC_CONFIG.some(function (y) { return y.id === x; }); });
+    var voulus = Array.prototype.map.call(m.querySelectorAll(".soc-g-m:checked"), function (c) { return c.value; });
+    var retirer = membres.filter(function (x) { return voulus.indexOf(x) < 0; }), ajouter = voulus.filter(function (x) { return membres.indexOf(x) < 0; });
+    var err = el("soc-g-err"), ctl = socControle("groupe", { id: g ? g.id : null, libelle: lib, classement_id: cls });
+    var k = socClassement(cls);
+    if (k && k.exclusif) ajouter.forEach(function (r) { var d = socGroupesDe(r).find(function (x) { return x.classement_id === k.id && x.id !== id; }); if (d) ctl.push(socNom(r) + " est déjà dans « " + d.libelle + " » (classement exclusif « " + k.libelle + " »)."); });
+    if (ctl.length) { err.textContent = ctl.join(" "); return; }
+    el("soc-g-ok").disabled = true; err.textContent = "";
+    var suite = function () { /* retraits d'abord : un classement exclusif n'est jamais en défaut entre deux écritures */
+      return retirer.reduce(function (pr, r) { return pr.then(function () { return SOC_OPS.lienSuppr({ residence_id: r, groupe_id: id }); }); }, Promise.resolve())
+        .then(function () { return SOC_OPS.groupe({ id: id, nouveau: nouveau, libelle: lib, classement_id: cls }); })
+        .then(function () { return ajouter.reduce(function (pr, r) { return pr.then(function () { return SOC_OPS.lien({ residence_id: r, groupe_id: id }); }); }, Promise.resolve()); });
+    };
+    suite().then(socRecharger).then(function () { socAppliquer(); fermer(); rendre(); })
+      .catch(function (e) { var msg = enLigne() ? messageErreur(e) : e.message; socRecharger().catch(function () {}).then(function () { socAppliquer(); rendre(); var b2 = el("soc-g-ok"); if (b2) { b2.disabled = false; el("soc-g-err").textContent = msg; } else alert(msg); }); });
+  });
+}
+function socModaleClassement(id) {
+  var c = socClassement(id); if (!c) return;
+  var lib = prompt("Nom du classement :", c.libelle); if (lib === null) return;
+  var excl = confirm("Classement exclusif (une société dans un seul de ses groupes) ?\nOK = exclusif, Annuler = plusieurs groupes possibles.");
+  socAlerte(socExecuter("classement", { id: c.id, nouveau: false, libelle: lib.trim(), exclusif: excl }));
+}
+function socBrancherGestion(racine) {
+  racine.querySelectorAll(".soc-g-nouv").forEach(function (b) { b.addEventListener("click", function () { socModaleGroupe(null, b.dataset.c || null); }); });
+  racine.querySelectorAll(".soc-g-mod").forEach(function (b) { b.addEventListener("click", function () { socModaleGroupe(b.dataset.g); }); });
+  racine.querySelectorAll(".soc-g-sup").forEach(function (b) { b.addEventListener("click", function () {
+    var g = SOC.grp.find(function (x) { return x.id === b.dataset.g; });
+    if (g && confirm("Supprimer le groupe « " + g.libelle + " » ? Les sociétés restent ; seul le regroupement disparaît.")) socAlerte(socExecuter("groupeSuppr", { id: g.id }));
+  }); });
+  racine.querySelectorAll(".soc-c-mod").forEach(function (b) { b.addEventListener("click", function () { socModaleClassement(b.dataset.c); }); });
+  racine.querySelectorAll(".soc-c-sup").forEach(function (b) { b.addEventListener("click", function () {
+    var c = socClassement(b.dataset.c);
+    if (c && confirm("Supprimer le classement « " + c.libelle + " » ? Ses groupes sont conservés, sans classement.")) socAlerte(socExecuter("classementSuppr", { id: c.id }));
+  }); });
+  var ok = racine.querySelector("#soc-c-ok");
+  if (ok) ok.addEventListener("click", function () {
+    var lib = el("soc-c-lib").value.trim(), id = socSlug(lib, "CL-", function (x) { return !!socClassement(x); });
+    ok.disabled = true; el("soc-c-err").textContent = "";
+    socExecuter("classement", { id: id, nouveau: true, libelle: lib, exclusif: el("soc-c-excl").checked }).catch(function (e) { var b2 = el("soc-c-ok"); if (b2) b2.disabled = false; var z = el("soc-c-err"); if (z) z.textContent = e.message; });
+  });
+}
+function socModaleGestion() {
+  var m = document.createElement("div"); m.className = "modale"; m.id = "soc-modale-gestion";
+  m.innerHTML = '<div class="modale-boite" style="width:min(1000px,96vw)" role="dialog" aria-modal="true" aria-labelledby="soc-ge-titre"><div class="modale-tete"><div><h2 id="soc-ge-titre">Groupes et classements</h2><p>Créer, modifier ou supprimer les regroupements de sociétés.</p></div><button class="btn-petit" id="soc-ge-x" aria-label="Fermer">✕</button></div><div id="soc-ge-corps">' + socGestionHtml() + "</div></div>";
+  document.body.appendChild(m);
+  var fermer = function () { m.remove(); }; el("soc-ge-x").addEventListener("click", fermer); m.addEventListener("click", function (e) { if (e.target === m) fermer(); });
+  socBrancherGestion(m);
+}
+
+/* ---------- Journal ---------- */
+var SOC_ACTIONS = { insert: "création", update: "modification", "delete": "suppression", archivage: "archivage", restauration: "restauration" };
+var SOC_OBJETS = { societe: "Société", identifiant: "Nom ou code", classement: "Classement", groupe: "Groupe", appartenance: "Appartenance" };
+function socLibJournal(j) {
+  var d = j.detail || {}, v = function (x) { return Array.isArray(x) ? (x[1] === null || x[1] === undefined ? x[0] : x[1]) : x; };
+  var g = j.groupe_id ? (SOC.grp.find(function (x) { return x.id === j.groupe_id; }) || {}).libelle || j.groupe_id : "";
+  if (j.objet === "identifiant") return (d.libelle ? v(d.libelle) : "") + (d.code ? " « " + v(d.code) + " »" : "");
+  if (j.objet === "appartenance") return (j.action === "delete" ? "retirée de " : "ajoutée à ") + g;
+  if (j.objet === "groupe") return g + (d.libelle && j.action === "update" ? " (nom : " + v(d.libelle) + ")" : "");
+  if (j.objet === "classement") return d.libelle ? v(d.libelle) : d.id || "";
+  if (j.objet === "societe" && j.action === "update") return Object.keys(d).map(function (k) {
+    var c = SOC_CHAMPS.find(function (x) { return x[0] === k; }), n = d[k][1];
+    return (c ? c[1] : k) + " : " + (n === null || n === undefined || n === "" ? "valeur de la configuration" : n); }).join(" ; ");
+  if (j.objet === "societe" && j.action === "insert") return d.nom || d.libelle || "";
+  return "";
+}
+function socJournalHtml(lignes, avecSociete) {
+  if (!lignes.length) return '<p class="mut">Aucune modification enregistrée.</p>';
+  return '<div class="defile"><table class="tab"><thead><tr><th>Date</th><th>Par</th>' + (avecSociete ? "<th>Société</th>" : "") + "<th>Objet</th><th>Action</th><th>Détail</th></tr></thead><tbody>" +
+    lignes.map(function (j) { return "<tr><td>" + esc(dateHeure(j.le)) + "</td><td>" + esc(j.par || "") + "</td>" + (avecSociete ? "<td>" + esc(j.residence_id ? socNom(j.residence_id) : "") + "</td>" : "") +
+      "<td>" + esc(SOC_OBJETS[j.objet] || j.objet) + "</td><td>" + esc(SOC_ACTIONS[j.action] || j.action) + "</td><td>" + esc(socLibJournal(j)) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+}
+
+/* ---------- Exercices : deux avant, l'exercice en cours, deux après ; les autres sur demande ---------- */
+function socDuree(x) { var a = x.debut.split("-"), b = x.fin.split("-"); return (+b[0] - +a[0]) * 12 + (+b[1] - +a[1]) + 1; }
+function socExercicesHtml(d) {
+  var rangs = (D.imports[d] || []).slice();
+  if (!rangs.length) rangs = exercicesDe(d).map(function (x) { return { rang: x.rang, debut: x.debut, fin: x.fin, periode_importee: null, ecritures: null }; });
+  var par = {}; rangs.forEach(function (x) { par[x.rang] = x; });
+  var proches = ["N-2", "N-1", "N", "N+1", "N+2"], autres = rangs.filter(function (x) { return proches.indexOf(x.rang) < 0; }).sort(function (a, b) { return a.debut < b.debut ? -1 : 1; });
+  var ligne = function (x) { return "<tr" + (x.rang === "N" ? ' class="soc-courant"' : "") + "><td><b>" + esc(x.rang) + "</b>" + (x.rang === "N" ? ' <span class="puce">en cours</span>' : "") + "</td><td>Du " + dateFr(x.debut) + " au " + dateFr(x.fin) + '</td><td class="num">' + socDuree(x) + " mois</td><td>" +
+    (x.periode_importee ? dateFr(x.periode_importee[0]) + " au " + dateFr(x.periode_importee[1]) : '<span class="mut">aucune</span>') + '</td><td class="num">' + (x.ecritures === null || x.ecritures === undefined ? "" : nb(x.ecritures)) + "</td></tr>"; };
+  var vide = function (rang) { var futur = proches.indexOf(rang) > 2; return '<tr class="soc-absent"><td><b>' + esc(rang) + '</b></td><td colspan="4"><span class="mut">' + (futur ? "Pas encore ouvert dans Pennylane" : "Non disponible (non importé ou antérieur à la société)") + "</span></td></tr>"; };
+  var avant = autres.filter(function (x) { return par.N && x.debut < par.N.debut; }), apres = autres.filter(function (x) { return avant.indexOf(x) < 0; });
+  var corps = (SOC_VUE.exTous ? avant.map(ligne).join("") : "") + proches.map(function (r) { return par[r] ? ligne(par[r]) : vide(r); }).join("") + (SOC_VUE.exTous ? apres.map(ligne).join("") : "");
+  return '<div class="bloc"><div class="bloc-tete"><h2>Exercices comptables</h2>' + (autres.length ? '<button class="btn-petit" id="soc-ex-tous">' + (SOC_VUE.exTous ? "Voir moins" : "Voir plus (" + autres.length + ")") + "</button>" : "") + "</div>" +
+    '<div class="defile"><table class="tab"><thead><tr><th>Rang</th><th>Exercice</th><th class="num">Durée</th><th>Période importée</th><th class="num">Écritures</th></tr></thead><tbody>' + corps + "</tbody></table></div></div>";
+}
+
+/* ---------- Ajustements : les cinq dernières modifications ---------- */
+function socAjustementsHtml(d) {
+  var l = ajActifs().filter(function (a) { return ajPourDossier(a, d); }).map(function (a) { return { lib: a.libelle, compte: a.compte, nature: natureAj(a), le: a.modifie_le || "", par: a.modifie_par || a.auteur || "" }; })
+    .concat(lisActifs(d).map(function (x) { return { lib: "Lissage de l’écriture " + x.ecriture, compte: x.compte, nature: "Lissage", le: x.modifie_le || "", par: x.modifie_par || x.auteur || "" }; }))
+    .sort(function (a, b) { return a.le < b.le ? 1 : a.le > b.le ? -1 : 0; });
+  return '<div class="bloc"><div class="bloc-tete"><h2>Ajustements actifs</h2>' + (l.length ? '<span class="legende">' + Math.min(5, l.length) + " dernier" + (l.length > 1 ? "s" : "") + " sur " + l.length + "</span>" : "") + "</div>" + (l.length ?
+    '<div class="defile"><table class="tab"><thead><tr><th>Libellé</th><th>Nature</th><th>Compte</th><th>Modifié le</th><th>Par</th></tr></thead><tbody>' +
+    l.slice(0, 5).map(function (x) { return "<tr><td>" + esc(x.lib) + "</td><td>" + esc(x.nature) + "</td><td><code>" + esc(x.compte) + "</code></td><td>" + (x.le ? esc(dateHeure(x.le)) : '<span class="mut">non daté</span>') + "</td><td>" + (x.par ? esc(x.par) : '<span class="mut">inconnu</span>') + "</td></tr>"; }).join("") + "</tbody></table></div>" +
+    '<p><button class="btn-petit" id="soc-aj-tous">Voir tous les ajustements</button></p>'
+    : '<p class="mut">Aucun ajustement, provision ou lissage actif pour cette société.</p>') + "</div>";
+}
+
+/* ---------- Groupes de la société ---------- */
+function socGroupesHtml(d, resId) {
+  var r = residence(d), adm = socAdmin(), siens = socGroupesDe(resId);
+  var h = '<div class="bloc"><div class="bloc-tete"><h2>Groupes et regroupements</h2>' + (adm ? '<button class="btn-petit" id="soc-gestion">Gérer les groupes et classements</button>' : "") + '</div><dl class="fiche">' +
+    "<dt>Groupe</dt><dd>" + esc(perimetre("GROUPE") ? perimetre("GROUPE").libelle : "Groupe Zenitude") + "</dd><dt>Activité</dt><dd>" + esc(r.activite || "") + "</dd><dt>Région</dt><dd>" + esc(r.region || "") + "</dd>";
+  var puce = function (g) { return '<span class="puce">' + esc(g.libelle) + (adm ? ' <button class="soc-retirer" data-g="' + esc(g.id) + '" title="Retirer de ce groupe" aria-label="Retirer de ' + esc(g.libelle) + '">✕</button>' : "") + "</span>"; };
+  socClassementsTries().forEach(function (c) { var gs = siens.filter(function (g) { return g.classement_id === c.id; }); h += "<dt>" + esc(c.libelle) + "</dt><dd>" + (gs.length ? '<span class="puces">' + gs.map(puce).join("") + "</span>" : '<span class="mut">Aucun</span>') + "</dd>"; });
+  var libres = siens.filter(function (g) { return !socClassement(g.classement_id); });
+  var config = SOC_CONFIG.filter(function (p) { return p.dossiers.indexOf(d) >= 0; });
+  if (libres.length || config.length || !SOC.cls.length) h += "<dt>Autres groupes</dt><dd>" + (libres.length || config.length ? '<span class="puces">' + libres.map(puce).join("") + config.map(function (p) { return '<span class="puce">' + esc(p.libelle) + "<small>configuration</small></span>"; }).join("") + "</span>" : '<span class="mut">Aucun</span>') + "</dd>";
+  h += "</dl>";
+  if (adm) {
+    var dispo = SOC.grp.filter(function (g) { return siens.indexOf(g) < 0; });
+    h += '<div class="soc-id-ajout"><label class="mini-champ large"><span>Ajouter à un groupe</span><select id="soc-g-ajout"><option value="">Choisir un groupe</option>' +
+      socClassementsTries().concat([{ id: null, libelle: "Sans classement" }]).map(function (c) { var gs = dispo.filter(function (g) { return c.id ? g.classement_id === c.id : !socClassement(g.classement_id); }); return gs.length ? '<optgroup label="' + esc(c.libelle) + '">' + gs.map(function (g) { return '<option value="' + esc(g.id) + '">' + esc(g.libelle) + "</option>"; }).join("") + "</optgroup>" : ""; }).join("") +
+      '</select></label><button class="btn btn-principal" id="soc-g-ajout-ok">Ajouter</button></div><p class="legende" id="soc-g-ajout-err" style="color:var(--erreur)"></p>';
+  }
+  return h + "</div>";
+}
+
+/* ---------- Page Société ---------- */
+function socListeHtml(p) {
+  var adm = socAdmin(), q = SOC_VUE.q.toLowerCase();
+  var lignes = p.dossiers.map(residence).filter(Boolean).map(function (r) { var b = socRes(r.dossier) || {}; return { r: r, b: b, id: b.id || r.code }; });
+  if (p.id === "GROUPE") SOC.res.forEach(function (b) { if (!b.dossier_pennylane || !residence(b.dossier_pennylane)) lignes.push({ r: null, b: b, id: b.id }); });
+  var nbArch = lignes.filter(function (x) { return x.b.archivee; }).length;
+  lignes = lignes.filter(function (x) { return SOC_VUE.archives || !x.b.archivee; }).filter(function (x) {
+    if (!q) return true;
+    var ids = SOC.ids.filter(function (i) { return i.residence_id === x.id; }).map(function (i) { return i.libelle + " " + i.code; }).join(" ");
+    return [x.r ? x.r.nom : socNom(x.id), x.id, x.r && x.r.dossier, x.r && x.r.activite, x.r && x.r.region, x.r && x.r.societe, x.b.siren, x.b.code_mews, ids].join(" ").toLowerCase().indexOf(q) >= 0;
+  });
+  var t = '<div class="bloc"><div class="bloc-tete"><h2>Sociétés du périmètre</h2><div class="soc-outils"><input id="soc-rech" type="search" placeholder="Rechercher un nom, un code (Pennylane, Mews…)" value="' + esc(SOC_VUE.q) + '">' +
+    (nbArch ? '<label class="soc-case"><input type="checkbox" id="soc-archives"' + (SOC_VUE.archives ? " checked" : "") + "> Archivées (" + nbArch + ")</label>" : "") + "</div></div>" +
+    '<div class="defile"><table class="tab soc-liste"><thead><tr><th>Société</th><th>Code</th><th>Activité</th><th>Région</th><th>Raison sociale</th><th>Noms et codes</th><th>Exercice en cours</th><th>Statut</th>' + (adm ? "<th></th>" : "") + "</tr></thead><tbody>";
+  lignes.forEach(function (x) {
+    var r = x.r, b = x.b, ids = SOC.ids.filter(function (i) { return i.residence_id === x.id; });
+    var statut = b.archivee ? '<span class="puce soc-arch">Archivée</span>' : r ? esc(r.statut || "actif") : '<span class="puce">En attente de données</span>';
+    t += "<tr" + (r ? ' class="clic" tabindex="0" data-p="' + esc(r.dossier) + '"' : ' class="clic" tabindex="0" data-soc="' + esc(x.id) + '"') + (b.archivee ? ' style="opacity:.65"' : "") + "><td><b>" + esc(r ? r.nom : socNom(x.id)) + "</b></td><td>" + esc(x.id) + "</td><td>" + esc(r ? r.activite : b.activite || "") + "</td><td>" + esc(r ? r.region : b.region || "") +
+      "</td><td>" + esc(r ? r.societe : b.raison_sociale || "") + "</td><td>" + (ids.length ? ids.map(function (i) { return '<span class="soc-code">' + esc(i.libelle) + " : " + esc(i.code) + "</span>"; }).join(" ") : '<span class="mut">—</span>') +
+      "</td><td>" + (r && r.exercice ? dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) : "") + "</td><td>" + statut + "</td>" +
+      (adm ? '<td class="aj-lig-actions"><button class="btn-petit soc-mod" data-soc="' + esc(x.id) + '">Modifier</button><button class="btn-petit soc-arc" data-soc="' + esc(x.id) + '" data-a="' + (b.archivee ? "0" : "1") + '">' + (b.archivee ? "Restaurer" : "Archiver") + "</button></td>" : "") + "</tr>";
+  });
+  if (!lignes.length) t += '<tr><td colspan="9" class="mut">Aucune société ne correspond.</td></tr>';
+  return t + "</tbody></table></div></div>";
+}
+function socBrancherListe() {
+  var c = el("contenu");
+  c.querySelectorAll("tr[data-p]").forEach(function (tr) {
+    tr.addEventListener("click", function (e) { if (e.target.closest("button")) return; choisir(tr.dataset.p); });
+    tr.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target === tr) choisir(tr.dataset.p); });
+  });
+  c.querySelectorAll("tr[data-soc]").forEach(function (tr) {
+    tr.addEventListener("click", function (e) { if (e.target.closest("button")) return; if (socEditeur()) socModale(tr.dataset.soc); });
+    tr.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target === tr && socEditeur()) socModale(tr.dataset.soc); });
+  });
+  c.querySelectorAll(".soc-mod").forEach(function (b) { b.addEventListener("click", function () { socModale(b.dataset.soc); }); });
+  c.querySelectorAll(".soc-arc").forEach(function (b) { b.addEventListener("click", function () { socArchiver(b.dataset.soc, b.dataset.a === "1"); }); });
+  var r = el("soc-rech"); if (r) r.addEventListener("input", function () { SOC_VUE.q = this.value; var pos = this.selectionStart; majContenu(); var x = el("soc-rech"); x.focus(); x.setSelectionRange(pos, pos); });
+  var a = el("soc-archives"); if (a) a.addEventListener("change", function () { SOC_VUE.archives = this.checked; majContenu(); });
+  var n = el("soc-nouvelle"); if (n) n.addEventListener("click", function () { socModale(null); });
+}
+function socAvertissement() {
+  return enLigne() && !D.lot31 ? '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Migration 020 non appliquée.</b> La fiche reste en lecture : appliquez <code>migrations/020_societes.sql</code> dans Supabase pour créer, modifier et archiver les sociétés.</div></div>' : "";
+}
 PAGES.residence = function (p) {
+  if (!SOC) socCharger();
   if (p.type !== "residence") {
-    var t = '<div class="bloc"><div class="bloc-tete"><h2>Résidences du périmètre</h2><span class="legende">Cliquez sur une résidence pour ouvrir sa fiche.</span></div><div class="defile"><table class="tab"><thead><tr>' +
-      "<th>Résidence</th><th>Code</th><th>Activité</th><th>Région</th><th>Société</th><th>Marque</th><th>Ouverture</th><th>Exercice en cours</th></tr></thead><tbody>";
-    p.dossiers.map(residence).forEach(function (r) {
-      t += '<tr class="clic" tabindex="0" data-p="' + esc(r.dossier) + '"><td><b>' + esc(r.nom) + "</b></td><td>" + esc(r.code) + "</td><td>" + esc(r.activite) + "</td><td>" + esc(r.region) +
-        "</td><td>" + esc(r.societe) + "</td><td>" + esc(r.marque) + "</td><td>" + (r.ouverture ? dateFr(r.ouverture) : "") + "</td><td>" + (r.exercice ? dateFr(r.exercice[0]) + " au " + dateFr(r.exercice[1]) : "") + "</td></tr>";
-    });
-    el("contenu").innerHTML = enTete("Résidence", p, "Choisissez une résidence pour afficher toutes ses informations") + t + "</tbody></table></div></div>";
-    el("contenu").querySelectorAll("tr[data-p]").forEach(function (tr) {
-      tr.addEventListener("click", function () { choisir(tr.dataset.p); });
-      tr.addEventListener("keydown", function (e) { if (e.key === "Enter") choisir(tr.dataset.p); });
-    });
+    var outils = socAdmin() ? '<button class="btn btn-principal" id="soc-nouvelle">+ Nouvelle société</button>' : "";
+    el("contenu").innerHTML = enTete("Sociétés", p, "Fiches, noms et codes dans les autres outils, groupes", outils) + socAvertissement() + socListeHtml(p) +
+      '<div class="bloc" id="soc-gestion-bloc"><div class="bloc-tete"><h2>Groupes et classements</h2></div>' + socGestionHtml() + "</div>" +
+      (socEditeur() ? '<div class="bloc"><div class="bloc-tete"><h2>Dernières modifications</h2><span class="legende">Sociétés, noms et codes, groupes et classements</span></div>' + socJournalHtml(SOC.journal.slice(0, 15), true) + "</div>" : "");
+    socBrancherListe(); socBrancherGestion(el("soc-gestion-bloc"));
     return;
   }
-  var d = p.id, r = residence(d), dm = D.meta.dernier_mois_importe;
-  var h = enTete("Fiche de la résidence", p, "Informations de référence, exercices, résultats et données disponibles") + '<div class="fiche-grille">';
-  /* Identité */
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Identité</h2></div><dl class="fiche">' +
-    ligneFiche("Nom", r.nom) + ligneFiche("Code interne", r.code) + ligneFiche("Dossier Pennylane", d) + ligneFiche("Société", r.societe) +
+  var d = p.id, r = residence(d), dm = D.meta.dernier_mois_importe, b = socRes(d) || {}, resId = b.id || r.code, adm = socAdmin();
+  var outils = (socEditeur() ? '<button class="btn btn-principal" id="soc-modifier">Modifier</button>' : "") + (adm ? ' <button class="btn-petit" id="soc-archiver">' + (r.archivee ? "Restaurer" : "Archiver") + "</button>" : "");
+  var h = enTete("Fiche de la société", p, "Informations de référence, exercices, résultats et données disponibles", outils) + socAvertissement() +
+    (r.archivee ? '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div><b>Société archivée</b>' + (r.archivee_le ? " le " + esc(dateHeure(r.archivee_le)) : "") + (r.archivee_par ? " par " + esc(r.archivee_par) : "") + ". Elle n’apparaît plus dans les listes de choix ; ses chiffres et son historique sont conservés.</div></div>" : "") +
+    '<div class="fiche-grille">';
+  /* Identité, puis noms et codes dans les autres outils */
+  h += '<div class="bloc" id="soc-identite"><div class="bloc-tete"><h2>Identité</h2></div><dl class="fiche">' +
+    ligneFiche("Nom", r.nom) + ligneFiche("Code interne", resId) + ligneFiche("Dossier Pennylane", d) + ligneFiche("Raison sociale", r.societe) + ligneFiche("SIREN", r.siren) +
     ligneFiche("Activité", r.activite) + ligneFiche("Région", r.region) + ligneFiche("Marque", r.marque) +
-    ligneFiche("Date d’ouverture", r.ouverture ? dateFr(r.ouverture) : "") + ligneFiche("Rattachée depuis", r.date_effet ? dateFr(r.date_effet) : "") + ligneFiche("Statut", r.statut) + "</dl></div>";
+    ligneFiche("Date d’ouverture", r.ouverture ? dateFr(r.ouverture) : "") + ligneFiche("Rattachée depuis", r.date_effet ? dateFr(r.date_effet) : "") + ligneFiche("Statut", r.archivee ? "archivée" : r.statut) + "</dl>" +
+    socIdentHtml(resId, socEditeur()) + "</div>";
   /* Indicateurs du dernier mois importé */
   var kp = resultatFen([d], [dm], ajuste());
   h += '<div class="bloc"><div class="bloc-tete"><h2>Indicateurs, ' + esc(moisLong(dm)) + (ajuste() ? " (ajusté)" : " (réel)") + '</h2><span class="legende">Dernier mois importé</span></div><div class="kpi-mini">' +
@@ -2369,30 +2870,35 @@ PAGES.residence = function (p) {
       var sp = xa({ t: "kpi", k: k.code, d: [d], m: [dm], a: ajuste() });
       return v && v.statut === "calculé" ? '<div' + sp + '><span class="n">' + esc(k.nom) + '</span><span class="v">' + esc(v.affichage) + "</span></div>"
         : '<div class="nc"' + sp + '><span class="n">' + esc(k.nom) + '</span><span class="v" title="' + esc(v ? v.motif : "") + '">Non calculable</span></div>'; }).join("") + "</div></div>";
-  /* Exercices */
-  var rangs = D.imports[d] || [];
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Exercices comptables</h2></div><div class="defile"><table class="tab"><thead><tr><th>Rang</th><th>Exercice</th><th>Période importée</th><th class="num">Écritures</th></tr></thead><tbody>' +
-    rangs.map(function (x) { return "<tr><td><b>" + x.rang + "</b></td><td>Du " + dateFr(x.debut) + " au " + dateFr(x.fin) + "</td><td>" +
-      (x.periode_importee ? dateFr(x.periode_importee[0]) + " au " + dateFr(x.periode_importee[1]) : '<span class="mut">aucune</span>') + '</td><td class="num">' + nb(x.ecritures) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  h += socExercicesHtml(d);
   /* Résultat de l'exercice publié */
   var fi = D.finance.find(function (x) { return x.dossier === d; });
   h += '<div class="bloc"><div class="bloc-tete"><h2>Résultat de l’exercice publié</h2>' + (fi ? '<span class="legende">Du ' + dateFr(fi.exercice.debut) + " au " + dateFr(fi.exercice.fin) + ", " + fi.exercice.duree_mois + " mois, " + esc(fi.statut) + "</span>" : "") + "</div>" +
     (fi && fi.statut === "publié" ? '<dl class="fiche">' + [["CA hébergement", "CA_HEBERGEMENT"], ["CA services", "CA_SERVICES"], ["Charges (classe 6)", "PL_CHARGES"], ["Résultat", "RESULTAT"]].map(function (x) {
       return "<dt>" + esc(x[0]) + "</dt><dd><span" + xa({ t: "pub", d: d, k: x[1] }) + ">" + esc(eur(fi.resultat[x[1]])) + "</span></dd>"; }).join("") + "</dl>"
-      : '<p class="mut">Aucune publication pour cette résidence.</p>') + "</div>";
-  /* Appartenances */
-  var ap = D.perimetres.filter(function (x) { return x.type !== "residence" && x.type !== "groupe" && x.dossiers.indexOf(d) >= 0; });
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Groupes et regroupements</h2></div><div class="puces"><span class="puce">Groupe Zenitude</span>' +
-    ap.map(function (x) { return '<span class="puce">' + esc(x.libelle) + "<small>" + esc(TYPES[x.type] || "") + "</small></span>"; }).join("") + "</div></div>";
-  /* Ajustements */
-  var ajs = ajActifs().filter(function (a) { return ajPourDossier(a, d); });
-  h += '<div class="bloc"><div class="bloc-tete"><h2>Ajustements actifs</h2></div>' + (ajs.length ?
-    '<div class="defile"><table class="tab"><thead><tr><th>Libellé</th><th>Compte</th></tr></thead><tbody>' + ajs.map(function (a) { return "<tr><td>" + esc(a.libelle) + "</td><td><code>" + esc(a.compte) + "</code></td></tr>"; }).join("") + "</tbody></table></div>"
-    : '<p class="mut">Aucun ajustement ou provision actif pour cette résidence.</p>') +
-    (lisActifs(d).length ? '<p class="legende">' + lisActifs(d).length + " écriture(s) lissée(s) active(s) : voir Ajustements, Lissage de postes.</p>" : "") + "</div>";
+      : '<p class="mut">Aucune publication pour cette société.</p>') + "</div>";
+  h += socGroupesHtml(d, resId);
+  h += socAjustementsHtml(d);
   /* Couverture des données */
   h += '<div class="bloc large"><div class="bloc-tete"><h2>Données disponibles, ' + D.meta.annee + '</h2><span class="legende">Comptabilité et exploitation, mois par mois</span></div>' + grilleCouverture(p, true) + "</div>";
+  if (socEditeur()) h += '<div class="bloc large"><div class="bloc-tete"><h2>Historique de la fiche</h2><span class="legende">Dix dernières modifications</span></div>' + socJournalHtml(SOC.journal.filter(function (j) { return j.residence_id === resId; }).slice(0, 10), false) + "</div>";
   el("contenu").innerHTML = h + "</div>";
+  socBrancherIdent(el("soc-identite"));
+  if (el("soc-modifier")) el("soc-modifier").addEventListener("click", function () { socModale(resId); });
+  if (el("soc-archiver")) el("soc-archiver").addEventListener("click", function () { socArchiver(resId, !r.archivee); });
+  if (el("soc-ex-tous")) el("soc-ex-tous").addEventListener("click", function () { SOC_VUE.exTous = !SOC_VUE.exTous; majContenu(); });
+  if (el("soc-aj-tous")) el("soc-aj-tous").addEventListener("click", function () { allerA("ajustements", "provisions"); });
+  if (el("soc-gestion")) el("soc-gestion").addEventListener("click", socModaleGestion);
+  el("contenu").querySelectorAll(".soc-retirer").forEach(function (bt) { bt.addEventListener("click", function () {
+    var g = SOC.grp.find(function (x) { return x.id === bt.dataset.g; });
+    if (g && confirm("Retirer " + r.nom + " du groupe « " + g.libelle + " » ?")) socAlerte(socExecuter("lienSuppr", { residence_id: resId, groupe_id: g.id }));
+  }); });
+  var ga = el("soc-g-ajout-ok");
+  if (ga) ga.addEventListener("click", function () {
+    var g = el("soc-g-ajout").value; if (!g) return;
+    ga.disabled = true; el("soc-g-ajout-err").textContent = "";
+    socExecuter("lien", { residence_id: resId, groupe_id: g }).catch(function (e) { var b2 = el("soc-g-ajout-ok"); if (b2) b2.disabled = false; var z = el("soc-g-ajout-err"); if (z) z.textContent = e.message; });
+  });
 };
 
 PAGES.budgets = function (p) { el("contenu").innerHTML = enTete("Budgets", p, "") + '<div class="bloc vide-etat"><h2>Module à venir</h2><p>Saisie et import des budgets par résidence. Il alimentera les colonnes Projection des tableaux EBITDA et SIG.</p></div>'; };
@@ -3576,7 +4082,7 @@ PAGES.lissage = function (p) {
   el("contenu").querySelectorAll("[data-lis-ouvrir]").forEach(function (b) { b.addEventListener("click", function () { etat.lisCompte = b.dataset.lisOuvrir; etat.lisSaisie = null; dessinerModaleLissage(); }); });
   el("contenu").querySelectorAll("[data-lis-actif]").forEach(function (b) { b.addEventListener("click", function () {
     var ls = lisDe(d, b.dataset.lisActif), on = !ls.some(function (l) { return l.actif; });
-    lisExecuter(function () { ls.forEach(function (l) { l.actif = on; }); }, function () { return ls.reduce(function (pr, l) { return pr.then(function () { return BASE_LIS.modifier(l, { actif: on }); }); }, Promise.resolve()); });
+    lisExecuter(function () { ls.forEach(function (l) { l.actif = on; l.modifie_le = new Date().toISOString(); l.modifie_par = socQui(); }); }, function () { return ls.reduce(function (pr, l) { return pr.then(function () { return BASE_LIS.modifier(l, { actif: on }); }); }, Promise.resolve()); });
   }); });
   if (etat.lisCompte) dessinerModaleLissage();
 };
@@ -3644,7 +4150,7 @@ function dessinerModaleLissage() {
     });
   }
 }
-function nouveauLissage(d, r, du, au) { return { dossier: d, ecriture: r[0], compte: r[4], montant: r[6], date: r[1], du: du, au: au, actif: true, rev: 1 }; }
+function nouveauLissage(d, r, du, au) { return { dossier: d, ecriture: r[0], compte: r[4], montant: r[6], date: r[1], du: du, au: au, actif: true, rev: 1, modifie_le: new Date().toISOString(), modifie_par: socQui() }; }
 /* Enregistrement : navigateur (démonstration locale) ou base (en ligne), puis on redessine. */
 var BASE_LIS = {
   creer: function (l) { return sb(ZCLIENT.from("lissages").insert({ dossier: l.dossier, ecriture: l.ecriture, compte: l.compte, montant: l.montant, date_ecriture: l.date, du: l.du, au: l.au, actif: l.actif }).select("id")).then(verifierTouche); },
@@ -4385,6 +4891,7 @@ function validerModeleKpi(lignes, p) {
   if (!feuilles.length) { R.erreurs.push({ ligne: "", colonne: "Lisez-moi", motif: "aucune feuille de modèle déclarée" }); return R; }
   var dans = {}, exist = {}, vus = {};
   var parCode = {}; D.residences.forEach(function (r) { parCode[r.dossier] = r.dossier; if (r.code) parCode[r.code] = r.dossier; });
+  if (SOC) SOC.ids.forEach(function (i) { var d = socDossier(i.residence_id); if (d && residence(d) && !parCode[i.code]) parCode[i.code] = d; }); /* lot 31 : codes des autres outils */
   p.dossiers.forEach(function (d) { dans[d] = 1; });
   MESURES_IMP.forEach(function (x) { exist[x.dossier + "|" + x.mois + "|" + x.mesure] = x.valeur; });
   feuilles.forEach(function (k) {
@@ -7135,6 +7642,7 @@ mesuresImporteesCharger();
 catCharger();
 appliquerMesures();
 anCharger();
+socCharger();
 appliquerMenu(menuReduit());
 
 demarrer();
@@ -7233,7 +7741,7 @@ function chargerDonnees(client) {
   return Promise.all([
     lireBase(client.from("donnees_communes").select("contenu").eq("id", "SITE").maybeSingle()),
     lireBase(client.from("donnees_residences").select("residence_id, contenu")),
-    lireBase(client.from("groupes").select("id, libelle")),
+    lireBase(client.from("groupes").select("*")),
     lireBase(client.from("residence_groupe").select("residence_id, groupe_id")),
     lireBase(client.from("ajustements").select("*").order("id")),
     lireBase(client.from("comptes_simules").select("numero, libelle, cree_par").order("numero")),
@@ -7242,7 +7750,7 @@ function chargerDonnees(client) {
     lireBase(client.from("comptes_bancaires").select("*")),
     lireFacultatif(client.from("parametres_import").select("*")),
     lireFacultatif(client.from("synchronisations").select("*").order("id")),
-    lireOuNull(client.from("residences").select("id, dossier_pennylane, code_mews")),
+    lireOuNull(client.from("residences").select("*")),
     lireTout(function () { return client.from("kpi_mois").select("*").order("dossier").order("mois"); }, true),
     lireFacultatif(client.from("depots_kpi").select("*").order("id")),
     lireOuNull(client.from("kpi_catalogue").select("*").order("ordre")),
@@ -7270,11 +7778,15 @@ function chargerDonnees(client) {
     /* Lots 28 à 30 : null quand la migration 019 manque */
     lireOuNull(client.from("analyse_parametres").select("*")),
     lireTout(function () { return client.from("ecarts_suivi").select("*").order("id"); }, true),
-    lireFacultatif(client.from("ecarts_journal").select("*").order("id", { ascending: false }).limit(500))
+    lireFacultatif(client.from("ecarts_journal").select("*").order("id", { ascending: false }).limit(500)),
+    /* Lot 31 : null quand la migration 020 manque */
+    lireOuNull(client.from("classements").select("*").order("ordre").order("libelle")),
+    lireOuNull(client.from("residence_identifiants").select("*").order("id")),
+    lireFacultatif(client.from("societes_journal").select("*").order("id", { ascending: false }).limit(500))
   ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10],
     resbase: r[11], kpimois: r[12], depots: r[13], cat: r[14], modeles: r[15], resmod: r[16], journalkpi: r[17],
     lot24: { rubriques: r[18], regles: r[19], ca: r[20], clotures: r[21], journal: r[22], previsions: r[23], virements: r[24] },
-    lot25: { missions: r[25], paquets: r[26], versions: r[27] }, lot26: { etablissements: r[28], mois: r[29], journal: r[30], postes: r[31] }, lot28: { parametres: r[32], suivi: r[33], journal: r[34] } }; });
+    lot25: { missions: r[25], paquets: r[26], versions: r[27] }, lot26: { etablissements: r[28], mois: r[29], journal: r[30], postes: r[31] }, lot28: { parametres: r[32], suivi: r[33], journal: r[34] }, lot31: { classements: r[35], identifiants: r[36], journal: r[37] } }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -7295,6 +7807,7 @@ function demarrerAvecClient(client, profil) {
     D.tresorerie_previsions = L24.previsions || []; D.virements_suivis = L24.virements || [];
     D.lot25 = x.lot25.missions !== null; D.missions = x.lot25.missions || []; D.paquets = x.lot25.paquets || []; D.missions_versions = x.lot25.versions || [];
     D.lot26 = x.lot26.etablissements !== null && x.lot26.mois !== null; D.dsn_etablissements = x.lot26.etablissements || []; D.dsn_mois = x.lot26.mois || []; D.dsn_journal = x.lot26.journal || []; D.lot27 = x.lot26.postes !== null; D.dsn_postes = x.lot26.postes || [];
+    D.lot31 = x.lot31.classements !== null && x.lot31.identifiants !== null; D.soc_classements = x.lot31.classements || []; D.soc_identifiants = x.lot31.identifiants || []; D.soc_journal = x.lot31.journal || [];
     D.lot28 = x.lot28.parametres !== null && x.lot28.suivi !== null; D.analyse_parametres = x.lot28.parametres || []; D.ecarts_suivi = x.lot28.suivi || []; D.ecarts_journal = x.lot28.journal || [];
     lancerApplication();
     ZCLIENT = client;

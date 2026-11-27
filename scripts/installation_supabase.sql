@@ -1,17 +1,17 @@
--- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 25). À coller en une fois dans SQL Editor.
+-- INSTALLATION COMPLÈTE DE LA BASE DE TEST SUPABASE (lots 12 à 26). À coller en une fois dans SQL Editor.
 -- Fichier assemblé par scripts/assembler_installation.py : remise à zéro + migrations + données de départ.
 -- Remet la base de test à zéro : données fictives uniquement. Ne jamais exécuter sur une base réelle.
 -- Après l'avoir lancé, relancer la publication des données (GitHub, Actions, « Run workflow »).
 
 -- ===================== scripts/reinitialiser_base_test.sql =====================
 -- Remise à zéro de la BASE DE TEST Supabase (données fictives uniquement).
--- Supprime les tableaux et fonctions des lots 12 à 25, y compris ceux d'une version précédente.
+-- Supprime les tableaux et fonctions des lots 12 à 26, y compris ceux d'une version précédente.
 -- Ne jamais exécuter sur une base contenant des données réelles.
 
-DROP TABLE IF EXISTS paquets_claude, missions_versions, missions_claude, virements_suivis, tresorerie_previsions, compta_journal, fees_clotures, ca_regles, fees_regles, fees_rubriques, residence_modele, kpi_journal, kpi_catalogue, kpi_modeles, connexions_pennylane, cle_jetons, depots_kpi, kpi_mois, pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
+DROP TABLE IF EXISTS dsn_journal, dsn_mois, dsn_etablissements, paquets_claude, missions_versions, missions_claude, virements_suivis, tresorerie_previsions, compta_journal, fees_clotures, ca_regles, fees_regles, fees_rubriques, residence_modele, kpi_journal, kpi_catalogue, kpi_modeles, connexions_pennylane, cle_jetons, depots_kpi, kpi_mois, pennylane_magasin, pennylane_etat, pennylane_ecritures, pennylane_lignes, lettrages_pennylane, synchronisations, parametres_import, mesures_importees, comptes_bancaires, lissages, ajustements, comptes_simules, donnees_residences, donnees_communes,
   parcs, residence_groupe, groupes, residences, profils CASCADE;
 
-DROP FUNCTION IF EXISTS trace_mission_claude(), trace_paquet_claude(), controle_fees_rubrique(), trace_compta(), garde_cloture(), trace_virement(), journal_compta(), controle_kpi_catalogue(), journal_kpi_catalogue(), trace_residence_modele(), controle_signe_mesure(), trace_connexion_pennylane(), trace_cle_jetons(), trace_kpi(), garde_code_mews(), trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
+DROP FUNCTION IF EXISTS trace_dsn_etablissement(), suivre_dsn_etablissement(), trace_dsn_mois(), journal_dsn_mois(), trace_mission_claude(), trace_paquet_claude(), controle_fees_rubrique(), trace_compta(), garde_cloture(), trace_virement(), journal_compta(), controle_kpi_catalogue(), journal_kpi_catalogue(), trace_residence_modele(), controle_signe_mesure(), trace_connexion_pennylane(), trace_cle_jetons(), trace_kpi(), garde_code_mews(), trace_lettrage(), trace_parametres_import(), trace_import(), gere_ajustement(boolean, text[]), voit_ajustement(boolean, text[]),
   modifie_dossier(text), voit_dossier(text), ajustements_trace(),
   voit_groupe(text), voit_residence(text), modifie_residence(text),
   est_administrateur(), role_courant(), email_courant(), utilisateur_courant() CASCADE;
@@ -1591,6 +1591,155 @@ CREATE POLICY paquets_claude_resultat ON paquets_claude FOR UPDATE TO authentica
 GRANT SELECT, INSERT, UPDATE, DELETE ON missions_claude TO authenticated;
 GRANT SELECT ON missions_versions TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON paquets_claude TO authenticated;
+
+-- ===================== migrations/017_dsn.sql =====================
+-- Migration 017 : données sociales issues de la DSN (lot 26, décision 0020).
+-- SQL standard PostgreSQL, rejouable. S'ajoute aux migrations 001 à 016 sans remise à zéro.
+--
+-- Le fichier DSN (nominatif) est lu dans le navigateur et n'est jamais envoyé à la base. Elle ne reçoit que des
+-- totaux anonymes par établissement et par mois (effectifs, ETP, mouvements, masse salariale, heures) et, pour
+-- les arrêts de travail, une clé anonyme et des dates. Aucun nom, NIR, matricule ni salaire individuel.
+--
+-- dsn_etablissements : rattachement d'un SIRET (établissement déclarant) à une résidence (dossier Pennylane).
+--                      Changer le rattachement déplace tous les mois importés de ce SIRET.
+-- dsn_mois           : totaux d'une DSN mensuelle (un SIRET, un mois). Un nouvel import du même mois remplace
+--                      le précédent (DSN « annule et remplace » ou correction) ; le journal garde la trace.
+-- dsn_journal        : imports, remplacements, suppressions et rattachements, écrit par la base seule (sans
+--                      montant), jamais modifié.
+-- Droits : lecture et écriture réservées aux administrateurs (données de paie).
+
+CREATE TABLE IF NOT EXISTS dsn_etablissements (
+    siret       text PRIMARY KEY CHECK (siret ~ '^[0-9]{14}$'),
+    dossier     text NOT NULL CHECK (dossier ~ '^[A-Z0-9_-]+$'),
+    modifie_par text,
+    modifie_le  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS dsn_mois (
+    id          bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    siret       text NOT NULL REFERENCES dsn_etablissements(siret) ON UPDATE CASCADE,
+    dossier     text NOT NULL,
+    mois        text NOT NULL CHECK (mois ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
+    type_decl   text NOT NULL CHECK (type_decl IN ('01', '02', '03', '05')),
+    contenu     jsonb NOT NULL CHECK (jsonb_typeof(contenu) = 'object' AND contenu ? 'effectif_fin' AND contenu ? 'brut'
+                                      AND NOT (contenu ?| ARRAY['nir', 'nom', 'prenoms', 'nom_famille', 'matricule', 'individus'])
+                                      AND octet_length(contenu::text) <= 200000),
+    fichier     text NOT NULL DEFAULT '' CHECK (length(fichier) <= 200),
+    empreinte   text NOT NULL CHECK (empreinte ~ '^[0-9a-f]{64}$'),
+    importe_par text,
+    importe_le  timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (siret, mois)
+);
+CREATE INDEX IF NOT EXISTS dsn_mois_dossier ON dsn_mois (dossier, mois);
+
+CREATE TABLE IF NOT EXISTS dsn_journal (
+    id        bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    action    text NOT NULL,
+    siret     text NOT NULL,
+    mois      text,
+    dossier   text,
+    detail    text NOT NULL DEFAULT '',
+    par       text,
+    le        timestamptz NOT NULL DEFAULT now()
+);
+
+-- Rattachement : la résidence doit exister ; auteur et date posés par la base ; les mois suivent le SIRET.
+CREATE OR REPLACE FUNCTION trace_dsn_etablissement() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM residences WHERE dossier_pennylane = NEW.dossier) THEN
+    RAISE EXCEPTION 'Résidence inconnue pour le dossier %.', NEW.dossier USING ERRCODE = 'check_violation';
+  END IF;
+  IF TG_OP = 'UPDATE' AND NEW.siret <> OLD.siret THEN
+    RAISE EXCEPTION 'Le SIRET d''un établissement ne change pas.' USING ERRCODE = 'check_violation';
+  END IF;
+  NEW.modifie_par := coalesce(email_courant(), NEW.modifie_par);
+  NEW.modifie_le := now();
+  IF TG_OP = 'INSERT' OR NEW.dossier IS DISTINCT FROM OLD.dossier THEN
+    INSERT INTO dsn_journal (action, siret, dossier, detail, par)
+    VALUES ('rattachement', NEW.siret, NEW.dossier, CASE WHEN TG_OP = 'UPDATE' THEN 'avant : ' || OLD.dossier ELSE '' END, NEW.modifie_par);
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS dsn_etablissements_trace ON dsn_etablissements;
+CREATE TRIGGER dsn_etablissements_trace BEFORE INSERT OR UPDATE ON dsn_etablissements
+  FOR EACH ROW EXECUTE FUNCTION trace_dsn_etablissement();
+
+CREATE OR REPLACE FUNCTION suivre_dsn_etablissement() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  UPDATE dsn_mois SET dossier = NEW.dossier WHERE siret = NEW.siret AND dossier <> NEW.dossier;
+  RETURN NULL;
+END
+$$;
+DROP TRIGGER IF EXISTS dsn_etablissements_suivi ON dsn_etablissements;
+CREATE TRIGGER dsn_etablissements_suivi AFTER UPDATE OF dossier ON dsn_etablissements
+  FOR EACH ROW EXECUTE FUNCTION suivre_dsn_etablissement();
+
+-- Mois : la résidence est celle du rattachement du SIRET (jamais choisie à part) ; auteur et date posés par la base.
+CREATE OR REPLACE FUNCTION trace_dsn_mois() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  d text;
+BEGIN
+  SELECT dossier INTO d FROM dsn_etablissements WHERE siret = NEW.siret;
+  IF d IS NULL THEN
+    RAISE EXCEPTION 'Établissement % non rattaché à une résidence.', NEW.siret USING ERRCODE = 'check_violation';
+  END IF;
+  NEW.dossier := d;
+  IF TG_OP = 'UPDATE' AND (NEW.siret, NEW.mois) IS DISTINCT FROM (OLD.siret, OLD.mois) THEN
+    RAISE EXCEPTION 'Le SIRET et le mois d''une DSN importée ne changent pas.' USING ERRCODE = 'check_violation';
+  END IF;
+  IF TG_OP = 'UPDATE' AND NEW.empreinte = OLD.empreinte AND NEW.contenu = OLD.contenu AND NEW.type_decl = OLD.type_decl THEN
+    NEW.importe_par := OLD.importe_par;  -- simple déplacement de rattachement
+    NEW.importe_le := OLD.importe_le;
+    RETURN NEW;
+  END IF;
+  NEW.importe_par := coalesce(email_courant(), NEW.importe_par);
+  NEW.importe_le := now();
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS dsn_mois_trace ON dsn_mois;
+CREATE TRIGGER dsn_mois_trace BEFORE INSERT OR UPDATE ON dsn_mois
+  FOR EACH ROW EXECUTE FUNCTION trace_dsn_mois();
+
+-- Journal après coup : un import qui remplace un mois existant (ON CONFLICT) n'est noté qu'une fois.
+CREATE OR REPLACE FUNCTION journal_dsn_mois() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    INSERT INTO dsn_journal (action, siret, mois, dossier, detail, par)
+    VALUES ('suppression', OLD.siret, OLD.mois, OLD.dossier, OLD.fichier, email_courant());
+  ELSIF TG_OP = 'INSERT' OR (NEW.empreinte, NEW.contenu, NEW.type_decl) IS DISTINCT FROM (OLD.empreinte, OLD.contenu, OLD.type_decl) THEN
+    INSERT INTO dsn_journal (action, siret, mois, dossier, detail, par)
+    VALUES (CASE WHEN TG_OP = 'INSERT' THEN 'import' ELSE 'remplacement' END, NEW.siret, NEW.mois, NEW.dossier,
+            NEW.fichier || ' (type ' || NEW.type_decl || ', empreinte ' || left(NEW.empreinte, 12) || ')', NEW.importe_par);
+  END IF;
+  RETURN NULL;
+END
+$$;
+DROP TRIGGER IF EXISTS dsn_mois_journal ON dsn_mois;
+CREATE TRIGGER dsn_mois_journal AFTER INSERT OR UPDATE OR DELETE ON dsn_mois
+  FOR EACH ROW EXECUTE FUNCTION journal_dsn_mois();
+
+ALTER TABLE dsn_etablissements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dsn_mois ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dsn_journal ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS dsn_etablissements_admin ON dsn_etablissements;
+CREATE POLICY dsn_etablissements_admin ON dsn_etablissements FOR ALL TO authenticated
+  USING (est_administrateur()) WITH CHECK (est_administrateur());
+DROP POLICY IF EXISTS dsn_mois_admin ON dsn_mois;
+CREATE POLICY dsn_mois_admin ON dsn_mois FOR ALL TO authenticated
+  USING (est_administrateur()) WITH CHECK (est_administrateur());
+DROP POLICY IF EXISTS dsn_journal_lecture ON dsn_journal;
+CREATE POLICY dsn_journal_lecture ON dsn_journal FOR SELECT TO authenticated USING (est_administrateur());
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON dsn_etablissements, dsn_mois TO authenticated;
+GRANT SELECT ON dsn_journal TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE dsn_mois_id_seq TO authenticated;
 
 -- ===================== scripts/donnees_test.sql =====================
 -- Données de départ de la phase test (lots 12 et 13). Tout est fictif sauf les deux adresses

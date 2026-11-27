@@ -57,8 +57,8 @@ def exporter(site, pg, section, page):
 def test_ordre_du_menu_lateral(site):
     pg, erreurs = ouvrir(site)
     noms = [t.split("\n")[0] for t in pg.locator(".lat-item").all_inner_texts()]
-    # Lot 24 : Comptabilité juste avant Trésorerie
-    assert noms == ["Résidence", "Import et paramètres", "Tableaux de bord", "Ajustements", "Comptabilité", "Trésorerie", "Budgets", "Rapports"]
+    # Lot 24 : Comptabilité juste avant Trésorerie ; lot 26 : Social juste après Comptabilité (administrateurs)
+    assert noms == ["Résidence", "Import et paramètres", "Tableaux de bord", "Ajustements", "Comptabilité", "Social", "Trésorerie", "Budgets", "Rapports"]
     assert not erreurs
 
 

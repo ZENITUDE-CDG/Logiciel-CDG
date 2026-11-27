@@ -45,7 +45,7 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (483 tests au lot 25 ; détail historique : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15, 5 du lot 16, 5 du lot 17 ; les tests de page des lots 9, 11, 13 à 17 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
+- Tests : `python -m pytest` (495 tests au lot 26 ; détail historique : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15, 5 du lot 16, 5 du lot 17 ; les tests de page des lots 9, 11, 13 à 17 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
 - Tests et publication automatiques : `.github/workflows/tests-et-publication.yml`. À chaque dépôt, toute la suite tourne sur GitHub (onglet Actions) avec une base PostgreSQL temporaire créée depuis `migrations/` (aucun secret, Supabase jamais touché). Puis, sur main seulement et si les tests passent, `python interface/publier_supabase.py` publie les chiffres dans la base de test avec le secret GitHub `SUPABASE_SECRET_KEY` (décision 0007). Essai sans envoi : `python interface/publier_supabase.py --essai <dossier>`.
 - Installation de la base de test : `python scripts/assembler_installation.py` régénère `scripts/installation_supabase.sql` (remise à zéro + migrations + données de départ) ; un test vérifie qu'il est à jour.
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
@@ -320,3 +320,13 @@ Décision : `docs/decisions/0019-socle-de-donnees-et-missions-claude.md`. Mise e
 - Tests : `tests/test_lot25_socle.py` (11), `tests/test_lot25_page.py` (8, dont page = Python à l'octet près sur 4 périmètres et périodes, avec anomalies fictives), `tests/lot25/test_lot25_droits.py` (2).
 - Limites : pas de lien direct entre le logiciel et Claude (paquet joint à la main ; connecteur en lecture seule envisageable plus tard) ; factures en pièces jointes, baux et budgets de CA hors paquet ; données réelles vers Claude soumises à l'accord DSI et DAF.
 
+
+## Lot 26 - STATUT : réalisé (DSN et indicateurs sociaux)
+Décision : `docs/decisions/0020-dsn-et-indicateurs-sociaux.md`. Règles : `docs/dsn.md`. Mise en route : `docs/lot26_mise_en_route.md`.
+- Principe : la DSN (Silae, nominative) est lue dans le navigateur, jamais envoyée ; seuls des totaux par SIRET et par mois sont enregistrés, plus une clé anonyme par arrêt de travail. Réservé aux administrateurs.
+- Référence : `zenitude/social/dsn.py` (`analyser`, `lire`, `entete`, `agreger`, `jours_arret`) ; centimes, centièmes d'heure, millièmes d'ETP. Codes NEODeS à confirmer sur un premier fichier Silae.
+- Page : Import et paramètres, `so_import` (dépôt multi-fichiers, aperçu, rattachement SIRET → résidence, remplacement, suppression, journal) ; section Social : `so_synthese`, `so_effectifs`, `so_absences`, `so_controle` (brut DSN ↔ 641, tolérance 1 % ou 1 €). Fonctions : `dsnAnalyser`, `dsnAgreger`, `dsnJoursArret`, `dsnCouple`, `dsnSomme`, `dsnRatio` ; détail `EXPLIQUER.dsn`, `EXPLIQUER.dsnr`. Section masquée sans page autorisée (`dessinerMenu`). `barres` accepte `unite: "nb"`.
+- Base : migration 017 (`dsn_etablissements`, `dsn_mois` unique par SIRET et mois, `dsn_journal` écrit par la base ; résidence imposée par le rattachement ; contenu nominatif refusé) ; démonstration locale dans le navigateur (`zen-dsn`).
+- Données fictives : `python tests/generer_dsn.py` (13 DSN dans `interface/demo/dsn/`, brut = 641 de la démonstration, anomalies volontaires).
+- Tests : `tests/test_lot26_dsn.py` (6), `tests/test_lot26_page.py` (3, dont page = Python à l'octet près sur les 13 fichiers), `tests/lot26/test_lot26_droits.py` (3, base).
+- Limites : pas de lecture des DSN fractionnées ni des annulations (type 04) ; absences hors arrêt de travail non comptées ; ancienneté limitée aux contrats présents dans la DSN ; comptes 641 et 64 à valider (provisions de congés payés).

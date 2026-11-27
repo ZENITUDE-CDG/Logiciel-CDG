@@ -689,18 +689,20 @@ var SOUS = {
   tresorerie: [["tr_position", "Position de trésorerie"], ["tr_banques", "Comptes bancaires"], ["tr_previsions", "Prévisions et virements"], ["tr_analyse", "Analyse du solde"], ["tr_creances", "Analyse des créances"], ["tr_dettes", "Analyse des dettes"]],
   ajustements: [["provisions", "Comptes et provisions"], ["lissage", "Lissage de postes"], ["ecarts", "Écarts Réel → Ajusté"]],
   comptabilite: [["cp_ca", "Chiffre d’affaires"], ["cp_parametrage", "Paramétrage des FEES"], ["cp_fees", "FEES à refacturer"]],
-  import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
+  social: [["so_synthese", "Tableau de bord social"], ["so_effectifs", "Effectifs et mouvements"], ["so_absences", "Absentéisme"], ["so_controle", "Paie et comptabilité"]],
+  import: [["pennylane", "Import comptable"], ["externes", "Données externes"], ["so_import", "Import DSN"], ["plan", "Plan comptable"], ["journaux", "Journaux"], ["analytique", "Sections analytiques"], ["parametres", "Paramètres KPI"]],
   residence: [["residence", "Résidence"]],
   budgets: [["budgets", "Budgets"]], rapports: [["claude", "Paquet pour Claude"], ["missions", "Missions Claude"], ["rapports", "Plaquettes"]]
 };
 /* Menu latéral : ordre, libellés et icônes (lot 10 ; ordre du lot 17 : Résidence, Import et paramètres, Tableaux de bord, Ajustements, Trésorerie, Budgets, Rapports ;
-   lot 24 : Comptabilité juste avant Trésorerie) */
+   lot 24 : Comptabilité juste avant Trésorerie ; lot 26 : Social juste après Comptabilité, réservé aux administrateurs) */
 var MENU = [
   ["residence", "Résidence", "M4 17V4.5L10 3l6 1.5V17M2.5 17h15M8 7.5h1.5M11 7.5h1.5M8 11h1.5M11 11h1.5M9 17v-3h2v3"],
   ["import", "Import et paramètres", "M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M3.5 13.5v2A1.5 1.5 0 005 17h10a1.5 1.5 0 001.5-1.5v-2"],
   ["tableaux", "Tableaux de bord", "M3 3v14h14M7 13V9m4 4V6m4 7v-4"],
   ["ajustements", "Ajustements", "M4 5h7M15 5h1M4 10h2M10 10h6M4 15h9M17 15h-1M11 3.5v3M7 8.5v3M14 13.5v3"],
   ["comptabilite", "Comptabilité", "M5.5 2.5h9a1 1 0 011 1v13a1 1 0 01-1 1h-9a1 1 0 01-1-1v-13a1 1 0 011-1zM7.5 5.5h5v2.5h-5zM7.5 11h1M11.5 11h1M7.5 14h1M11.5 14h1"],
+  ["social", "Social", "M7 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM2.5 16.5v-1A3.5 3.5 0 016 12h2a3.5 3.5 0 013.5 3.5v1M13.5 9a2 2 0 100-4M14.5 12h.5a3 3 0 013 3v1.5"],
   ["tresorerie", "Trésorerie", "M2.5 8L10 3.5 17.5 8M4.5 8.5v6M8 8.5v6M12 8.5v6M15.5 8.5v6M2.5 16.5h15"],
   ["budgets", "Budgets", "M3 6.5A1.5 1.5 0 014.5 5h11A1.5 1.5 0 0117 6.5v7a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 13.5zM3 8.5h14M6.5 12h2", true],
   ["rapports", "Rapports", "M5 2.5h7l3.5 3.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-14a.5.5 0 01.5-.5zM12 2.5V6h3.5M7 10h6M7 13h6"]
@@ -826,13 +828,14 @@ el("btn-reduire").addEventListener("click", function () { appliquerMenu(!el("app
 el("btn-burger").addEventListener("click", function (e) { e.stopPropagation(); el("app").classList.add("menu-ouvert"); });
 el("lat-voile").addEventListener("click", fermerTiroir);
 /* Lot 15 : la vue des comptes bancaires est réservée aux administrateurs (en ligne) ; lot 24 : prévisions et virements aussi. */
-var PAGES_ADMIN = ["tr_banques", "tr_previsions"];
+var PAGES_ADMIN = ["tr_banques", "tr_previsions", "so_synthese", "so_effectifs", "so_absences", "so_controle", "so_import"]; /* lot 26 : données de paie */
 function sousVisibles(sec) { return SOUS[sec].filter(function (x) { return PAGES_ADMIN.indexOf(x[0]) < 0 || !enLigne() || estAdmin(); }); }
 function allerA(section, page) { if (PAGES_ADMIN.indexOf(page) >= 0 && enLigne() && !estAdmin()) page = null; etat.section = section; etat.page = page || SOUS[section][0][0]; etat.brouillon = null; fermerTiroir(); rendre(); }
 function dessinerMenu() {
   var h = "";
   MENU.forEach(function (m) {
     var sec = m[0], actif = etat.section === sec, sous = sousVisibles(sec);
+    if (!sous.length) return; /* lot 26 : section sans page autorisée (Social hors administrateurs) */
     h += '<button class="lat-item' + (actif ? " actif" : "") + '" data-section="' + sec + '" title="' + esc(m[1]) + '"' + (actif ? ' aria-current="page"' : "") + '>' +
       '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="' + m[2] + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '<span class="lat-txt">' + esc(m[1]) + "</span>" + (m[3] ? '<span class="tag lat-txt">à venir</span>' : "") + "</button>";
@@ -1370,8 +1373,8 @@ function libFenetre() {
   var f = fenetre(), a = moisCourt(f[0]), b = moisCourt(f[f.length - 1]);
   return f.length === 1 ? moisLong(f[0]) : a + " → " + b;
 }
-var PAGES_PERIODE = ["claude", "cp_ca", "synthese", "suivi", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
-var PAGES_SANS_VUE = ["claude", "cp_ca", "suivi", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_PERIODE = ["so_synthese", "so_effectifs", "so_absences", "so_controle", "claude", "cp_ca", "synthese", "suivi", "indicateurs", "provisions", "ecarts", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
+var PAGES_SANS_VUE = ["so_synthese", "so_effectifs", "so_absences", "so_controle", "so_import", "claude", "cp_ca", "suivi", "tr_position", "tr_banques", "tr_analyse", "tr_creances", "tr_dettes", "equilibre", "externes"];
 function raccourcis(p) {
   var iD = idxMois(D.meta.dernier_mois_importe), an = String(D.meta.annee), n = MOIS.length;
   var r = [["Dernier mois importé", iD, iD + 1], ["12 derniers mois", Math.max(0, iD - 11), iD + 1]];
@@ -2004,7 +2007,8 @@ function barres(titre, cats, series, opts) {
   opts = opts || {};
   var N = cats.length;
   if (!N) return '<div class="graphe"><div class="gt"><b>' + esc(titre) + '</b></div><p class="legende" style="margin:10px 0">Aucun mois importé sur la période choisie.</p></div>';
-  noterGraphe(titre, cats, series, "eur");
+  noterGraphe(titre, cats, series, opts.unite || "eur");
+  var fmtV = opts.unite === "nb" ? function (v) { return nb(Math.round(v * 1000) / 1000); } : eur; /* lot 26 : effectifs, jours */
   var W = 520, H = 230, g = 46, d = 8, h = 18, b = 34, pas = (W - g - d) / N, empile = !!opts.empile;
   var vals = [0];
   series.forEach(function (x) { x.valeurs.forEach(function (v) { if (v !== null && v !== undefined) vals.push(v); }); });
@@ -2024,7 +2028,7 @@ function barres(titre, cats, series, opts) {
       if (v === null || v === undefined) return; /* lot 15 : valeur non disponible (N-1 non importé), pas de barre */
       if (empile) { x0 = cx - lb / 2; if (v >= 0) { y1 = y(base + v); y2 = y(base); base += v; } else { y1 = y(0); y2 = y(v); } }
       else { x0 = cx - lb * ns / 2 + lb * j; y1 = y(Math.max(v, 0)); y2 = y(Math.min(v, 0)); }
-      s += '<rect' + (opts.specs ? xs(opts.specs(i, j)) + ' style="cursor:pointer"' : "") + ' x="' + x0.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + lb.toFixed(1) + '" height="' + Math.max(0.5, y2 - y1).toFixed(1) + '" fill="' + couleur + '" fill-opacity="' + (opts.hors && opts.hors[i] ? "0.28" : "1") + '" rx="1.5"><title>' + esc(c) + " · " + esc(x.nom) + " : " + eur(v) + "</title></rect>";
+      s += '<rect' + (opts.specs ? xs(opts.specs(i, j)) + ' style="cursor:pointer"' : "") + ' x="' + x0.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + lb.toFixed(1) + '" height="' + Math.max(0.5, y2 - y1).toFixed(1) + '" fill="' + couleur + '" fill-opacity="' + (opts.hors && opts.hors[i] ? "0.28" : "1") + '" rx="1.5"><title>' + esc(c) + " · " + esc(x.nom) + " : " + fmtV(v) + "</title></rect>";
     });
     if (opts.etiquettes && opts.etiquettes[i]) s += '<text x="' + cx.toFixed(1) + '" y="' + (y(empile ? base : Math.max.apply(null, series.map(function (x) { return x.valeurs[i]; }))) - 4).toFixed(1) + '" font-size="9" text-anchor="middle" fill="var(--mut)">' + esc(opts.etiquettes[i]) + "</text>";
     if (i % sk === 0) s += '<text x="' + cx.toFixed(1) + '" y="' + (H - 14) + '" font-size="9" text-anchor="middle" fill="var(--faible)">' + esc(c) + "</text>";
@@ -3214,7 +3218,7 @@ var EXPORT_GR = [];
 function noterGraphe(titre, cats, series, genre) {
   EXPORT_GR.push({ titre: titre, genre: genre || "eur", cats: cats.slice(), series: series.map(function (x) { return { nom: x.nom, valeurs: x.valeurs.slice() }; }) });
 }
-function exportable() { return etat.section === "tableaux" || etat.section === "tresorerie" || etat.section === "comptabilite" || etat.page === "ecarts"; }
+function exportable() { return etat.section === "tableaux" || etat.section === "tresorerie" || etat.section === "comptabilite" || etat.section === "social" || etat.page === "ecarts"; }
 function boutonExport() {
   return exportable() ? '<button class="btn btn-ligne" id="btn-xlsx" title="Télécharger un classeur Excel : tableaux, données des graphiques, détail des calculs et écritures comptables">Exporter en Excel</button>' : "";
 }
@@ -4496,6 +4500,642 @@ function refusDepot(motif) {
 function voirPlus(cle, n) { return n > 5 ? '<div class="aj-actions" style="margin-top:8px"><button class="btn-petit" data-voir-plus="' + cle + '">' + (etat[cle] ? "Réduire" : "Voir plus (" + n + ")") + "</button></div>" : ""; }
 
 /* ======================================================================================
+   Lot 26 (décision 0020) : données sociales issues de la DSN (export Silae).
+   - Import DSN (Import et paramètres) : les fichiers DSN bruts sont lus dans ce navigateur, jamais envoyés.
+     Seuls des totaux anonymes par établissement (SIRET) et par mois sont enregistrés, rattachés à une résidence.
+   - Social : tableau de bord, effectifs et mouvements, absentéisme, rapprochement paie / comptabilité.
+   Lecture et totaux : mêmes règles que zenitude/social/dsn.py (comparés à l'octet près par
+   tests/test_lot26_page.py). Montants en centimes, heures en centièmes, ETP en millièmes : aucun flottant.
+   Réservé aux administrateurs (données de paie).
+   ====================================================================================== */
+var DSN = { etablissements: [], mois: [], journal: [] }, DSN_LOCAL = "zen-dsn", DSN_CACHE = null;
+var DSN_CATEGORIES = ["CDI", "CDD", "ALTERNANCE", "AUTRE"];
+var DSN_MOTIFS_SORTIE = ["DEMISSION", "RUPTURE_CONVENTIONNELLE", "LICENCIEMENT", "FIN_CDD", "PERIODE_ESSAI", "RETRAITE", "AUTRE"];
+var DSN_MOTIFS_ARRET = ["MALADIE", "AT_MP", "PARENTALITE", "AUTRE"];
+var DSN_TRANCHES_AGE = ["<26", "26-44", "45-54", "55+"], DSN_TRANCHES_ANC = ["<1", "1-3", "3-10", "10+"];
+var DSN_TYPES = { "01": "normale", "02": "néant", "03": "annule et remplace", "05": "annule et remplace néant" };
+var DSN_LIB = { CDI: "CDI", CDD: "CDD", ALTERNANCE: "Alternance", AUTRE: "Autres", DEMISSION: "Démission", RUPTURE_CONVENTIONNELLE: "Rupture conventionnelle",
+  LICENCIEMENT: "Licenciement", FIN_CDD: "Fin de CDD", PERIODE_ESSAI: "Fin de période d’essai", RETRAITE: "Retraite",
+  MALADIE: "Maladie", AT_MP: "Accidents et maladies pro.", PARENTALITE: "Maternité, paternité",
+  "<26": "Moins de 26 ans", "26-44": "26 à 44 ans", "45-54": "45 à 54 ans", "55+": "55 ans et plus", "<1": "Moins d’un an", "1-3": "1 à 3 ans", "3-10": "3 à 10 ans", "10+": "10 ans et plus" };
+/* Comptes de comparaison (à valider par le contrôle de gestion) : brut DSN ↔ 641 ; charges de personnel = comptes 64. */
+var DSN_REGLE_BRUT = { inclus: ["641"], exclus: [] }, DSN_REGLE_CHARGES = { inclus: ["64"], exclus: [] }, DSN_TOLERANCE = 0.01;
+var PAGES_SOCIAL = ["so_synthese", "so_effectifs", "so_absences", "so_controle", "so_import"];
+
+/* ---------- Lecture du fichier (mêmes règles que zenitude/social/dsn.py) ---------- */
+var DSN_RE_LIGNE = /^(S[0-9]{2}\.G[0-9]{2}\.[0-9]{2})\.([0-9]{3}),'(.*)'$/, DSN_RE_MONTANT = /^-?[0-9]{1,12}(\.[0-9]{1,2})?$/, DSN_RE_CHIFFRES = /^[0-9]+$/;
+var DSN_ESPACES = /^[\t\n\x0b\x0c\r\x1c-\x20\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\t\n\x0b\x0c\r\x1c-\x20\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/g;
+function dsnErreur(m) { return { dsnErreur: m }; }
+function dsnMotif(m) { return { dsnMotif: m }; }
+function dsnDecoder(o) {
+  if (o.length >= 3 && o[0] === 0xef && o[1] === 0xbb && o[2] === 0xbf) o = o.subarray(3);
+  try { return new TextDecoder("utf-8", { fatal: true }).decode(o); }
+  catch (e) { var s = ""; for (var i = 0; i < o.length; i += 8192) s += String.fromCharCode.apply(null, o.subarray(i, i + 8192)); return s; }
+}
+function dsnJour(y, m, d) {
+  if (y < 1 || y > 9999 || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  var x = new Date(0); x.setUTCFullYear(y, m - 1, d);
+  if (x.getUTCFullYear() !== y || x.getUTCMonth() !== m - 1 || x.getUTCDate() !== d) return null;
+  return { y: y, m: m, d: d, n: Math.round(x.getTime() / 86400000) };
+}
+function dsnDeN(n) { var x = new Date(n * 86400000); return dsnJour(x.getUTCFullYear(), x.getUTCMonth() + 1, x.getUTCDate()); }
+function dsnDate(v) { if (!v || !/^[0-9]{8}$/.test(v)) return null; return dsnJour(+v.slice(4), +v.slice(2, 4), +v.slice(0, 2)); }
+function dsnIso(d) { return d ? String(d.y).padStart(4, "0") + "-" + String(d.m).padStart(2, "0") + "-" + String(d.d).padStart(2, "0") : null; }
+function dsnDeIso(s) { return dsnJour(+s.slice(0, 4), +s.slice(5, 7), +s.slice(8, 10)); }
+function dsnFinMois(mois) { var y = +mois.slice(0, 4), m = +mois.slice(5); return dsnDeN(dsnJour(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, 1).n - 1); }
+function dsnJoursMois(mois) { return dsnFinMois(mois).d; }
+function dsnAnnees(a, b) { var n = b.y - a.y; if (b.m < a.m || (b.m === a.m && b.d < a.d)) n -= 1; return n; }
+function dsnEntier(v, ou) {
+  if (v === undefined || v === null || v === "") return null;
+  if (!DSN_RE_MONTANT.test(v)) throw dsnMotif("montant illisible « " + v + " » (" + ou + ")");
+  var neg = v.charAt(0) === "-"; if (neg) v = v.slice(1);
+  var p = v.split("."), n = parseInt(p[0], 10) * 100 + parseInt(((p[1] || "") + "00").slice(0, 2), 10);
+  return neg ? -n : n;
+}
+function dsnTrancheAge(a) { return a <= 25 ? "<26" : a <= 44 ? "26-44" : a <= 54 ? "45-54" : "55+"; }
+function dsnTrancheAnc(a) { return a < 1 ? "<1" : a < 3 ? "1-3" : a < 10 ? "3-10" : "10+"; }
+function dsnCategorie(r) {
+  if (["61", "64", "65"].indexOf(r["008"]) >= 0) return "ALTERNANCE";
+  var n = r["007"]; if (n === "01" || n === "07") return "CDI";
+  if (["02", "08", "09", "10"].indexOf(n) >= 0) return "CDD";
+  return "AUTRE";
+}
+function dsnMotifSortie(c) {
+  c = c || "";
+  if (c === "059") return "DEMISSION"; if (c === "043") return "RUPTURE_CONVENTIONNELLE";
+  if (c === "031" || c === "032") return "FIN_CDD"; if (c === "034" || c === "035") return "PERIODE_ESSAI";
+  if (c === "038" || c === "039") return "RETRAITE"; if (c.length === 3 && (c.slice(0, 2) === "01" || c.slice(0, 2) === "02")) return "LICENCIEMENT";
+  return "AUTRE";
+}
+function dsnMotifArret(c) { return c === "01" ? "MALADIE" : c === "04" || c === "05" || c === "06" ? "AT_MP" : c === "02" || c === "03" ? "PARENTALITE" : "AUTRE"; }
+function dsnCleArret(siret, dernier, motif, naissance, sexe) { return socleSha256(new TextEncoder().encode(siret + "|" + dernier + "|" + motif + "|" + naissance + "|" + sexe)).slice(0, 16); }
+function dsnLire(texte) {
+  var decls = [], avert = [], cur = null, indiv = null, contrat = null, occ = null, precBloc = null, precRub = 0, nLignes = 0, total = {};
+  var lignes = texte.split(/\r\n|[\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]/);
+  for (var i = 0; i < lignes.length; i++) {
+    var num = i + 1, ligne = lignes[i].replace(DSN_ESPACES, "");
+    if (!ligne) continue;
+    nLignes += 1;
+    var m = DSN_RE_LIGNE.exec(ligne);
+    if (!m) throw dsnErreur("ligne " + num + " illisible : ce n’est pas une rubrique DSN (RUBRIQUE,'valeur').");
+    var bloc = m[1], rub = m[2], val = m[3], nouveau = bloc !== precBloc || +rub <= precRub;
+    precBloc = bloc; precRub = +rub;
+    if (bloc === "S90.G00.90") { total[rub] = val; occ = null; continue; }
+    if (bloc.slice(0, 3) === "S10") { occ = null; continue; }
+    if (nouveau) {
+      if (bloc === "S20.G00.05") { cur = { s20: {}, s06: {}, s11: {}, ops: [], individus: [], ligne: num }; decls.push(cur); indiv = contrat = null; occ = cur.s20; }
+      else if (cur === null) throw dsnErreur("ligne " + num + " : rubrique " + bloc + "." + rub + " avant le début d’une déclaration (bloc S20.G00.05).");
+      else if (bloc === "S21.G00.06") occ = cur.s06;
+      else if (bloc === "S21.G00.11") occ = cur.s11;
+      else if (bloc === "S21.G00.20") { occ = {}; cur.ops.push(occ); }
+      else if (bloc === "S21.G00.30") { indiv = { r: {}, contrats: [], versements: [], remunerations: [], primes: [] }; cur.individus.push(indiv); contrat = null; occ = indiv.r; }
+      else if (["S21.G00.40", "S21.G00.50", "S21.G00.51", "S21.G00.52", "S21.G00.60", "S21.G00.62"].indexOf(bloc) >= 0) {
+        if (indiv === null) throw dsnErreur("ligne " + num + " : bloc " + bloc + " sans individu (bloc S21.G00.30).");
+        occ = {};
+        if (bloc === "S21.G00.40") { contrat = { r: occ, arrets: [], fin: null }; indiv.contrats.push(contrat); }
+        else if (bloc === "S21.G00.50") indiv.versements.push(occ);
+        else if (bloc === "S21.G00.51") indiv.remunerations.push(occ);
+        else if (bloc === "S21.G00.52") indiv.primes.push(occ);
+        else {
+          if (contrat === null) throw dsnErreur("ligne " + num + " : bloc " + bloc + " sans contrat (bloc S21.G00.40).");
+          if (bloc === "S21.G00.60") contrat.arrets.push(occ); else contrat.fin = occ;
+        }
+      } else occ = null;
+    }
+    if (occ !== null) occ[rub] = val;
+  }
+  if (!decls.length) throw dsnErreur("aucune déclaration (bloc S20.G00.05) : ce fichier n’est pas une DSN.");
+  if (total["001"] !== undefined && DSN_RE_CHIFFRES.test(total["001"]) && parseInt(total["001"], 10) !== nLignes)
+    avert.push("le fichier annonce " + parseInt(total["001"], 10) + " rubriques et en contient " + nLignes + " (fichier peut-être incomplet).");
+  if (total["002"] !== undefined && DSN_RE_CHIFFRES.test(total["002"]) && parseInt(total["002"], 10) !== decls.length)
+    avert.push("le fichier annonce " + parseInt(total["002"], 10) + " déclarations et en contient " + decls.length + ".");
+  return { declarations: decls, avertissements: avert, lignes: nLignes };
+}
+function dsnEntete(decl) {
+  var s20 = decl.s20, siret = (decl.s06["001"] || "") + (decl.s11["001"] || ""), d = dsnDate(s20["005"]);
+  var mois = d ? String(d.y).padStart(4, "0") + "-" + String(d.m).padStart(2, "0") : null, refus = null;
+  if (s20["001"] !== "01") refus = "déclaration de nature " + (s20["001"] || "?") + " (seule la DSN mensuelle, nature 01, est lue)";
+  else if (!DSN_TYPES[s20["002"]]) refus = s20["002"] === "04" ? "déclaration d’annulation (type 04) : non prise en compte, le mois déjà importé est conservé" : "type de déclaration " + (s20["002"] || "?") + " inconnu";
+  else if (["", "11", undefined].indexOf(s20["003"]) < 0) refus = "DSN fractionnée (fraction " + s20["003"] + ") : non prise en charge";
+  else if (!/^[0-9]{14}$/.test(siret)) refus = "SIRET de l’établissement illisible (« " + siret + " »)";
+  else if (!mois) refus = "mois déclaré illisible (« " + (s20["005"] || "") + " »)";
+  return { siret: siret, mois: mois, type: s20["002"] === undefined ? null : s20["002"], nature: s20["001"] === undefined ? null : s20["001"], refus: refus };
+}
+function dsnZeros(ks) { var o = {}; ks.forEach(function (k) { o[k] = 0; }); return o; }
+function dsnAgreger(decl, siret, mois) {
+  var an = +mois.slice(0, 4), mo = +mois.slice(5), F = dsnJour(an, mo, 1), L = dsnFinMois(mois), effD = decl.s11["008"];
+  var R = { version: 1, nature: decl.s20["001"] === undefined ? null : decl.s20["001"], type: decl.s20["002"] === undefined ? null : decl.s20["002"],
+    effectif_declare: effD && DSN_RE_CHIFFRES.test(effD) ? parseInt(effD, 10) : null, effectif_fin: 0, stagiaires_fin: 0,
+    categories: dsnZeros(DSN_CATEGORIES), femmes: 0, hommes: 0, cadres: 0, age_somme: 0, age_nb: 0, tranches_age: dsnZeros(DSN_TRANCHES_AGE),
+    anciennete: dsnZeros(DSN_TRANCHES_ANC), etp_milli: 0, etp_incomplet: 0, entrees: dsnZeros(DSN_CATEGORIES), sorties: dsnZeros(DSN_MOTIFS_SORTIE),
+    brut: 0, net_verse: 0, pas: 0, primes: 0, cotisations_organismes: 0, heures_payees: 0, hs_heures: 0, hs_montant: 0, salaries_payes: 0, arrets: [], alertes: [] };
+  var sansDebut = 0, arrets = {}, ordre = [];
+  decl.ops.forEach(function (o) { R.cotisations_organismes += dsnEntier(o["005"], "versement à un organisme") || 0; });
+  decl.individus.forEach(function (ind) {
+    var r = ind.r, sexe = r["005"], naissance = dsnDate(r["006"]), cs = [];
+    ind.contrats.forEach(function (c) {
+      var debut = dsnDate(c.r["001"]); if (debut === null) { sansDebut += 1; return; }
+      cs.push({ r: c.r, debut: debut, fin: c.fin ? dsnDate(c.fin["001"]) : null, motifFin: c.fin ? c.fin["002"] : undefined, arrets: c.arrets, hors: c.r["007"] === "29" || c.r["007"] === "80" });
+    });
+    var utiles = cs.filter(function (c) { return !c.hors; });
+    var enCours = function (c) { return c.debut.n <= L.n && (c.fin === null || c.fin.n >= L.n); };
+    var presents = utiles.filter(enCours);
+    if (presents.length) {
+      var princ = presents[0]; presents.forEach(function (c) { if (c.debut.n < princ.debut.n) princ = c; });
+      R.effectif_fin += 1; R.categories[dsnCategorie(princ.r)] += 1;
+      if (sexe === "02") R.femmes += 1; else if (sexe === "01") R.hommes += 1;
+      if (princ.r["003"] === "01" || princ.r["003"] === "02") R.cadres += 1;
+      if (naissance && naissance.n <= L.n) { var a = dsnAnnees(naissance, L); R.age_somme += a; R.age_nb += 1; R.tranches_age[dsnTrancheAge(a)] += 1; }
+      var prem = utiles[0]; utiles.forEach(function (c) { if (c.debut.n < prem.debut.n) prem = c; });
+      R.anciennete[dsnTrancheAnc(dsnAnnees(prem.debut, L))] += 1;
+      var milli = 0, complet = true;
+      presents.forEach(function (c) {
+        var q = dsnEntier(c.r["013"], "quotité du contrat"), ref = dsnEntier(c.r["012"], "quotité de référence");
+        if (q === null || ref === null || ref <= 0 || q < 0) { complet = false; return; }
+        milli += Math.min(1000, Math.floor((2 * 1000 * q + ref) / (2 * ref)));
+      });
+      if (complet) R.etp_milli += Math.min(1000, milli); else R.etp_incomplet += 1;
+    } else if (cs.some(function (c) { return c.r["007"] === "29" && enCours(c); })) R.stagiaires_fin += 1;
+    utiles.forEach(function (c) {
+      if (F.n <= c.debut.n && c.debut.n <= L.n && !utiles.some(function (o) { return o !== c && o.debut.n < c.debut.n; })) R.entrees[dsnCategorie(c.r)] += 1;
+    });
+    if (!presents.length) {
+      var finis = utiles.filter(function (c) { return c.fin !== null && F.n <= c.fin.n && c.fin.n <= L.n; });
+      if (finis.length) { var der = finis[0]; finis.forEach(function (c) { if (c.fin.n > der.fin.n) der = c; }); R.sorties[dsnMotifSortie(der.motifFin)] += 1; }
+    }
+    ind.remunerations.forEach(function (x) {
+      var t = x["011"], mt = dsnEntier(x["013"], "rémunération") || 0, h = dsnEntier(x["012"], "nombre d’heures") || 0;
+      if (t === "001") R.brut += mt; else if (t === "002") R.heures_payees += h; else if (t === "017" || t === "018") { R.hs_heures += h; R.hs_montant += mt; }
+    });
+    ind.primes.forEach(function (x) { R.primes += dsnEntier(x["002"], "prime") || 0; });
+    ind.versements.forEach(function (x) { R.net_verse += dsnEntier(x["004"], "net versé") || 0; R.pas += dsnEntier(x["009"], "prélèvement à la source") || 0; });
+    if (ind.versements.length) R.salaries_payes += 1;
+    utiles.forEach(function (c) {
+      c.arrets.forEach(function (a) {
+        var dernier = dsnDate(a["002"]);
+        if (dernier === null) { R.alertes.push("arrêt de travail sans date du dernier jour travaillé : ignoré"); return; }
+        var motif = a["001"] || "", cle = dsnCleArret(siret, dsnIso(dernier), motif, dsnIso(naissance) || "", sexe || "");
+        var x = { cle: cle, motif: motif, debut: dsnIso(dsnDeN(dernier.n + 1)), fin_prevue: dsnIso(dsnDate(a["003"])), reprise: dsnIso(dsnDate(a["010"])) };
+        if (!arrets[cle]) { arrets[cle] = x; ordre.push(cle); } else if (x.reprise && !arrets[cle].reprise) arrets[cle] = x;
+      });
+    });
+  });
+  R.arrets = ordre.map(function (k) { return arrets[k]; }).sort(function (a, b) { return a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.cle < b.cle ? -1 : a.cle > b.cle ? 1 : 0; });
+  if (sansDebut) R.alertes.push(sansDebut + " contrat(s) sans date de début : ignoré(s)");
+  if (R.etp_incomplet) R.alertes.push(R.etp_incomplet + " salarié(s) sans quotité de travail lisible : ETP non calculable");
+  if (R.effectif_declare !== null && R.effectif_declare !== R.effectif_fin) R.alertes.push("effectif déclaré " + R.effectif_declare + ", effectif recalculé " + R.effectif_fin + " (stagiaires et mandataires exclus du recalcul)");
+  return R;
+}
+function dsnAnalyser(octets) {
+  var lu = dsnLire(dsnDecoder(octets)), sortie = [];
+  lu.declarations.forEach(function (decl) {
+    var e = dsnEntete(decl);
+    if (!e.refus) { try { e.contenu = dsnAgreger(decl, e.siret, e.mois); } catch (x) { if (x && x.dsnMotif) e.refus = x.dsnMotif; else throw x; } }
+    if (e.refus) delete e.contenu; else delete e.refus;
+    if (e.contenu) sortie = sortie.filter(function (x) { return x.refus || x.siret !== e.siret || x.mois !== e.mois; });
+    sortie.push(e);
+  });
+  return { empreinte: socleSha256(octets), avertissements: lu.avertissements, declarations: sortie };
+}
+/* Jours calendaires d'arrêt par motif dans un mois, pour un établissement (contenus : {mois: contenu}). */
+function dsnJoursArret(contenus, mois) {
+  if (!contenus[mois]) return null;
+  var ms = Object.keys(contenus).sort(), finConnue = dsnFinMois(ms[ms.length - 1]), reunis = {}, cles = [];
+  ms.forEach(function (m) {
+    (contenus[m].arrets || []).forEach(function (a) {
+      var x = reunis[a.cle]; if (!x) { x = reunis[a.cle] = { motif: a.motif, debut: a.debut, fin_prevue: null, reprise: null }; cles.push(a.cle); }
+      if (a.fin_prevue) x.fin_prevue = a.fin_prevue; if (a.reprise) x.reprise = a.reprise;
+    });
+  });
+  var F = dsnJour(+mois.slice(0, 4), +mois.slice(5), 1), L = dsnFinMois(mois), jours = dsnZeros(DSN_MOTIFS_ARRET);
+  cles.forEach(function (k) {
+    var x = reunis[k], debut = dsnDeIso(x.debut), fin = x.reprise ? dsnDeN(dsnDeIso(x.reprise).n - 1) : x.fin_prevue ? dsnDeIso(x.fin_prevue) : finConnue;
+    var a = Math.max(debut.n, F.n), b = Math.min(fin.n, L.n);
+    if (a <= b) jours[dsnMotifArret(x.motif)] += b - a + 1;
+  });
+  return jours;
+}
+
+/* ---------- Stockage : en ligne dans la base (administrateurs), en local dans ce navigateur ---------- */
+function dsnMigration() { return !enLigne() || !!D.lot26; }
+function dsnCharger() {
+  if (enLigne()) DSN = { etablissements: (D.dsn_etablissements || []).slice(), mois: (D.dsn_mois || []).slice(), journal: (D.dsn_journal || []).slice() };
+  else { var x = null; try { x = JSON.parse(localStorage.getItem(DSN_LOCAL)); } catch (e) {} DSN = x || { etablissements: [], mois: [], journal: [] }; }
+  DSN_CACHE = null; DSN_COUPLES = {};
+}
+function dsnSauverLocal() { try { localStorage.setItem(DSN_LOCAL, JSON.stringify(DSN)); } catch (e) { throw new Error("Stockage du navigateur plein : la démonstration locale ne peut pas garder ces DSN."); } }
+function dsnJournalLocal(action, siret, mois, dossier, detail) { DSN.journal.unshift({ id: Date.now() + Math.random(), action: action, siret: siret, mois: mois || null, dossier: dossier || null, detail: detail || "", par: etat.utilisateur ? etat.utilisateur.mail : "", le: new Date().toISOString() }); }
+function dsnRecharger() {
+  if (!enLigne()) { dsnSauverLocal(); DSN_CACHE = null; DSN_COUPLES = {}; return Promise.resolve(); }
+  return Promise.all([lireOuNull(ZCLIENT.from("dsn_etablissements").select("*").order("siret")),
+    lireTout(function () { return ZCLIENT.from("dsn_mois").select("*").order("siret").order("mois"); }, true),
+    lireFacultatif(ZCLIENT.from("dsn_journal").select("*").order("id", { ascending: false }).limit(500))]).then(function (r) {
+    D.lot26 = r[0] !== null && r[1] !== null; D.dsn_etablissements = r[0] || []; D.dsn_mois = r[1] || []; D.dsn_journal = r[2] || []; dsnCharger();
+  });
+}
+function dsnAgir(enBase, enLocal) {
+  var p = enLigne() ? Promise.resolve().then(enBase) : Promise.resolve().then(enLocal);
+  return p.then(dsnRecharger).then(function () { majContenu(); }).catch(function (e) { alert(messageErreur(e)); return dsnRecharger().catch(function () {}).then(function () { majContenu(); }); });
+}
+function blocMigration26() { return blocNC("Migration 017 non appliquée sur la base : collez migrations/017_dsn.sql dans Supabase (SQL Editor), puis rechargez la page."); }
+
+/* ---------- Totaux par résidence et par mois ---------- */
+var DSN_COUPLES = {};
+function dsnIdx() {
+  if (DSN_CACHE) return DSN_CACHE;
+  var parSiret = {}, parDossier = {};
+  DSN.mois.forEach(function (r) {
+    (parSiret[r.siret] = parSiret[r.siret] || {})[r.mois] = r.contenu;
+    var x = parDossier[r.dossier] = parDossier[r.dossier] || {}; (x[r.mois] = x[r.mois] || []).push(r);
+  });
+  DSN_COUPLES = {};
+  return (DSN_CACHE = { siret: parSiret, dossier: parDossier });
+}
+function dsnEtab(siret) { return DSN.etablissements.find(function (e) { return e.siret === siret; }) || null; }
+function dsnAjouter(a, b) { Object.keys(b).forEach(function (k) { a[k] = (a[k] || 0) + b[k]; }); return a; }
+/* Somme des établissements d'une résidence pour un mois ; null si aucune DSN importée. */
+function dsnCouple(d, m) {
+  var cle = d + "|" + m; if (DSN_COUPLES[cle] !== undefined) return DSN_COUPLES[cle];
+  var x = (dsnIdx().dossier[d] || {})[m];
+  if (!x) return (DSN_COUPLES[cle] = null);
+  var C = { lignes: x, effectif_fin: 0, etp_milli: 0, etp_incomplet: 0, entrees: {}, sorties: {}, categories: {}, femmes: 0, hommes: 0, cadres: 0, age_somme: 0, age_nb: 0,
+    tranches_age: {}, anciennete: {}, brut: 0, net_verse: 0, pas: 0, primes: 0, hs_heures: 0, hs_montant: 0, heures_payees: 0, cotisations_organismes: 0, jours: dsnZeros(DSN_MOTIFS_ARRET), alertes: [] };
+  x.forEach(function (r) {
+    var c = r.contenu;
+    ["effectif_fin", "etp_milli", "etp_incomplet", "femmes", "hommes", "cadres", "age_somme", "age_nb", "brut", "net_verse", "pas", "primes", "hs_heures", "hs_montant", "heures_payees", "cotisations_organismes"].forEach(function (k) { C[k] += c[k] || 0; });
+    ["entrees", "sorties", "categories", "tranches_age", "anciennete"].forEach(function (k) { dsnAjouter(C[k], c[k] || {}); });
+    dsnAjouter(C.jours, dsnJoursArret(dsnIdx().siret[r.siret], m));
+    (c.alertes || []).forEach(function (t) { C.alertes.push(t); });
+  });
+  C.entrees_tot = somme(DSN_CATEGORIES.map(function (k) { return C.entrees[k] || 0; }));
+  C.sorties_tot = somme(DSN_MOTIFS_SORTIE.map(function (k) { return C.sorties[k] || 0; }));
+  C.jours_tot = somme(DSN_MOTIFS_ARRET.map(function (k) { return C.jours[k]; }));
+  C.jours_theoriques = C.effectif_fin * dsnJoursMois(m);
+  C.etp = C.etp_incomplet ? null : C.etp_milli;
+  return (DSN_COUPLES[cle] = C);
+}
+function dsnCompta(d, m, regle) {
+  var X = (COMPTA[d] || {})[m]; if (!X) return null;
+  var t = 0, vu = false; Object.keys(X).forEach(function (c) { if (compteRetenu(c, regle)) { t -= X[c]; vu = true; } });
+  return vu ? t : null;
+}
+function dsnNuitees(d, m) { var v = ((EXPL[d] || {})[m] || {}).LN_VENDUES; return v === undefined || v === null || isNaN(v) ? null : v; }
+/* Valeur d'une donnée pour une résidence et un mois (null = non disponible). */
+function dsnValeur(k, d, m) {
+  if (k === "ms64") return dsnCompta(d, m, DSN_REGLE_CHARGES);
+  if (k === "c641") return dsnCompta(d, m, DSN_REGLE_BRUT);
+  if (k === "ca") return caMois(d, m);
+  if (k === "nuitees") return dsnNuitees(d, m);
+  var c = dsnCouple(d, m); if (!c) return null;
+  return k === "effectif" ? c.effectif_fin : k === "etp" ? c.etp : k === "entrees" ? c.entrees_tot : k === "sorties" ? c.sorties_tot : k === "jours" ? c.jours_tot :
+    k === "jours_theoriques" ? c.jours_theoriques : c[k] === undefined ? null : c[k];
+}
+var DSN_DEF = {
+  effectif: { lib: "Effectif fin de mois", fmt: "nb", fin: true, formule: "Salariés ayant un contrat en cours le dernier jour du mois (DSN), stagiaires et mandataires sociaux exclus ; un salarié compte une fois" },
+  etp: { lib: "ETP fin de mois", fmt: "etp", fin: true, formule: "Somme, par salarié présent, de la quotité du contrat ÷ quotité de référence (plafonnée à 1)" },
+  entrees: { lib: "Entrées", fmt: "nb", formule: "Contrats commencés dans le mois, hors renouvellement ou changement de contrat d’un salarié déjà présent" },
+  sorties: { lib: "Sorties", fmt: "nb", formule: "Salariés dont le contrat a pris fin dans le mois et sans autre contrat en cours à la fin du mois" },
+  brut: { lib: "Masse salariale brute (DSN)", fmt: "eur", formule: "Somme des rémunérations brutes non plafonnées déclarées (type 001)" },
+  net_verse: { lib: "Net versé (DSN)", fmt: "eur", formule: "Somme des montants nets versés déclarés" },
+  primes: { lib: "Primes et indemnités (DSN)", fmt: "eur", formule: "Somme des primes, gratifications et indemnités déclarées" },
+  hs_heures: { lib: "Heures supplémentaires", fmt: "h", formule: "Heures supplémentaires ou complémentaires déclarées (types 017 et 018)" },
+  hs_montant: { lib: "Montant des heures supplémentaires", fmt: "eur", formule: "Rémunération des heures supplémentaires ou complémentaires (types 017 et 018)" },
+  heures_payees: { lib: "Heures rémunérées", fmt: "h", formule: "Heures déclarées avec le salaire brut (type 002)" },
+  jours: { lib: "Jours d’arrêt de travail", fmt: "nb", formule: "Jours calendaires d’arrêt dans le mois, toutes causes ; un arrêt est suivi d’une DSN à l’autre jusqu’à sa reprise" },
+  jours_theoriques: { lib: "Jours calendaires × effectif", fmt: "nb", formule: "Effectif fin de mois × nombre de jours du mois" },
+  ms64: { lib: "Charges de personnel (comptes 64)", fmt: "eur", formule: "Somme en débit − crédit des comptes 64 (salaires, charges sociales, autres charges de personnel), écritures Pennylane" },
+  c641: { lib: "Rémunérations comptabilisées (641)", fmt: "eur", formule: "Somme en débit − crédit des comptes 641, écritures Pennylane" },
+  ca: { lib: "Chiffre d’affaires", fmt: "eur", formule: "Règle de CA de la résidence (Comptabilité)" },
+  nuitees: { lib: "Nuitées vendues", fmt: "nb", formule: "Donnée d’exploitation LN_VENDUES" }
+};
+function dsnFmt(f, v) {
+  if (v === null || v === undefined || (typeof v === "number" && !isFinite(v))) return "–";
+  if (f === "eur") return eurC(v);
+  if (f === "etp") return (v / 1000).toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).replace(/\u202f|\u00a0/g, " ");
+  if (f === "h") return nb(Math.round(v / 100)) + " h";
+  if (f === "pct") return pct1(v);
+  if (f === "dec1") return v.toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).replace(/\u202f|\u00a0/g, " ");
+  return nb(Math.round(v));
+}
+function dsnMoisAvec(ds, ms) { return ms.filter(function (m) { return ds.some(function (d) { return dsnCouple(d, m); }); }); }
+function dsnDernier(ds, ms) { var x = dsnMoisAvec(ds, ms); return x.length ? x[x.length - 1] : null; }
+/* Somme d'une donnée ; valeur « fin de mois » = dernier mois importé de la période. null si rien. */
+function dsnSomme(k, ds, ms) {
+  if (DSN_DEF[k] && DSN_DEF[k].fin) { var m = dsnDernier(ds, ms); if (!m) return null; ms = [m]; }
+  var t = 0, vu = false, nc = false;
+  ds.forEach(function (d) { ms.forEach(function (m) { var c = k === "etp" ? dsnCouple(d, m) : null; if (c && c.etp === null) nc = true; var v = dsnValeur(k, d, m); if (v !== null) { t += v; vu = true; } }); });
+  return nc ? null : vu ? t : null;
+}
+/* Ratios calculés sur des sommes (jamais une moyenne de ratios), sur les seuls couples résidence-mois où les deux termes existent. */
+function dsnRatio(k, ds, ms) {
+  var num = 0, den = 0, n = 0, exclus = 0, R;
+  var paire = function (fa, fb) { ds.forEach(function (d) { ms.forEach(function (m) { var a = fa(d, m), b = fb(d, m); if (a === null || b === null) { if (a !== null || b !== null) exclus++; return; } num += a; den += b; n++; }); }); };
+  if (k === "turnover") {
+    var E = 0, S = 0, moy = 0, vu = false;
+    ds.forEach(function (d) { var s = 0, nm = 0; ms.forEach(function (m) { var c = dsnCouple(d, m); if (!c) return; s += c.effectif_fin; nm++; E += c.entrees_tot; S += c.sorties_tot; vu = true; }); if (nm) moy += s / nm; });
+    if (!vu) return { val: null, motif: "Aucune DSN importée sur la période" };
+    return { val: moy ? (E + S) / 2 / moy : null, motif: moy ? null : "Effectif moyen nul", fmt: "pct", lib: "Turnover de la période", formule: "((Entrées + Sorties) ÷ 2) ÷ effectif moyen (moyenne des effectifs fin de mois importés, par résidence, additionnée)",
+      parts: [{ lib: "Entrées", val: nb(E), spec: { t: "dsn", k: "entrees", d: ds, m: ms } }, { lib: "Sorties", val: nb(S), spec: { t: "dsn", k: "sorties", d: ds, m: ms } }, { lib: "Effectif moyen", val: dsnFmt("dec1", moy) }] };
+  }
+  if (k === "absenteisme") { paire(function (d, m) { return dsnValeur("jours", d, m); }, function (d, m) { return dsnValeur("jours_theoriques", d, m); });
+    R = { lib: "Taux d’absentéisme (arrêts de travail)", fmt: "pct", formule: "Jours calendaires d’arrêt ÷ (effectif fin de mois × jours du mois)", a: "jours", b: "jours_theoriques" }; }
+  else if (k === "ms_ca") { paire(function (d, m) { return dsnValeur("ms64", d, m); }, function (d, m) { return dsnValeur("ca", d, m); });
+    R = { lib: "Charges de personnel / CA", fmt: "pct", formule: "Charges de personnel (comptes 64) ÷ chiffre d’affaires, sur les mois où les deux existent", a: "ms64", b: "ca" }; }
+  else if (k === "cout_etp") { paire(function (d, m) { return dsnValeur("ms64", d, m); }, function (d, m) { var v = dsnValeur("etp", d, m); return v === null ? null : v / 1000; });
+    R = { lib: "Coût mensuel par ETP", fmt: "eur", formule: "Charges de personnel (comptes 64) ÷ ETP fin de mois, sommés sur les mois où les deux existent", a: "ms64", b: "etp" }; }
+  else if (k === "cout_nuitee") { paire(function (d, m) { return dsnValeur("ms64", d, m); }, function (d, m) { var v = dsnValeur("nuitees", d, m); return v ? v : null; });
+    R = { lib: "Charges de personnel par nuitée vendue", fmt: "eur", formule: "Charges de personnel (comptes 64) ÷ nuitées vendues, sur les mois où les deux existent", a: "ms64", b: "nuitees" }; }
+  else if (k === "ecart") { paire(function (d, m) { return dsnValeur("brut", d, m); }, function (d, m) { return dsnValeur("c641", d, m); });
+    var dif = num - den; R = { lib: "Écart brut DSN − 641", fmt: "pct", formule: "(Brut DSN − comptes 641) ÷ comptes 641, sur les mois où les deux existent", a: "brut", b: "c641" };
+    R.val = n && den ? dif / den : null; R.ecart = n ? dif : null; }
+  if (!n) { R.val = null; R.motif = "Aucun mois où les deux données existent"; }
+  else if (R.val === undefined) R.val = den ? num / den : null;
+  if (n && R.val === null) R.motif = "Dénominateur nul";
+  R.parts = [{ lib: DSN_DEF[R.a].lib, val: dsnFmt(DSN_DEF[R.a].fmt, num) }, { lib: DSN_DEF[R.b].lib, val: R.b === "etp" ? dsnFmt("dec1", den) : dsnFmt(DSN_DEF[R.b].fmt, den) }];
+  R.couples = n; R.exclus = exclus;
+  return R;
+}
+function dsnValRatio(R) { return R.val === null ? "" : dsnFmt(R.fmt, R.fmt === "eur" ? Math.round(R.val) : R.val); }
+
+/* ---------- Détail des calculs ---------- */
+EXPLIQUER.dsn = function (s) {
+  var D_ = DSN_DEF[s.k], ms = s.m;
+  if (D_.fin) { var der = dsnDernier(s.d, s.m); ms = der ? [der] : []; }
+  var v = dsnSomme(s.k, s.d, ms), parts = [], notes = [];
+  if (s.d.length > 1) s.d.forEach(function (d) { var x = dsnSomme(s.k, [d], ms); parts.push({ lib: nomResidence(d), val: dsnFmt(D_.fmt, x), spec: x === null ? null : { t: "dsn", k: s.k, d: [d], m: ms } }); });
+  else if (ms.length > 1) ms.forEach(function (m) { var x = dsnSomme(s.k, s.d, [m]); parts.push({ lib: moisLong(m), val: dsnFmt(D_.fmt, x), spec: x === null ? null : { t: "dsn", k: s.k, d: s.d, m: [m] } }); });
+  else if (ms.length === 1) {
+    var c = dsnCouple(s.d[0], ms[0]);
+    if (c && ["ms64", "c641", "ca", "nuitees"].indexOf(s.k) < 0) {
+      c.lignes.forEach(function (r) { parts.push({ lib: "SIRET " + r.siret + " · " + (r.fichier || "fichier") + " · DSN " + (DSN_TYPES[r.type_decl] || r.type_decl) + " · importée le " + dateHeureCourte(r.importe_le) + (r.importe_par ? " par " + r.importe_par : ""),
+        val: s.k === "etp" ? dsnFmt("etp", r.contenu.etp_incomplet ? null : r.contenu.etp_milli) : s.k === "effectif" ? nb(r.contenu.effectif_fin) : "" }); });
+      if (s.k === "entrees") DSN_CATEGORIES.forEach(function (k) { if (c.entrees[k]) notes.push(DSN_LIB[k] + " : " + c.entrees[k]); });
+      if (s.k === "sorties") DSN_MOTIFS_SORTIE.forEach(function (k) { if (c.sorties[k]) notes.push(DSN_LIB[k] + " : " + c.sorties[k]); });
+      if (s.k === "jours") DSN_MOTIFS_ARRET.forEach(function (k) { if (c.jours[k]) notes.push(DSN_LIB[k] + " : " + c.jours[k] + " j"); });
+      c.alertes.forEach(function (t) { notes.push("Alerte du fichier : " + t + "."); });
+    }
+  }
+  if (s.k === "etp" && v === null && dsnDernier(s.d, s.m)) notes.push("Au moins un salarié sans quotité de travail lisible : ETP non calculable (jamais estimé).");
+  if (D_.fin && ms.length) notes.unshift("Valeur du dernier mois importé de la période : " + moisLong(ms[0]) + ".");
+  return { titre: D_.lib, sous: libPerim(s.d) + ", " + libMois(ms.length ? ms : s.m), valeur: v === null ? "non calculable" : dsnFmt(D_.fmt, v), formule: D_.formule, partsTitre: s.d.length > 1 ? "Résidences" : ms.length > 1 ? "Mois" : "Déclarations", parts: parts, notes: notes };
+};
+EXPLIQUER.dsnr = function (s) {
+  var R = dsnRatio(s.k, s.d, s.m), notes = [];
+  if (R.exclus) notes.push(R.exclus + " mois-résidence exclus : une seule des deux données existe (jamais comptée comme zéro).");
+  if (R.motif) notes.push("Non calculable : " + R.motif + ".");
+  if (s.k === "ecart" && R.ecart !== null && R.ecart !== undefined) notes.unshift("Écart en euros : " + eurC(R.ecart) + ".");
+  return { titre: R.lib, sous: libPerim(s.d) + ", " + libMois(s.m), valeur: R.val === null ? "non calculable" : dsnValRatio(R), formule: R.formule, partsTitre: "Éléments", parts: R.parts, notes: notes };
+};
+
+/* ---------- Pages ---------- */
+function dsnPrealables(h, ds) {
+  if (!dsnMigration()) { el("contenu").innerHTML = h + blocMigration26(); return false; }
+  if (!ds.some(function (d) { return dsnIdx().dossier[d]; })) {
+    el("contenu").innerHTML = h + '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div><b>Aucune DSN importée pour ce périmètre.</b> Déposez les fichiers DSN exportés de Silae dans Import et paramètres, Import DSN.' +
+      ' <button class="btn-petit" id="so-vers-import">Importer des DSN</button></div></div>';
+    el("so-vers-import").addEventListener("click", function () { allerA("import", "so_import"); });
+    return false;
+  }
+  return true;
+}
+function dsnCarte(nom, k, ds, ms, def) {
+  var v = dsnSomme(k, ds, ms), D_ = DSN_DEF[k];
+  return carte(nom || D_.lib, dsnFmt(D_.fmt, v), def || D_.formule, v === null, { t: "dsn", k: k, d: ds, m: ms });
+}
+function dsnCarteRatio(k, ds, ms, nom) { var R = dsnRatio(k, ds, ms); return carte(nom || R.lib, dsnValRatio(R), R.val === null ? R.motif || "Non calculable" : R.formule, R.val === null, { t: "dsnr", k: k, d: ds, m: ms }); }
+function dsnCellule(k, d, m) { var v = dsnSomme(k, d, m); return '<td class="num"' + (v === null ? "" : xa({ t: "dsn", k: k, d: d, m: m })) + ">" + (v === null ? '<span class="nc-cell">n.c.</span>' : dsnFmt(DSN_DEF[k].fmt, v)) + "</td>"; }
+function dsnCelluleRatio(k, d, m) { var R = dsnRatio(k, d, m); return '<td class="num"' + (R.val === null ? ' title="' + esc(R.motif || "") + '"' : xa({ t: "dsnr", k: k, d: d, m: m })) + ">" + (R.val === null ? '<span class="nc-cell">n.c.</span>' : dsnValRatio(R)) + "</td>"; }
+function dsnSerie(k, ds, ms, div) { return ms.map(function (m) { var v = dsnSomme(k, ds, [m]); return v === null ? null : v / (div || 1); }); }
+
+PAGES.so_synthese = function (p) {
+  var ms = fenetre(), ds = p.dossiers, h = enTete("Tableau de bord social", p, "DSN de " + libMois(ms));
+  if (!dsnPrealables(h, ds)) return;
+  var der = dsnDernier(ds, ms), avec = dsnMoisAvec(ds, ms);
+  h += '<div class="ruban">' + [dsnCarte(der ? "Effectif fin " + moisCourt(der) : null, "effectif", ds, ms), dsnCarte(der ? "ETP fin " + moisCourt(der) : null, "etp", ds, ms),
+    dsnCarte("Entrées de la période", "entrees", ds, ms), dsnCarte("Sorties de la période", "sorties", ds, ms), dsnCarteRatio("turnover", ds, ms),
+    dsnCarteRatio("absenteisme", ds, ms), dsnCarte(null, "brut", ds, ms), dsnCarteRatio("ms_ca", ds, ms), dsnCarteRatio("cout_etp", ds, ms), dsnCarte(null, "hs_heures", ds, ms)].join("") + "</div>";
+  var couv = 0; ds.forEach(function (d) { ms.forEach(function (m) { if (dsnCouple(d, m)) couv++; }); });
+  if (couv < ds.length * ms.length) h += '<p class="legende" style="margin:0 0 12px">DSN importées pour ' + couv + " mois-résidence sur " + ds.length * ms.length + " de la période : les mois manquants ne sont jamais comptés comme zéro.</p>";
+  h += '<div class="graphes">' + barres("Effectif et ETP fin de mois", ms.map(moisCourt), [{ nom: "Effectif", couleur: BLEU, valeurs: dsnSerie("effectif", ds, ms) }, { nom: "ETP", couleur: ORANGE, valeurs: dsnSerie("etp", ds, ms, 1000) }],
+    { specs: function (i, j) { return { t: "dsn", k: j ? "etp" : "effectif", d: ds, m: [ms[i]] }; }, unite: "nb" }) +
+    barres("Masse salariale brute et charges de personnel", ms.map(moisCourt), [{ nom: "Brut DSN", couleur: BLEU, valeurs: dsnSerie("brut", ds, ms, 100) }, { nom: "Charges de personnel (64)", couleur: ORANGE, valeurs: ms.map(function (m) { var v = dsnSomme("ms64", ds, [m]); return v === null ? null : v / 100; }) }],
+    { specs: function (i, j) { return { t: "dsn", k: j ? "ms64" : "brut", d: ds, m: [ms[i]] }; } }) + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par résidence</h2><span class="legende">' + (der ? "Effectif et ETP : fin " + esc(moisLong(der)) : "") + '</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">Mois DSN</th><th class="num">Effectif</th><th class="num">ETP</th><th class="num">Entrées</th><th class="num">Sorties</th><th class="num">Turnover</th><th class="num">Absentéisme</th><th class="num">Brut DSN</th><th class="num">Charges de personnel</th><th class="num">Charges / CA</th><th class="num">Coût par ETP</th><th class="num">Coût par nuitée</th></tr></thead><tbody>';
+  var ligne = function (lib, dd, total) {
+    var n = 0; dd.forEach(function (d) { ms.forEach(function (m) { if (dsnCouple(d, m)) n++; }); });
+    return "<tr" + (total ? ' class="bq-total bq-grand"' : "") + "><td><b>" + esc(lib) + '</b></td><td class="num">' + n + "/" + dd.length * ms.length + "</td>" + dsnCellule("effectif", dd, ms) + dsnCellule("etp", dd, ms) + dsnCellule("entrees", dd, ms) + dsnCellule("sorties", dd, ms) +
+      dsnCelluleRatio("turnover", dd, ms) + dsnCelluleRatio("absenteisme", dd, ms) + dsnCellule("brut", dd, ms) + dsnCellule("ms64", dd, ms) + dsnCelluleRatio("ms_ca", dd, ms) + dsnCelluleRatio("cout_etp", dd, ms) + dsnCelluleRatio("cout_nuitee", dd, ms) + "</tr>";
+  };
+  ds.forEach(function (d) { h += ligne(nomResidence(d), [d]); });
+  if (ds.length > 1) h += ligne("Total " + p.libelle, ds, true);
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Effectifs, mouvements, absences et brut : DSN importées. Charges de personnel : comptes 64 des écritures Pennylane. Les ratios sont calculés sur des sommes, sur les seuls mois où les deux termes existent. Cliquez une valeur pour son calcul.</p></div>';
+  el("contenu").innerHTML = h;
+};
+
+PAGES.so_effectifs = function (p) {
+  var ms = fenetre(), ds = p.dossiers, h = enTete("Effectifs et mouvements", p, "DSN de " + libMois(ms));
+  if (!dsnPrealables(h, ds)) return;
+  var der = dsnDernier(ds, ms), tot = function (champ, m) { var t = {}; ds.forEach(function (d) { var c = dsnCouple(d, m); if (c) dsnAjouter(t, c[champ]); }); return t; };
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Effectifs fin de mois et mouvements</h2></div><div class="defile"><table class="tab"><thead><tr><th>Mois</th><th class="num">Résidences</th><th class="num">Effectif</th><th class="num">ETP</th>' +
+    DSN_CATEGORIES.map(function (k) { return '<th class="num">' + esc(DSN_LIB[k]) + "</th>"; }).join("") + '<th class="num">Entrées</th><th class="num">Sorties</th></tr></thead><tbody>';
+  var E = {}, S = {};
+  ms.forEach(function (m) {
+    var a = ds.filter(function (d) { return dsnCouple(d, m); }).length;
+    if (!a) { h += "<tr><td>" + esc(moisLong(m)) + '</td><td class="num">0/' + ds.length + '</td><td colspan="' + (4 + DSN_CATEGORIES.length) + '"><span class="nc-cell">aucune DSN importée</span></td></tr>'; return; }
+    var cat = tot("categories", m); dsnAjouter(E, tot("entrees", m)); dsnAjouter(S, tot("sorties", m));
+    h += "<tr><td>" + esc(moisLong(m)) + '</td><td class="num">' + (a < ds.length ? '<span class="pastille att">' + a + "/" + ds.length + "</span>" : a + "/" + ds.length) + "</td>" + dsnCellule("effectif", ds, [m]) + dsnCellule("etp", ds, [m]) +
+      DSN_CATEGORIES.map(function (k) { return '<td class="num">' + nb(cat[k] || 0) + "</td>"; }).join("") + dsnCellule("entrees", ds, [m]) + dsnCellule("sorties", ds, [m]) + "</tr>";
+  });
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Catégorie d’un salarié : celle de son contrat en cours le plus ancien (alternance = apprentissage et professionnalisation). Un changement de contrat d’un salarié déjà présent ne compte ni comme entrée ni comme sortie. Résidences : DSN importées sur les résidences du périmètre.</p></div>';
+  var tE = somme(DSN_CATEGORIES.map(function (k) { return E[k] || 0; })), tS = somme(DSN_MOTIFS_SORTIE.map(function (k) { return S[k] || 0; }));
+  var tableau = function (titre, ks, X, t) { return '<div class="bloc"><div class="bloc-tete"><h2>' + esc(titre) + '</h2></div><table class="tab"><thead><tr><th></th><th class="num">Nombre</th><th class="num">Part</th></tr></thead><tbody>' +
+    ks.map(function (k) { return "<tr><td>" + esc(DSN_LIB[k]) + '</td><td class="num">' + nb(X[k] || 0) + '</td><td class="num">' + (t ? pct1((X[k] || 0) / t) : "–") + "</td></tr>"; }).join("") +
+    '<tr class="bq-total"><td>Total</td><td class="num">' + nb(t) + '</td><td class="num"></td></tr></tbody></table></div>'; };
+  h += '<div class="graphes">' + tableau("Entrées de la période par contrat", DSN_CATEGORIES, E, tE) + tableau("Sorties de la période par motif", DSN_MOTIFS_SORTIE, S, tS) + "</div>";
+  if (der) {
+    var ta = tot("tranches_age", der), an = tot("anciennete", der), x = { f: 0, h: 0, c: 0, as: 0, an: 0, eff: 0 };
+    ds.forEach(function (d) { var c = dsnCouple(d, der); if (!c) return; x.f += c.femmes; x.h += c.hommes; x.c += c.cadres; x.as += c.age_somme; x.an += c.age_nb; x.eff += c.effectif_fin; });
+    h += '<div class="ruban">' + [carte("Femmes", x.eff ? pct1(x.f / x.eff) : "", nb(x.f) + " sur " + nb(x.eff) + " salariés, fin " + moisCourt(der), !x.eff),
+      carte("Âge moyen", x.an ? dsnFmt("dec1", x.as / x.an) + " ans" : "", "Salariés présents fin " + moisCourt(der) + " dont la date de naissance est déclarée", !x.an),
+      carte("Cadres", x.eff ? pct1(x.c / x.eff) : "", nb(x.c) + " salariés au statut cadre ou assimilé", !x.eff)].join("") + "</div>";
+    h += '<div class="graphes">' + barres("Pyramide des âges, fin " + moisCourt(der), DSN_TRANCHES_AGE.map(function (k) { return DSN_LIB[k]; }), [{ nom: "Salariés", couleur: BLEU, valeurs: DSN_TRANCHES_AGE.map(function (k) { return ta[k] || 0; }) }], { unite: "nb" }) +
+      barres("Ancienneté, fin " + moisCourt(der), DSN_TRANCHES_ANC.map(function (k) { return DSN_LIB[k]; }), [{ nom: "Salariés", couleur: ORANGE, valeurs: DSN_TRANCHES_ANC.map(function (k) { return an[k] || 0; }) }], { unite: "nb" }) + "</div>";
+    h += '<p class="legende" style="margin:0 0 12px">Ancienneté mesurée depuis le début du plus ancien contrat déclaré du salarié (la DSN ne connaît pas les contrats antérieurs terminés).</p>';
+  }
+  el("contenu").innerHTML = h;
+};
+
+PAGES.so_absences = function (p) {
+  var ms = fenetre(), ds = p.dossiers, h = enTete("Absentéisme", p, "Arrêts de travail déclarés en DSN, " + libMois(ms));
+  if (!dsnPrealables(h, ds)) return;
+  var jm = function (dd, m) { var t = dsnZeros(DSN_MOTIFS_ARRET), vu = false; dd.forEach(function (d) { var c = dsnCouple(d, m); if (c) { dsnAjouter(t, c.jours); vu = true; } }); return vu ? t : null; };
+  var periode = dsnZeros(DSN_MOTIFS_ARRET); ms.forEach(function (m) { var t = jm(ds, m); if (t) dsnAjouter(periode, t); });
+  h += '<div class="ruban">' + [dsnCarteRatio("absenteisme", ds, ms), dsnCarte("Jours d’arrêt de la période", "jours", ds, ms),
+    carte("dont maladie", nb(periode.MALADIE) + " j", "Arrêts pour maladie (motif 01)"), carte("dont accidents et maladies pro.", nb(periode.AT_MP) + " j", "Accident du travail, de trajet, maladie professionnelle")].join("") + "</div>";
+  h += '<div class="graphes" style="grid-template-columns:minmax(0,1fr)">' + barres("Jours d’arrêt par motif", ms.map(moisCourt), DSN_MOTIFS_ARRET.map(function (k, j) {
+    return { nom: DSN_LIB[k], couleur: [BLEU, ORANGE, "#7A9A01", "#8C8C8C"][j], valeurs: ms.map(function (m) { var t = jm(ds, m); return t ? t[k] : null; }) }; }), { empile: true, unite: "nb", specs: function (i) { return { t: "dsn", k: "jours", d: ds, m: [ms[i]] }; } }) + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par mois</h2></div><div class="defile"><table class="tab"><thead><tr><th>Mois</th><th class="num">Effectif</th><th class="num">Jours × effectif</th>' +
+    DSN_MOTIFS_ARRET.map(function (k) { return '<th class="num">' + esc(DSN_LIB[k]) + "</th>"; }).join("") + '<th class="num">Total</th><th class="num">Taux</th></tr></thead><tbody>';
+  ms.forEach(function (m) { var t = jm(ds, m);
+    if (!t) { h += "<tr><td>" + esc(moisLong(m)) + '</td><td colspan="' + (5 + DSN_MOTIFS_ARRET.length - 1) + '"><span class="nc-cell">aucune DSN importée</span></td></tr>'; return; }
+    h += "<tr><td>" + esc(moisLong(m)) + "</td>" + dsnCellule("effectif", ds, [m]) + dsnCellule("jours_theoriques", ds, [m]) + DSN_MOTIFS_ARRET.map(function (k) { return '<td class="num">' + nb(t[k]) + "</td>"; }).join("") +
+      dsnCellule("jours", ds, [m]) + dsnCelluleRatio("absenteisme", ds, [m]) + "</tr>"; });
+  h += "</tbody></table></div></div>";
+  if (ds.length > 1) {
+    h += '<div class="bloc"><div class="bloc-tete"><h2>Par résidence</h2></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th>' + DSN_MOTIFS_ARRET.map(function (k) { return '<th class="num">' + esc(DSN_LIB[k]) + "</th>"; }).join("") + '<th class="num">Total</th><th class="num">Taux</th></tr></thead><tbody>';
+    ds.forEach(function (d) { var t = dsnZeros(DSN_MOTIFS_ARRET), vu = false; ms.forEach(function (m) { var x = jm([d], m); if (x) { dsnAjouter(t, x); vu = true; } });
+      h += "<tr><td><b>" + esc(nomResidence(d)) + "</b></td>" + (vu ? DSN_MOTIFS_ARRET.map(function (k) { return '<td class="num">' + nb(t[k]) + "</td>"; }).join("") : DSN_MOTIFS_ARRET.map(function () { return '<td class="num"><span class="nc-cell">n.c.</span></td>'; }).join("")) +
+        dsnCellule("jours", [d], ms) + dsnCelluleRatio("absenteisme", [d], ms) + "</tr>"; });
+    h += "</tbody></table></div></div>";
+  }
+  h += '<p class="legende">Jours calendaires. Un arrêt est relié d’une DSN à l’autre par une clé anonyme : il court jusqu’à la veille de la reprise déclarée, sinon jusqu’à sa fin prévisionnelle, sinon jusqu’à la fin du dernier mois importé. Les absences hors arrêt de travail (congés, absences non rémunérées) ne sont pas comptées.</p>';
+  el("contenu").innerHTML = h;
+};
+
+PAGES.so_controle = function (p) {
+  var ms = fenetre(), ds = p.dossiers, h = enTete("Paie et comptabilité", p, "Brut DSN rapproché des comptes 641, " + libMois(ms));
+  if (!dsnMigration()) { el("contenu").innerHTML = h + blocMigration26(); return; }
+  var st = { ok: 0, ecart: 0, sansDsn: 0, sansCompta: 0 }, cellules = {};
+  ds.forEach(function (d) { ms.forEach(function (m) {
+    var b = dsnValeur("brut", d, m), c = dsnValeur("c641", d, m), e;
+    if (b === null && c === null) e = { k: "vide" };
+    else if (b === null) { e = { k: "sansDsn" }; if (!estProj(m)) st.sansDsn++; }
+    else if (c === null) { e = { k: "sansCompta" }; st.sansCompta++; }
+    else { var dif = b - c, ok = Math.abs(dif) <= Math.max(100, Math.abs(c) * DSN_TOLERANCE); e = { k: ok ? "ok" : "ecart", dif: dif }; st[ok ? "ok" : "ecart"]++; }
+    cellules[d + "|" + m] = e; }); });
+  h += '<div class="ruban">' + [carte("Mois rapprochés", nb(st.ok), "Brut DSN et comptes 641 égaux à 1 % près (1 € au minimum)"), carte("Mois en écart", nb(st.ecart), "Écart supérieur à la tolérance : paie, OD ou provisions à vérifier"),
+    carte("DSN manquantes", nb(st.sansDsn), "Comptes 641 sans DSN importée (mois passés)"), carte("Paie non comptabilisée", nb(st.sansCompta), "DSN importée sans compte 641 ce mois"), dsnCarteRatio("ecart", ds, ms)].join("") + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Brut DSN − comptes 641</h2><span class="legende">Cliquez un mois pour les deux montants</span></div><div class="defile"><table class="tab cp-tab"><thead><tr><th>Résidence</th>' +
+    ms.map(function (m) { return '<th class="num' + (estProj(m) ? " mut" : "") + '">' + esc(moisCourt(m)) + "</th>"; }).join("") + '<th class="num">Période</th></tr></thead><tbody>';
+  ds.forEach(function (d) {
+    h += "<tr><td><b>" + esc(nomResidence(d)) + "</b></td>" + ms.map(function (m) { var e = cellules[d + "|" + m], x = xa({ t: "dsnr", k: "ecart", d: [d], m: [m] });
+      if (e.k === "vide") return '<td class="num"><span class="mut">–</span></td>';
+      if (e.k === "sansDsn") return '<td class="num" title="Comptes 641 sans DSN importée">' + (estProj(m) ? '<span class="mut">–</span>' : '<span class="pastille att">DSN ?</span>') + "</td>";
+      if (e.k === "sansCompta") return '<td class="num" title="DSN importée sans compte 641"><span class="pastille att">641 ?</span></td>';
+      return '<td class="num"' + x + ">" + (e.k === "ok" ? '<span class="pastille ok">' + (e.dif ? eurC(e.dif) : "=") + "</span>" : '<span class="pastille ko">' + eurC(e.dif) + "</span>") + "</td>"; }).join("") +
+      dsnCelluleRatio("ecart", [d], ms) + "</tr>";
+  });
+  h += '</tbody></table></div><p class="legende" style="margin:10px 0 0">Brut DSN : rémunérations brutes non plafonnées déclarées. 641 : débit − crédit des comptes 641 dans Pennylane. Un écart peut venir d’une provision de congés payés, d’une paie passée sur un autre mois ou d’une OD : à vérifier avec le journal de paie.</p></div>';
+  var al = []; ds.forEach(function (d) { ms.forEach(function (m) { var c = dsnCouple(d, m); if (c) c.alertes.forEach(function (t) { al.push([d, m, t]); }); }); });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Alertes des fichiers DSN</h2></div>' + (al.length ? '<div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th>Mois</th><th>Alerte</th></tr></thead><tbody>' +
+    al.slice(0, etat.dsnAlTout ? al.length : 5).map(function (x) { return "<tr><td>" + esc(nomResidence(x[0])) + "</td><td>" + esc(moisLong(x[1])) + "</td><td>" + esc(x[2]) + "</td></tr>"; }).join("") + "</tbody></table></div>" + voirPlus("dsnAlTout", al.length)
+    : '<p class="legende" style="margin:0">Aucune alerte sur la période.</p>') + "</div>";
+  el("contenu").innerHTML = h;
+  el("contenu").querySelectorAll("[data-voir-plus]").forEach(function (b) { b.addEventListener("click", function () { etat[b.dataset.voirPlus] = !etat[b.dataset.voirPlus]; majContenu(); }); });
+};
+
+/* ---------- Import DSN ---------- */
+function dsnLireFichiers(fichiers) {
+  return Promise.all(Array.prototype.map.call(fichiers, function (f) {
+    return new Promise(function (ok) { var r = new FileReader(); r.onload = function () { ok({ nom: f.name, octets: new Uint8Array(r.result) }); }; r.onerror = function () { ok({ nom: f.name, erreur: "fichier illisible" }); }; r.readAsArrayBuffer(f); });
+  }));
+}
+/* Aperçu : une ligne par déclaration, avec son statut face aux mois déjà importés. */
+function dsnPreparer(lus) {
+  var lignes = [], vus = {};
+  lus.forEach(function (f) {
+    if (f.erreur) { lignes.push({ fichier: f.nom, refus: f.erreur }); return; }
+    var A; try { A = dsnAnalyser(f.octets); } catch (e) { if (e && e.dsnErreur) { lignes.push({ fichier: f.nom, refus: e.dsnErreur }); return; } throw e; }
+    A.avertissements.forEach(function (t) { lignes.push({ fichier: f.nom, avert: t }); });
+    A.declarations.forEach(function (x) {
+      var l = { fichier: f.nom, empreinte: A.empreinte, siret: x.siret, mois: x.mois, type: x.type, contenu: x.contenu, refus: x.refus };
+      if (!l.refus) { var cle = x.siret + "|" + x.mois; if (vus[cle]) vus[cle].refus = "remplacée par " + f.nom + " (même établissement et même mois dans ce dépôt)"; vus[cle] = l; }
+      lignes.push(l);
+    });
+  });
+  lignes.forEach(function (l) {
+    if (l.refus || l.avert) return;
+    var ex = DSN.mois.find(function (r) { return r.siret === l.siret && r.mois === l.mois; });
+    l.statut = !ex ? "nouveau" : ex.empreinte === l.empreinte && JSON.stringify(ex.contenu) === JSON.stringify(l.contenu) ? "identique" : "remplace";
+  });
+  return lignes;
+}
+function dsnARattacher() { var s = {}; (etat.dsnApercu || []).forEach(function (l) { if (l.contenu && !l.refus && l.statut !== "identique" && !dsnEtab(l.siret)) s[l.siret] = true; }); return Object.keys(s).sort(); }
+function dsnEnregistrer() {
+  var lignes = (etat.dsnApercu || []).filter(function (l) { return l.contenu && !l.refus && l.statut !== "identique"; }), choix = etat.dsnChoix || {};
+  var nouveaux = dsnARattacher().map(function (s) { return { siret: s, dossier: choix[s] }; });
+  if (nouveaux.some(function (e) { return !e.dossier; })) { alert("Choisissez la résidence de chaque établissement à rattacher."); return; }
+  var vers = function (l) { return { siret: l.siret, dossier: (dsnEtab(l.siret) || nouveaux.find(function (e) { return e.siret === l.siret; })).dossier, mois: l.mois, type_decl: l.type, contenu: l.contenu, fichier: l.fichier.slice(0, 200), empreinte: l.empreinte }; };
+  dsnAgir(function () {
+    var p = nouveaux.length ? sb(ZCLIENT.from("dsn_etablissements").insert(nouveaux)) : Promise.resolve();
+    var lots = []; for (var i = 0; i < lignes.length; i += 50) lots.push(lignes.slice(i, i + 50).map(vers));
+    lots.forEach(function (lot) { p = p.then(function () { return sb(ZCLIENT.from("dsn_mois").upsert(lot, { onConflict: "siret,mois" })); }); });
+    return p.then(function () { etat.dsnApercu = null; etat.dsnChoix = null; });
+  }, function () {
+    var qui = etat.utilisateur ? etat.utilisateur.mail : "", le = new Date().toISOString();
+    nouveaux.forEach(function (e) { DSN.etablissements.push({ siret: e.siret, dossier: e.dossier, modifie_par: qui, modifie_le: le }); dsnJournalLocal("rattachement", e.siret, null, e.dossier, ""); });
+    lignes.forEach(function (l) { var r = vers(l), i = DSN.mois.findIndex(function (x) { return x.siret === r.siret && x.mois === r.mois; });
+      r.importe_par = qui; r.importe_le = le; if (i >= 0) DSN.mois[i] = r; else DSN.mois.push(r);
+      dsnJournalLocal(i >= 0 ? "remplacement" : "import", r.siret, r.mois, r.dossier, r.fichier + " (type " + r.type_decl + ", empreinte " + r.empreinte.slice(0, 12) + ")"); });
+    etat.dsnApercu = null; etat.dsnChoix = null;
+  });
+}
+function dsnRattacher(siret, dossier) {
+  dsnAgir(function () { return sb(ZCLIENT.from("dsn_etablissements").update({ dossier: dossier }).eq("siret", siret)); }, function () {
+    var e = dsnEtab(siret); if (!e || e.dossier === dossier) return; var avant = e.dossier; e.dossier = dossier; e.modifie_le = new Date().toISOString();
+    DSN.mois.forEach(function (r) { if (r.siret === siret) r.dossier = dossier; }); dsnJournalLocal("rattachement", siret, null, dossier, "avant : " + avant); });
+}
+function dsnSupprimer(siret, mois) {
+  dsnAgir(function () { return sb(ZCLIENT.from("dsn_mois").delete().eq("siret", siret).eq("mois", mois)); }, function () {
+    var i = DSN.mois.findIndex(function (r) { return r.siret === siret && r.mois === mois; }); if (i < 0) return; var r = DSN.mois.splice(i, 1)[0]; dsnJournalLocal("suppression", siret, mois, r.dossier, r.fichier); });
+}
+var DSN_STATUTS = { nouveau: '<span class="pastille ok">Nouveau</span>', remplace: '<span class="pastille att">Remplace l’import précédent</span>', identique: '<span class="pastille">Déjà importé</span>' };
+PAGES.so_import = function (p) {
+  var h = enTete("Import DSN", p, "Fichiers DSN mensuels exportés de Silae"), adm = estAdmin();
+  if (!dsnMigration()) { el("contenu").innerHTML = h + blocMigration26(); return; }
+  h += '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div><b>Le fichier ne quitte pas ce poste.</b> Il est lu dans le navigateur ; seuls des totaux par établissement et par mois sont enregistrés (effectifs, ETP, entrées et sorties, masse salariale, heures, jours d’arrêt). Aucun nom, numéro de sécurité sociale ni salaire individuel n’est conservé.</div></div>';
+  if (adm) h += '<div class="bloc" id="so-depot"><div class="bloc-tete"><h2>Déposer des DSN</h2><label class="btn btn-principal" for="so-fichiers" style="cursor:pointer">Choisir les fichiers…</label><input type="file" id="so-fichiers" multiple style="display:none"></div>' +
+    '<p class="legende" style="margin:0">Un ou plusieurs fichiers, un ou plusieurs mois, toutes résidences confondues. Chaque établissement (SIRET) est rattaché une fois à sa résidence. Un mois déjà importé est remplacé (DSN « annule et remplace » ou correction).</p></div>';
+  var A = etat.dsnApercu;
+  if (A) {
+    var aRat = dsnARattacher(), choix = etat.dsnChoix = etat.dsnChoix || {}, ok = A.filter(function (l) { return l.contenu && !l.refus && l.statut !== "identique"; });
+    var opts = function (val) { return '<option value="">— Choisir la résidence —</option>' + D.residences.slice().sort(function (a, b) { return a.nom < b.nom ? -1 : 1; }).map(function (r) { return '<option value="' + esc(r.dossier) + '"' + (r.dossier === val ? " selected" : "") + ">" + esc(r.nom) + " (" + esc(r.dossier) + ")</option>"; }).join(""); };
+    h += '<div class="bloc" id="so-apercu"><div class="bloc-tete"><h2>Aperçu avant enregistrement</h2><span class="aj-actions"><button class="btn btn-ligne" id="so-annuler">Annuler</button><button class="btn btn-principal" id="so-enregistrer"' + (ok.length ? "" : " disabled") + ">Enregistrer " + ok.length + " mois</button></span></div>";
+    if (aRat.length) h += '<p><b>Établissements à rattacher</b> (une seule fois, modifiable ensuite) :</p><div class="defile"><table class="tab"><thead><tr><th>SIRET</th><th>Résidence</th></tr></thead><tbody>' +
+      aRat.map(function (s) { return "<tr><td><code>" + esc(s) + '</code></td><td><select data-so-rat="' + esc(s) + '">' + opts(choix[s]) + "</select></td></tr>"; }).join("") + "</tbody></table></div>";
+    h += '<div class="defile"><table class="tab"><thead><tr><th>Fichier</th><th>SIRET</th><th>Résidence</th><th>Mois</th><th>Type</th><th class="num">Effectif</th><th class="num">ETP</th><th class="num">Brut</th><th class="num">Jours d’arrêt déclarés</th><th>Statut</th></tr></thead><tbody>' +
+      A.slice(0, etat.dsnApercuTout ? A.length : 10).map(function (l) {
+        if (l.avert) return "<tr><td>" + esc(l.fichier) + '</td><td colspan="9"><span class="pastille att">Avertissement</span> ' + esc(l.avert) + "</td></tr>";
+        var e = l.siret ? dsnEtab(l.siret) : null, d = e ? e.dossier : choix[l.siret];
+        return "<tr><td>" + esc(l.fichier) + "</td><td><code>" + esc(l.siret || "") + "</code></td><td>" + (d ? esc(nomResidence(d)) : l.refus ? "" : '<span class="mut">à rattacher</span>') + "</td><td>" + (l.mois ? esc(moisLong(l.mois)) : "") + "</td><td>" + esc(DSN_TYPES[l.type] || l.type || "") + "</td>" +
+          (l.contenu ? '<td class="num">' + nb(l.contenu.effectif_fin) + '</td><td class="num">' + dsnFmt("etp", l.contenu.etp_incomplet ? null : l.contenu.etp_milli) + '</td><td class="num">' + eurC(l.contenu.brut) + '</td><td class="num">' + nb(l.contenu.arrets.length) + "</td><td>" + (DSN_STATUTS[l.statut] || "") +
+            (l.contenu.alertes.length ? ' <span class="pastille att" title="' + esc(l.contenu.alertes.join(" ; ")) + '">' + l.contenu.alertes.length + " alerte" + (l.contenu.alertes.length > 1 ? "s" : "") + "</span>" : "") + "</td>"
+            : '<td colspan="5"><span class="pastille ko">Refusé</span> ' + esc(l.refus) + "</td>") + "</tr>"; }).join("") + "</tbody></table></div>" +
+      (A.length > 10 ? '<div class="aj-actions" style="margin-top:8px"><span class="legende">' + A.length + " lignes : " + ok.length + " mois à enregistrer, " + A.filter(function (l) { return l.statut === "identique"; }).length + " déjà importés, " + A.filter(function (l) { return l.refus; }).length + ' refusés.</span><button class="btn-petit" data-voir-plus="dsnApercuTout">' + (etat.dsnApercuTout ? "Réduire" : "Tout voir") + "</button></div>" : "") + "</div>";
+  }
+  /* Établissements rattachés */
+  var parSiret = {}; DSN.mois.forEach(function (r) { (parSiret[r.siret] = parSiret[r.siret] || []).push(r.mois); });
+  h += '<div class="bloc" id="so-etabs"><div class="bloc-tete"><h2>Établissements rattachés</h2></div>' + (DSN.etablissements.length ? '<div class="defile"><table class="tab"><thead><tr><th>SIRET</th><th>Résidence</th><th class="num">Mois importés</th><th>Du</th><th>Au</th></tr></thead><tbody>' +
+    DSN.etablissements.slice().sort(function (a, b) { return a.siret < b.siret ? -1 : 1; }).map(function (e) { var mm = (parSiret[e.siret] || []).sort();
+      return "<tr><td><code>" + esc(e.siret) + "</code></td><td>" + (adm ? '<select data-so-chg="' + esc(e.siret) + '">' + D.residences.slice().sort(function (a, b) { return a.nom < b.nom ? -1 : 1; }).map(function (r) { return '<option value="' + esc(r.dossier) + '"' + (r.dossier === e.dossier ? " selected" : "") + ">" + esc(r.nom) + "</option>"; }).join("") + (residence(e.dossier) ? "" : '<option selected value="' + esc(e.dossier) + '">' + esc(e.dossier) + " (hors parc)</option>") + "</select>" : esc(nomResidence(e.dossier))) +
+        '</td><td class="num">' + mm.length + "</td><td>" + (mm.length ? esc(moisCourt(mm[0])) : "") + "</td><td>" + (mm.length ? esc(moisCourt(mm[mm.length - 1])) : "") + "</td></tr>"; }).join("") + "</tbody></table></div>"
+    : '<p class="legende" style="margin:0">Aucun établissement : déposez une première DSN.</p>') + "</div>";
+  /* Mois importés du périmètre */
+  var ds = p.dossiers, mo = {}; DSN.mois.forEach(function (r) { if (ds.indexOf(r.dossier) >= 0) mo[r.mois] = 1; }); var liste = Object.keys(mo).sort();
+  if (liste.length) {
+    h += '<div class="bloc" id="so-mois"><div class="bloc-tete"><h2>Mois importés</h2><span class="legende">AR : annule et remplace</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th>' + liste.map(function (m) { return '<th class="num">' + esc(moisCourt(m)) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      ds.map(function (d) { var x = dsnIdx().dossier[d] || {}; return "<tr><td><b>" + esc(nomResidence(d)) + "</b></td>" + liste.map(function (m) { var r = x[m]; return '<td class="num">' + (r ? r.map(function (y) { return '<span class="pastille ok" title="' + esc(y.siret + " · " + y.fichier + " · " + dateHeureCourte(y.importe_le)) + '">' + (y.type_decl === "03" || y.type_decl === "05" ? "AR" : "✓") + "</span>"; }).join(" ") : '<span class="mut">–</span>') + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>";
+    if (adm) { var sup = DSN.mois.filter(function (r) { return ds.indexOf(r.dossier) >= 0; }).sort(function (a, b) { return a.mois < b.mois ? 1 : a.mois > b.mois ? -1 : a.siret < b.siret ? -1 : 1; });
+      h += '<div class="lis-barre" style="margin:12px 0 0"><label for="so-sup">Supprimer un mois importé <select id="so-sup">' + sup.map(function (r) { return '<option value="' + esc(r.siret + "|" + r.mois) + '">' + esc(nomResidence(r.dossier) + " · " + moisLong(r.mois) + " · " + r.siret) + "</option>"; }).join("") + '</select></label><button class="btn-petit" id="so-sup-go">Supprimer</button></div>'; }
+    h += "</div>";
+  }
+  /* Journal */
+  var J = DSN.journal.slice().sort(function (a, b) { return String(b.le).localeCompare(String(a.le)) || (b.id > a.id ? 1 : -1); });
+  h += '<div class="bloc" id="so-journal"><div class="bloc-tete"><h2>Journal</h2></div>' + (J.length ? '<div class="defile"><table class="tab"><thead><tr><th>Date</th><th>Action</th><th>SIRET</th><th>Mois</th><th>Résidence</th><th>Détail</th><th>Par</th></tr></thead><tbody>' +
+    J.slice(0, etat.dsnJournalTout ? J.length : 5).map(function (j) { return "<tr><td>" + esc(dateHeureCourte(j.le)) + "</td><td>" + esc(j.action) + "</td><td><code>" + esc(j.siret) + "</code></td><td>" + (j.mois ? esc(moisCourt(j.mois)) : "") + "</td><td>" + (j.dossier ? esc(nomResidence(j.dossier)) : "") + "</td><td>" + esc(j.detail || "") + "</td><td>" + esc(j.par || "") + "</td></tr>"; }).join("") +
+    "</tbody></table></div>" + voirPlus("dsnJournalTout", J.length) : '<p class="legende" style="margin:0">Aucune opération.</p>') + "</div>";
+  el("contenu").innerHTML = h;
+  var f = el("so-fichiers");
+  if (f) f.addEventListener("change", function () { if (!f.files.length) return; dsnLireFichiers(f.files).then(function (lus) { etat.dsnApercu = dsnPreparer(lus); etat.dsnChoix = {}; majContenu(); }).catch(function (e) { alert(messageErreur(e)); }); });
+  el("contenu").querySelectorAll("[data-so-rat]").forEach(function (s) { s.addEventListener("change", function () { etat.dsnChoix[s.dataset.soRat] = s.value; majContenu(); }); });
+  el("contenu").querySelectorAll("[data-so-chg]").forEach(function (s) { s.addEventListener("change", function () { if (confirm("Rattacher l’établissement " + s.dataset.soChg + " à " + nomResidence(s.value) + " ? Tous ses mois importés suivent.")) dsnRattacher(s.dataset.soChg, s.value); else majContenu(); }); });
+  var a = el("so-annuler"); if (a) a.addEventListener("click", function () { etat.dsnApercu = null; etat.dsnChoix = null; majContenu(); });
+  var g = el("so-enregistrer"); if (g) g.addEventListener("click", dsnEnregistrer);
+  var s = el("so-sup-go"); if (s) s.addEventListener("click", function () { var v = el("so-sup").value.split("|"); if (confirm("Supprimer la DSN de " + moisLong(v[1]) + " (SIRET " + v[0] + ") ?")) dsnSupprimer(v[0], v[1]); });
+  el("contenu").querySelectorAll("[data-voir-plus]").forEach(function (b) { b.addEventListener("click", function () { etat[b.dataset.voirPlus] = !etat[b.dataset.voirPlus]; majContenu(); }); });
+};
+
+/* ======================================================================================
    Lot 24 (décision 0018) : comptabilité du siège et trésorerie prévisionnelle.
    - Chiffre d'affaires par résidence et par mois, lu dans les écritures (Pennylane) selon la règle de CA
      de chaque résidence (par défaut tous les comptes 7) : plus de saisie à la main.
@@ -5146,6 +5786,7 @@ ajCharger();
 lisCharger();
 bqpCharger();
 cpCharger();
+dsnCharger();
 mesuresImporteesCharger();
 catCharger();
 appliquerMesures();
@@ -5274,11 +5915,15 @@ function chargerDonnees(client) {
     /* Lot 25 : null quand la migration 016 manque */
     lireOuNull(client.from("missions_claude").select("*").order("categorie").order("code")),
     lireFacultatif(client.from("paquets_claude").select("*").order("id", { ascending: false }).limit(200)),
-    lireFacultatif(client.from("missions_versions").select("*").order("id"))
+    lireFacultatif(client.from("missions_versions").select("*").order("id")),
+    /* Lot 26 : null quand la migration 017 manque ; vide hors administrateurs (règles par ligne) */
+    lireOuNull(client.from("dsn_etablissements").select("*").order("siret")),
+    lireTout(function () { return client.from("dsn_mois").select("*").order("siret").order("mois"); }, true),
+    lireFacultatif(client.from("dsn_journal").select("*").order("id", { ascending: false }).limit(500))
   ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10],
     resbase: r[11], kpimois: r[12], depots: r[13], cat: r[14], modeles: r[15], resmod: r[16], journalkpi: r[17],
     lot24: { rubriques: r[18], regles: r[19], ca: r[20], clotures: r[21], journal: r[22], previsions: r[23], virements: r[24] },
-    lot25: { missions: r[25], paquets: r[26], versions: r[27] } }; });
+    lot25: { missions: r[25], paquets: r[26], versions: r[27] }, lot26: { etablissements: r[28], mois: r[29], journal: r[30] } }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -5298,6 +5943,7 @@ function demarrerAvecClient(client, profil) {
     D.fees_rubriques = L24.rubriques || []; D.fees_regles = L24.regles || []; D.ca_regles = L24.ca || []; D.fees_clotures = L24.clotures || []; D.compta_journal = L24.journal || [];
     D.tresorerie_previsions = L24.previsions || []; D.virements_suivis = L24.virements || [];
     D.lot25 = x.lot25.missions !== null; D.missions = x.lot25.missions || []; D.paquets = x.lot25.paquets || []; D.missions_versions = x.lot25.versions || [];
+    D.lot26 = x.lot26.etablissements !== null && x.lot26.mois !== null; D.dsn_etablissements = x.lot26.etablissements || []; D.dsn_mois = x.lot26.mois || []; D.dsn_journal = x.lot26.journal || [];
     lancerApplication();
     ZCLIENT = client;
     var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");

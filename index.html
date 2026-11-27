@@ -3218,7 +3218,7 @@ var EXPORT_GR = [];
 function noterGraphe(titre, cats, series, genre) {
   EXPORT_GR.push({ titre: titre, genre: genre || "eur", cats: cats.slice(), series: series.map(function (x) { return { nom: x.nom, valeurs: x.valeurs.slice() }; }) });
 }
-function exportable() { return etat.section === "tableaux" || etat.section === "tresorerie" || etat.section === "comptabilite" || etat.section === "social" || etat.page === "ecarts"; }
+function exportable() { return etat.section === "tableaux" || (etat.section === "analyse" && etat.page !== "an_parametres") || etat.section === "tresorerie" || etat.section === "comptabilite" || etat.section === "social" || etat.page === "ecarts"; }
 function boutonExport() {
   return exportable() ? '<button class="btn btn-ligne" id="btn-xlsx" title="Télécharger un classeur Excel : tableaux, données des graphiques, détail des calculs et écritures comptables">Exporter en Excel</button>' : "";
 }
@@ -6111,6 +6111,1009 @@ function brancherModalePrevision(p) {
   });
 }
 
+/* ======================================================================================
+   Lots 28 à 30 : analyse des écarts (décision 0022, règles docs/analyse_ecarts.md).
+   Moteur : mêmes calculs que zenitude/analyse/ecarts.py (tests/test_lot28_page.py compare les deux sur la vue
+   réelle). La page ajoute la vue ajustée (ajustements et lissages) et la cohérence avec la paie (DSN).
+   Les écarts ne sont jamais stockés : seul leur suivi (statut, commentaire) l'est (migration 019).
+   ====================================================================================== */
+SOUS.analyse = [["an_constats", "Écarts à expliquer"], ["an_natures", "Coûts par nature"], ["an_cascade", "Cascade de l’EBITDA"],
+  ["an_volume", "CA : volume et prix"], ["an_fournisseurs", "Fournisseurs"], ["an_anomalies", "Anomalies et cut-off"],
+  ["an_coherence", "Cohérence compta et KPI"], ["an_social", "Cohérence compta et paie"], ["an_benchmark", "Comparaison des résidences"],
+  ["an_parametres", "Seuils et références"]];
+MENU.splice(MENU.findIndex(function (m) { return m[0] === "tableaux"; }) + 1, 0,
+  ["analyse", "Analyse des écarts", "M3 16.5h14M5 13l3-4 3 2.5 4-6M13 5.5h2v2"]);
+PAGES_ADMIN.push("an_social");
+["an_constats", "an_natures", "an_cascade", "an_volume", "an_fournisseurs", "an_anomalies", "an_coherence", "an_social", "an_benchmark"].forEach(function (x) { PAGES_PERIODE.push(x); });
+PAGES_SANS_VUE.push("an_social", "an_parametres");
+
+var AN_REFERENCES = { n1: "Même période N-1", prec: "Période précédente de même durée", moy12: "Moyenne des 12 mois précédents" };
+var AN_SEUILS_DEFAUT = { pct: 0.10, montant: 200000, sigma: 2.0, ecriture: 3.0, coherence: 0.15, rapprochement: 0.02, etalement: 0.6, historique: 6 };
+var AN_BLOCS = { natures: "Coûts par nature", volume: "Volume et prix", fournisseurs: "Fournisseurs", anomalies: "Anomalies et cut-off",
+  coherence: "Cohérence compta et KPI", benchmark: "Comparaison des résidences", social: "Cohérence compta et paie" };
+var AN_CODES = {
+  N1: ["natures", "Poste en écart"], V1: ["volume", "CA hébergement : volume et prix"],
+  F1: ["fournisseurs", "Nouveau fournisseur"], F2: ["fournisseurs", "Fournisseur disparu"], F3: ["fournisseurs", "Fournisseur en forte variation"],
+  F4: ["fournisseurs", "Facture en double possible"], F5: ["fournisseurs", "Fournisseur récurrent sans facture"],
+  A1: ["anomalies", "Poste hors de sa tendance"], A2: ["anomalies", "Écriture inhabituelle"], A3: ["anomalies", "Compte nouveau"], A4: ["anomalies", "Charge à étaler"],
+  A5: ["anomalies", "Mois sans comptabilité"], A6: ["anomalies", "Mois sans chiffre d’affaires"], A7: ["anomalies", "Mois sans paie"],
+  K1: ["coherence", "Ratio compta / activité en écart"], R1: ["coherence", "CA comptable différent du CA Mews"],
+  B1: ["benchmark", "Poste au-dessus des résidences comparables"],
+  S1: ["social", "Brut DSN différent des comptes 641"], S2: ["social", "Masse salariale : effectif et coût moyen"],
+  S3: ["social", "Intérim en hausse sans hausse des arrêts"], S4: ["social", "Coût horaire en écart"]
+};
+var AN_RACINE_VAR = "CV", AN_RACINES_CHARGES = ["CV", "CF", "SIEGE", "LOYERS"], AN_ETALEMENT = ["616", "635", "614", "6156", "6281"];
+var AN_RATIOS = [
+  ["K_PRIX", "Prix moyen comptable par nuitée vendue", ["CA_HEB"], ["mes", ["LN_VENDUES"]], "produit"],
+  ["K_COMM", "Commissions en % du CA hébergement", ["COMM"], ["lig", ["CA_HEB"]], "charge"],
+  ["K_MEN", "Ménage par nuitée vendue", ["MEN"], ["mes", ["LN_VENDUES"]], "charge"],
+  ["K_BLANCH", "Blanchissage par nuitée vendue", ["BLANCH"], ["mes", ["LN_VENDUES"]], "charge"],
+  ["K_ACCUEIL", "Produits d’accueil par client présent", ["PROD_ACC"], ["mes", ["NUITEES_CLIENTS"]], "charge"],
+  ["K_PDJ", "Achats restauration par petit-déjeuner servi", ["ACH_REST"], ["mes", ["COUVERTS_PDJ"]], "charge"],
+  ["K_FOOD", "Coût matière en % du CA restauration", ["ACH_REST"], ["lig", ["CA_REST"]], "charge"],
+  ["K_ENERGIE", "Énergie par logement-nuit disponible", ["ENERGIE"], ["mes", ["LN_DISPONIBLES"]], "charge"],
+  ["K_PERS", "Frais de personnel en % du CA", ["PERS_HB", "MEN", "CF_REST"], ["lig", ["CA"]], "charge"]
+];
+var AN_RAPPROCHEMENTS = [
+  ["CA", "CA total comptable / CA total Mews", ["CA"], ["CA_MEWS_TOTAL"]],
+  ["CA_REST", "CA restauration comptable / CA restaurant et petit-déjeuner Mews", ["CA_REST"], ["CA_MEWS_RESTO", "CA_MEWS_PDJ"]]
+];
+var AN_BASES = { ca: ["En % du chiffre d’affaires", ["lig", ["CA"]]], nuitee: ["Par nuitée vendue", ["mes", ["LN_VENDUES"]]], capacite: ["Par logement-nuit disponible", ["mes", ["LN_DISPONIBLES"]]] };
+var AN_STATUTS = { a_analyser: ["À analyser", "att"], explique: ["Expliqué", "ok"], a_corriger: ["À corriger", "ko"], corrige: ["Corrigé", "ok"] };
+
+/* ---------- Outils (mêmes règles que la référence Python) ---------- */
+function anArr(x) { var s = x < 0 ? -1 : 1; return s * Math.floor(Math.abs(x) + 0.5 + 1e-9); }
+function anMoisRef(mois, ref) {
+  var n = mois.length, out = [], i;
+  if (ref === "n1") return { mois: mois.map(function (m) { return ajMois(m, -12); }), facteur: 1 };
+  if (ref === "prec") { for (i = 0; i < n; i++) out.push(ajMois(mois[0], -n + i)); return { mois: out, facteur: 1 }; }
+  for (i = 0; i < 12; i++) out.push(ajMois(mois[0], -12 + i));
+  return { mois: out, facteur: n / 12 };
+}
+function anMediane(vals) {
+  var v = vals.slice().sort(function (a, b) { return a - b; }), k = v.length;
+  if (!k) return null;
+  return k % 2 ? v[(k - k % 2) / 2] : (v[k / 2 - 1] + v[k / 2]) / 2;
+}
+function anCle(code, d, objet, mois, ref) { return code + "|" + d + "|" + objet + "|" + mois[0] + "|" + mois[mois.length - 1] + "|" + ref; }
+function anTri(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
+function anV0(p, code) { var v = p[code]; return v === null || v === undefined ? 0 : v; }
+function anSommeLignes(p, codes) { return codes.reduce(function (s, c) { return s + anV0(p, c); }, 0); }
+function anEcartJours(a, b) { var f = function (x) { return Date.UTC(+x.slice(0, 4), +x.slice(5, 7) - 1, +x.slice(8, 10)); }; return Math.abs(f(a) - f(b)) / 864e5; }
+
+var AN_PARENT = null;
+function anParents() {
+  if (AN_PARENT) return AN_PARENT;
+  AN_PARENT = {};
+  D.lignes_ebitda.forEach(function (l) { (l.regle.termes || []).forEach(function (t) { if (!(t[1] in AN_PARENT)) AN_PARENT[t[1]] = l.code; }); });
+  return AN_PARENT;
+}
+function anAncetres(code) { var P = anParents(), out = [], x = P[code]; while (x) { out.push(x); x = P[x]; } return out; }
+function anEstCharge(code) { return AN_RACINES_CHARGES.indexOf(code) >= 0 || anAncetres(code).some(function (a) { return AN_RACINES_CHARGES.indexOf(a) >= 0; }); }
+function anLigne(code) { return D.lignes_ebitda.find(function (l) { return l.code === code; }) || null; }
+function anLibLigne(code) { var l = anLigne(code); return l ? l.libelle : code; }
+
+/* Cache des postes : vidé quand les soldes le sont (ajustements, lissages modifiés). */
+var AN_CACHE = {}, AN_CACHE_SOLDES = null;
+function anCacheValide() { if (AN_CACHE_SOLDES !== SOLDES) { AN_CACHE = {}; AN_CACHE_SOLDES = SOLDES; } }
+function anCouvert(d, mois) { var c = COUV[d] || {}; return mois.every(function (m) { return c[m]; }); }
+/* Lignes EBITDA d'une résidence sommées sur des mois ; null si un ajustement rend un compte non calculable. */
+function anPostes(d, mois, aj, facteur) {
+  anCacheValide();
+  facteur = facteur || 1;
+  var k = "P|" + d + "|" + mois.join(",") + "|" + (aj ? 1 : 0) + "|" + facteur;
+  if (k in AN_CACHE) return AN_CACHE[k];
+  var S = soldes(d, aj), brut = {}, nc = false;
+  mois.forEach(function (m) { var cs = S.v[m] || {}; Object.keys(cs).forEach(function (c) {
+    var l = ligneDuCompte(c, D.lignes_ebitda); if (l === null) return;
+    var v = cs[c]; if (v === NC) { nc = true; return; } brut[l] = (brut[l] || 0) + v; }); });
+  /* Facteur (moyenne de 12 mois ramenée à la période) appliqué et arrondi sur les lignes de base, avant les totaux. */
+  if (facteur !== 1) Object.keys(brut).forEach(function (l) { brut[l] = anArr(brut[l] * facteur); });
+  return (AN_CACHE[k] = nc ? null : calcLignes(D.lignes_ebitda, brut));
+}
+function anMesure(d, codes, mois) {
+  var t = 0;
+  for (var i = 0; i < mois.length; i++) { var x = (EXPL[d] || {})[mois[i]] || {};
+    for (var j = 0; j < codes.length; j++) { var v = x[codes[j]]; if (v === undefined || v === null || isNaN(v)) return null; t += v; } }
+  return t;
+}
+function anBase(d, P, spec, mois) { return spec[0] === "lig" ? anSommeLignes(P, spec[1]) : anMesure(d, spec[1], mois); }
+
+/* ---------- Moteur (zenitude/analyse/ecarts.py, fonction analyser) ---------- */
+function anCalculer(dossiers, mois, reference, seuils, aj) {
+  var S = Object.assign({}, AN_SEUILS_DEFAUT, seuils || {});
+  dossiers = dossiers.slice().sort(anTri).filter(function (d, i, a) { return !i || a[i - 1] !== d; });
+  var R0 = anMoisRef(mois, reference), mref = R0.mois, facteur = R0.facteur, constats = [], L = D.lignes_ebitda;
+  function constat(code, d, objet, valeur, ref, impact, info, moisC) {
+    var ecart = valeur === null || valeur === undefined || ref === null || ref === undefined ? null : valeur - ref;
+    var pct = ecart === null || !ref ? null : ecart / Math.abs(ref);
+    constats.push({ cle: anCle(code, d, objet, mois, reference), bloc: AN_CODES[code][0], code: code, dossier: d, objet: objet, mois: moisC || "",
+      valeur: valeur === undefined ? null : valeur, reference: ref === undefined ? null : ref, ecart: ecart, pct: pct, impact: impact, info: info || {} });
+  }
+  /* Disponibilité et postes par résidence */
+  var res = {};
+  dossiers.forEach(function (d) {
+    var dv = anCouvert(d, mois), dr = anCouvert(d, mref), x = { dispo: dv && dr, motif: dv && dr ? null : (!dv ? "période" : "référence") };
+    if (dv) { x.pv = anPostes(d, mois, aj); if (x.pv === null) { delete x.pv; x.dispo = false; x.motif = "ajustement non calculable"; } }
+    if (x.dispo) {
+      var pr = anPostes(d, mref, aj, facteur);
+      if (pr === null) { x.dispo = false; x.motif = "ajustement non calculable"; }
+      else {
+        x.pr = pr; x.nv = anMesure(d, ["LN_VENDUES"], mois);
+        var nr = anMesure(d, ["LN_VENDUES"], mref); x.nr = nr === null ? null : nr * facteur;
+      }
+    }
+    res[d] = x;
+  });
+  var dispo = dossiers.filter(function (d) { return res[d].dispo; });
+
+  /* Bloc 1 : coûts par nature */
+  var natures = [];
+  L.forEach(function (l) {
+    var code = l.code, anc = anAncetres(code), variable = anc.indexOf(AN_RACINE_VAR) >= 0;
+    var charge = l.sens === "charge" || anc.some(function (a) { return AN_RACINES_CHARGES.indexOf(a) >= 0; }) || AN_RACINES_CHARGES.indexOf(code) >= 0;
+    var v = 0, r = 0, vu = false, ea = 0, eaOk = true;
+    dispo.forEach(function (d) {
+      var a = res[d].pv[code], b = res[d].pr[code];
+      if ((a === null || a === undefined) && (b === null || b === undefined)) return;
+      vu = true; a = a || 0; b = b || 0; v += a; r += b;
+      if (variable) { var nv = res[d].nv, nr = res[d].nr; if (nv === null || !nr) eaOk = false; else ea += anArr(b * (nv / nr - 1)); }
+    });
+    if (!vu) return;
+    var cav = 0, car = 0; dispo.forEach(function (d) { cav += anV0(res[d].pv, "CA"); car += anV0(res[d].pr, "CA"); });
+    var nvs = dispo.map(function (d) { return res[d].nv; }), nrs = dispo.map(function (d) { return res[d].nr; });
+    var nvT = nvs.some(function (x) { return x === null; }) ? null : nvs.reduce(function (s, x) { return s + x; }, 0);
+    var nrT = nrs.some(function (x) { return x === null; }) ? null : nrs.reduce(function (s, x) { return s + x; }, 0);
+    natures.push({ code: code, niveau: l.niveau, sens: l.sens, variable: variable, charge: charge, v: v, r: r, ecart: v - r, pct: r ? (v - r) / Math.abs(r) : null,
+      ca_v: cav ? v / cav : null, ca_r: car ? r / car : null, nuit_v: nvT ? v / nvT : null, nuit_r: nrT ? r / nrT : null,
+      effet_activite: variable ? (eaOk ? ea : null) : null, effet_cout: variable ? (eaOk ? v - r - ea : null) : null });
+  });
+  dispo.forEach(function (d) {
+    var P = res[d].pv, R = res[d].pr;
+    L.forEach(function (l) {
+      if (!l.regle.prefixes || (l.sens !== "charge" && l.sens !== "produit")) return;
+      var code = l.code, pa = P[code], pb = R[code];
+      if ((pa === null || pa === undefined) && (pb === null || pb === undefined)) return;
+      var a = anV0(P, code), b = anV0(R, code), e = a - b;
+      if (Math.abs(e) < S.montant || (b && Math.abs(e) / Math.abs(b) < S.pct)) return;
+      var info = {};
+      if (anAncetres(code).indexOf(AN_RACINE_VAR) >= 0 && res[d].nv !== null && res[d].nr) info.effet_activite = anArr(b * (res[d].nv / res[d].nr - 1));
+      constat("N1", d, code, a, b, l.sens === "produit" ? e : -e, info);
+    });
+  });
+
+  /* Bloc 3 : cascade */
+  var etapes = [["CA_HEB", 1], ["CA_ANN", 1], ["CA_REST", 1], ["CV_HEB", -1], ["CV_REST", -1], ["CF_HEB", -1], ["CF_REST", -1], ["SIEGE", -1], ["LOYERS", -1]].map(function (x) {
+    var e = 0; dispo.forEach(function (d) { e += anV0(res[d].pv, x[0]) - anV0(res[d].pr, x[0]); }); return [x[0], x[1] * e]; });
+  var ebv = 0, ebr = 0; dispo.forEach(function (d) { ebv += anV0(res[d].pv, "EBITDA"); ebr += anV0(res[d].pr, "EBITDA"); });
+  var cascade = { ebitda_v: ebv, ebitda_r: ebr, etapes: etapes, residences: dispo.map(function (d) { return [d, anV0(res[d].pv, "EBITDA"), anV0(res[d].pr, "EBITDA")]; }) };
+
+  /* Bloc 2 : volume et prix du CA hébergement */
+  var volprix = [];
+  dispo.forEach(function (d) {
+    var P = res[d].pv, R = res[d].pr, cv = anV0(P, "CA_HEB"), cr = anV0(R, "CA_HEB"), nv = res[d].nv, nr = res[d].nr;
+    var kv = anMesure(d, ["LN_DISPONIBLES"], mois), kr = anMesure(d, ["LN_DISPONIBLES"], mref); kr = kr === null ? null : kr * facteur;
+    var av = anV0(P, "CA_ANN") + anV0(P, "CA_REST"), ar = anV0(R, "CA_ANN") + anV0(R, "CA_REST");
+    var x = { dossier: d, ca_v: cv, ca_r: cr, n_v: nv, n_r: nr, k_v: kv, k_r: kr, ann_v: av, ann_r: ar, volume: null, prix: null, capacite: null, occupation: null, ann_volume: null, panier: null };
+    if (nv !== null && nr) {
+      x.volume = anArr((nv - nr) * cr / nr); x.prix = (cv - cr) - x.volume;
+      x.ann_volume = anArr((nv - nr) * ar / nr); x.panier = (av - ar) - x.ann_volume;
+      if (kv !== null && kr) { x.capacite = anArr((kv - kr) * (nr / kr) * cr / nr); x.occupation = x.volume - x.capacite; }
+    }
+    volprix.push(x);
+    var e = cv - cr;
+    if (Math.abs(e) >= S.montant && (!cr || Math.abs(e) / Math.abs(cr) >= S.pct)) constat("V1", d, "CA_HEB", cv, cr, e, { volume: x.volume, prix: x.prix, capacite: x.capacite, occupation: x.occupation });
+  });
+
+  /* Bloc 4 : fournisseurs */
+  var fournisseurs = [], smois = {}, sref = {};
+  mois.forEach(function (m) { smois[m] = 1; }); mref.forEach(function (m) { sref[m] = 1; });
+  dossiers.forEach(function (d) {
+    var ecr = (D.ecritures || {})[d] || [], pieces = {}, fo = {}, comptes = {};
+    ecr.forEach(function (e) { (pieces[e[3]] = pieces[e[3]] || []).push(e); });
+    Object.keys(pieces).sort(anTri).forEach(function (p) {
+      var ls = pieces[p], m = ls[0][1].slice(0, 7), trE = ls.find(function (e) { return e[4].indexOf("40") === 0 && e[7]; }), ch = ls.filter(function (e) { return e[4].charAt(0) === "6"; });
+      if (!trE || !ch.length) return;
+      var tr = trE[7], k = tr + "\u0000" + m, x = fo[k] = fo[k] || [0, 0, tr, m];
+      x[0] += ch.reduce(function (s, e) { return s - e[6]; }, 0); x[1] += 1;
+      comptes[tr] = comptes[tr] || {}; ch.forEach(function (e) { comptes[tr][e[4]] = 1; });
+    });
+    var FO = function (t, m) { return fo[t + "\u0000" + m]; };
+    if (res[d].dispo) {
+      var ts = {}; Object.keys(fo).forEach(function (k) { var x = fo[k]; if (smois[x[3]] || sref[x[3]]) ts[x[2]] = 1; });
+      Object.keys(ts).sort(anTri).forEach(function (t) {
+        var v = 0, nbv = 0, r0 = 0, nbr = 0;
+        mois.forEach(function (m) { var x = FO(t, m); if (x) { v += x[0]; nbv += x[1]; } });
+        mref.forEach(function (m) { var x = FO(t, m); if (x) { r0 += x[0]; nbr += x[1]; } });
+        var r = facteur !== 1 ? anArr(r0 * facteur) : r0, e = v - r, statut = "stable";
+        if (!nbr && nbv) statut = "nouveau"; else if (nbr && !nbv) statut = "disparu"; else if (r && Math.abs(e) / Math.abs(r) >= S.pct) statut = "variation";
+        fournisseurs.push({ dossier: d, tiers: t, v: v, r: r, nb_v: nbv, nb_r: nbr, comptes: Object.keys(comptes[t] || {}).sort(anTri).join("|"), statut: statut });
+        if (statut === "nouveau" && v >= S.montant) constat("F1", d, t, v, r, -e, { nb_v: nbv });
+        else if (statut === "disparu" && r >= S.montant) constat("F2", d, t, v, r, -e, { nb_r: nbr });
+        else if (statut === "variation" && Math.abs(e) >= S.montant) constat("F3", d, t, v, r, -e, { nb_v: nbv, nb_r: nbr });
+      });
+    }
+    var couvP = mois.filter(function (m) { return (COUV[d] || {})[m]; }), n = couvP.length;
+    if (n >= 3) {
+      var par = {};
+      Object.keys(fo).forEach(function (k) { var x = fo[k]; if (couvP.indexOf(x[3]) >= 0) (par[x[2]] = par[x[2]] || {})[x[3]] = x[0]; });
+      var seuil = Math.max(3, Math.floor((n + 1) / 2));
+      Object.keys(par).sort(anTri).forEach(function (t) {
+        var ms = par[t], k = Object.keys(ms).length;
+        if (k < seuil || k >= n) return;
+        var vals = Object.keys(ms).map(function (m) { return ms[m]; }).sort(function (a, b) { return a - b; }), med = vals[Math.floor((k - 1) / 2)];
+        couvP.forEach(function (m) { if (!(m in ms) && med >= S.montant / 10) constat("F5", d, t + "|" + m, null, med, -med, { mois_factures: k, mois_couverts: n }, m); });
+      });
+    }
+    var debut = mois[0] + "-01", fin = mois[mois.length - 1] + "-31", grp = {};
+    ecr.forEach(function (e) { if (e[4].indexOf("40") === 0 && e[7] && e[6] > 0 && e[2] !== "AN" && e[1] <= fin) { var k = e[7] + "\u0000" + e[6]; (grp[k] = grp[k] || { t: e[7], mt: e[6], ls: [] }).ls.push(e); } });
+    Object.keys(grp).map(function (k) { return grp[k]; }).sort(function (a, b) { return anTri(a.t, b.t) || a.mt - b.mt; }).forEach(function (g) {
+      var ls = g.ls.slice().sort(function (a, b) { return anTri(a[1], b[1]) || anTri(a[3], b[3]); });
+      for (var i = 0; i + 1 < ls.length; i++) { var a = ls[i], b = ls[i + 1];
+        if (a[3] !== b[3] && anEcartJours(a[1], b[1]) <= 5 && b[1] >= debut) constat("F4", d, g.t + "|" + a[3] + "|" + b[3], g.mt, null, -g.mt, { date_a: a[1], date_b: b[1] }, b[1].slice(0, 7)); }
+    });
+  });
+
+  /* Bloc 5 : anomalies et cut-off */
+  var feuilles = L.filter(function (l) { return l.regle.prefixes && (l.sens === "charge" || l.sens === "produit"); });
+  dossiers.forEach(function (d) {
+    var couv = COUV[d] || {}, ecr = (D.ecritures || {})[d] || [], parMois = {};
+    mois.forEach(function (m) { if (!couv[m]) constat("A5", d, m, null, null, 0, {}, m); });
+    ecr.forEach(function (e) { (parMois[e[1].slice(0, 7)] = parMois[e[1].slice(0, 7)] || []).push(e); });
+    var hp = mois.slice(); for (var i = 1; i <= 12; i++) hp.push(ajMois(mois[0], -i));
+    var aPaie = hp.some(function (m) { return (parMois[m] || []).some(function (e) { return e[4].indexOf("641") === 0; }); });
+    mois.forEach(function (m) {
+      if (!couv[m]) return;
+      var ls = parMois[m] || [];
+      if (!ls.some(function (e) { return e[4].charAt(0) === "7" && e[6]; })) constat("A6", d, m, null, null, 0, {}, m);
+      if (aPaie && !ls.some(function (e) { return e[4].indexOf("641") === 0; })) constat("A7", d, m, null, null, 0, {}, m);
+    });
+    mois.forEach(function (m) {
+      if (!couv[m]) return;
+      var hist = []; for (var i = 12; i >= 1; i--) { var h = ajMois(m, -i); if (couv[h]) hist.push(h); }
+      if (hist.length < S.historique) return;
+      var P = anPostes(d, [m], false);
+      var PH = hist.map(function (h) { return anPostes(d, [h], false); });
+      feuilles.forEach(function (l) {
+        var code = l.code, xs = PH.map(function (q) { return anV0(q, code); }), v = anV0(P, code);
+        if (v === 0 && !xs.some(function (x) { return x; })) return;
+        var mu = 0; xs.forEach(function (x) { mu += x; }); mu = mu / xs.length;
+        var sq = 0; xs.forEach(function (x) { sq += (x - mu) * (x - mu); }); var sg = Math.sqrt(sq / xs.length), dev = v - mu;
+        if (Math.abs(dev) >= S.montant && Math.abs(dev) > S.sigma * sg) constat("A1", d, code + "|" + m, v, anArr(mu), l.sens === "produit" ? anArr(dev) : -anArr(dev), { sigma: anArr(sg), n: hist.length }, m);
+      });
+    });
+    var parCompte = {};
+    ecr.forEach(function (e) { var c0 = e[4].charAt(0); if (c0 === "6" || c0 === "7") (parCompte[e[4]] = parCompte[e[4]] || []).push(e); });
+    Object.keys(parCompte).sort(anTri).forEach(function (c) {
+      var ls = parCompte[c];
+      ls.forEach(function (e) {
+        var m = e[1].slice(0, 7); if (!smois[m]) return;
+        var hist = {}; for (var i = 1; i <= 12; i++) hist[ajMois(m, -i)] = 1;
+        var h = ls.filter(function (x) { return hist[x[1].slice(0, 7)]; }).map(function (x) { return Math.abs(x[6]); }), ma = Math.abs(e[6]);
+        if (h.length >= 3 && ma >= S.montant) { var med = anMediane(h); if (ma > S.ecriture * med) constat("A2", d, e[0], ma, anArr(med), e[6], { compte: c, piece: e[3], date: e[1], n: h.length }, m); }
+        if (AN_ETALEMENT.some(function (p) { return c.indexOf(p) === 0; }) && e[6] < 0 && -e[6] >= S.montant) {
+          var fen = {}; for (i = 0; i < 12; i++) fen[ajMois(m, -i)] = 1;
+          var nbc = Object.keys(fen).filter(function (x) { return couv[x]; }).length, tot = 0;
+          ls.forEach(function (x) { if (fen[x[1].slice(0, 7)]) tot += -x[6]; });
+          if (nbc >= S.historique && tot > 0 && -e[6] >= S.etalement * tot) constat("A4", d, e[0], -e[6], anArr(-e[6] / 12), -(-e[6] - anArr(-e[6] / 12)), { compte: c, piece: e[3], date: e[1], part: -e[6] / tot }, m);
+        }
+      });
+    });
+    var hist = {}, nbh = 0; for (var j = 1; j <= 12; j++) { var hm = ajMois(mois[0], -j); hist[hm] = 1; if (couv[hm]) nbh++; }
+    if (nbh >= S.historique) Object.keys(parCompte).sort(anTri).forEach(function (c) {
+      var ls = parCompte[c], dans = ls.filter(function (e) { return smois[e[1].slice(0, 7)]; });
+      if (!dans.length || ls.some(function (e) { return hist[e[1].slice(0, 7)]; })) return;
+      var t = dans.reduce(function (s, e) { return s + e[6]; }, 0);
+      if (Math.abs(t) >= S.montant) constat("A3", d, c, Math.abs(t), 0, t, { nb: dans.length });
+    });
+  });
+
+  /* Bloc 6 : cohérence compta / KPI */
+  var coherence = [];
+  dispo.forEach(function (d) {
+    var P = res[d].pv, R = res[d].pr;
+    AN_RATIOS.forEach(function (q) {
+      var nv = anSommeLignes(P, q[2]), nr = anSommeLignes(R, q[2]), dv = anBase(d, P, q[3], mois), dr = anBase(d, R, q[3], mref);
+      if (q[3][0] === "mes" && dr !== null) dr = dr * facteur;
+      var rv = dv ? nv / dv : null, rr = dr ? nr / dr : null;
+      if (!nv && !nr) return;
+      var impact = null;
+      if (rv !== null && rr !== null) { impact = anArr((rv - rr) * dv); if (q[4] === "charge") impact = -impact; }
+      coherence.push({ dossier: d, code: q[0], num_v: nv, num_r: nr, den_v: dv, den_r: dr, ratio_v: rv, ratio_r: rr, impact: impact });
+      if (rv !== null && rr && Math.abs(rv / rr - 1) >= S.coherence && Math.abs(impact) >= S.montant) constat("K1", d, q[0], null, null, impact, { ratio_v: rv, ratio_r: rr });
+    });
+  });
+  dossiers.forEach(function (d) {
+    var couv = COUV[d] || {};
+    AN_RAPPROCHEMENTS.forEach(function (q) { mois.forEach(function (m) {
+      if (!couv[m]) return;
+      var me = anMesure(d, q[3], [m]); if (me === null) return;
+      var cpt = anSommeLignes(anPostes(d, [m], false), q[2]), mc = anArr(me * 100), e = cpt - mc;
+      if (Math.abs(e) >= S.montant / 10 && (!mc || Math.abs(e) / Math.abs(mc) > S.rapprochement)) constat("R1", d, q[0] + "|" + m, cpt, mc, e, {}, m);
+    }); });
+  });
+
+  /* Bloc 8 : comparaison des résidences */
+  var benchmark = [], dispV = dossiers.filter(function (d) { return res[d].pv; });
+  if (dispV.length >= 2) {
+    var charges = L.filter(function (l) { return anEstCharge(l.code); }), acts = {};
+    dispV.forEach(function (d) { acts[d] = (residence(d) || {}).activite || ""; });
+    Object.keys(AN_BASES).forEach(function (base) {
+      var spec = AN_BASES[base][1], dens = {};
+      dispV.forEach(function (d) { dens[d] = anBase(d, res[d].pv, spec, mois); });
+      charges.forEach(function (l) {
+        var code = l.code, ratios = {};
+        dispV.forEach(function (d) { var v = res[d].pv[code]; if (dens[d] && v !== null && v !== undefined) ratios[d] = v / dens[d]; });
+        var cles = Object.keys(ratios);
+        if (cles.length < 2) return;
+        cles.sort(anTri).forEach(function (d) {
+          var comp = cles.filter(function (x) { return acts[x] === acts[d]; }), groupe = "activite";
+          if (comp.length < 3) { comp = cles; groupe = "perimetre"; }
+          var med = anMediane(comp.map(function (x) { return ratios[x]; })), rang = 1 + comp.filter(function (x) { return ratios[x] < ratios[d]; }).length;
+          var pot = ratios[d] > med ? anArr((ratios[d] - med) * dens[d]) : 0;
+          benchmark.push({ base: base, code: code, dossier: d, ratio: ratios[d], mediane: med, comparables: comp.length, groupe: groupe, rang: rang, potentiel: pot });
+          if (base === "ca" && l.regle.prefixes && comp.length >= 3 && med > 0 && ratios[d] > med * (1 + S.pct) && pot >= S.montant)
+            constat("B1", d, code, res[d].pv[code], anArr(med * dens[d]), -pot, { ratio: ratios[d], mediane: med, comparables: comp.length, groupe: groupe });
+        });
+      });
+    });
+  }
+  constats.sort(function (a, b) { return Math.abs(b.impact || 0) - Math.abs(a.impact || 0) || anTri(a.cle, b.cle); });
+  return { reference: reference, mois: mois.slice(), mois_ref: mref, facteur: facteur, seuils: S, dispo: dispo,
+    exclues: dossiers.filter(function (d) { return !res[d].dispo; }).map(function (d) { return [d, res[d].motif]; }),
+    natures: natures, cascade: cascade, volprix: volprix, fournisseurs: fournisseurs, coherence: coherence, benchmark: benchmark, constats: constats, _res: res };
+}
+
+/* ---------- Suivi des écarts et paramètres (migration 019 ; démonstration locale : navigateur) ---------- */
+var AN = { param: { seuils: {}, reference: "n1" }, suivi: [], journal: [], cache: {}, derniere: {} };
+function anMigration() { return !enLigne() || !!D.lot28; }
+function anCharger() {
+  if (enLigne()) {
+    AN.param = (D.analyse_parametres && D.analyse_parametres[0]) || { seuils: {}, reference: "n1" };
+    AN.suivi = D.ecarts_suivi || []; AN.journal = D.ecarts_journal || [];
+  } else {
+    try { var x = JSON.parse(localStorage.getItem("zen-ecarts")); if (x && Array.isArray(x.suivi)) { AN.suivi = x.suivi; AN.journal = x.journal || []; } } catch (e) {}
+    try { var q = JSON.parse(localStorage.getItem("zen-analyse-param")); if (q && typeof q === "object") AN.param = { seuils: q.seuils || {}, reference: q.reference || "n1" }; } catch (e) {}
+  }
+  AN.cache = {};
+}
+function anSauverLocal() { try { localStorage.setItem("zen-ecarts", JSON.stringify({ suivi: AN.suivi, journal: AN.journal.slice(0, 2000) })); } catch (e) {} }
+function anSeuils() { return Object.assign({}, AN_SEUILS_DEFAUT, AN.param.seuils || {}); }
+function anReference() { var r = etat.anRef || AN.param.reference || "n1"; return AN_REFERENCES[r] ? r : "n1"; }
+function anSuiviDe(cle) { return AN.suivi.find(function (x) { return x.cle === cle; }) || null; }
+function anPeutSuivre() { if (!enLigne()) return true; var r = roleEnLigne(); return r === "administrateur" || r === "collaborateur"; }
+function anPeutParametrer() { return !enLigne() || estAdmin(); }
+function anRecharger() {
+  return Promise.all([sb(ZCLIENT.from("ecarts_suivi").select("*").order("id")), lireFacultatif(ZCLIENT.from("ecarts_journal").select("*").order("id", { ascending: false }).limit(500))])
+    .then(function (r) { D.ecarts_suivi = r[0] || []; D.ecarts_journal = r[1] || []; anCharger(); });
+}
+function anSuiviEnregistrer(c, statut, commentaire) {
+  if (!AN_STATUTS[statut]) return Promise.reject({ message: "Statut inconnu." });
+  if (String(commentaire || "").length > 2000) return Promise.reject({ message: "Commentaire : 2 000 caractères au plus." });
+  var parts = c.cle.split("|"), ex = anSuiviDe(c.cle), qui = D.enLigne ? D.enLigne.email : (etat.utilisateur && etat.utilisateur.mail) || "", le = new Date().toISOString();
+  var row = { cle: c.cle, dossier: c.dossier, code: c.code, du: parts[3], au: parts[4], reference: parts[5], statut: statut, commentaire: commentaire || "", montant: c.impact === null || c.impact === undefined ? null : Math.round(c.impact) };
+  if (!enLigne()) {
+    if (ex) Object.assign(ex, { statut: row.statut, commentaire: row.commentaire, montant: row.montant, modifie_par: qui, modifie_le: le });
+    else { ex = Object.assign({ id: Date.now(), cree_par: qui, cree_le: le, modifie_par: qui, modifie_le: le }, row); AN.suivi.push(ex); }
+    AN.journal.unshift({ id: Date.now() + Math.random(), suivi_id: ex.id, cle: row.cle, dossier: row.dossier, action: "update", statut: row.statut, commentaire: row.commentaire, montant: row.montant, par: qui, le: le });
+    anSauverLocal(); return Promise.resolve();
+  }
+  var req = ex ? ZCLIENT.from("ecarts_suivi").update({ statut: row.statut, commentaire: row.commentaire, montant: row.montant }).eq("id", ex.id).select("*")
+    : ZCLIENT.from("ecarts_suivi").insert(row).select("*");
+  return sb(req).then(verifierTouche).then(anRecharger);
+}
+function anParamEnregistrer(seuils, reference) {
+  var q = { seuils: seuils, reference: reference };
+  if (!enLigne()) { AN.param = q; try { localStorage.setItem("zen-analyse-param", JSON.stringify(q)); } catch (e) {} AN.cache = {}; return Promise.resolve(); }
+  return sb(ZCLIENT.from("analyse_parametres").update(q).eq("id", 1).select("*")).then(verifierTouche).then(function (r) { D.analyse_parametres = r; anCharger(); });
+}
+
+/* ---------- Analyse du périmètre affiché (mise en cache) ---------- */
+function anAnalyse(p) {
+  anCacheValide();
+  var mois = fenetre(), ref = anReference(), S = anSeuils(), k = [p.id, mois.join(","), ref, ajuste() ? 1 : 0, JSON.stringify(S), AN.suivi.length].join("|");
+  if (AN.cache.k === k) return AN.cache.A;
+  var A = anCalculer(p.dossiers, mois, ref, S, ajuste());
+  var soc = anSocial(p.dossiers, mois, A, S);
+  A.social = soc;
+  A.tous = A.constats.concat(soc.constats).sort(function (a, b) { return Math.abs(b.impact || 0) - Math.abs(a.impact || 0) || anTri(a.cle, b.cle); });
+  AN.derniere = {}; A.tous.forEach(function (c) { AN.derniere[c.cle] = c; });
+  AN.cache = { k: k, A: A };
+  return A;
+}
+
+/* ---------- Cohérence compta et paie (DSN, administrateurs ; page seulement) ---------- */
+function anDsnDispo() { return (PAGES_ADMIN.indexOf("an_social") < 0 || !enLigne() || estAdmin()) && typeof dsnCouple === "function" && DSN && DSN.mois && DSN.mois.length > 0; }
+function anSocial(dossiers, mois, A, S) {
+  var out = { lignes: [], mensuel: [], constats: [] };
+  if (!anDsnDispo()) return out;
+  var mref = A.mois_ref, ref = A.reference;
+  function cons(code, d, objet, valeur, rf, impact, info, m) {
+    var ecart = valeur === null || rf === null ? null : valeur - rf;
+    out.constats.push({ cle: anCle(code, d, objet, mois, ref), bloc: "social", code: code, dossier: d, objet: objet, mois: m || "", valeur: valeur, reference: rf, ecart: ecart, pct: ecart === null || !rf ? null : ecart / Math.abs(rf), impact: impact, info: info || {} });
+  }
+  function cote(d, ms) {
+    var M = 0, E = 0, n = 0, H = 0, MH = 0, J = 0, JT = 0, nj = 0;
+    ms.forEach(function (m) {
+      var ms64 = dsnValeur("ms64", d, m), etp = dsnValeur("etp", d, m), h = dsnValeur("heures_payees", d, m);
+      if (ms64 !== null && etp !== null && etp > 0) { M += ms64; E += etp / 1000; n++; }
+      if (ms64 !== null && h) { MH += ms64; H += h / 100; }
+      var j = dsnValeur("jours", d, m), jt = dsnValeur("jours_theoriques", d, m);
+      if (j !== null && jt) { J += j; JT += jt; nj++; }
+    });
+    return { M: M, E: E, n: n, H: H, MH: MH, abs: JT ? J / JT : null, nj: nj };
+  }
+  dossiers.forEach(function (d) {
+    var v = cote(d, mois), r = cote(d, mref);
+    var x = { dossier: d, n_v: v.n, n_r: r.n, ms_v: v.n ? v.M : null, ms_r: r.n ? r.M : null, etp_v: v.n ? v.E / v.n : null, etp_r: r.n ? r.E / r.n : null,
+      cm_v: v.E ? v.M / v.E : null, cm_r: r.E ? r.M / r.E : null, ch_v: v.H ? v.MH / v.H : null, ch_r: r.H ? r.MH / r.H : null, abs_v: v.abs, abs_r: r.abs,
+      delta: null, effectif: null, cout: null, interim_v: null, interim_r: null };
+    if (v.n && r.n && r.E) {
+      x.delta = anArr((v.M / v.n - r.M / r.n) * v.n);
+      x.effectif = anArr((v.E / v.n - r.E / r.n) * (r.M / r.E) * v.n);
+      x.cout = x.delta - x.effectif;
+      var base = r.M / r.n * v.n;
+      if (Math.abs(x.delta) >= S.montant && base && Math.abs(x.delta) / Math.abs(base) >= S.pct) cons("S2", d, "MS64", anArr(v.M), anArr(base), -x.delta, { effectif: x.effectif, cout: x.cout, etp_v: x.etp_v, etp_r: x.etp_r });
+    }
+    if (x.ch_v !== null && x.ch_r) {
+      var eff = anArr((x.ch_v - x.ch_r) * v.H);
+      if (Math.abs(x.ch_v / x.ch_r - 1) >= S.coherence && Math.abs(eff) >= S.montant) cons("S4", d, "COUT_HEURE", null, null, -eff, { ch_v: x.ch_v, ch_r: x.ch_r });
+    }
+    var res = A._res[d];
+    if (res && res.dispo) {
+      var IV = ["MEN_INT", "INT_HB", "REST_INT"];
+      x.interim_v = anSommeLignes(res.pv, IV); x.interim_r = anSommeLignes(res.pr, IV);
+      var di = x.interim_v - x.interim_r;
+      if (di >= S.montant && (!x.interim_r || di / Math.abs(x.interim_r) >= S.pct) && x.abs_v !== null && x.abs_r !== null && x.abs_v - x.abs_r < 0.01)
+        cons("S3", d, "INTERIM", x.interim_v, x.interim_r, -di, { abs_v: x.abs_v, abs_r: x.abs_r });
+    }
+    out.lignes.push(x);
+    mois.forEach(function (m) {
+      var b = dsnValeur("brut", d, m), c = dsnValeur("c641", d, m);
+      if (b === null || c === null) return;
+      out.mensuel.push([d, m, b, c]);
+      var dif = b - c;
+      if (Math.abs(dif) >= S.montant / 10 && (!c || Math.abs(dif) / Math.abs(c) > S.rapprochement)) cons("S1", d, "BRUT|" + m, b, c, -dif, {}, m);
+    });
+  });
+  return out;
+}
+
+/* ---------- Textes ---------- */
+function anPct(x) { return x === null || x === undefined ? "–" : (x > 0 ? "+" : "") + (x * 100).toFixed(1).replace(".", ",") + " %"; }
+function anEur(c) { return c === null || c === undefined ? "–" : eur(c / 100); }
+function anEurS(c) { return c === null || c === undefined ? "–" : (c > 0 ? "+" : "") + eur(c / 100); }
+function anEur2(c) { return c === null || c === undefined || !isFinite(c) ? "–" : (c / 100).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\u202f|\u00a0/g, " ") + " €"; }
+function anRatioDef(code) { return AN_RATIOS.find(function (q) { return q[0] === code; }); }
+function anFmtRatio(spec, v) { return v === null || v === undefined ? "–" : spec[0] === "lig" ? pct1(v) : anEur2(v); }
+function anObjet(c) {
+  var o = c.objet.split("|");
+  if (c.code === "N1" || c.code === "B1" || c.code === "A1") return anLibLigne(o[0]);
+  if (c.code === "K1") { var q = anRatioDef(o[0]); return q ? q[1] : o[0]; }
+  if (c.code === "R1") { var r = AN_RAPPROCHEMENTS.find(function (x) { return x[0] === o[0]; }); return r ? r[1] : o[0]; }
+  if (c.code === "V1") return "CA hébergement";
+  if (c.code === "A2" || c.code === "A4") return "Compte " + c.info.compte + " " + libelleCompte(c.info.compte);
+  if (c.code === "A3") return "Compte " + o[0] + " " + libelleCompte(o[0]);
+  if (c.code === "A5" || c.code === "A6" || c.code === "A7") return moisMaj(o[0]);
+  if (c.code === "S1") return "Brut DSN / comptes 641";
+  if (c.code === "S2") return "Charges de personnel (64)";
+  if (c.code === "S3") return "Intérim";
+  if (c.code === "S4") return "Coût par heure rémunérée";
+  return o[0];
+}
+function anDetail(c) {
+  var i = c.info, o = c.objet.split("|");
+  switch (c.code) {
+    case "N1": return anEur(c.valeur) + " contre " + anEur(c.reference) + " (" + (c.pct === null ? "nouveau poste" : anPct(c.pct)) + ")" + (i.effet_activite !== undefined ? " ; dont effet activité " + anEurS(i.effet_activite) : "");
+    case "V1": return anEur(c.valeur) + " contre " + anEur(c.reference) + " : effet volume " + anEurS(i.volume) + ", effet prix " + anEurS(i.prix) + (i.capacite !== null && i.capacite !== undefined ? " (capacité " + anEurS(i.capacite) + ", occupation " + anEurS(i.occupation) + ")" : "");
+    case "F1": return o[0] + " : " + anEur(c.valeur) + " sur la période (" + i.nb_v + " pièce" + (i.nb_v > 1 ? "s" : "") + "), aucune facture dans la référence";
+    case "F2": return o[0] + " : " + anEur(c.reference) + " dans la référence, aucune facture sur la période";
+    case "F3": return o[0] + " : " + anEur(c.valeur) + " contre " + anEur(c.reference) + " (" + anPct(c.pct) + ") ; " + i.nb_v + " pièce(s) contre " + i.nb_r;
+    case "F4": return o[0] + " : pièces " + o[1] + " (" + dateFr(i.date_a) + ") et " + o[2] + " (" + dateFr(i.date_b) + "), même montant " + anEur(c.valeur);
+    case "F5": return o[0] + " : facturé " + i.mois_factures + " mois sur " + i.mois_couverts + ", aucune facture en " + moisLong(o[1]) + " ; montant habituel " + anEur(c.reference);
+    case "A1": return moisMaj(o[1]) + " : " + anEur(c.valeur) + " contre " + anEur(c.reference) + " en moyenne sur " + i.n + " mois (écart-type " + anEur(i.sigma) + ")";
+    case "A2": return "Pièce " + i.piece + " du " + dateFr(i.date) + " : " + anEur(c.valeur) + ", médiane du compte sur 12 mois " + anEur(c.reference);
+    case "A3": return anEur(c.valeur) + " sur la période (" + i.nb + " écriture" + (i.nb > 1 ? "s" : "") + "), aucune écriture sur les 12 mois précédents";
+    case "A4": return "Pièce " + i.piece + " du " + dateFr(i.date) + " : " + anEur(c.valeur) + ", soit " + pct1(i.part) + " des 12 derniers mois du compte ; lissée : " + anEur(c.reference) + " par mois";
+    case "A5": return "Aucune donnée comptable synchronisée pour ce mois";
+    case "A6": return "Aucune écriture de chiffre d’affaires (classe 7) ce mois";
+    case "A7": return "Aucune écriture de salaires (641) ce mois alors que la résidence en a d’habitude";
+    case "K1": var q = anRatioDef(o[0]); return anFmtRatio(q[3], i.ratio_v) + " contre " + anFmtRatio(q[3], i.ratio_r) + " (" + anPct(i.ratio_r ? i.ratio_v / i.ratio_r - 1 : null) + ")";
+    case "R1": return moisMaj(o[1]) + " : comptabilité " + anEur(c.valeur) + ", Mews " + anEur(c.reference);
+    case "B1": return pct1(i.ratio) + " du CA contre une médiane de " + pct1(i.mediane) + " (" + i.comparables + " résidences " + (i.groupe === "activite" ? "de même activité" : "du périmètre") + ")";
+    case "S1": return moisMaj(o[1]) + " : brut DSN " + anEur(c.valeur) + ", comptes 641 " + anEur(c.reference);
+    case "S2": return anEur(c.valeur) + " contre " + anEur(c.reference) + " : effet effectif " + anEurS(-i.effectif) + ", effet coût moyen " + anEurS(-i.cout) + " (ETP moyen " + dsnFmt("dec1", i.etp_v) + " contre " + dsnFmt("dec1", i.etp_r) + ")";
+    case "S3": return anEur(c.valeur) + " contre " + anEur(c.reference) + " ; absentéisme " + pct1(i.abs_v) + " contre " + pct1(i.abs_r);
+    case "S4": return anEur2(i.ch_v) + " par heure contre " + anEur2(i.ch_r);
+  }
+  return "";
+}
+var AN_REGLES = {
+  N1: "Poste du tableau EBITDA : période − référence. Signalé si l’écart dépasse le seuil en euros et le seuil en %. Effet activité (charges variables) = référence × (nuitées vendues de la période ÷ nuitées de la référence − 1).",
+  V1: "CA hébergement = nuitées vendues × prix moyen. Effet volume = (nuitées période − nuitées référence) × prix moyen de la référence ; effet prix = écart − effet volume. Volume = effet capacité (logements-nuits disponibles) + effet occupation.",
+  F1: "Pièces de la période ayant une ligne fournisseur (40) avec un tiers et des lignes de charges (6) ; aucune pièce de ce tiers dans la référence.",
+  F2: "Tiers facturé dans la référence, aucune pièce sur la période.",
+  F3: "Charges du tiers : période − référence, au-delà des seuils.",
+  F4: "Deux pièces différentes, même fournisseur, même montant, à 5 jours d’écart au plus (règle du contrôle C05).",
+  F5: "Fournisseur facturé au moins la moitié des mois couverts de la période (3 au minimum), absent ce mois-ci ; montant = médiane de ses mois facturés (règle du contrôle C04).",
+  A1: "Valeur du mois comparée à la moyenne des 12 mois précédents (au moins 6 couverts) : écart supérieur au seuil en euros et à n écarts-types. Calculé sur la comptabilité importée.",
+  A2: "Écriture de classe 6 ou 7 supérieure à n fois la médiane des écritures du même compte sur les 12 mois précédents (3 au moins).",
+  A3: "Compte de classe 6 ou 7 mouvementé sur la période, sans aucune écriture sur les 12 mois précédents (au moins 6 couverts).",
+  A4: "Charge annuelle (assurances, taxes, charges locatives, maintenance, cotisations) passée en une écriture qui représente au moins le seuil des 12 derniers mois du compte : à lisser (Ajustements, Lissage de postes).",
+  A5: "Mois de la période sans comptabilité synchronisée : aucun écart n’est calculé pour cette résidence.",
+  A6: "Mois couvert sans écriture de classe 7 (règle du contrôle C02).",
+  A7: "Mois couvert sans écriture 641, alors que la résidence en a sur la période ou les 12 mois précédents (règle du contrôle C03).",
+  K1: "Ratio sur des sommes (jamais une moyenne de ratios) : période contre référence. Effet = (ratio période − ratio référence) × base de la période.",
+  R1: "CA comptable du mois comparé au CA importé de Mews (données externes), au-delà du seuil de rapprochement.",
+  B1: "Poste en % du CA comparé à la médiane des résidences de même activité (du périmètre si moins de 3) ; potentiel = (ratio − médiane) × CA.",
+  S1: "Brut déclaré en DSN comparé aux comptes 641 du même mois.",
+  S2: "Charges de personnel (64) : effet effectif = (ETP moyen période − ETP moyen référence) × coût mensuel par ETP de la référence × mois ; effet coût moyen = écart − effet effectif.",
+  S3: "Intérim (lignes intérim du tableau EBITDA) en hausse alors que le taux d’absentéisme (arrêts de travail DSN) n’augmente pas d’un point.",
+  S4: "Charges de personnel (64) ÷ heures rémunérées (DSN), période contre référence."
+};
+
+/* ---------- Détail des calculs ---------- */
+function anSpecLig(code, ds, ms) { return { t: "lig", v: "ebitda", c: code, d: ds, m: ms, a: ajuste() }; }
+EXPLIQUER.anc = function (s) {
+  var c = AN.derniere[s.cle];
+  if (!c) return { titre: "Écart", valeur: "", notes: ["Cet écart n’est plus repéré sur la période et la référence affichées."] };
+  var parts = [], o = c.objet.split("|"), A = AN.cache.A, ms = A ? A.mois : fenetre(), mr = A ? A.mois_ref : [];
+  if (c.code === "N1" || c.code === "B1") { parts.push({ lib: "Période", val: anEur(c.valeur), spec: anSpecLig(o[0], [c.dossier], ms) });
+    if (c.code === "N1") parts.push({ lib: "Référence (" + AN_REFERENCES[A.reference] + ")", val: anEur(c.reference), spec: { t: "anr", c: o[0], d: [c.dossier], m: mr, f: A.facteur } }); }
+  if (c.code === "A1") parts.push({ lib: moisMaj(o[1]), val: anEur(c.valeur), spec: { t: "lig", v: "ebitda", c: o[0], d: [c.dossier], m: [o[1]], a: false } });
+  if (c.code === "V1") parts.push({ lib: "CA hébergement de la période", val: anEur(c.valeur), spec: anSpecLig("CA_HEB", [c.dossier], ms) });
+  if (c.code === "A2" || c.code === "A4") parts.push({ lib: "Compte " + c.info.compte + " en " + moisLong(c.mois), val: "", spec: { t: "cpt", c: c.info.compte, d: [c.dossier], m: [c.mois], a: false } });
+  if (c.code === "A3") parts.push({ lib: "Compte " + o[0] + " sur la période", val: anEur(c.valeur), spec: { t: "cpt", c: o[0], d: [c.dossier], m: ms, a: false } });
+  if (c.code === "K1") { var q = anRatioDef(o[0]); q[2].forEach(function (x) { parts.push({ lib: anLibLigne(x) + " (période)", val: "", spec: anSpecLig(x, [c.dossier], ms) }); }); }
+  if (c.code === "R1") parts.push({ lib: "Comptabilité " + moisLong(o[1]), val: anEur(c.valeur), spec: { t: "lig", v: "ebitda", c: o[0], d: [c.dossier], m: [o[1]], a: false } });
+  var su = anSuiviDe(c.cle), notes = [anDetail(c)];
+  if (su) {
+    notes.push("Statut : " + AN_STATUTS[su.statut][0] + (su.commentaire ? " ; commentaire : " + su.commentaire : "") + " (" + (su.modifie_par || "") + ", " + (su.modifie_le ? dateFr(su.modifie_le) : "") + ")");
+    if (su.montant !== null && su.montant !== undefined && Math.round(c.impact || 0) !== +su.montant) notes.push("Le montant a changé depuis le commentaire : " + anEurS(+su.montant) + " alors, " + anEurS(c.impact) + " aujourd’hui.");
+    AN.journal.filter(function (j) { return j.cle === c.cle; }).slice(0, 10).forEach(function (j) { notes.push("Historique : " + dateHeure(j.le) + ", " + (j.par || "") + " : " + (AN_STATUTS[j.statut] ? AN_STATUTS[j.statut][0] : j.action) + (j.commentaire ? " — " + j.commentaire : "")); });
+  }
+  return { titre: AN_CODES[c.code][1], sous: "Effet sur l’EBITDA. " + nomResidence(c.dossier) + ", " + libMois(ms) + (c.mois ? " (" + moisLong(c.mois) + ")" : ""), valeur: anEurS(c.impact),
+    formule: AN_REGLES[c.code], partsTitre: "Éléments", parts: parts, notes: notes };
+};
+/* Référence d'une ligne (moyenne de 12 mois ramenée à la durée de la période si besoin) */
+EXPLIQUER.anr = function (s) {
+  var V = VUES_FIN.ebitda, T = tableauJS(V.lignes(), s.d, s.m, ajuste(), V.ratio), v = T.total[s.c], val = anValRef(s);
+  return { titre: anLibLigne(s.c) + " (référence)", sous: libPerim(s.d) + ", " + libMois(s.m), valeur: valCts(val),
+    formule: s.f !== 1 ? "Somme des 12 mois précédant la période × " + nb(Math.round(s.f * 12)) + " ÷ 12 (moyenne mensuelle ramenée à la durée de la période)" : "Somme des mois de la référence",
+    partsTitre: "Éléments", parts: [{ lib: "Somme des mois de la référence", val: valCts(v), spec: { t: "lig", v: "ebitda", c: s.c, d: s.d, m: s.m, a: ajuste() } }] };
+};
+/* Valeur de référence d'une ligne : facteur appliqué ligne de base par ligne de base, résidence par résidence (comme le moteur). */
+function anValRef(s) {
+  if (s.f === 1) return tableauJS(VUES_FIN.ebitda.lignes(), s.d, s.m, ajuste(), VUES_FIN.ebitda.ratio).total[s.c];
+  var t = 0, vu = false;
+  for (var i = 0; i < s.d.length; i++) { var P = anPostes(s.d[i], s.m, ajuste(), s.f); if (P === null) return NC; if (P[s.c] !== null && P[s.c] !== undefined) { t += P[s.c]; vu = true; } }
+  return vu ? t : null;
+}
+EXPLIQUER.ane = function (s) {
+  var V = VUES_FIN.ebitda, a = tableauJS(V.lignes(), s.d, s.m, ajuste(), V.ratio).total[s.c], bb = anValRef({ c: s.c, d: s.d, m: s.r, f: s.f });
+  var ok = a !== NC && bb !== NC;
+  return { titre: "Écart : " + anLibLigne(s.c), sous: libPerim(s.d) + ", " + libMois(s.m) + " contre " + libMois(s.r), valeur: ok ? anEurS((a || 0) - (bb || 0)) : "non calculable",
+    formule: "Période − référence (résidences dont la période et la référence sont couvertes par la comptabilité)", partsTitre: "Éléments",
+    parts: [{ lib: "Période", val: valCts(a), spec: { t: "lig", v: "ebitda", c: s.c, d: s.d, m: s.m, a: ajuste() } }, { lib: "Référence", val: valCts(bb), spec: { t: "anr", c: s.c, d: s.d, m: s.r, f: s.f } }] };
+};
+
+/* ---------- Éléments communs des pages ---------- */
+function anOutils() {
+  return '<label class="mini-champ" title="Référence de comparaison"><select id="an-ref" aria-label="Comparer à">' + Object.keys(AN_REFERENCES).map(function (k) {
+    return '<option value="' + k + '"' + (k === anReference() ? " selected" : "") + ">Comparer à : " + esc(AN_REFERENCES[k]) + "</option>"; }).join("") + "</select></label>";
+}
+function anBrancher() { var s = el("an-ref"); if (s) s.addEventListener("change", function () { etat.anRef = s.value; majContenu(); }); }
+function anBandeau(A) {
+  var h = '<div class="connexion-etat info"><span class="info-ronde" style="width:18px;height:18px">i</span><div><b>Référence : ' + esc(AN_REFERENCES[A.reference]) + "</b>, " + esc(libMois(A.mois_ref)) +
+    (A.facteur !== 1 ? " (moyenne mensuelle × " + A.mois.length + ")" : "") + ". Seuils : " + pct1(A.seuils.pct) + " et " + eur(A.seuils.montant / 100) + ".";
+  if (A.exclues.length) h += " " + A.exclues.length + " résidence" + (A.exclues.length > 1 ? "s" : "") + " sans comptabilité complète sur la " + (A.exclues.every(function (x) { return x[1] === "référence"; }) ? "référence" : "période ou la référence") + ", hors des écarts : " +
+    esc(A.exclues.map(function (x) { return nomResidence(x[0]) + " (" + x[1] + ")"; }).join(", ")) + ".";
+  return h + "</div></div>";
+}
+function anPage(titre, p, sous) { return enTete(titre, p, sous || "", anOutils()) + bandeauAjuste(); }
+function anPoser(h) { el("contenu").innerHTML = h; anBrancher(); }
+function anSansDonnees(A) {
+  var ref = A.exclues.length && A.exclues.every(function (x) { return x[1] === "référence"; });
+  return anVide("Aucune résidence comparable", ref ? "La comptabilité ne couvre pas la référence (" + libMois(A.mois_ref) + ") : choisissez une autre référence, par exemple la période précédente, ou une période plus récente."
+    : "La comptabilité de la période ou de la référence est incomplète pour toutes les résidences du périmètre.");
+}
+function anVide(titre, texte) { return '<div class="bloc vide-etat"><h2>' + esc(titre) + "</h2><p>" + esc(texte) + "</p></div>"; }
+function anStatutHtml(su) { var s = su ? AN_STATUTS[su.statut] : AN_STATUTS.a_analyser; return '<span class="pastille ' + s[1] + '">' + esc(s[0]) + "</span>"; }
+function anCouleur(impact) { return impact > 0 ? "var(--ok)" : impact < 0 ? "var(--attente)" : "var(--mut)"; }
+function anCellImpact(c) { return '<td class="num" style="color:' + anCouleur(c.impact) + ';font-weight:600"' + xa({ t: "anc", cle: c.cle }) + ">" + anEurS(c.impact) + "</td>"; }
+
+/* ---------- Page : Écarts à expliquer (base de contrôle) ---------- */
+PAGES.an_constats = function (p) {
+  var A = anAnalyse(p), F = etat.anF = etat.anF || { bloc: "", statut: "", d: "", q: "", n: 100 };
+  var h = enTete("Écarts à expliquer", p, "Écarts repérés sur la période " + libFenetre() + ", du plus fort effet sur l’EBITDA au plus faible", anOutils()) + bandeauAjuste() + anBandeau(A);
+  if (!anMigration()) h += '<div class="connexion-etat"><span class="info-ronde" style="width:18px;height:18px">!</span><div>Migration 019 non appliquée : les statuts et commentaires ne peuvent pas être enregistrés (docs/lot28_mise_en_route.md).</div></div>';
+  var tous = A.tous, cpt = { a_analyser: 0, explique: 0, a_corriger: 0, corrige: 0 }, nonExp = 0;
+  tous.forEach(function (c) { var su = anSuiviDe(c.cle), st = su ? su.statut : "a_analyser"; cpt[st]++; if (st === "a_analyser" || st === "a_corriger") nonExp += c.impact || 0; });
+  h += '<div class="ruban">' + carte("Écarts repérés", nb(tous.length), "Tous blocs confondus") + carte("À analyser", nb(cpt.a_analyser), "Sans statut ou à analyser") +
+    carte("Expliqués", nb(cpt.explique), "Écart justifié par un commentaire") + carte("À corriger", nb(cpt.a_corriger), "Erreur ou oubli à reprendre en comptabilité") +
+    carte("Corrigés", nb(cpt.corrige), "Correction faite") + carte("Effet non expliqué", valeurUnite(eur(nonExp / 100)), "Somme des effets à analyser et à corriger") + "</div>";
+  var liste = tous.filter(function (c) {
+    var su = anSuiviDe(c.cle), st = su ? su.statut : "a_analyser";
+    if (F.bloc && c.bloc !== F.bloc) return false;
+    if (F.statut && st !== F.statut) return false;
+    if (F.d && c.dossier !== F.d) return false;
+    if (F.q) { var t = (nomResidence(c.dossier) + " " + AN_CODES[c.code][1] + " " + anObjet(c) + " " + anDetail(c) + " " + (su ? su.commentaire : "")).toLowerCase(); if (t.indexOf(F.q.toLowerCase()) < 0) return false; }
+    return true;
+  });
+  var sel = function (id, val, opts) { return '<select id="' + id + '">' + opts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (o[0] === val ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select>"; };
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Écarts (' + nb(liste.length) + ")</h2>" + '<span class="legende">Clic sur un effet : son calcul et son historique. Effet positif : favorable à l’EBITDA.</span></div>' +
+    '<div class="aj-nvcompte">' +
+    '<label class="champ-aj"><span>Bloc</span>' + sel("an-f-bloc", F.bloc, [["", "Tous"]].concat(Object.keys(AN_BLOCS).map(function (k) { return [k, AN_BLOCS[k]]; }))) + "</label>" +
+    '<label class="champ-aj"><span>Statut</span>' + sel("an-f-statut", F.statut, [["", "Tous"]].concat(Object.keys(AN_STATUTS).map(function (k) { return [k, AN_STATUTS[k][0]]; }))) + "</label>" +
+    (p.dossiers.length > 1 ? '<label class="champ-aj"><span>Résidence</span>' + sel("an-f-d", F.d, [["", "Toutes"]].concat(p.dossiers.slice().sort(function (a, b) { return anTri(nomResidence(a), nomResidence(b)); }).map(function (d) { return [d, nomResidence(d)]; }))) + "</label>" : "") +
+    '<label class="champ-aj large"><span>Rechercher</span><input id="an-f-q" value="' + esc(F.q) + '" placeholder="Fournisseur, poste, commentaire…"></label></div>';
+  if (!liste.length) h += '<p class="mut">' + (tous.length ? "Aucun écart pour ces filtres." : "Aucun écart au-delà des seuils sur cette période : rien à expliquer.") + "</p>";
+  else {
+    h += '<div class="defile"><table class="tab" id="an-table"><thead><tr><th class="num">N°</th>' + (p.dossiers.length > 1 ? "<th>Résidence</th>" : "") + '<th>Bloc</th><th>Écart</th><th>Objet</th><th>Constat</th><th class="num">Effet EBITDA</th><th>Statut</th><th>Commentaire</th><th></th></tr></thead><tbody>';
+    liste.slice(0, F.n).forEach(function (c, i) {
+      var su = anSuiviDe(c.cle), modif = su && su.montant !== null && su.montant !== undefined && Math.round(c.impact || 0) !== +su.montant;
+      h += '<tr data-cle="' + esc(c.cle) + '"><td class="num mut">' + (i + 1) + "</td>" + (p.dossiers.length > 1 ? "<td>" + esc(nomResidence(c.dossier)) + "</td>" : "") + '<td class="mut">' + esc(AN_BLOCS[c.bloc]) + "</td><td><b>" + esc(AN_CODES[c.code][1]) + "</b></td><td>" + esc(anObjet(c)) + "</td><td>" + esc(anDetail(c)) + "</td>" + anCellImpact(c) +
+        "<td>" + anStatutHtml(su) + (modif ? ' <span class="pastille att" title="Montant changé depuis le commentaire">montant modifié</span>' : "") + '</td><td class="mut" style="max-width:280px">' + esc(su ? su.commentaire : "") + "</td>" +
+        '<td class="aj-lig-actions">' + (anPeutSuivre() && anMigration() ? '<button class="btn-petit" data-an-suivi="' + esc(c.cle) + '">Commenter</button>' : "") + "</td></tr>";
+    });
+    h += "</tbody></table></div>" + (liste.length > F.n ? '<p><button class="btn-petit" id="an-plus">Voir ' + Math.min(100, liste.length - F.n) + " de plus (" + (liste.length - F.n) + " restants)</button></p>" : "");
+  }
+  h += "</div>";
+  /* Paquet pour Claude */
+  var ms = missionsListe().filter(function (m) { return m.actif !== false; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Préparer le commentaire avec Claude</h2><span class="legende">Paquet d’écarts (CSV, sans écriture comptable) avec une référence PQ et son empreinte, inscrit à l’historique des paquets.</span></div>' +
+    '<div class="aj-nvcompte"><label class="champ-aj large"><span>Mission</span><select id="an-mission"><option value="">Aucune (consignes à donner à Claude)</option>' + ms.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.code + " : " + m.titre) + "</option>"; }).join("") + '</select></label>' +
+    '<button class="btn btn-principal" id="an-paquet"' + (tous.length ? "" : " disabled") + '>Télécharger le paquet d’écarts</button></div><p class="legende" id="an-paquet-etat">Le paquet reprend tous les écarts affichés (filtres compris), leurs statuts et commentaires, les postes par nature, la cascade, le volume et le prix, les fournisseurs, la cohérence et la comparaison des résidences.</p></div>';
+  var J = AN.journal.filter(function (j) { return p.dossiers.indexOf(j.dossier) >= 0; });
+  if (J.length) h += '<div class="bloc"><div class="bloc-tete"><h2>Derniers commentaires</h2></div><div class="defile"><table class="tab"><thead><tr><th>Date</th><th>Par</th><th>Résidence</th><th>Écart</th><th>Statut</th><th>Commentaire</th></tr></thead><tbody>' +
+    J.slice(0, 10).map(function (j) { var k = j.cle.split("|"); return "<tr><td>" + esc(dateHeure(j.le)) + "</td><td>" + esc(j.par || "") + "</td><td>" + esc(nomResidence(j.dossier)) + "</td><td>" + esc((AN_CODES[k[0]] || ["", k[0]])[1]) + " (" + esc(k[3]) + " → " + esc(k[4]) + ")</td><td>" + (AN_STATUTS[j.statut] ? anStatutHtml(j) : esc(j.action)) + "</td><td>" + esc(j.commentaire || "") + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  anPoser(h);
+  var maj = function () { F.n = 100; majContenu(); };
+  [["an-f-bloc", "bloc"], ["an-f-statut", "statut"], ["an-f-d", "d"]].forEach(function (x) { var s = el(x[0]); if (s) s.addEventListener("change", function () { F[x[1]] = s.value; maj(); }); });
+  var q = el("an-f-q"); if (q) q.addEventListener("change", function () { F.q = q.value.trim(); maj(); });
+  var pl = el("an-plus"); if (pl) pl.addEventListener("click", function () { F.n += 100; majContenu(); });
+  document.querySelectorAll("[data-an-suivi]").forEach(function (b) { b.addEventListener("click", function () { anModale(b.dataset.anSuivi); }); });
+  var bp = el("an-paquet"); if (bp) bp.addEventListener("click", function () { anTelechargerPaquet(p, A, liste, bp); });
+};
+function anModale(cle) {
+  var c = AN.derniere[cle]; if (!c) return;
+  var su = anSuiviDe(cle), m = document.createElement("div");
+  m.className = "modale"; m.id = "an-modale";
+  m.innerHTML = '<div class="modale-boite" style="width:min(640px,96vw)" role="dialog" aria-modal="true" aria-labelledby="an-mod-titre"><div class="modale-tete"><div><h2 id="an-mod-titre">' + esc(AN_CODES[c.code][1]) + "</h2><p>" + esc(nomResidence(c.dossier) + " : " + anObjet(c)) + "</p><p>" + esc(anDetail(c)) + "</p></div></div>" +
+    '<div style="display:grid;gap:12px;margin-top:14px"><label class="champ-aj"><span>Statut</span><select id="an-mod-statut">' + Object.keys(AN_STATUTS).map(function (k) { return '<option value="' + k + '"' + ((su ? su.statut : "a_analyser") === k ? " selected" : "") + ">" + esc(AN_STATUTS[k][0]) + "</option>"; }).join("") + "</select></label>" +
+    '<label class="champ-aj"><span>Commentaire (explication, correction prévue, pièce justificative)</span><textarea id="an-mod-com" rows="5" maxlength="2000" style="width:100%;padding:8px 10px;border:1px solid var(--bord-fort);border-radius:8px;background:var(--surface);color:var(--txt);font:inherit">' + esc(su ? su.commentaire : "") + "</textarea></label>" +
+    '<p class="legende" id="an-mod-err" style="color:var(--erreur)"></p></div><div class="modale-pied" style="gap:8px"><button class="btn-petit" id="an-mod-annuler">Annuler</button><button class="btn btn-principal" id="an-mod-ok">Enregistrer</button></div></div>';
+  document.body.appendChild(m);
+  var fermer = function () { m.remove(); };
+  el("an-mod-annuler").addEventListener("click", fermer);
+  m.addEventListener("click", function (e) { if (e.target === m) fermer(); });
+  el("an-mod-com").focus();
+  el("an-mod-ok").addEventListener("click", function () {
+    el("an-mod-ok").disabled = true;
+    anSuiviEnregistrer(c, el("an-mod-statut").value, el("an-mod-com").value.trim()).then(function () { fermer(); AN.cache = {}; majContenu(); })
+      .catch(function (e) { el("an-mod-ok").disabled = false; el("an-mod-err").textContent = messageErreur(e); });
+  });
+}
+
+/* ---------- Page : Coûts par nature ---------- */
+PAGES.an_natures = function (p) {
+  var A = anAnalyse(p), h = anPage("Coûts par nature", p, "Postes du tableau EBITDA, période " + libFenetre()) + anBandeau(A);
+  if (!A.dispo.length) return anPoser(h + anSansDonnees(A));
+  var ds = A.dispo, sp = function (code) { return { t: "lig", v: "ebitda", c: code, d: ds, m: A.mois, a: ajuste() }; };
+  var top = A.natures.filter(function (x) { var l = anLigne(x.code); return l.regle.prefixes && x.ecart; }).map(function (x) { return { x: x, imp: x.sens === "produit" ? x.ecart : -x.ecart }; })
+    .sort(function (a, b) { return Math.abs(b.imp) - Math.abs(a.imp); }).slice(0, 12);
+  var code = etat.anPoste || "EBITDA";
+  var serV = A.mois.map(function (m) { var t = 0; ds.forEach(function (d) { t += anV0(anPostes(d, [m], ajuste()) || {}, code); }); return t / 100; });
+  var serR;
+  if (A.facteur !== 1) { var moy = anValRef({ c: code, d: ds, m: A.mois_ref, f: 1 / 12 }); serR = A.mois.map(function () { return moy === null || moy === NC ? null : moy / 100; }); }
+  else serR = A.mois_ref.map(function (m) { var t = 0; ds.forEach(function (d) { t += anV0(anPostes(d, [m], ajuste()) || {}, code); }); return t / 100; });
+  h += '<div class="graphes" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+    barres("Principaux écarts (effet sur l’EBITDA)", top.map(function (t) { var x = anLibLigne(t.x.code); return x.length > 14 ? x.slice(0, 13) + "…" : x; }), [{ nom: "Effet", couleur: BLEU, valeurs: top.map(function (t) { return t.imp / 100; }) }],
+      { couleurs: top.map(function (t) { return t.imp >= 0 ? BLEU : ORANGE; }), specs: function (i) { return { t: "ane", c: top[i].x.code, d: ds, m: A.mois, r: A.mois_ref, f: A.facteur }; } }) +
+    barres("Évolution mensuelle : " + anLibLigne(code), A.mois.map(moisCourt), [{ nom: "Période", couleur: BLEU, valeurs: serV }, { nom: A.facteur !== 1 ? "Moyenne mensuelle de référence" : "Référence (" + AN_REFERENCES[A.reference] + ")", couleur: ORANGE, valeurs: serR }],
+      { specs: function (i, j) { return j ? (A.facteur !== 1 ? { t: "anr", c: code, d: ds, m: A.mois_ref, f: 1 / 12 } : { t: "lig", v: "ebitda", c: code, d: ds, m: [A.mois_ref[i]], a: ajuste() }) : { t: "lig", v: "ebitda", c: code, d: ds, m: [A.mois[i]], a: ajuste() }; } }) + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par poste</h2><span class="legende">Clic sur un libellé : son évolution mensuelle. Effet activité : part de l’écart des charges variables expliquée par le nombre de nuitées vendues.</span></div><div class="defile"><table class="tab" id="an-natures"><thead><tr>' +
+    '<th>Poste</th><th class="num">Période</th><th class="num">Référence</th><th class="num">Écart</th><th class="num">Écart %</th><th class="num">% CA période</th><th class="num">% CA réf.</th><th class="num">Par nuitée période</th><th class="num">Par nuitée réf.</th><th class="num">Effet activité</th><th class="num">Effet coût unitaire</th></tr></thead><tbody>';
+  A.natures.forEach(function (x) {
+    var l = anLigne(x.code), gras = l.niveau <= 1, imp = x.sens === "produit" || (x.sens === "total" && !x.charge) ? x.ecart : -x.ecart;
+    h += "<tr" + (l.niveau === 0 ? ' class="bq-total"' : "") + '><td style="padding-left:' + (8 + Math.max(0, l.niveau - 1) * 14) + 'px"><a href="#" style="color:inherit;text-decoration:none" title="Évolution mensuelle" data-an-poste="' + x.code + '">' + (gras ? "<b>" + esc(l.libelle) + "</b>" : esc(l.libelle)) + "</a></td>" +
+      '<td class="num"' + xa(sp(x.code)) + ">" + anEur(x.v) + '</td><td class="num"' + xa({ t: "anr", c: x.code, d: ds, m: A.mois_ref, f: A.facteur }) + ">" + anEur(x.r) + "</td>" +
+      '<td class="num" style="color:' + anCouleur(imp) + '"' + xa({ t: "ane", c: x.code, d: ds, m: A.mois, r: A.mois_ref, f: A.facteur }) + ">" + anEurS(x.ecart) + '</td><td class="num">' + anPct(x.pct) + "</td>" +
+      '<td class="num">' + (x.ca_v === null ? "–" : pct1(x.ca_v)) + '</td><td class="num mut">' + (x.ca_r === null ? "–" : pct1(x.ca_r)) + '</td><td class="num">' + anEur2(x.nuit_v) + '</td><td class="num mut">' + anEur2(x.nuit_r) + "</td>" +
+      '<td class="num">' + (x.variable ? anEurS(x.effet_activite) : "") + '</td><td class="num">' + (x.variable ? anEurS(x.effet_cout) : "") + "</td></tr>";
+  });
+  h += "</tbody></table></div></div>";
+  anPoser(h);
+  document.querySelectorAll("[data-an-poste]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); etat.anPoste = a.dataset.anPoste; majContenu(); }); });
+};
+
+/* ---------- Page : Cascade de l'EBITDA ---------- */
+function anCascadeSvg(A) {
+  var pas = [["Référence", A.cascade.ebitda_r, "base"]].concat(A.cascade.etapes.map(function (e) { return [anLibLigne(e[0]), e[1], "pas", e[0]]; })).concat([["Période", A.cascade.ebitda_v, "base"]]);
+  var W = 860, H = 320, g = 56, b = 96, h0 = 18, n = pas.length, w = (W - g - 10) / n, cum = 0, vals = [];
+  pas.forEach(function (x) { if (x[2] === "base") { vals.push(x[1]); cum = x[1]; } else { vals.push(cum); cum += x[1]; vals.push(cum); } });
+  /* Axe tronqué (les étapes resteraient invisibles à côté de l'EBITDA entier) : il part sous le plus bas cumul ; il part de 0 si un cumul est négatif. */
+  var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals), ecartMax = max - min || Math.abs(max) || 1;
+  min = min < 0 ? Math.min(0, min - ecartMax * 0.15) : Math.max(0, min - ecartMax * 0.6); max += ecartMax * 0.08; if (max === min) max = min + 1;
+  var y = function (v) { return h0 + (H - h0 - b) * (1 - (v - min) / (max - min)); };
+  var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Cascade de l’EBITDA">';
+  s += '<line x1="' + g + '" x2="' + (W - 10) + '" y1="' + y(min) + '" y2="' + y(min) + '" stroke="var(--bord-fort)"/>';
+  if (min > 0) s += '<text x="' + (g - 6) + '" y="' + (y(min) + 3) + '" font-size="9" text-anchor="end" fill="var(--faible)">' + esc(kEur(min / 100)) + "</text>";
+  cum = 0;
+  pas.forEach(function (x, i) {
+    var x0 = g + i * w + w * 0.15, lw = w * 0.7, y1, y2, col, spec;
+    if (x[2] === "base") { y1 = y(Math.max(min, x[1])); y2 = y(Math.max(min, Math.min(0, x[1]))); col = "var(--bleu-fonce)"; cum = x[1]; spec = i ? { t: "lig", v: "ebitda", c: "EBITDA", d: A.dispo, m: A.mois, a: ajuste() } : { t: "anr", c: "EBITDA", d: A.dispo, m: A.mois_ref, f: A.facteur }; }
+    else { var a = cum, bb = cum + x[1]; y1 = y(Math.max(a, bb)); y2 = y(Math.min(a, bb)); col = x[1] >= 0 ? BLEU : ORANGE; cum = bb; spec = { t: "ane", c: x[3], d: A.dispo, m: A.mois, r: A.mois_ref, f: A.facteur }; }
+    s += "<rect" + xs(spec) + ' style="cursor:pointer" x="' + x0.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + lw.toFixed(1) + '" height="' + Math.max(0.5, y2 - y1).toFixed(1) + '" fill="' + col + '" rx="2"><title>' + esc(x[0]) + " : " + (x[2] === "base" ? anEur(x[1]) : anEurS(x[1])) + "</title></rect>";
+    s += '<text x="' + (x0 + lw / 2).toFixed(1) + '" y="' + (y1 - 4).toFixed(1) + '" font-size="9.5" text-anchor="middle" fill="var(--mut)">' + esc(kEur(x[1] / 100)) + "</text>";
+    s += '<text x="' + (x0 + lw / 2).toFixed(1) + '" y="' + (H - b + 14) + '" font-size="9.5" text-anchor="end" fill="var(--faible)" transform="rotate(-30 ' + (x0 + lw / 2).toFixed(1) + " " + (H - b + 14) + ')">' + esc(x[0].length > 24 ? x[0].slice(0, 23) + "…" : x[0]) + "</text>";
+  });
+  noterGraphe("Cascade de l’EBITDA", pas.map(function (x) { return x[0]; }), [{ nom: "Montant", valeurs: pas.map(function (x) { return x[1] / 100; }) }], "eur");
+  return '<div class="graphe"><div class="gt"><b>Cascade de l’EBITDA : de la référence à la période</b></div>' + s + "</svg></div>";
+}
+PAGES.an_cascade = function (p) {
+  var A = anAnalyse(p), h = anPage("Cascade de l’EBITDA", p, "Ce qui fait passer l’EBITDA de la référence à la période") + anBandeau(A);
+  if (!A.dispo.length) return anPoser(h + anSansDonnees(A));
+  var C = A.cascade, dE = C.ebitda_v - C.ebitda_r;
+  h += '<div class="ruban">' + carte("EBITDA de référence", valeurUnite(anEur(C.ebitda_r)), AN_REFERENCES[A.reference], false, { t: "anr", c: "EBITDA", d: A.dispo, m: A.mois_ref, f: A.facteur }) +
+    carte("EBITDA de la période", valeurUnite(anEur(C.ebitda_v)), libMois(A.mois), false, { t: "lig", v: "ebitda", c: "EBITDA", d: A.dispo, m: A.mois, a: ajuste() }) +
+    carte("Écart", valeurUnite(anEurS(dE)), C.ebitda_r ? anPct(dE / Math.abs(C.ebitda_r)) : "", false, { t: "ane", c: "EBITDA", d: A.dispo, m: A.mois, r: A.mois_ref, f: A.facteur }) + "</div>";
+  h += '<div class="graphes" style="grid-template-columns:1fr">' + anCascadeSvg(A) + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Étapes</h2><span class="legende">Produits : écart tel quel. Charges : écart changé de signe (une hausse de charges réduit l’EBITDA).</span></div><div class="defile"><table class="tab"><thead><tr><th>Poste</th><th class="num">Effet sur l’EBITDA</th><th class="num">Part de l’écart</th></tr></thead><tbody>' +
+    C.etapes.map(function (e) { return "<tr><td>" + esc(anLibLigne(e[0])) + '</td><td class="num" style="color:' + anCouleur(e[1]) + '"' + xa({ t: "ane", c: e[0], d: A.dispo, m: A.mois, r: A.mois_ref, f: A.facteur }) + ">" + anEurS(e[1]) + '</td><td class="num">' + (dE ? pct1(e[1] / dE) : "–") + "</td></tr>"; }).join("") +
+    '<tr class="bq-total"><td><b>Écart d’EBITDA</b></td><td class="num"><b>' + anEurS(dE) + '</b></td><td class="num">100,0 %</td></tr></tbody></table></div></div>';
+  if (C.residences.length > 1) {
+    var rs = C.residences.slice().sort(function (a, b) { return (a[1] - a[2]) - (b[1] - b[2]); });
+    h += '<div class="bloc"><div class="bloc-tete"><h2>Contribution des résidences</h2><span class="legende">Des plus fortes baisses aux plus fortes hausses</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">EBITDA référence</th><th class="num">EBITDA période</th><th class="num">Écart</th><th class="num">Part de l’écart du périmètre</th><th class="num">Marge période</th></tr></thead><tbody>' +
+      rs.map(function (x) { var e = x[1] - x[2], ca = anV0(A._res[x[0]].pv, "CA");
+        return "<tr><td>" + esc(nomResidence(x[0])) + '</td><td class="num"' + xa({ t: "anr", c: "EBITDA", d: [x[0]], m: A.mois_ref, f: A.facteur }) + ">" + anEur(x[2]) + '</td><td class="num"' + xa({ t: "lig", v: "ebitda", c: "EBITDA", d: [x[0]], m: A.mois, a: ajuste() }) + ">" + anEur(x[1]) +
+          '</td><td class="num" style="color:' + anCouleur(e) + '"' + xa({ t: "ane", c: "EBITDA", d: [x[0]], m: A.mois, r: A.mois_ref, f: A.facteur }) + ">" + anEurS(e) + '</td><td class="num">' + (dE ? pct1(e / dE) : "–") + '</td><td class="num">' + (ca ? pct1(x[1] / ca) : "–") + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  }
+  anPoser(h);
+};
+
+/* ---------- Page : CA, volume et prix ---------- */
+PAGES.an_volume = function (p) {
+  var A = anAnalyse(p), h = anPage("CA : volume et prix", p, "Ce qui explique l’évolution du CA hébergement et des ventes annexes") + anBandeau(A);
+  if (!A.volprix.length) return anPoser(h + anSansDonnees(A));
+  /* Total : résidences dont les effets sont calculables (nuitées importées sur la période et la référence) */
+  var T = { ca_v: 0, ca_r: 0, n_v: 0, n_r: 0, k_v: 0, k_r: 0, ann_v: 0, ann_r: 0, volume: 0, prix: 0, capacite: 0, occupation: 0, ann_volume: 0, panier: 0 }, avec = A.volprix.filter(function (x) { return x.volume !== null; });
+  avec.forEach(function (x) { Object.keys(T).forEach(function (k) { if (T[k] !== null && x[k] === null) T[k] = null; else if (T[k] !== null) T[k] += x[k]; }); });
+  if (!avec.length) Object.keys(T).forEach(function (k) { T[k] = null; });
+  T.dossiers = avec.map(function (x) { return x.dossier; });
+  var ligne = function (x, lib, total) {
+    var pv = x.n_v ? x.ca_v / x.n_v : null, pr = x.n_r ? x.ca_r / x.n_r : null, tv = x.k_v && x.n_v !== null ? x.n_v / x.k_v : null, tr = x.k_r && x.n_r !== null ? x.n_r / x.k_r : null;
+    var ds = total ? T.dossiers : [x.dossier];
+    return "<tr" + (total ? ' class="bq-total"' : "") + "><td>" + (total ? "<b>" + esc(lib) + "</b>" : esc(lib)) + '</td><td class="num"' + xa({ t: "lig", v: "ebitda", c: "CA_HEB", d: ds, m: A.mois, a: ajuste() }) + ">" + anEur(x.ca_v) + '</td><td class="num mut">' + anEur(x.ca_r) +
+      '</td><td class="num">' + (x.n_v === null ? "–" : nb(Math.round(x.n_v))) + '</td><td class="num mut">' + (x.n_r === null ? "–" : nb(Math.round(x.n_r))) + '</td><td class="num">' + (tv === null ? "–" : pct1(tv)) + '</td><td class="num mut">' + (tr === null ? "–" : pct1(tr)) +
+      '</td><td class="num">' + anEur2(pv) + '</td><td class="num mut">' + anEur2(pr) + '</td><td class="num">' + anEurS(x.capacite) + '</td><td class="num">' + anEurS(x.occupation) + '</td><td class="num">' + anEurS(x.prix) +
+      '</td><td class="num">' + anEurS(x.ann_volume) + '</td><td class="num">' + anEurS(x.panier) + "</td></tr>";
+  };
+  h += '<div class="graphes" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+    barres("Effets sur le CA hébergement" + (A.volprix.length > 1 ? " (" + avec.length + " résidence" + (avec.length > 1 ? "s" : "") + ")" : ""), ["Capacité", "Occupation", "Prix"], [{ nom: "Effet", couleur: BLEU, valeurs: [T.capacite, T.occupation, T.prix].map(function (v) { return v === null ? null : v / 100; }) }],
+      { couleurs: [T.capacite, T.occupation, T.prix].map(function (v) { return v >= 0 ? BLEU : ORANGE; }) }) +
+    barres("Effets sur les ventes annexes et la restauration", ["Volume (nuitées)", "Panier par nuitée"], [{ nom: "Effet", couleur: BLEU, valeurs: [T.ann_volume, T.panier].map(function (v) { return v === null ? null : v / 100; }) }],
+      { couleurs: [T.ann_volume, T.panier].map(function (v) { return v >= 0 ? BLEU : ORANGE; }) }) + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par résidence</h2><span class="legende">Prix moyen = CA hébergement comptable ÷ nuitées vendues. Taux d’occupation = nuitées vendues ÷ logements-nuits disponibles. Effets en euros, leur somme = écart de CA.</span></div><div class="defile"><table class="tab"><thead><tr>' +
+    '<th>Résidence</th><th class="num">CA héb. période</th><th class="num">CA héb. réf.</th><th class="num">Nuitées période</th><th class="num">Nuitées réf.</th><th class="num">TO période</th><th class="num">TO réf.</th><th class="num">Prix moyen période</th><th class="num">Prix moyen réf.</th><th class="num">Effet capacité</th><th class="num">Effet occupation</th><th class="num">Effet prix</th><th class="num">Annexes : effet volume</th><th class="num">Annexes : effet panier</th></tr></thead><tbody>' +
+    A.volprix.map(function (x) { return ligne(x, nomResidence(x.dossier)); }).join("") + (A.volprix.length > 1 && avec.length ? ligne(T, "Total des " + avec.length + " résidence" + (avec.length > 1 ? "s" : "") + " avec nuitées", true) : "") + "</tbody></table></div>" +
+    '<p class="legende" style="margin:10px 0 0">Total : somme des effets calculés résidence par résidence (le mix entre résidences reste dans les effets de chacune). Sans nuitées importées, les effets sont non calculables (–).</p></div>';
+  anPoser(h);
+};
+
+/* ---------- Page : Fournisseurs ---------- */
+PAGES.an_fournisseurs = function (p) {
+  var A = anAnalyse(p), f = etat.anFo || "", h = anPage("Fournisseurs", p, "Charges par fournisseur (pièces avec un compte 40 et des comptes 6)") + anBandeau(A);
+  var LIB = { "": "Tous", nouveau: "Nouveaux", disparu: "Disparus", variation: "En forte variation", stable: "Stables" };
+  var liste = A.fournisseurs.filter(function (x) { return !f || x.statut === f; }).sort(function (a, b) { return Math.abs(b.v - b.r) - Math.abs(a.v - a.r) || anTri(a.tiers, b.tiers); });
+  var n = {}; A.fournisseurs.forEach(function (x) { n[x.statut] = (n[x.statut] || 0) + 1; });
+  h += '<div class="ruban">' + ["nouveau", "disparu", "variation", "stable"].map(function (k) { return carte(LIB[k], nb(n[k] || 0), k === "variation" ? "Écart d’au moins " + pct1(A.seuils.pct) : k === "nouveau" ? "Absents de la référence" : k === "disparu" ? "Absents de la période" : "Variation sous le seuil"); }).join("") + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Par fournisseur</h2><div class="segment" role="group" aria-label="Filtre">' + Object.keys(LIB).map(function (k) { return '<button data-an-fo="' + k + '" class="' + (k === f ? "actif" : "") + '">' + esc(LIB[k]) + "</button>"; }).join("") + "</div></div>";
+  if (!liste.length) h += '<p class="mut">Aucun fournisseur.</p>';
+  else h += '<div class="defile"><table class="tab"><thead><tr>' + (p.dossiers.length > 1 ? "<th>Résidence</th>" : "") + '<th>Fournisseur</th><th>Comptes</th><th class="num">Période</th><th class="num">Référence</th><th class="num">Écart</th><th class="num">Écart %</th><th class="num">Pièces</th><th>Statut</th></tr></thead><tbody>' +
+    liste.slice(0, 400).map(function (x) { var e = x.v - x.r, st = { nouveau: "att", disparu: "", variation: "ko", stable: "ok" }[x.statut];
+      return "<tr>" + (p.dossiers.length > 1 ? "<td>" + esc(nomResidence(x.dossier)) + "</td>" : "") + "<td><b>" + esc(x.tiers) + '</b></td><td class="mut">' + esc(x.comptes.split("|").join(", ")) + '</td><td class="num">' + anEur(x.v) + '</td><td class="num mut">' + anEur(x.r) +
+        '</td><td class="num" style="color:' + anCouleur(-e) + '">' + anEurS(e) + '</td><td class="num">' + (x.r ? anPct(e / Math.abs(x.r)) : "–") + '</td><td class="num">' + x.nb_v + " / " + x.nb_r + '</td><td><span class="pastille ' + st + '">' + esc(LIB[x.statut].replace(/s$/, "").replace("En forte variation", "Variation")) + "</span></td></tr>"; }).join("") +
+    "</tbody></table></div>" + (liste.length > 400 ? '<p class="legende">' + (liste.length - 400) + " autres lignes : export Excel.</p>" : "");
+  h += "</div>";
+  var ctl = A.constats.filter(function (c) { return c.code === "F4" || c.code === "F5"; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Doublons et factures manquantes</h2><span class="legende">Mêmes règles que les contrôles C04 et C05 du paquet pour Claude</span></div>' +
+    (ctl.length ? '<div class="defile"><table class="tab"><thead><tr>' + (p.dossiers.length > 1 ? "<th>Résidence</th>" : "") + '<th>Constat</th><th>Détail</th><th class="num">Effet EBITDA</th><th>Statut</th></tr></thead><tbody>' +
+      ctl.map(function (c) { return "<tr>" + (p.dossiers.length > 1 ? "<td>" + esc(nomResidence(c.dossier)) + "</td>" : "") + "<td><b>" + esc(AN_CODES[c.code][1]) + "</b></td><td>" + esc(anDetail(c)) + "</td>" + anCellImpact(c) + "<td>" + anStatutHtml(anSuiviDe(c.cle)) + "</td></tr>"; }).join("") + "</tbody></table></div>"
+      : '<p class="mut">Aucun doublon ni facture manquante repéré sur la période.</p>') + "</div>";
+  anPoser(h);
+  document.querySelectorAll("[data-an-fo]").forEach(function (b) { b.addEventListener("click", function () { etat.anFo = b.dataset.anFo; majContenu(); }); });
+};
+
+/* ---------- Page : Anomalies et cut-off ---------- */
+PAGES.an_anomalies = function (p) {
+  var A = anAnalyse(p), h = anPage("Anomalies et cut-off", p, "Mois atypiques, écritures inhabituelles, comptes nouveaux, charges à étaler, mois manquants") + anBandeau(A);
+  var codes = ["A5", "A6", "A7", "A4", "A2", "A1", "A3"], tot = 0;
+  codes.forEach(function (code) {
+    var l = A.constats.filter(function (c) { return c.code === code; });
+    tot += l.length;
+    h += '<div class="bloc"><div class="bloc-tete"><h2>' + esc(AN_CODES[code][1]) + " (" + l.length + ')</h2><span class="legende">' + esc(AN_REGLES[code]) + "</span></div>";
+    if (!l.length) { h += '<p class="mut">Rien à signaler.</p></div>'; return; }
+    h += '<div class="defile"><table class="tab"><thead><tr>' + (p.dossiers.length > 1 ? "<th>Résidence</th>" : "") + '<th>Objet</th><th>Détail</th><th class="num">Effet EBITDA</th><th>Statut</th><th></th></tr></thead><tbody>' +
+      l.slice(0, 200).map(function (c) { return "<tr>" + (p.dossiers.length > 1 ? "<td>" + esc(nomResidence(c.dossier)) + "</td>" : "") + "<td>" + esc(anObjet(c)) + "</td><td>" + esc(anDetail(c)) + "</td>" + anCellImpact(c) + "<td>" + anStatutHtml(anSuiviDe(c.cle)) + "</td>" +
+        '<td class="aj-lig-actions">' + (code === "A4" && peutEcrire() ? '<button class="btn-petit" data-an-lisser="' + esc(c.dossier) + '">Lisser</button>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  });
+  if (!tot) h = h.replace(/<div class="bloc">[\s\S]*$/, "") + anVide("Aucune anomalie", "Aucune anomalie repérée sur la période avec les seuils actuels.");
+  anPoser(h);
+  document.querySelectorAll("[data-an-lisser]").forEach(function (b) { b.addEventListener("click", function () { if (perimetre(b.dataset.anLisser)) etat.perim = b.dataset.anLisser; allerA("ajustements", "lissage"); }); });
+};
+
+/* ---------- Page : Cohérence compta et KPI ---------- */
+PAGES.an_coherence = function (p) {
+  var A = anAnalyse(p), h = anPage("Cohérence compta et KPI", p, "Coûts unitaires et rapprochement du CA avec les données d’exploitation") + anBandeau(A);
+  var flag = {}; A.constats.forEach(function (c) { if (c.code === "K1") flag[c.dossier + "|" + c.objet] = c; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Coûts unitaires</h2><span class="legende">Ratios calculés sur des sommes. Effet = variation du ratio × base de la période. En orange : écart signalé.</span></div>';
+  if (!A.coherence.length) h += '<p class="mut">Aucun ratio calculable : importez les données d’exploitation (nuitées, capacité, petits-déjeuners) dans Données externes.</p>';
+  else {
+    h += '<div class="defile"><table class="tab"><thead><tr><th>Indicateur</th>' + (p.dossiers.length > 1 ? "<th>Résidence</th>" : "") + '<th class="num">Période</th><th class="num">Référence</th><th class="num">Variation</th><th class="num">Effet EBITDA</th><th></th></tr></thead><tbody>';
+    AN_RATIOS.forEach(function (q) {
+      var rows = A.coherence.filter(function (x) { return x.code === q[0]; });
+      if (!rows.length) return;
+      if (p.dossiers.length > 1) {
+        var nv = 0, nr = 0, dv = 0, dr = 0; rows.forEach(function (x) { if (x.den_v === null || x.den_r === null) return; nv += x.num_v; nr += x.num_r; dv += x.den_v; dr += x.den_r; });
+        var rv = dv ? nv / dv : null, rr = dr ? nr / dr : null;
+        h += '<tr class="rub-ligne"><td colspan="2"><b>' + esc(q[1]) + '</b></td><td class="num"><b>' + anFmtRatio(q[3], rv) + '</b></td><td class="num">' + anFmtRatio(q[3], rr) + '</td><td class="num">' + (rv !== null && rr ? anPct(rv / rr - 1) : "–") + "</td><td></td><td></td></tr>";
+      }
+      rows.forEach(function (x) { var c = flag[x.dossier + "|" + q[0]];
+        h += "<tr><td>" + (p.dossiers.length > 1 ? "" : "<b>" + esc(q[1]) + "</b>") + "</td>" + (p.dossiers.length > 1 ? "<td>" + esc(nomResidence(x.dossier)) + "</td>" : "") + '<td class="num">' + anFmtRatio(q[3], x.ratio_v) + '</td><td class="num mut">' + anFmtRatio(q[3], x.ratio_r) + "</td>" +
+          '<td class="num">' + (x.ratio_v !== null && x.ratio_r ? anPct(x.ratio_v / x.ratio_r - 1) : "–") + "</td>" + (c ? anCellImpact(c) : '<td class="num" style="color:' + anCouleur(x.impact || 0) + '">' + anEurS(x.impact) + "</td>") + "<td>" + (c ? '<span class="pastille att">écart</span>' : "") + "</td></tr>"; });
+    });
+    h += "</tbody></table></div>";
+  }
+  h += "</div>";
+  var r1 = A.constats.filter(function (c) { return c.code === "R1"; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Rapprochement du CA avec Mews</h2><span class="legende">' + esc(AN_REGLES.R1) + " Seuil : " + pct1(A.seuils.rapprochement) + "</span></div>" +
+    (r1.length ? '<div class="defile"><table class="tab"><thead><tr>' + (p.dossiers.length > 1 ? "<th>Résidence</th>" : "") + '<th>Rapprochement</th><th class="num">Comptabilité</th><th class="num">Mews</th><th class="num">Écart</th><th>Statut</th></tr></thead><tbody>' +
+      r1.map(function (c) { return "<tr>" + (p.dossiers.length > 1 ? "<td>" + esc(nomResidence(c.dossier)) + "</td>" : "") + "<td>" + esc(anObjet(c)) + ", " + esc(moisLong(c.mois)) + '</td><td class="num">' + anEur(c.valeur) + '</td><td class="num">' + anEur(c.reference) + "</td>" + anCellImpact(c) + "<td>" + anStatutHtml(anSuiviDe(c.cle)) + "</td></tr>"; }).join("") + "</tbody></table></div>"
+      : '<p class="mut">Aucun écart de rapprochement (ou CA Mews non importé : données CA_MEWS_TOTAL, CA_MEWS_RESTO et CA_MEWS_PDJ du catalogue).</p>') + "</div>";
+  anPoser(h);
+};
+
+/* ---------- Page : Cohérence compta et paie ---------- */
+PAGES.an_social = function (p) {
+  var A = anAnalyse(p), S = A.social, h = enTete("Cohérence compta et paie", p, "Charges de personnel, DSN et intérim, période " + libFenetre(), anOutils()) + anBandeau(A);
+  if (!anDsnDispo()) return anPoser(h + anVide("Aucune DSN importée", "Importez les DSN (Import et paramètres, Import DSN) pour rapprocher la paie de la comptabilité."));
+  var dsl = function (x) { return '<td class="num">' + (x === null ? "–" : dsnFmt("dec1", x)) + "</td>"; };
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Charges de personnel : effectif et coût moyen</h2><span class="legende">' + esc(AN_REGLES.S2) + '</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">Mois DSN</th><th class="num">Charges 64 période</th><th class="num">Charges 64 réf.</th><th class="num">ETP moyen</th><th class="num">ETP réf.</th><th class="num">Coût / ETP / mois</th><th class="num">Réf.</th><th class="num">Écart ramené à la période</th><th class="num">Effet effectif</th><th class="num">Effet coût moyen</th><th class="num">Coût / heure</th><th class="num">Réf.</th></tr></thead><tbody>' +
+    S.lignes.map(function (x) { return "<tr><td>" + esc(nomResidence(x.dossier)) + '</td><td class="num">' + x.n_v + " / " + x.n_r + '</td><td class="num">' + anEur(x.ms_v) + '</td><td class="num mut">' + anEur(x.ms_r) + "</td>" + dsl(x.etp_v) + dsl(x.etp_r) +
+      '<td class="num">' + anEur(x.cm_v === null ? null : anArr(x.cm_v)) + '</td><td class="num mut">' + anEur(x.cm_r === null ? null : anArr(x.cm_r)) + '</td><td class="num">' + anEurS(x.delta) + '</td><td class="num">' + anEurS(x.effectif) + '</td><td class="num">' + anEurS(x.cout) +
+      '</td><td class="num">' + anEur2(x.ch_v) + '</td><td class="num mut">' + anEur2(x.ch_r) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Intérim et absentéisme</h2><span class="legende">' + esc(AN_REGLES.S3) + '</span></div><div class="defile"><table class="tab"><thead><tr><th>Résidence</th><th class="num">Intérim période</th><th class="num">Intérim réf.</th><th class="num">Écart</th><th class="num">Absentéisme période</th><th class="num">Réf.</th></tr></thead><tbody>' +
+    S.lignes.map(function (x) { return "<tr><td>" + esc(nomResidence(x.dossier)) + '</td><td class="num">' + anEur(x.interim_v) + '</td><td class="num mut">' + anEur(x.interim_r) + '</td><td class="num">' + (x.interim_v === null ? "–" : anEurS(x.interim_v - x.interim_r)) +
+      '</td><td class="num">' + (x.abs_v === null ? "–" : pct1(x.abs_v)) + '</td><td class="num mut">' + (x.abs_r === null ? "–" : pct1(x.abs_r)) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  var ecartsMois = S.mensuel.filter(function (x) { return x[2] !== x[3]; });
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Brut DSN et comptes 641 : mois en écart</h2><span class="legende">' + esc(AN_REGLES.S1) + " Seuil : " + pct1(A.seuils.rapprochement) + ". " + nb(S.mensuel.length - ecartsMois.length) + " mois-résidence rapprochés sans écart sur " + nb(S.mensuel.length) + '.</span></div>' +
+    (ecartsMois.length ? "" : '<p class="mut">Aucun écart entre le brut DSN et les comptes 641 sur la période.</p>') + '<div class="defile"' + (ecartsMois.length ? "" : ' hidden') + '><table class="tab"><thead><tr><th>Résidence</th><th>Mois</th><th class="num">Brut DSN</th><th class="num">Comptes 641</th><th class="num">Écart</th><th></th></tr></thead><tbody>' +
+    ecartsMois.map(function (x) { var c = S.constats.find(function (k) { return k.code === "S1" && k.dossier === x[0] && k.mois === x[1]; });
+      return "<tr><td>" + esc(nomResidence(x[0])) + "</td><td>" + esc(moisLong(x[1])) + '</td><td class="num"' + xa({ t: "dsn", k: "brut", d: [x[0]], m: [x[1]] }) + ">" + anEur(x[2]) + '</td><td class="num"' + xa({ t: "dsn", k: "c641", d: [x[0]], m: [x[1]] }) + ">" + anEur(x[3]) + '</td><td class="num">' + anEurS(x[2] - x[3]) + "</td><td>" + (c ? '<span class="pastille att">écart</span>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  anPoser(h);
+};
+
+/* ---------- Page : Comparaison des résidences ---------- */
+PAGES.an_benchmark = function (p) {
+  var A = anAnalyse(p), base = etat.anBase || "ca", h = enTete("Comparaison des résidences", p, "Postes de charges comparés à la médiane des résidences comparables, période " + libFenetre()) + bandeauAjuste();
+  if (p.dossiers.length < 2) return anPoser(h + anVide("Choisissez un groupe", "La comparaison porte sur au moins deux résidences : choisissez un groupe, une activité ou une région dans le ruban."));
+  if (!A.benchmark.length) return anPoser(h + anVide("Comparaison impossible", "Moins de deux résidences ont une comptabilité complète sur la période."));
+  var fmt = function (v) { return base === "ca" ? pct1(v) : anEur2(v); };
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Carte des postes</h2><div class="segment" role="group" aria-label="Base de comparaison">' + Object.keys(AN_BASES).map(function (k) { return '<button data-an-base="' + k + '" class="' + (k === base ? "actif" : "") + '">' + esc(AN_BASES[k][0]) + "</button>"; }).join("") + "</div></div>";
+  var rows = A.benchmark.filter(function (x) { return x.base === base; });
+  var cols = []; rows.forEach(function (x) { var l = anLigne(x.code); if (l.niveau <= 2 && cols.indexOf(x.code) < 0) cols.push(x.code); });
+  cols.sort(function (a, b) { return D.lignes_ebitda.indexOf(anLigne(a)) - D.lignes_ebitda.indexOf(anLigne(b)); });
+  var parD = {}; rows.forEach(function (x) { (parD[x.dossier] = parD[x.dossier] || {})[x.code] = x; });
+  var ds = Object.keys(parD).sort(function (a, b) { return anTri(nomResidence(a), nomResidence(b)); }), sp = A.seuils.pct;
+  if (!cols.length) h += '<p class="mut">Base non disponible : importez les données d’exploitation pour comparer par nuitée ou par logement-nuit.</p>';
+  else {
+    h += '<div class="defile"><table class="tab" id="an-carte"><thead><tr><th>Résidence</th><th>Activité</th>' + cols.map(function (c) { return '<th class="num" title="' + esc(anLibLigne(c)) + '">' + esc(anLibLigne(c)) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      ds.map(function (d) { return "<tr><td>" + esc(nomResidence(d)) + '</td><td class="mut">' + esc((residence(d) || {}).activite || "") + "</td>" + cols.map(function (c) {
+        var x = parD[d][c]; if (!x) return '<td class="num mut">–</td>';
+        var e = x.mediane ? x.ratio / x.mediane - 1 : 0, fond = e > sp ? "var(--attente-fond)" : e < -sp ? "var(--ok-fond)" : "transparent";
+        return '<td class="num" style="background:' + fond + '" title="Médiane ' + esc(fmt(x.mediane)) + " (" + x.comparables + " résidences " + (x.groupe === "activite" ? "de même activité" : "du périmètre") + "), rang " + x.rang + "/" + x.comparables + '">' + fmt(x.ratio) + "</td>"; }).join("") + "</tr>"; }).join("") +
+      "</tbody></table></div><p class=\"legende\" style=\"margin:10px 0 0\">Orange : au-dessus de la médiane des comparables de plus de " + pct1(sp) + ". Vert : en dessous de plus de " + pct1(sp) + ". Comparables : même activité (au moins 3), sinon tout le périmètre. Survol : médiane et rang.</p>";
+  }
+  h += "</div>";
+  var pot = {}; rows.forEach(function (x) { if (anLigne(x.code).regle.prefixes) pot[x.dossier] = (pot[x.dossier] || 0) + x.potentiel; });
+  var cl = A.dispo.length ? A.dispo : ds;
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Classement</h2><span class="legende">Potentiel : somme, poste par poste, de l’écart à la médiane des comparables quand la résidence est au-dessus (' + esc(AN_BASES[base][0].toLowerCase()) + ')</span></div><div class="defile"><table class="tab"><thead><tr><th class="num">Rang</th><th>Résidence</th><th class="num">CA</th><th class="num">EBITDA</th><th class="num">Marge d’EBITDA</th><th class="num">Potentiel vs médiane</th></tr></thead><tbody>';
+  var lst = ds.map(function (d) { var P = A._res[d].pv || {}, ca = anV0(P, "CA"), eb = anV0(P, "EBITDA"); return { d: d, ca: ca, eb: eb, m: ca ? eb / ca : null }; }).sort(function (a, b) { return (b.m === null ? -1e9 : b.m) - (a.m === null ? -1e9 : a.m); });
+  h += lst.map(function (x, i) { return '<tr><td class="num">' + (i + 1) + "</td><td>" + esc(nomResidence(x.d)) + '</td><td class="num"' + xa({ t: "lig", v: "ebitda", c: "CA", d: [x.d], m: A.mois, a: ajuste() }) + ">" + anEur(x.ca) + '</td><td class="num"' + xa({ t: "lig", v: "ebitda", c: "EBITDA", d: [x.d], m: A.mois, a: ajuste() }) + ">" + anEur(x.eb) +
+    '</td><td class="num">' + (x.m === null ? "–" : pct1(x.m)) + '</td><td class="num">' + anEur(pot[x.d] || 0) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  void cl;
+  anPoser(h);
+  document.querySelectorAll("[data-an-base]").forEach(function (b) { b.addEventListener("click", function () { etat.anBase = b.dataset.anBase; majContenu(); }); });
+};
+
+/* ---------- Page : Seuils et références ---------- */
+var AN_CHAMPS = [["pct", "Écart minimal en %", "pct"], ["montant", "Écart minimal en euros", "eur"], ["sigma", "Anomalie : nombre d’écarts-types", "nb"], ["ecriture", "Écriture inhabituelle : fois la médiane du compte", "nb"],
+  ["coherence", "Ratio compta / activité : variation minimale en %", "pct"], ["rapprochement", "Rapprochement CA et paie : tolérance en %", "pct"], ["etalement", "Charge à étaler : part minimale des 12 derniers mois en %", "pct"], ["historique", "Mois d’historique couverts au minimum", "nb"]];
+PAGES.an_parametres = function (p) {
+  var S = anSeuils(), ok = anPeutParametrer() && anMigration();
+  var h = enTete("Seuils et références", p, "Réglages communs à toute l’analyse des écarts" + (enLigne() ? " (administrateurs)" : ""));
+  var val = function (c) { var v = S[c[0]]; return c[2] === "pct" ? +(v * 100).toFixed(4) : c[2] === "eur" ? v / 100 : v; };
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Seuils</h2><span class="legende">Un écart est signalé s’il dépasse le seuil en euros et le seuil en %.</span></div><div class="aj-grille" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">' +
+    AN_CHAMPS.map(function (c) { return '<label class="champ-aj"><span>' + esc(c[1]) + '</span><input type="number" step="any" min="0" id="an-p-' + c[0] + '" value="' + val(c) + '"' + (ok ? "" : " disabled") + "><small class=\"mut\">Par défaut : " +
+      (c[2] === "pct" ? pct1(AN_SEUILS_DEFAUT[c[0]]) : c[2] === "eur" ? eur(AN_SEUILS_DEFAUT[c[0]] / 100) : nb(AN_SEUILS_DEFAUT[c[0]])) + "</small></label>"; }).join("") +
+    '<label class="champ-aj"><span>Référence proposée</span><select id="an-p-ref"' + (ok ? "" : " disabled") + ">" + Object.keys(AN_REFERENCES).map(function (k) { return '<option value="' + k + '"' + (k === (AN.param.reference || "n1") ? " selected" : "") + ">" + esc(AN_REFERENCES[k]) + "</option>"; }).join("") + "</select></label></div>" +
+    (ok ? '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-principal" id="an-p-ok">Enregistrer</button><button class="btn-petit" id="an-p-defaut">Valeurs par défaut</button><span class="legende" id="an-p-msg"></span></div>' : '<p class="legende">Seuls les administrateurs modifient les seuils.</p>') + "</div>";
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Références de comparaison</h2></div><table class="tab"><tbody>' +
+    '<tr><td><b>Même période N-1</b></td><td>Les mêmes mois, un an plus tôt.</td></tr><tr><td><b>Période précédente</b></td><td>Les mois qui précèdent immédiatement la période, en même nombre (pour un mois : le mois précédent).</td></tr>' +
+    '<tr><td><b>Moyenne des 12 mois précédents</b></td><td>Somme des 12 mois avant la période, ramenée à la durée de la période (× nombre de mois ÷ 12). Lisse la saisonnalité et les à-coups.</td></tr>' +
+    '<tr><td><b>Budget</b></td><td class="mut">À venir avec le module Budgets.</td></tr></tbody></table><p class="legende" style="margin:10px 0 0">Une résidence n’entre dans les écarts que si sa comptabilité couvre tous les mois de la période et de la référence. Dans un mois couvert, un poste sans écriture vaut zéro.</p></div>';
+  h += '<div class="bloc"><div class="bloc-tete"><h2>Règles des écarts repérés</h2></div><div class="defile"><table class="tab"><thead><tr><th>Code</th><th>Bloc</th><th>Écart</th><th>Règle</th></tr></thead><tbody>' +
+    Object.keys(AN_CODES).map(function (k) { return "<tr><td><code>" + k + "</code></td><td>" + esc(AN_BLOCS[AN_CODES[k][0]]) + "</td><td><b>" + esc(AN_CODES[k][1]) + "</b></td><td>" + esc(AN_REGLES[k]) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
+  el("contenu").innerHTML = h;
+  if (!ok) return;
+  el("an-p-defaut").addEventListener("click", function () { AN_CHAMPS.forEach(function (c) { var v = AN_SEUILS_DEFAUT[c[0]]; el("an-p-" + c[0]).value = c[2] === "pct" ? v * 100 : c[2] === "eur" ? v / 100 : v; }); });
+  el("an-p-ok").addEventListener("click", function () {
+    var q = {}, err = null;
+    AN_CHAMPS.forEach(function (c) { var t = el("an-p-" + c[0]).value, v = +t; if (t === "" || !isFinite(v) || v < 0) { err = c[1] + " : un nombre positif."; return; } q[c[0]] = c[2] === "pct" ? v / 100 : c[2] === "eur" ? Math.round(v * 100) : v; });
+    if (err) { el("an-p-msg").textContent = err; return; }
+    anParamEnregistrer(q, el("an-p-ref").value).then(function () { etat.anRef = null; el("an-p-msg").textContent = "Enregistré."; }).catch(function (e) { el("an-p-msg").textContent = messageErreur(e); });
+  });
+};
+
+/* ---------- Paquet d'écarts pour Claude (lot 30) ---------- */
+function anFichiers(p, A, liste) {
+  var E = socleEuros, num = function (x) { return x === null || x === undefined ? "" : String(x); };
+  var f = [];
+  f.push({ nom: "ecarts.csv", texte: socleCsv(["cle", "dossier", "residence", "bloc", "code", "ecart", "objet", "mois", "constat", "valeur", "reference", "difference", "pct", "effet_ebitda", "statut", "commentaire", "commente_par", "commente_le"],
+    liste.map(function (c) { var su = anSuiviDe(c.cle); return [c.cle, c.dossier, nomResidence(c.dossier), AN_BLOCS[c.bloc], c.code, AN_CODES[c.code][1], anObjet(c), c.mois, anDetail(c), E(c.valeur), E(c.reference), E(c.ecart), c.pct === null ? "" : c.pct.toFixed(4), E(c.impact),
+      su ? AN_STATUTS[su.statut][0] : AN_STATUTS.a_analyser[0], su ? su.commentaire : "", su ? su.modifie_par || "" : "", su ? String(su.modifie_le || "").slice(0, 10) : ""]; })) });
+  var po = [];
+  A.dispo.forEach(function (d) { D.lignes_ebitda.forEach(function (l) { var a = A._res[d].pv[l.code], b = A._res[d].pr[l.code]; if ((a === null || a === undefined) && (b === null || b === undefined)) return; po.push([d, l.code, l.libelle, l.niveau, E(a || 0), E(b || 0), E((a || 0) - (b || 0))]); }); });
+  f.push({ nom: "postes.csv", texte: socleCsv(["dossier", "code", "libelle", "niveau", "periode", "reference", "ecart"], po) });
+  f.push({ nom: "cascade.csv", texte: socleCsv(["etape", "libelle", "effet_ebitda"], [["REF", "EBITDA de référence", E(A.cascade.ebitda_r)]].concat(A.cascade.etapes.map(function (e) { return [e[0], anLibLigne(e[0]), E(e[1])]; })).concat([["PER", "EBITDA de la période", E(A.cascade.ebitda_v)]])) });
+  f.push({ nom: "volume_prix.csv", texte: socleCsv(["dossier", "ca_heb_periode", "ca_heb_reference", "nuitees_periode", "nuitees_reference", "capacite_periode", "capacite_reference", "effet_capacite", "effet_occupation", "effet_prix", "annexes_periode", "annexes_reference", "effet_volume_annexes", "effet_panier"],
+    A.volprix.map(function (x) { return [x.dossier, E(x.ca_v), E(x.ca_r), num(x.n_v), num(x.n_r), num(x.k_v), num(x.k_r), E(x.capacite), E(x.occupation), E(x.prix), E(x.ann_v), E(x.ann_r), E(x.ann_volume), E(x.panier)]; })) });
+  f.push({ nom: "fournisseurs.csv", texte: socleCsv(["dossier", "tiers", "comptes", "periode", "reference", "pieces_periode", "pieces_reference", "statut"], A.fournisseurs.map(function (x) { return [x.dossier, x.tiers, x.comptes, E(x.v), E(x.r), x.nb_v, x.nb_r, x.statut]; })) });
+  f.push({ nom: "coherence.csv", texte: socleCsv(["dossier", "code", "indicateur", "numerateur_periode", "base_periode", "numerateur_reference", "base_reference", "ratio_periode", "ratio_reference", "effet_ebitda"],
+    A.coherence.map(function (x) { var q = anRatioDef(x.code); return [x.dossier, x.code, q[1], E(x.num_v), q[3][0] === "lig" ? E(x.den_v) : num(x.den_v), E(x.num_r), q[3][0] === "lig" ? E(x.den_r) : num(x.den_r), x.ratio_v === null ? "" : x.ratio_v.toFixed(6), x.ratio_r === null ? "" : x.ratio_r.toFixed(6), E(x.impact)]; })) });
+  f.push({ nom: "comparaison.csv", texte: socleCsv(["base", "dossier", "code", "libelle", "ratio", "mediane", "comparables", "groupe", "rang", "potentiel"],
+    A.benchmark.map(function (x) { return [x.base, x.dossier, x.code, anLibLigne(x.code), x.ratio.toFixed(6), x.mediane.toFixed(6), x.comparables, x.groupe, x.rang, E(x.potentiel)]; })) });
+  return f;
+}
+function anLisezMoi(p, A, ref, emp, n) {
+  return "# Paquet d’écarts : " + p.libelle + "\n\n- Référence du paquet : " + ref + " ; empreinte des données : " + emp + "\n- Période : " + A.mois[0] + " à " + A.mois[A.mois.length - 1] + " ; comparée à : " + AN_REFERENCES[A.reference] + " (" + A.mois_ref[0] + " à " + A.mois_ref[A.mois_ref.length - 1] + ")\n" +
+    "- Vue : " + (ajuste() ? "ajustée (provisions, comptes simulés et lissages du logiciel)" : "réelle (comptabilité importée)") + "\n- Seuils : " + pct1(A.seuils.pct) + " et " + eur(A.seuils.montant / 100) + "\n- Écarts dans ce paquet : " + n + "\n" +
+    (A.exclues.length ? "- Résidences hors des écarts (comptabilité incomplète) : " + A.exclues.map(function (x) { return x[0] + " (" + x[1] + ")"; }).join(", ") + "\n" : "") +
+    "\n## Fichiers\n\n- ecarts.csv : écarts repérés par le logiciel, du plus fort effet sur l’EBITDA au plus faible, avec le statut et le commentaire du contrôle de gestion.\n- postes.csv : postes du tableau EBITDA par résidence (période, référence, écart).\n- cascade.csv : passage de l’EBITDA de référence à celui de la période.\n- volume_prix.csv : CA hébergement décomposé en effets capacité, occupation et prix ; ventes annexes en volume et panier.\n- fournisseurs.csv : charges par fournisseur.\n- coherence.csv : coûts unitaires (par nuitée, en % du CA).\n- comparaison.csv : postes comparés à la médiane des résidences comparables.\n\n" +
+    "## Règles\n\n- Montants en euros (point décimal), effets sur l’EBITDA signés : positif = favorable.\n- Une case vide = non disponible, jamais zéro.\n- Les écarts sont calculés par le logiciel (règles : Analyse des écarts, Seuils et références) ; les commentaires sont ceux des personnes qui les ont saisis.\n- Citez la référence du paquet (" + ref + ") dans tout document produit.\n";
+}
+function anInscrire(p, A, emp, m, nbF) {
+  var ligne = { perimetre: String(p.libelle).slice(0, 200), dossiers: p.dossiers.slice().sort(anTri), du: A.mois[0], au: A.mois[A.mois.length - 1], niveau: "ecarts",
+    mission_id: m && /^\d+$/.test(m.id) ? +m.id : null, mission_code: m ? m.code : null, mission_version: m ? m.version || 1 : null, nb_fichiers: nbF, empreinte: emp };
+  if (!enLigne()) {
+    var l = paquetsListe(), id = l.length + 1;
+    var x = Object.assign({ id: id, reference: "LOCAL-" + String(id).padStart(6, "0"), cree_par: (etat.utilisateur && etat.utilisateur.mail) || "", cree_le: new Date().toISOString(), resultat: "", resultat_note: "" }, ligne);
+    l.unshift(x); try { localStorage.setItem("zen-paquets", JSON.stringify(l)); } catch (e) {}
+    return Promise.resolve(x.reference);
+  }
+  return sb(ZCLIENT.from("paquets_claude").insert(ligne).select("*")).then(verifierTouche).then(function (r) { D.paquets = r.concat(D.paquets || []); return r[0].reference; });
+}
+function anConstruirePaquet(p, A, liste, m, ref) {
+  var donnees = anFichiers(p, A, liste), emp = socleEmpreinte(donnees);
+  var tete = [{ nom: "LISEZ-MOI.md", texte: anLisezMoi(p, A, ref, emp, liste.length) }];
+  if (m) tete.push({ nom: "MISSION.md", texte: socleTexteMission(m, ref, emp) });
+  return { fichiers: tete.concat(donnees), donnees: donnees, empreinte: emp };
+}
+function anTelechargerPaquet(p, A, liste, btn) {
+  var mid = el("an-mission") ? el("an-mission").value : "", m = missionsListe().find(function (x) { return String(x.id) === mid; }) || null, cible = el("an-paquet-etat");
+  btn.disabled = true; cible.textContent = "Préparation du paquet…";
+  var P0 = anConstruirePaquet(p, A, liste, m, "—");
+  anInscrire(p, A, P0.empreinte, m, P0.fichiers.length).then(function (ref) {
+    var P = anConstruirePaquet(p, A, liste, m, ref);
+    return zipper(P.fichiers, "application/zip").then(function (zip) {
+      var net = function (s) { return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); };
+      telechargerXl(zip, "Ecarts_Claude_" + net(ref) + "_" + net(p.libelle).slice(0, 40) + "_" + A.mois[0] + "_" + A.mois[A.mois.length - 1] + ".zip");
+      btn.disabled = false; cible.textContent = "Paquet " + ref + " téléchargé. Joignez-le à Claude" + (m ? " : la mission est dans MISSION.md." : " avec vos consignes.") + " Le document produit se note dans Rapports, Paquet pour Claude.";
+    });
+  }).catch(function (e) { btn.disabled = false; cible.textContent = messageErreur(e); });
+}
+
 /* ---------- Thème d'affichage ---------- */
 function themeChoisi() { try { return localStorage.getItem("zen-theme") || "light"; } catch (e) { return "light"; } }
 var THEMES = { light: ["☀", "Thème clair (blanc). Cliquer pour passer au thème sombre."], dark: ["☾", "Thème sombre. Cliquer pour passer au réglage automatique."], auto: ["Auto", "Suit le réglage de l’ordinateur. Cliquer pour passer au thème clair."] };
@@ -6131,6 +7134,7 @@ dsnCharger();
 mesuresImporteesCharger();
 catCharger();
 appliquerMesures();
+anCharger();
 appliquerMenu(menuReduit());
 
 demarrer();
@@ -6262,11 +7266,15 @@ function chargerDonnees(client) {
     lireTout(function () { return client.from("dsn_mois").select("*").order("siret").order("mois"); }, true),
     lireFacultatif(client.from("dsn_journal").select("*").order("id", { ascending: false }).limit(500)),
     /* Lot 27 : null quand la migration 018 manque */
-    lireOuNull(client.from("dsn_postes").select("*").order("emploi"))
+    lireOuNull(client.from("dsn_postes").select("*").order("emploi")),
+    /* Lots 28 à 30 : null quand la migration 019 manque */
+    lireOuNull(client.from("analyse_parametres").select("*")),
+    lireTout(function () { return client.from("ecarts_suivi").select("*").order("id"); }, true),
+    lireFacultatif(client.from("ecarts_journal").select("*").order("id", { ascending: false }).limit(500))
   ]).then(function (r) { return { commun: r[0] && r[0].contenu, lignes: r[1] || [], groupes: r[2] || [], liens: r[3] || [], ajustements: r[4] || [], comptes: r[5] || [], lissages: r[6] || [], mesures: r[7] || [], banques: r[8] || [], parametres: r[9], synchros: r[10],
     resbase: r[11], kpimois: r[12], depots: r[13], cat: r[14], modeles: r[15], resmod: r[16], journalkpi: r[17],
     lot24: { rubriques: r[18], regles: r[19], ca: r[20], clotures: r[21], journal: r[22], previsions: r[23], virements: r[24] },
-    lot25: { missions: r[25], paquets: r[26], versions: r[27] }, lot26: { etablissements: r[28], mois: r[29], journal: r[30], postes: r[31] } }; });
+    lot25: { missions: r[25], paquets: r[26], versions: r[27] }, lot26: { etablissements: r[28], mois: r[29], journal: r[30], postes: r[31] }, lot28: { parametres: r[32], suivi: r[33], journal: r[34] } }; });
 }
 /* Démarrage avec un client de base déjà connecté et le profil de la personne. Appelé par demarrerEnLigne ;
    les tests l'appellent avec un client simulé. */
@@ -6287,6 +7295,7 @@ function demarrerAvecClient(client, profil) {
     D.tresorerie_previsions = L24.previsions || []; D.virements_suivis = L24.virements || [];
     D.lot25 = x.lot25.missions !== null; D.missions = x.lot25.missions || []; D.paquets = x.lot25.paquets || []; D.missions_versions = x.lot25.versions || [];
     D.lot26 = x.lot26.etablissements !== null && x.lot26.mois !== null; D.dsn_etablissements = x.lot26.etablissements || []; D.dsn_mois = x.lot26.mois || []; D.dsn_journal = x.lot26.journal || []; D.lot27 = x.lot26.postes !== null; D.dsn_postes = x.lot26.postes || [];
+    D.lot28 = x.lot28.parametres !== null && x.lot28.suivi !== null; D.analyse_parametres = x.lot28.parametres || []; D.ecarts_suivi = x.lot28.suivi || []; D.ecarts_journal = x.lot28.journal || [];
     lancerApplication();
     ZCLIENT = client;
     var e = document.getElementById("ecran-demarrage"); if (e) e.classList.remove("visible");

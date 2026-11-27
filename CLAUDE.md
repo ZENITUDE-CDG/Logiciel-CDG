@@ -45,7 +45,7 @@
 
 ## Commandes
 - Installation : `pip install -r requirements.txt`.
-- Tests : `python -m pytest` (501 tests au lot 27 ; détail historique : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15, 5 du lot 16, 5 du lot 17 ; les tests de page des lots 9, 11, 13 à 17 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
+- Tests : `python -m pytest` (524 tests aux lots 28 à 30 ; détail historique : 70 cas de configuration, 9 du lot 2, 9 du lot 3, 11 du lot 4, 7 du lot 5, 15 du lot 6, 5 du lot 7, 2 du lot 9, 110 du lot 11, 20 du lot 12, 39 du lot 13, 18 du lot 14, 21 du lot 15, 5 du lot 16, 5 du lot 17 ; les tests de page des lots 9, 11, 13 à 17 demandent Playwright et Chromium, sinon ils sont ignorés ; ceux des lots 12 à 15 sur la base demandent PostgreSQL (`ZENITUDE_ENV=test` et `DATABASE_URL`, migrations appliquées), sinon ils sont ignorés).
 - Tests et publication automatiques : `.github/workflows/tests-et-publication.yml`. À chaque dépôt, toute la suite tourne sur GitHub (onglet Actions) avec une base PostgreSQL temporaire créée depuis `migrations/` (aucun secret, Supabase jamais touché). Puis, sur main seulement et si les tests passent, `python interface/publier_supabase.py` publie les chiffres dans la base de test avec le secret GitHub `SUPABASE_SECRET_KEY` (décision 0007). Essai sans envoi : `python interface/publier_supabase.py --essai <dossier>`.
 - Installation de la base de test : `python scripts/assembler_installation.py` régénère `scripts/installation_supabase.sql` (remise à zéro + migrations + données de départ) ; un test vérifie qu'il est à jour.
 - Versions : `python -m zenitude.config versions <dossier> deposer|approuver|appliquer|revenir|publier|statut ...`.
@@ -339,3 +339,13 @@ Décision : `docs/decisions/0021-detail-des-salaires-et-indicateurs-de-pilotage.
 - Données fictives : `tests/generer_dsn.py` (grille de postes HCR, salaire de base stable, complément au 641 en heures sup. et primes, anomalies SMIC et variation).
 - Tests : `tests/test_lot27_page.py` (4), `tests/lot27/test_lot27_droits.py` (2, base).
 - Limites : données pseudonymisées (validation RGPD avant un fichier réel) ; SMIC et seuils dans la page ; niveau = rubrique S21.G00.40.041 selon le paramétrage Silae ; paquet pour Claude (lot 25) sans les données sociales.
+
+## Lots 28 à 30 - STATUT : réalisé (analyse des écarts)
+Décision : `docs/decisions/0022-analyse-des-ecarts.md`. Règles : `docs/analyse_ecarts.md`. Mise en route : `docs/lot28_mise_en_route.md`.
+- Référence : `zenitude/analyse/ecarts.py` (`analyser(donnees, dossiers, mois, reference, seuils)` : natures, cascade, volume et prix, fournisseurs, coherence, benchmark, constats). Références `n1`, `prec`, `moy12` (facteur appliqué par ligne de base avant les totaux). Résidence retenue seulement si la comptabilité couvre la période ET la référence.
+- Page : section `analyse` après Tableaux de bord ; pages `an_constats`, `an_natures`, `an_cascade`, `an_volume`, `an_fournisseurs`, `an_anomalies`, `an_coherence`, `an_social` (administrateurs, DSN), `an_benchmark`, `an_parametres`. Moteur `anCalculer` identique à Python (vue réelle) ; vue ajustée par `soldes` ; `anSocial` (S1 à S4) dans la page seulement. Détail des calculs : `EXPLIQUER.anc` (écart), `anr` (référence), `ane` (période − référence). Export Excel du lot 17 sur toute la section.
+- Suivi : `anSuiviEnregistrer` (statut, commentaire, montant au moment du commentaire), modale `anModale` ; seuils `anParamEnregistrer` ; démonstration locale : `zen-ecarts`, `zen-analyse-param`.
+- Paquet d'écarts pour Claude : `anFichiers`, `anConstruirePaquet`, `anInscrire` (journal `paquets_claude`, niveau `ecarts`), `anTelechargerPaquet`.
+- Base : migration 019 (`ecarts_suivi`, `ecarts_journal` écrit par la base, `analyse_parametres` une ligne ; `paquets_claude.niveau` accepte `ecarts`).
+- Tests : `tests/test_lot28_ecarts.py` (9), `tests/test_lot28_page.py` (10, dont page = Python sur 6 périmètres et références), `tests/lot28/test_lot28_droits.py` (4, base). Jeu d'anomalies : `tests/donnees_lot28.py`.
+- Limites : pas de comparaison au budget ; contrats Zeendoc non reliés ; seuils et ratios à recaler sur données réelles.

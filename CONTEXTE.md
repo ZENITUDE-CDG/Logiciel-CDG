@@ -37,12 +37,15 @@ Ce fichier résume l'état du projet pour une nouvelle conversation ou un nouvea
 | 19 | Dépôt du consolidé KPI (onglet « Données KPI », périmètre groupe ou résidence, rattachement par code Mews, statuts des mois, groupes du fichier)  (jetons chiffrés retirés au lot 23, décision 0017) | 32 |
 | 24 | Comptabilité du siège : CA par résidence (comptes 7 ou règle propre), paramétrage des FEES (rubriques, versions datées, journal), FEES à refacturer avec clôture figée ; trésorerie : prévisions, point bas, virements de compte à compte proposés, plafond | 17 |
 | 25 | Socle de données pour Claude : paquet standard (résidence ou groupe) de chiffres réels, contrôles C01 à C10, référence et empreinte ; missions versionnées par catégorie ; historique des paquets et documents produits | 21 |
+| 28-30 | Analyse des écarts : écarts à expliquer (statut, commentaire, historique), coûts par nature, cascade de l'EBITDA, volume et prix, fournisseurs, anomalies et cut-off, cohérence compta / KPI / paie, comparaison des résidences, seuils, paquet d'écarts pour Claude | 23 |
 | 18b | Synchronisation lancée depuis la page Import comptable (résidence ou groupe), période d'import, masquage du brouillard, historique | 17 |
 | 13 | Chiffres publiés dans la base par GitHub Actions et lus selon le parc (compte de résultat, tableaux de bord, trésorerie) ; ajustements et comptes simulés partagés dans la base, actifs dès leur création ; lissage ; nettoyage des résidences de test (huit résidences de démonstration) | 39 |
 
 Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages, sur huit résidences fictives (`interface/demo/`). Charte graphique Zenitude appliquée (lot 8). Depuis le lot 12, on y entre par `connexion.html` (vraie connexion, base de test Supabase).
 
 ## Décisions prises
+
+- Lots 28 à 30 (`docs/decisions/0022`) : écarts recalculés à chaque affichage (référence Python `zenitude/analyse/ecarts.py`, page identique), jamais stockés ; seuls statut, commentaire et seuils sont en base (migration 019) ; résidence retenue seulement si la comptabilité couvre période et référence ; références N-1, période précédente, moyenne 12 mois.
 
 - Pas de studio sans code : la configuration métier est un classeur Excel.
 - Dossier Pennylane inconnu : refusé, sauf déclaré « à créer » (accepté avec avertissement W6).
@@ -84,6 +87,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 14. Lot 11 : rattachements PCG provisoires (708, 709, 608, 648, 649) et comptes non classés (643, 644, 646, 681 sans subdivision, 697, 768) à valider par la direction financière ; règlement ANC 2026-03 (titre V du PCG) à analyser ; exercice N-1 à importer pour remplir la colonne N-1.
 10. Charte graphique : appliquée au lot 8. Présentation EBITDA à valider par le contrôle de gestion.
 
+18. Lots 28 à 30 : comparaison au budget (module Budgets) ; seuils et ratios à recaler sur données réelles ; lien avec les contrats Zeendoc.
 17. Lot 25 : envoi de données réelles à Claude (paquet) à faire approuver par la DSI et la DAF ; connecteur Claude en lecture seule sur le logiciel à étudier.
 16. Lot 19, étape 2 : données réelles dans la base (résidences réelles, contrainte « fictif », lecture des dossiers connectés, synchronisation de plusieurs dossiers) : décision DSI et DAF.
 
@@ -91,7 +95,7 @@ Site (`index.html`, lot 7) : application de pilotage affichée par GitHub Pages,
 
 ```
 pip install -r requirements.txt
-python -m pytest            # 483 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
+python -m pytest            # 524 tests (les tests de page demandent Playwright, ceux des lots 12 et 13 sur la base une base PostgreSQL)
                             # sur GitHub : onglet Actions, lancé automatiquement à chaque dépôt
 sh demo.sh                  # démonstration complète
 python interface/generer_site.py   # régénère index.html (en ligne, sans données)

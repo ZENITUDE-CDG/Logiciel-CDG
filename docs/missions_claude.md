@@ -50,3 +50,19 @@ Les **livrables** (champ séparé) donnent les noms de fichiers et le plan type 
 4. Préciser les pièces que le paquet ne contient pas (baux, budget de CA, factures en pièce jointe) : elles sont
    jointes à la conversation.
 5. Enregistrer la mission dans le logiciel (jamais dans le dépôt, qui est public).
+
+## Exemple : commentaire des écarts (lots 28 à 30)
+À enregistrer dans Missions Claude (code `COMMENTAIRE-ECARTS`, catégorie Analyse), puis à choisir dans
+**Analyse des écarts, Écarts à expliquer, Préparer le commentaire avec Claude**.
+
+Consignes proposées :
+1. Lire LISEZ-MOI.md puis `ecarts.csv` (du plus fort effet au plus faible).
+2. Pour chaque écart « À analyser » ou « À corriger » : expliquer la cause probable à partir de `postes.csv`,
+   `volume_prix.csv`, `fournisseurs.csv` et `coherence.csv` ; dire s'il s'agit d'une évolution réelle (activité,
+   prix, contrat) ou d'une anomalie comptable (cut-off, doublon, charge non étalée, imputation) ; proposer l'action
+   (rien, écriture à passer, lissage, question au directeur).
+3. Ne jamais contredire un commentaire « Expliqué » ou « Corrigé » : le reprendre tel quel.
+4. Conclure par la cascade de l'EBITDA (`cascade.csv`) en trois phrases.
+
+Livrables : un tableau « écart, cause, action, responsable » et une note de synthèse d'une page, citant la référence
+du paquet.
